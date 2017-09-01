@@ -1,0 +1,14 @@
+*.o
+*.a
+*.so
+*.dll
+*.exe
+*.lps
+*.log
+*.res
+**/backup/**
+**/lib/**
+.fuse*
+src/tester-i386-linux
+src/tester-x86_64-linux
+
