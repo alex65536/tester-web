@@ -1,0 +1,10 @@
+[*] Create an HTML preprocessor
+[*] Create a simple users database
+[*] Write HTML pages drafts
+[*] Make simple site with user log in/log out/see others info
+[*] Add user roles (admin, problem setter, etc.)
+[*] Create contest system
+[*] Make contest uploading system
+[*] Make online (or offline?) contest editor
+[*] Add testing environment for users
+[*] Add standings
