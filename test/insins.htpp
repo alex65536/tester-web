@@ -1,0 +1,3 @@
+	Without force indent: ~insert2;
+
+	With force indent: ~>insert2;

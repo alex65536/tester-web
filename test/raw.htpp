@@ -1,0 +1,4 @@
+~<-! Raw line ~ ~ ~hello; 
+~-<! Also raw: ~ ~ ~ ~hello;
+~-! Raw indented line: ~hello;
+~<! Not raw line: ~hello;

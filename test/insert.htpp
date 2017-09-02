@@ -1,0 +1,6 @@
+I insert hello:
+
+   (as JS) ~\hello;!
+   (as HTML) ~&hello;!
+   (no indent) ~<hello;!
+   (always indent) ~>hello;!
