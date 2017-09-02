@@ -18,17 +18,16 @@
   to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
   MA 02111-1307, USA.
 }
-program tsweb;
+unit webstrconsts;
 
 {$mode objfpc}{$H+}
 
-uses
-  heaptrc, fphttpapp, index, htmlpreprocess, escaping, webstrconsts;
+interface
 
-begin
-  Application.Title := 'Tester Web';
-  {Application.Port := 8080;
-  Application.Initialize;
-  Application.Run;}
+uses
+  Classes, SysUtils;
+
+implementation
+
 end.
 
