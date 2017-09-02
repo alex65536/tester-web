@@ -113,7 +113,8 @@ type
     procedure PreprocessLine(const S: string; Target: TIndentTaggedStrings);
   public
     property Storages: TVariableStorageList read FStorages;
-    procedure Preprocess(Source: TStrings; Target: TIndentTaggedStrings); overload;
+    procedure Preprocess(Source: TStrings; Target: TIndentTaggedStrings;
+      Clear: boolean = False); overload;
     function Preprocess(Source: TStrings): string; overload;
     procedure PreprocessAndInsert(Source: TStrings; AStorage: TVariableStorage;
       const Key: string);
@@ -278,7 +279,7 @@ begin
     RawText := True;
     Pos := 4;
   end
-  else if (Length(S) = 4) and ((Copy(S, 1, 4) = '~<-!') or (Copy(S, 1, 4) = '~-<!')) then
+  else if (Length(S) >= 4) and ((Copy(S, 1, 4) = '~<-!') or (Copy(S, 1, 4) = '~-<!')) then
   begin
     Indent := False;
     RawText := True;
@@ -295,7 +296,7 @@ begin
   // parse the rest of the line
   if RawText then
     // if raw text - we just append the rest of the line
-    Line := Copy(S, Pos, Length(S) - Pos + 1)
+    Line := Line + Copy(S, Pos, Length(S) - Pos + 1)
   else
   begin
     // otherwise, parse it
@@ -334,11 +335,13 @@ begin
   Target.AddText(Line);
 end;
 
-procedure THtmlPreprocessor.Preprocess(Source: TStrings; Target: TIndentTaggedStrings);
+procedure THtmlPreprocessor.Preprocess(Source: TStrings;
+  Target: TIndentTaggedStrings; Clear: boolean);
 var
   I: integer;
 begin
-  Target.Clear;
+  if Clear then
+    Target.Clear;
   for I := 0 to Source.Count - 1 do
     PreprocessLine(Source[I], Target);
 end;
