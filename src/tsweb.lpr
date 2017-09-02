@@ -23,12 +23,47 @@ program tsweb;
 {$mode objfpc}{$H+}
 
 uses
-  heaptrc, fphttpapp, index, htmlpreprocess, escaping, webstrconsts;
+  heaptrc,
+  fphttpapp,
+  index,
+  htmlpreprocess,
+  escaping,
+  webstrconsts,
+  SysUtils;
 
+var
+  VarName: string;
+  Storage: TVariableStorage;
+  Preprocessor: THtmlPreprocessor;
 begin
+  // testing HTML preprocessor
+  WriteLn('To quit, enter "quit" instead of VarName');
+  Storage := TVariableStorage.Create;
+  Preprocessor := THtmlPreprocessor.Create;
+  try
+    Preprocessor.Storages.Add(Storage);
+    while 42 = 42 { True } do
+    begin
+      Write('VarName (will be loaded from ../test/VarName.htpp): ');
+      ReadLn(VarName);
+      if VarName = 'quit' then
+        Break;
+      try
+        Preprocessor.PreprocessFileAndInsert('..' + PathDelim + 'test' +
+          PathDelim + VarName + '.htpp', Storage, VarName);
+        WriteLn('Inserted, contents (raw) = ' + LineEnding + Storage[VarName]);
+      except
+        on E: Exception do
+          WriteLn(E.ClassName, ' : ', E.Message);
+      end;
+    end;
+  finally
+    FreeAndNil(Storage);
+    FreeAndNil(Preprocessor);
+  end;
+
   Application.Title := 'Tester Web';
   {Application.Port := 8080;
   Application.Initialize;
   Application.Run;}
 end.
-

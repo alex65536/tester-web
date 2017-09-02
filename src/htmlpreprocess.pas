@@ -413,7 +413,7 @@ end;
 
 constructor THtmlPreprocessor.Create;
 begin
-  FStorages := TVariableStorageList.Create(True);
+  FStorages := TVariableStorageList.Create(False);
 end;
 
 destructor THtmlPreprocessor.Destroy;
@@ -429,10 +429,11 @@ function TVariableStorageList.GetItemAsStrings(const Key: string;
 var
   I: integer;
 begin
-  Result := False;
+  Result := True;
   for I := 0 to Count - 1 do
     if Items[I].GetItemAsStrings(Key, Strings) then
       Exit;
+  Result := False;
 end;
 
 { TVariableStorage }
@@ -467,7 +468,7 @@ begin
   Result := '';
   for I := 0 to Count - 1 do
   begin
-    if I = 0 then
+    if I <> 0 then
       Result := Result + LineEnding;
     Result := Result + GetIndentMarker(IsIndented(I)) + Strings[I];
   end;
