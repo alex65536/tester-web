@@ -27,6 +27,15 @@ interface
 uses
   Classes, SysUtils;
 
+resourcestring
+  SNoIndentMarker = 'No indent marker!';
+  SInvalidIndentMarker = 'Invalid indent marker!';
+  SConvertError = 'Could not convert %s to %s.';
+  SUnclosedVariable = 'Unclosed variable specifier.';
+  SConflictingModifiers = 'Conflicting or repeating modifiers at variable "%s".';
+  SInvalidVariableName = 'Invalid variable name "%s".';
+  SVariableNotFound = 'Variable "%s" was not found.';
+
 implementation
 
 end.
