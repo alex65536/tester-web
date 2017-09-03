@@ -29,37 +29,31 @@ uses
   htmlpreprocess,
   escaping,
   webstrconsts,
-  SysUtils;
+  SysUtils,
+  datastorages;
+
+function DoGetApplicationName: string;
+begin
+  Result := 'tsweb';
+end;
 
 var
-  VarName: string;
-  Storage: TVariableStorage;
-  Preprocessor: THtmlPreprocessor;
+  AStorage: TAbstractDataStorage;
 begin
-  // testing HTML preprocessor
-  WriteLn('To quit, enter "quit" instead of VarName');
-  Storage := TVariableStorage.Create;
-  Preprocessor := THtmlPreprocessor.Create;
+  OnGetApplicationName := @DoGetApplicationName;
+
+  AStorage := TXmlDataStorage.Create('demo');
   try
-    Preprocessor.Storages.Add(Storage);
-    while 42 = 42 { True } do
-    begin
-      Write('VarName (will be loaded from ../test/VarName.htpp): ');
-      ReadLn(VarName);
-      if VarName = 'quit' then
-        Break;
-      try
-        Preprocessor.PreprocessFileAndInsert('..' + PathDelim + 'test' +
-          PathDelim + VarName + '.htpp', Storage, VarName);
-        WriteLn('Inserted, contents (raw) = ' + LineEnding + Storage[VarName]);
-      except
-        on E: Exception do
-          WriteLn(E.ClassName, ' : ', E.Message);
-      end;
-    end;
+    AStorage.WriteInteger('app.ints.answer', 42);
+    AStorage.WriteBool('app.bools.isTrue', True);
+    AStorage.WriteFloat('temperature', 36.6152845245);
+    AStorage.WriteInt64('app.ints.int64', 42862469295);
+    AStorage.WriteString('strconts.hello', 'Привет');
+    WriteLn('Here!!!');
+    AStorage.Reload;
+    WriteLn(AStorage.ReadInteger('app.ints.answer', -1));
   finally
-    FreeAndNil(Storage);
-    FreeAndNil(Preprocessor);
+    FreeAndNil(AStorage);
   end;
 
   Application.Title := 'Tester Web';
