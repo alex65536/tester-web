@@ -160,11 +160,8 @@ function TXmlDataStorage.VariableExists(const Path: string): boolean;
 var
   Elem: TDOMElement;
 begin
-  Result := False;
   Elem := FindNode(Path);
-  if Elem = nil then
-    Exit;
-  Result := Elem.HasAttribute(ValueAttr);
+  Result := (Elem <> nil) and Elem.HasAttribute(ValueAttr);
 end;
 
 procedure TXmlDataStorage.DeleteVariable(const Path: string);
