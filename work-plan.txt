@@ -1,5 +1,5 @@
 [V] 02.09.2017 Create an HTML preprocessor
-[*] Create a server config system
+[*] 04.09.2017 Create a server config system
 [*] Create a simple users database
 [*] Write HTML pages drafts
 [*] Make simple site with user log in/log out/see others info
