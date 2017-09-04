@@ -80,6 +80,7 @@ constructor TTesterServerConfig.Create;
 begin
   FConstructing := True;
   FStorage := CreateStorageConfig;
+  FStorage.FPOAttachObserver(Self);
   FStorage.Reload;
   DefaultSettings;
   FStorage.Commit;

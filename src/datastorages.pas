@@ -70,6 +70,7 @@ type
     FStream: TMemoryStream;
     procedure SplitPath(const Path: string; out Section, Ident: string);
     procedure CreateIniFile;
+    procedure LoadStream;
   protected
     function GetFileName: string; override;
   public
@@ -102,6 +103,7 @@ type
     function FindNode(const Path: string): TDOMElement;
     procedure CreateDocument;
     function RootElement: TDOMElement;
+    procedure LoadDocument;
   protected
     function GetFileName: string; override;
   public
@@ -166,6 +168,17 @@ end;
 function TXmlDataStorage.RootElement: TDOMElement;
 begin
   Result := FDocument.FindNode(RootNodeName) as TDOMElement;
+end;
+
+procedure TXmlDataStorage.LoadDocument;
+var
+  FileName: string;
+begin
+  FileName := GetFileName;
+  if FileExistsUTF8(FileName) then
+    ReadXMLFile(FDocument, FileName)
+  else
+    CreateDocument;
 end;
 
 function TXmlDataStorage.VariableExists(const Path: string): boolean;
@@ -269,15 +282,9 @@ begin
 end;
 
 procedure TXmlDataStorage.Reload;
-var
-  FileName: string;
 begin
-  FileName := GetFileName;
-  if FileExistsUTF8(FileName) then
-  begin
-    FreeAndNil(FDocument);
-    ReadXMLFile(FDocument, FileName);
-  end;
+  FreeAndNil(FDocument);
+  LoadDocument;
   inherited Reload;
 end;
 
@@ -318,6 +325,18 @@ procedure TIniDataStorage.CreateIniFile;
 begin
   FIniFile := TIniFile.Create(FStream);
   FIniFile.CacheUpdates := True;
+end;
+
+procedure TIniDataStorage.LoadStream;
+var
+  FileName: string;
+begin
+  FileName := GetFileName;
+  if FileExistsUTF8(FileName) then
+    FStream.LoadFromFile(FileName)
+  else
+    FStream.Clear;
+  FStream.Position := 0;
 end;
 
 function TIniDataStorage.GetFileName: string;
@@ -434,17 +453,10 @@ begin
 end;
 
 procedure TIniDataStorage.Reload;
-var
-  FileName: string;
 begin
-  FileName := GetFileName;
-  if FileExistsUTF8(FileName) then
-  begin
-    FreeAndNil(FIniFile);
-    FStream.LoadFromFile(FileName);
-    FStream.Position := 0;
-    CreateIniFile;
-  end;
+  FreeAndNil(FIniFile);
+  LoadStream;
+  CreateIniFile;
   inherited Reload;
 end;
 
