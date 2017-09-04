@@ -62,6 +62,7 @@ begin
   WriteLn(Base64RandomSequence(16));
   WriteLn(Base64RandomSequence(17));
   WriteLn(Base64RandomSequence(18));
+  ReadLn;
 
   Application.Title := 'Tester Web';
   {Application.Port := 8080;

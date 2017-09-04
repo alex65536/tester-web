@@ -33,6 +33,7 @@
     <RequiredPackages Count="4">
       <Item1>
         <PackageName Value="hash_3rdparty"/>
+        <DefaultFilename Value="../third-party/hash/hash_3rdparty.lpk"/>
       </Item1>
       <Item2>
         <PackageName Value="LazUtils"/>

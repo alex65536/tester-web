@@ -25,12 +25,9 @@ unit tswebcrypto;
 interface
 
 uses
-  Classes, SysUtils, base64;
+  Classes, SysUtils, Types, base64;
 
-type
-  TBytes = array of Byte;
-
-procedure TrulyRandomSequence(Len: integer; var Bytes: TBytes);
+procedure TrulyRandomSequence(Len: integer; var Bytes: TByteDynArray);
 function Base64RandomSequence(Len: integer): ansistring;
 
 implementation
@@ -51,9 +48,14 @@ implementation
   {$Endif}
 {$EndIf}
 
+{$IfDef __WinRandomSeq__}
+uses
+  JwaWinCrypt;
+{$EndIf}
+
 function Base64RandomSequence(Len: integer): ansistring;
 var
-  Bytes: TBytes;
+  Bytes: TByteDynArray;
   ArrLen: integer;
   DstStream: TMemoryStream;
   Encoder: TBase64EncodingStream;
@@ -82,7 +84,7 @@ begin
 end;
 
 {$IfDef __UnixRandomSeq__}
-procedure TrulyRandomSequence(Len: integer; var Bytes: TBytes);
+procedure TrulyRandomSequence(Len: integer; var Bytes: TByteDynArray);
 var
   F: TFileStream;
 begin
@@ -97,14 +99,28 @@ end;
 {$EndIf}
 
 {$IfDef __WinRandomSeq__}
-procedure TrulyRandomSequence(Len: integer; var Bytes: TBytes);
+procedure TrulyRandomSequence(Len: integer; var Bytes: TByteDynArray);
+var
+  Provider: HCRYPTPROV;
 begin
-
+  // we use Windows' built-in CryptGenRandom() function
+  // see this forum thread:
+  // http://forum.lazarus.freepascal.org/index.php/topic,35523.msg235007.html#msg235007
+  Provider := 0; // to avoid hints
+  if not CryptAcquireContext(Provider, nil, nil, PROV_RSA_FULL,
+    CRYPT_VERIFYCONTEXT or CRYPT_SILENT) then
+    RaiseLastOSError;
+  try
+    if not CryptGenRandom(Provider, Len, @Bytes[0]) then
+      RaiseLastOSError;
+  finally
+    CryptReleaseContext(Provider, 0);
+  end;
 end;
 {$EndIf}
 
 {$IfDef __SimpleRandomSeq__}
-procedure TrulyRandomSequence(Len: integer; var Bytes: TBytes);
+procedure TrulyRandomSequence(Len: integer; var Bytes: TByteDynArray);
 var
   I: integer;
 begin
