@@ -29,38 +29,27 @@ uses
   htmlpreprocess,
   escaping,
   webstrconsts,
-  SysUtils;
+  SysUtils,
+  datastorages,
+  serverconfig;
 
-var
-  VarName: string;
-  Storage: TVariableStorage;
-  Preprocessor: THtmlPreprocessor;
+{
+
+  This leads to hard-to-find bugs, because config is created before
+this is assigned.
+
+TODO : Move DoGetApplicationName somewhere where it can be included as first unit!
+
+function DoGetApplicationName: string;
 begin
-  // testing HTML preprocessor
-  WriteLn('To quit, enter "quit" instead of VarName');
-  Storage := TVariableStorage.Create;
-  Preprocessor := THtmlPreprocessor.Create;
-  try
-    Preprocessor.Storages.Add(Storage);
-    while 42 = 42 { True } do
-    begin
-      Write('VarName (will be loaded from ../test/VarName.htpp): ');
-      ReadLn(VarName);
-      if VarName = 'quit' then
-        Break;
-      try
-        Preprocessor.PreprocessFileAndInsert('..' + PathDelim + 'test' +
-          PathDelim + VarName + '.htpp', Storage, VarName);
-        WriteLn('Inserted, contents (raw) = ' + LineEnding + Storage[VarName]);
-      except
-        on E: Exception do
-          WriteLn(E.ClassName, ' : ', E.Message);
-      end;
-    end;
-  finally
-    FreeAndNil(Storage);
-    FreeAndNil(Preprocessor);
-  end;
+  Result := 'tsweb';
+end;
+
+}
+
+begin
+  //OnGetApplicationName := @DoGetApplicationName;
+  WriteLn('int is ', Config.TestInt);
 
   Application.Title := 'Tester Web';
   {Application.Port := 8080;
