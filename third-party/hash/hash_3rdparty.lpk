@@ -9,6 +9,11 @@
       <SearchPaths>
         <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)/"/>
       </SearchPaths>
+      <Other>
+        <CompilerMessages>
+          <IgnoredMessages idx5057="True"/>
+        </CompilerMessages>
+      </Other>
     </CompilerOptions>
     <Description Value="This package contains cryptographic hashing algorithms taken from http://www.wolfgang-ehrhardt.de/crchash_en.html."/>
     <License Value="See copying_we.txt for details."/>

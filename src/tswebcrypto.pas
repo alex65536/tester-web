@@ -25,9 +25,98 @@ unit tswebcrypto;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, base64;
+
+type
+  TBytes = array of Byte;
+
+procedure TrulyRandomSequence(Len: integer; var Bytes: TBytes);
+function Base64RandomSequence(Len: integer): ansistring;
 
 implementation
 
-end.
+{$IfDef Unix}
+  {$Define __UnixRandomSeq__}
+{$Else}
+  {$IfDef Windows}
+    {$Define __WinRandomSeq__}
+  {$Else}
+    // Don't know a way how to use cryptographically strong on this platform.
+    // Using a simple pascal random().
+    // We must warn this is insecure.
+    {$Warning TrulyRandomSequence doesn't use a cryptographically strong random function.}
+    {$Warning Using TrulyRandomSequence may be insecure on this platform}
+    {$Warning Please consider it or implement something better}
+    {$Define __SimpleRandomSeq__}
+  {$Endif}
+{$EndIf}
 
+function Base64RandomSequence(Len: integer): ansistring;
+var
+  Bytes: TBytes;
+  ArrLen: integer;
+  DstStream: TMemoryStream;
+  Encoder: TBase64EncodingStream;
+begin
+  // generate bytes
+  ArrLen := (Len * 6) div 8 + 4;
+  SetLength(Bytes, ArrLen);
+  TrulyRandomSequence(ArrLen, Bytes);
+  // encode them into base64
+  DstStream := TMemoryStream.Create;
+  try
+    Encoder := TBase64EncodingStream.Create(DstStream);
+    try
+      Encoder.WriteBuffer(Bytes[0], ArrLen);
+      Encoder.Flush;
+      // push into string
+      DstStream.Position := 0;
+      SetLength(Result, Len);
+      DstStream.ReadBuffer(Result[1], Len);
+    finally
+      FreeAndNil(Encoder);
+    end;
+  finally
+    FreeAndNil(DstStream);
+  end;
+end;
+
+{$IfDef __UnixRandomSeq__}
+procedure TrulyRandomSequence(Len: integer; var Bytes: TBytes);
+var
+  F: TFileStream;
+begin
+  // we read bytes from /dev/urandom
+  F := TFileStream.Create('/dev/urandom', fmOpenRead);
+  try
+    F.ReadBuffer(Bytes[0], Len);
+  finally
+    FreeAndNil(F);
+  end;
+end;
+{$EndIf}
+
+{$IfDef __WinRandomSeq__}
+procedure TrulyRandomSequence(Len: integer; var Bytes: TBytes);
+begin
+
+end;
+{$EndIf}
+
+{$IfDef __SimpleRandomSeq__}
+procedure TrulyRandomSequence(Len: integer; var Bytes: TBytes);
+var
+  I: integer;
+begin
+  // have nothing better than generating bytes with standard pascal's random()
+  for I := 0 to Len - 1 do
+    Bytes[I] := Random(256);
+end;
+{$EndIf}
+
+initialization
+  {$IfDef __SimpleRandomSeq}
+  Randomize;
+  {$EndIf}
+
+end.

@@ -24,6 +24,7 @@ program tsweb;
 
 uses
   heaptrc,
+  hash_3rdparty,
   fphttpapp,
   index,
   htmlpreprocess,
@@ -31,7 +32,10 @@ uses
   webstrconsts,
   SysUtils,
   datastorages,
-  serverconfig, tswebcrypto, hash_3rdparty;
+  serverconfig,
+  tswebcrypto,
+  base64,
+  Classes;
 
 {
 
@@ -49,7 +53,15 @@ end;
 
 begin
   //OnGetApplicationName := @DoGetApplicationName;
-  WriteLn('int is ', Config.TestInt);
+  WriteLn(Base64RandomSequence(10));
+  WriteLn(Base64RandomSequence(11));
+  WriteLn(Base64RandomSequence(12));
+  WriteLn(Base64RandomSequence(13));
+  WriteLn(Base64RandomSequence(14));
+  WriteLn(Base64RandomSequence(15));
+  WriteLn(Base64RandomSequence(16));
+  WriteLn(Base64RandomSequence(17));
+  WriteLn(Base64RandomSequence(18));
 
   Application.Title := 'Tester Web';
   {Application.Port := 8080;
