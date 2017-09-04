@@ -30,31 +30,26 @@ uses
   escaping,
   webstrconsts,
   SysUtils,
-  datastorages;
+  datastorages,
+  serverconfig;
+
+{
+
+  This leads to hard-to-find bugs, because config is created before
+this is assigned.
+
+TODO : Move DoGetApplicationName somewhere where it can be included as first unit!
 
 function DoGetApplicationName: string;
 begin
   Result := 'tsweb';
 end;
 
-var
-  AStorage: TAbstractDataStorage;
-begin
-  OnGetApplicationName := @DoGetApplicationName;
+}
 
-  AStorage := TXmlDataStorage.Create('demo');
-  try
-    AStorage.WriteInteger('app.ints.answer', 42);
-    AStorage.WriteBool('app.bools.isTrue', True);
-    AStorage.WriteFloat('temperature', 36.6152845245);
-    AStorage.WriteInt64('app.ints.int64', 42862469295);
-    AStorage.WriteString('strconts.hello', 'Привет');
-    WriteLn('Here!!!');
-    AStorage.Reload;
-    WriteLn(AStorage.ReadInteger('app.ints.answer', -1));
-  finally
-    FreeAndNil(AStorage);
-  end;
+begin
+  //OnGetApplicationName := @DoGetApplicationName;
+  WriteLn('int is ', Config.TestInt);
 
   Application.Title := 'Tester Web';
   {Application.Port := 8080;

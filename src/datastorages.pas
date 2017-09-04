@@ -53,8 +53,6 @@ type
     procedure Commit; virtual; abstract;
     procedure Reload; virtual;
     constructor Create(const AStoragePath: string);
-    procedure AfterConstruction; override;
-    procedure BeforeDestruction; override;
   end;
 
   { TFileDataStorage }
@@ -72,8 +70,6 @@ type
     FStream: TMemoryStream;
     procedure SplitPath(const Path: string; out Section, Ident: string);
     procedure CreateIniFile;
-    procedure LoadStream;
-    procedure SaveStream;
   protected
     function GetFileName: string; override;
   public
@@ -329,21 +325,6 @@ begin
   Result := ChangeFileExt(inherited GetFileName, '.ini');
 end;
 
-procedure TIniDataStorage.LoadStream;
-var
-  FileName: string;
-begin
-  FileName := GetFileName;
-  if FileExistsUTF8(FileName) then
-    FStream.LoadFromFile(FileName);
-  FStream.Position := 0;
-end;
-
-procedure TIniDataStorage.SaveStream;
-begin
-  FStream.SaveToFile(GetFileName);
-end;
-
 function TIniDataStorage.VariableExists(const Path: string): boolean;
 var
   Section, Ident: string;
@@ -449,14 +430,21 @@ end;
 procedure TIniDataStorage.Commit;
 begin
   FIniFile.UpdateFile;
-  SaveStream;
+  FStream.SaveToFile(GetFileName);
 end;
 
 procedure TIniDataStorage.Reload;
+var
+  FileName: string;
 begin
-  FreeAndNil(FIniFile);
-  LoadStream;
-  CreateIniFile;
+  FileName := GetFileName;
+  if FileExistsUTF8(FileName) then
+  begin
+    FreeAndNil(FIniFile);
+    FStream.LoadFromFile(FileName);
+    FStream.Position := 0;
+    CreateIniFile;
+  end;
   inherited Reload;
 end;
 
@@ -464,6 +452,7 @@ constructor TIniDataStorage.Create(const AStoragePath: string);
 begin
   inherited Create(AStoragePath);
   FStream := TMemoryStream.Create;
+  CreateIniFile;
 end;
 
 destructor TIniDataStorage.Destroy;
@@ -515,18 +504,6 @@ end;
 constructor TAbstractDataStorage.Create(const AStoragePath: string);
 begin
   FStoragePath := AStoragePath;
-end;
-
-procedure TAbstractDataStorage.AfterConstruction;
-begin
-  Reload;
-  inherited AfterConstruction;
-end;
-
-procedure TAbstractDataStorage.BeforeDestruction;
-begin
-  inherited BeforeDestruction;
-  Commit;
 end;
 
 {$Hints On}
