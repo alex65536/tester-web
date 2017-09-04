@@ -18,41 +18,16 @@
   to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
   MA 02111-1307, USA.
 }
-program tsweb;
+unit tswebcrypto;
 
 {$mode objfpc}{$H+}
 
+interface
+
 uses
-  heaptrc,
-  fphttpapp,
-  index,
-  htmlpreprocess,
-  escaping,
-  webstrconsts,
-  SysUtils,
-  datastorages,
-  serverconfig, tswebcrypto, hash_3rdparty;
+  Classes, SysUtils;
 
-{
+implementation
 
-  This leads to hard-to-find bugs, because config is created before
-this is assigned.
-
-TODO : Move DoGetApplicationName somewhere where it can be included as first unit!
-
-function DoGetApplicationName: string;
-begin
-  Result := 'tsweb';
-end;
-
-}
-
-begin
-  //OnGetApplicationName := @DoGetApplicationName;
-  WriteLn('int is ', Config.TestInt);
-
-  Application.Title := 'Tester Web';
-  {Application.Port := 8080;
-  Application.Initialize;
-  Application.Run;}
 end.
+

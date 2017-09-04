@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="4">
+    <Name Value="hash_3rdparty"/>
+    <AddToProjectUsesSection Value="True"/>
+    <Author Value="Wolfgang Ehrhardt (sources), Alexander Kernozhitsky (wrapping them into a Lazarus package)"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <SearchPaths>
+        <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)/"/>
+      </SearchPaths>
+    </CompilerOptions>
+    <Description Value="This package contains cryptographic hashing algorithms taken from http://www.wolfgang-ehrhardt.de/crchash_en.html."/>
+    <License Value="See copying_we.txt for details."/>
+    <Version Major="1"/>
+    <Files Count="8">
+      <Item1>
+        <Filename Value="btypes.pas"/>
+        <UnitName Value="BTypes"/>
+      </Item1>
+      <Item2>
+        <Filename Value="hash.pas"/>
+        <UnitName Value="Hash"/>
+      </Item2>
+      <Item3>
+        <Filename Value="kdf.pas"/>
+        <UnitName Value="kdf"/>
+      </Item3>
+      <Item4>
+        <Filename Value="scrypt.pas"/>
+        <UnitName Value="scrypt"/>
+      </Item4>
+      <Item5>
+        <Filename Value="sha256.pas"/>
+        <UnitName Value="SHA256"/>
+      </Item5>
+      <Item6>
+        <Filename Value="std.inc"/>
+        <Type Value="Include"/>
+      </Item6>
+      <Item7>
+        <Filename Value="hmac.pas"/>
+        <UnitName Value="HMAC"/>
+      </Item7>
+      <Item8>
+        <Filename Value="memh.pas"/>
+        <UnitName Value="memh"/>
+      </Item8>
+    </Files>
+    <RequiredPkgs Count="1">
+      <Item1>
+        <PackageName Value="FCL"/>
+      </Item1>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>
