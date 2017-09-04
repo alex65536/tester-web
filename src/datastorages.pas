@@ -57,17 +57,25 @@ type
     procedure BeforeDestruction; override;
   end;
 
+  { TFileDataStorage }
+
+  TFileDataStorage = class(TAbstractDataStorage)
+  protected
+    function GetFileName: string; virtual;
+  end;
+
   { TIniDataStorage }
 
-  TIniDataStorage = class(TAbstractDataStorage)
+  TIniDataStorage = class(TFileDataStorage)
   private
     FIniFile: TIniFile;
     FStream: TMemoryStream;
     procedure SplitPath(const Path: string; out Section, Ident: string);
     procedure CreateIniFile;
-    function GetFileName: string;
     procedure LoadStream;
     procedure SaveStream;
+  protected
+    function GetFileName: string; override;
   public
     function VariableExists(const Path: string): boolean; override;
     procedure DeleteVariable(const Path: string); override;
@@ -89,16 +97,17 @@ type
 
   { TXmlDataStorage }
 
-  TXmlDataStorage = class(TAbstractDataStorage)
+  TXmlDataStorage = class(TFileDataStorage)
   protected const
     ValueAttr = 'value';
     RootNodeName = 'data';
   private
     FDocument: TXMLDocument;
-    function GetFileName: string;
     function FindNode(const Path: string): TDOMElement;
     procedure CreateDocument;
     function RootElement: TDOMElement;
+  protected
+    function GetFileName: string; override;
   public
     function VariableExists(const Path: string): boolean; override;
     procedure DeleteVariable(const Path: string); override;
@@ -120,11 +129,18 @@ type
 
 implementation
 
+{ TFileDataStorage }
+
+function TFileDataStorage.GetFileName: string;
+begin
+  Result := AppendPathDelim(GetAppConfigDirUTF8(False, True)) + StoragePath + '.conf';
+end;
+
 { TXmlDataStorage }
 
 function TXmlDataStorage.GetFileName: string;
 begin
-  Result := AppendPathDelim(GetAppConfigDirUTF8(False, True)) + StoragePath + '.xml';
+  Result := ChangeFileExt(inherited GetFileName, '.xml');
 end;
 
 function TXmlDataStorage.FindNode(const Path: string): TDOMElement;
@@ -310,7 +326,7 @@ end;
 
 function TIniDataStorage.GetFileName: string;
 begin
-  Result := AppendPathDelim(GetAppConfigDirUTF8(False, True)) + StoragePath + '.ini';
+  Result := ChangeFileExt(inherited GetFileName, '.ini');
 end;
 
 procedure TIniDataStorage.LoadStream;
