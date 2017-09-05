@@ -34,8 +34,7 @@ uses
   datastorages,
   serverconfig,
   tswebcrypto,
-  base64,
-  Classes;
+  Types;
 
 {
 
@@ -51,17 +50,15 @@ end;
 
 }
 
+var
+  Bytes: TByteDynArray;
+
 begin
   //OnGetApplicationName := @DoGetApplicationName;
-  WriteLn(Base64RandomSequence(10));
-  WriteLn(Base64RandomSequence(11));
-  WriteLn(Base64RandomSequence(12));
-  WriteLn(Base64RandomSequence(13));
-  WriteLn(Base64RandomSequence(14));
-  WriteLn(Base64RandomSequence(15));
-  WriteLn(Base64RandomSequence(16));
-  WriteLn(Base64RandomSequence(17));
-  WriteLn(Base64RandomSequence(18));
+  TrulyRandomSequence(41, Bytes);
+  WriteLn(BytesToBase64(Bytes, Length(Bytes)));
+  WriteLn(RandomSequenceBase64(15));
+
   ReadLn;
 
   Application.Title := 'Tester Web';

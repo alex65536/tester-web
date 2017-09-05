@@ -27,8 +27,9 @@ interface
 uses
   Classes, SysUtils, Types, base64;
 
-procedure TrulyRandomSequence(Len: integer; var Bytes: TByteDynArray);
-function Base64RandomSequence(Len: integer): ansistring;
+procedure TrulyRandomSequence(Len: integer; out Bytes: TByteDynArray);
+function RandomSequenceBase64(Len: integer): ansistring;
+function BytesToBase64(const Bytes: TByteDynArray; Len: integer): ansistring;
 
 implementation
 
@@ -48,33 +49,39 @@ implementation
   {$Endif}
 {$EndIf}
 
-{$IfDef __WinRandomSeq__}
 uses
-  JwaWinCrypt;
+{$IfDef __WinRandomSeq__}
+  JwaWinCrypt,
 {$EndIf}
+  serverconfig;
 
-function Base64RandomSequence(Len: integer): ansistring;
+function RandomSequenceBase64(Len: integer): ansistring;
 var
-  Bytes: TByteDynArray;
   ArrLen: integer;
-  DstStream: TMemoryStream;
-  Encoder: TBase64EncodingStream;
+  Bytes: TByteDynArray;
 begin
   // generate bytes
   ArrLen := (Len * 6) div 8 + 4;
-  SetLength(Bytes, ArrLen);
   TrulyRandomSequence(ArrLen, Bytes);
-  // encode them into base64
+  // push into string
+  Result := Copy(BytesToBase64(Bytes, ArrLen), 1, Len);
+end;
+
+function BytesToBase64(const Bytes: TByteDynArray; Len: integer): ansistring;
+var
+  DstStream: TMemoryStream;
+  Encoder: TBase64EncodingStream;
+begin
   DstStream := TMemoryStream.Create;
   try
     Encoder := TBase64EncodingStream.Create(DstStream);
     try
-      Encoder.WriteBuffer(Bytes[0], ArrLen);
+      Encoder.WriteBuffer(Bytes[0], Len);
       Encoder.Flush;
       // push into string
       DstStream.Position := 0;
-      SetLength(Result, Len);
-      DstStream.ReadBuffer(Result[1], Len);
+      SetLength(Result, DstStream.Size);
+      DstStream.ReadBuffer(Result[1], DstStream.Size);
     finally
       FreeAndNil(Encoder);
     end;
@@ -84,13 +91,14 @@ begin
 end;
 
 {$IfDef __UnixRandomSeq__}
-procedure TrulyRandomSequence(Len: integer; var Bytes: TByteDynArray);
+procedure TrulyRandomSequence(Len: integer; out Bytes: TByteDynArray);
 var
   F: TFileStream;
 begin
   // we read bytes from /dev/urandom
   F := TFileStream.Create('/dev/urandom', fmOpenRead);
   try
+    SetLength(Bytes, Len);
     F.ReadBuffer(Bytes[0], Len);
   finally
     FreeAndNil(F);
@@ -99,7 +107,7 @@ end;
 {$EndIf}
 
 {$IfDef __WinRandomSeq__}
-procedure TrulyRandomSequence(Len: integer; var Bytes: TByteDynArray);
+procedure TrulyRandomSequence(Len: integer; out Bytes: TByteDynArray);
 var
   Provider: HCRYPTPROV;
 begin
@@ -111,6 +119,7 @@ begin
     CRYPT_VERIFYCONTEXT or CRYPT_SILENT) then
     RaiseLastOSError;
   try
+    SetLength(Bytes, Len);
     if not CryptGenRandom(Provider, Len, @Bytes[0]) then
       RaiseLastOSError;
   finally
@@ -120,11 +129,12 @@ end;
 {$EndIf}
 
 {$IfDef __SimpleRandomSeq__}
-procedure TrulyRandomSequence(Len: integer; var Bytes: TByteDynArray);
+procedure TrulyRandomSequence(Len: integer; out Bytes: TByteDynArray);
 var
   I: integer;
 begin
   // have nothing better than generating bytes with standard pascal's random()
+  SetLength(Bytes, Len);
   for I := 0 to Len - 1 do
     Bytes[I] := Random(256);
 end;
