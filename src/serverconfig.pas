@@ -22,6 +22,8 @@ type
     function GetCrypto_SCrypt_LogN: integer;
     function GetCrypto_SCrypt_R: integer;
     function GetCrypto_SCrypt_P: integer;
+    function GetSession_AliveTime: integer;
+    function GetSession_IDLength: integer;
   protected
     procedure FPOObservedChanged(ASender: TObject;
       Operation: TFPObservedOperation; Data: Pointer);
@@ -36,6 +38,10 @@ type
     property Crypto_SCrypt_LogN: integer read GetCrypto_SCrypt_LogN;
     property Crypto_SCrypt_R: integer read GetCrypto_SCrypt_R;
     property Crypto_SCrypt_P: integer read GetCrypto_SCrypt_P;
+
+    // session parameters
+    property Session_IDLength: integer read GetSession_IDLength;
+    property Session_AliveTime: integer read GetSession_AliveTime;
 
     constructor Create;
     procedure Reload;
@@ -81,6 +87,16 @@ begin
   Result := FStorage.ReadInteger('crypto.scrypt.p', 1);
 end;
 
+function TTesterServerConfig.GetSession_AliveTime: integer;
+begin
+  Result := FStorage.ReadInteger('session.aliveTime', 60);
+end;
+
+function TTesterServerConfig.GetSession_IDLength: integer;
+begin
+  Result := FStorage.ReadInteger('session.idLength', 32);
+end;
+
 procedure TTesterServerConfig.FPOObservedChanged(ASender: TObject;
   Operation: TFPObservedOperation; Data: Pointer);
 begin
@@ -102,6 +118,9 @@ begin
     WriteInteger('crypto.scrypt.logN', GetCrypto_SCrypt_LogN);
     WriteInteger('crypto.scrypt.r', GetCrypto_SCrypt_R);
     WriteInteger('crypto.scrypt.p', GetCrypto_SCrypt_P);
+
+    WriteInteger('session.aliveTime', Session_AliveTime);
+    WriteInteger('session.idLength', Session_IDLength);
   end;
 end;
 
