@@ -38,6 +38,7 @@ type
     property StoragePath: string read FStoragePath;
     function VariableExists(const Path: string): boolean; virtual; abstract;
     procedure DeleteVariable(const Path: string); virtual;
+    procedure DeletePath(const Path: string); virtual;
     function ReadInteger(const Path: string; Default: integer): integer;
       virtual; abstract;
     function ReadInt64(const Path: string; Default: int64): int64; virtual; abstract;
@@ -79,11 +80,14 @@ type
     procedure SplitPath(const Path: string; out Section, Ident: string);
     procedure CreateIniFile;
     procedure LoadStream;
+    procedure RemoveSectionIfEmpty(const Section: string);
+    procedure RemoveEmptySections;
   protected
     function GetFileName: string; override;
   public
     function VariableExists(const Path: string): boolean; override;
     procedure DeleteVariable(const Path: string); override;
+    procedure DeletePath(const Path: string); override;
     function ReadInteger(const Path: string; Default: integer): integer; override;
     function ReadInt64(const Path: string; Default: int64): int64; override;
     function ReadString(const Path: string; const Default: string): string; override;
@@ -117,6 +121,7 @@ type
   public
     function VariableExists(const Path: string): boolean; override;
     procedure DeleteVariable(const Path: string); override;
+    procedure DeletePath(const Path: string); override;
     function ReadInteger(const Path: string; Default: integer): integer; override;
     function ReadInt64(const Path: string; Default: int64): int64; override;
     function ReadString(const Path: string; const Default: string): string; override;
@@ -204,9 +209,29 @@ begin
   Elem := FindNode(Path);
   if Elem = nil then
     Exit;
+  if Elem.HasChildNodes then
+  begin
+    if Elem.HasAttribute(ValueAttr) then
+      Elem.RemoveAttribute(ValueAttr);
+  end
+  else
+  begin
+    Elem := Elem.ParentNode.RemoveChild(Elem) as TDOMElement;
+    FreeAndNil(Elem);
+  end;
+  inherited DeleteVariable(Path);
+end;
+
+procedure TXmlDataStorage.DeletePath(const Path: string);
+var
+  Elem: TDOMElement;
+begin
+  Elem := FindNode(Path);
+  if Elem = nil then
+    Exit;
   Elem := Elem.ParentNode.RemoveChild(Elem) as TDOMElement;
   FreeAndNil(Elem);
-  inherited DeleteVariable(Path);
+  inherited DeletePath(Path);
 end;
 
 function TXmlDataStorage.ReadInteger(const Path: string; Default: integer): integer;
@@ -347,6 +372,36 @@ begin
   FStream.Position := 0;
 end;
 
+procedure TIniDataStorage.RemoveSectionIfEmpty(const Section: string);
+var
+  StrList: TStringList;
+begin
+  // have nothing more effective than this :(
+  StrList := TStringList.Create;
+  try
+    FIniFile.ReadSection(Section, StrList);
+    if StrList.Count = 0 then
+      FIniFile.EraseSection(Section);
+  finally
+    FreeAndNil(StrList);
+  end;
+end;
+
+procedure TIniDataStorage.RemoveEmptySections;
+var
+  Sections: TStringList;
+  Section: string;
+begin
+  Sections := TStringList.Create;
+  try
+    FIniFile.ReadSections(Sections);
+    for Section in Sections do
+      RemoveSectionIfEmpty(Section);
+  finally
+    FreeAndNil(Sections);
+  end;
+end;
+
 function TIniDataStorage.GetFileName: string;
 begin
   Result := ChangeFileExt(inherited GetFileName, '.ini');
@@ -367,6 +422,42 @@ begin
   SplitPath(Path, Section, Ident);
   FIniFile.DeleteKey(Section, Ident);
   inherited DeleteVariable(Path);
+end;
+
+procedure TIniDataStorage.DeletePath(const Path: string);
+var
+  Section, Ident: string;
+  P: integer;
+  Idents: TStringList;
+  S: string;
+begin
+  // delete the key
+  SplitPath(Path, Section, Ident);
+  if FIniFile.ValueExists(Section, Ident) then
+    FIniFile.DeleteKey(Section, Ident);
+  // retreive the subsection and ident beginning
+  P := Pos('.', Path);
+  if P = 0 then
+  begin
+    Section := Path;
+    Ident := '';
+  end
+  else
+    Ident := Ident + '.';
+  // find and delete the Idents
+  Idents := TStringList.Create;
+  try
+    FIniFile.ReadSection(Section, Idents);
+    for S in Idents do
+    begin
+      if (Length(S) >= Length(Ident)) and (Copy(S, 1, Length(Ident)) = Ident) then
+        FIniFile.DeleteKey(Section, S);
+    end;
+    RemoveSectionIfEmpty(Section);
+  finally
+    FreeAndNil(Idents);
+    inherited DeletePath(Path);
+  end;
 end;
 
 function TIniDataStorage.ReadInteger(const Path: string; Default: integer): integer;
@@ -456,6 +547,7 @@ end;
 
 procedure TIniDataStorage.Commit;
 begin
+  RemoveEmptySections;
   FIniFile.UpdateFile;
   FStream.SaveToFile(GetFileName);
 end;
@@ -489,6 +581,11 @@ end;
 procedure TAbstractDataStorage.DeleteVariable(const Path: string);
 begin
   FPONotifyObservers(Self, ooDeleteItem, @Path);
+end;
+
+procedure TAbstractDataStorage.DeletePath(const Path: string);
+begin
+  FPONotifyObservers(Self, ooChange, @Path);
 end;
 
 procedure TAbstractDataStorage.WriteInteger(const Path: string; Value: integer);
