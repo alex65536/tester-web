@@ -25,11 +25,17 @@ unit index;
 interface
 
 uses
-  SysUtils, Classes, httpdefs, fpHTTP, fpWeb;
+  SysUtils, Classes, httpdefs, fpHTTP, fpWeb, fphttpapp;
 
 type
+
+  { TIndexModule }
+
   TIndexModule = class(TFPWebModule)
-    // ToDo : Write it later !!!
+    procedure DataModuleNewSession(Sender: TObject);
+    procedure DataModuleRequest(Sender: TObject; ARequest: TRequest;
+      AResponse: TResponse; var Handled: Boolean);
+    procedure DataModuleSessionExpired(Sender: TObject);
   end;
 
 var
@@ -38,6 +44,36 @@ var
 implementation
 
 {$R *.lfm}
+
+{ TIndexModule }
+
+procedure TIndexModule.DataModuleNewSession(Sender: TObject);
+begin
+  WriteLn('New Session : ', Session.SessionID);
+end;
+
+procedure TIndexModule.DataModuleRequest(Sender: TObject; ARequest: TRequest;
+  AResponse: TResponse; var Handled: Boolean);
+begin
+  AResponse.Contents.Add('Session id : ' + Session.SessionID + '<br>');
+  AResponse.Contents.Add('Var a = ' + Session.Variables['a'] + '<br>');
+  AResponse.Contents.Add('Var b = ' + Session.Variables['b'] + '<br>');
+  if ARequest.QueryFields.Values['addVar'] <> '' then
+  begin
+    AResponse.Contents.Add('Added variable : ' + ARequest.QueryFields.Values['addVar'] + '<br>');
+    Session.Variables[ARequest.QueryFields.Values['addVar']] := IntToStr(Random(256));
+  end;
+  if ARequest.QueryFields.Values['stop'] <> '' then
+    Session.Terminate;
+  if ARequest.QueryFields.Values['kill'] <> '' then
+    Application.Terminate;
+  Handled := True;
+end;
+
+procedure TIndexModule.DataModuleSessionExpired(Sender: TObject);
+begin
+  WriteLn('Session expired!');
+end;
 
 initialization
   RegisterHTTPModule('index', TIndexModule);

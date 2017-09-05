@@ -24,7 +24,7 @@ program tsweb;
 
 uses
   heaptrc,
-  iniwebsession,
+  tswebsessions,
   hash_3rdparty,
   fphttpapp,
   index,
@@ -36,7 +36,7 @@ uses
   serverconfig,
   tswebcrypto,
   Types,
-  dateutils, tswebsessions;
+  dateutils;
 
 {
 
@@ -52,60 +52,11 @@ end;
 
 }
 
-var
-  {Salt: ansistring;
-  Start, Finish: TDateTime;}
-  AStorage: TAbstractDataStorage;
-
 begin
-  AStorage := TIniDataStorage.Create('demo');
-  try
-    AStorage.WriteString('w', '-1');
-    AStorage.WriteString('a', '0');
-    AStorage.WriteString('a.a', '1');
-    AStorage.WriteString('a.b', '2');
-    AStorage.WriteString('a.c', '3');
-    AStorage.WriteString('a.c.a', '4');
-    AStorage.WriteString('a.c.b', '5');
-    AStorage.WriteString('a.d.a', '6');
-    AStorage.WriteString('a.d.b', '7');
-    AStorage.WriteString('a.d.c.hello', '8');
-    AStorage.WriteString('b.a', '9');
-    AStorage.WriteString('b.b', 'A');
-    AStorage.WriteString('b.b.a', 'B');
-    AStorage.WriteString('b.c.a', 'C');
-    AStorage.WriteString('c.a.hello', 'D');
-
-    with AStorage.GetRootElements do
-    begin
-      WriteLn(Text);
-      Free;
-    end;
-
-    AStorage.DeletePath('a.d');
-
-    AStorage.Commit;
-  finally
-    FreeAndNil(AStorage);
-  end;
-
   //OnGetApplicationName := @DoGetApplicationName;
 
-  {Salt := GenSalt;
-  WriteLn(Salt);
-
-  Start := Now;
-  WriteLn('Beg: ', FormatDateTime('hh:nn:ss.zzzz', Start));
-
-  WriteLn(HashPassword('Ubuntu GNU/Linux', Salt));
-
-  Finish := Now;
-  WriteLn('End: ', FormatDateTime('hh:nn:ss.zzzz', Finish));
-
-  WriteLn('Time = ', MilliSecondsBetween(Start, Finish), ' ms');}
-
   Application.Title := 'Tester Web';
-  {Application.Port := 8080;
+  Application.Port := 8080;
   Application.Initialize;
-  Application.Run;}
+  Application.Run;
 end.

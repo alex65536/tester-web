@@ -52,7 +52,7 @@ type
   public
     property Storage: TAbstractDataStorage read FStorage;
     procedure Terminate; override;
-    procedure UpdateResponse(AResponse: TResponse); override;
+    procedure UpdateResponse({%H-}AResponse: TResponse); override;
     procedure InitSession(ARequest: TRequest; OnNewSession, OnExpired: TNotifyEvent);
       override;
     procedure InitResponse(AResponse: TResponse); override;
@@ -69,12 +69,12 @@ type
   private
     FStorage: TAbstractDataStorage;
   protected
-    function DoCreateSession(ARequest: TRequest): TCustomSession; override;
+    function DoCreateSession({%H-}ARequest: TRequest): TCustomSession; override;
     procedure DoCleanupSessions; override;
     procedure DoDoneSession(var ASession: TCustomSession); override;
     procedure CreateDataStorage; virtual;
   public
-    function SessionExpired(const ASessionCookie: string): boolean;
+    function SessionExpired(const ASessionID: string): boolean;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
   end;
@@ -91,7 +91,7 @@ const
   StoragePath = 'sessions';
   SessionCookieName = 'TsWebSession';
   SessionActiveKey = 'active';
-  SessionTimeKey = 'startTime';
+  SessionTimeKey = 'lastTime';
   SessionPeriodKey = 'expirePeriod';
   SessionVarsKey = 'vars';
 
@@ -132,19 +132,19 @@ begin
   FStorage := TIniDataStorage.Create(StoragePath);
 end;
 
-function TTesterWebSessionFactory.SessionExpired(const ASessionCookie: string): boolean;
+function TTesterWebSessionFactory.SessionExpired(const ASessionID: string): boolean;
 var
   StartTime: TDateTime;
   Period: integer;
   ExpireTime: TDateTime;
 begin
-  if not FStorage.ReadBool(SessionCookie + '.' + SessionActiveKey, False) then
+  if not FStorage.ReadBool(ASessionID + '.' + SessionActiveKey, False) then
   begin
-    Result := False;
+    Result := True;
     Exit;
   end;
-  StartTime := FStorage.ReadFloat(SessionCookie + '.' + SessionTimeKey, 0.0);
-  Period := FStorage.ReadInteger(SessionCookie + '.' + SessionTimeKey,
+  StartTime := FStorage.ReadFloat(ASessionID + '.' + SessionTimeKey, 0.0);
+  Period := FStorage.ReadInteger(ASessionID + '.' + SessionTimeKey,
     Config.Session_AliveTime);
   ExpireTime := IncMinute(StartTime, Period);
   Result := CompareDateTime(Now, ExpireTime) > 0;
@@ -251,7 +251,7 @@ begin
   // check session cookie
   if SessionCookie = '' then
     SessionCookie := SessionCookieName;
-  CookieValue := ARequest.ContentFields.Values[SessionCookie];
+  CookieValue := ARequest.CookieFields.Values[SessionCookie];
   FSessionID := CookieValue;
   // check if session expired
   if (CookieValue <> '') and Factory.SessionExpired(CookieValue) then
@@ -301,8 +301,8 @@ end;
 
 constructor TTesterWebSession.Create(AOwner: TComponent);
 begin
-  TimeOutMinutes := Config.Session_AliveTime;
   inherited Create(AOwner);
+  TimeOutMinutes := Config.Session_AliveTime;
 end;
 
 constructor TTesterWebSession.Create(AOwner: TComponent;
