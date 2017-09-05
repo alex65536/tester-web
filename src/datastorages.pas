@@ -20,6 +20,8 @@
 }
 unit datastorages;
 
+// This unit implements hierachical data storages. Path delimiter is '.' character.
+
 {$mode objfpc}{$H+}{$B-}
 
 interface

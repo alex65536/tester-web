@@ -30,14 +30,6 @@ uses
   Classes, SysUtils, datastorages, serverconfig, fphttp, HTTPDefs, webstrconsts,
   DateUtils;
 
-const
-  StoragePath = 'sessions';
-  SessionCookieName = 'TsWebSession';
-  SessionActiveKey = 'active';
-  SessionTimeKey = 'startTime';
-  SessionPeriodKey = 'expirePeriod';
-  SessionVarsKey = 'vars';
-
 type
 
   { TTesterWebSession }
@@ -54,7 +46,7 @@ type
     procedure UpdateSessionTime;
     function VarNameToStoragePath(const VarName: string): string;
     function GenerateSessionID: string;
-    function GetSessionID: String; override;
+    function GetSessionID: string; override;
     function GetSessionVariable(VarName: string): string; override;
     procedure SetSessionVariable(VarName: string; const AValue: string); override;
   public
@@ -68,6 +60,7 @@ type
     constructor Create(AOwner: TComponent); override;
     constructor Create(AOwner: TComponent; AStorage: TAbstractDataStorage); virtual;
   end;
+
   TTesterWebSessionClass = class of TTesterWebSession;
 
   { TTesterWebSessionFactory }
@@ -93,6 +86,14 @@ implementation
 
 uses
   tswebcrypto;
+
+const
+  StoragePath = 'sessions';
+  SessionCookieName = 'TsWebSession';
+  SessionActiveKey = 'active';
+  SessionTimeKey = 'startTime';
+  SessionPeriodKey = 'expirePeriod';
+  SessionVarsKey = 'vars';
 
 { TTesterWebSessionFactory }
 
@@ -143,7 +144,8 @@ begin
     Exit;
   end;
   StartTime := FStorage.ReadFloat(SessionCookie + '.' + SessionTimeKey, 0.0);
-  Period := FStorage.ReadInteger(SessionCookie + '.' + SessionTimeKey, Config.Session_AliveTime);
+  Period := FStorage.ReadInteger(SessionCookie + '.' + SessionTimeKey,
+    Config.Session_AliveTime);
   ExpireTime := IncMinute(StartTime, Period);
   Result := CompareDateTime(Now, ExpireTime) > 0;
 end;
@@ -152,10 +154,13 @@ constructor TTesterWebSessionFactory.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   CreateDataStorage;
+  FStorage.Reload;
 end;
 
 destructor TTesterWebSessionFactory.Destroy;
 begin
+  CleanupSessions;
+  FStorage.Commit;
   FreeAndNil(FStorage);
   inherited Destroy;
 end;
@@ -191,7 +196,7 @@ end;
 
 function TTesterWebSession.VarNameToStoragePath(const VarName: string): string;
 begin
-  Result := GetSessionID + '.' + SessionVarsKey +  '.' + VarName;
+  Result := GetSessionID + '.' + SessionVarsKey + '.' + VarName;
 end;
 
 function TTesterWebSession.GenerateSessionID: string;
@@ -202,12 +207,11 @@ begin
   Result.Replace('/', '-');
 end;
 
-function TTesterWebSession.GetSessionID: String;
+function TTesterWebSession.GetSessionID: string;
 begin
   if FSessionID = '' then
-    Result := GenerateSessionID
-  else
-    Result := FSessionID;
+    FSessionID := GenerateSessionID;
+  Result := FSessionID;
 end;
 
 function TTesterWebSession.GetSessionVariable(VarName: string): string;
@@ -271,8 +275,8 @@ begin
 end;
 
 procedure TTesterWebSession.InitResponse(AResponse: TResponse);
-Var
-  C : TCookie;
+var
+  C: TCookie;
 begin
   C := AResponse.Cookies.FindCookie(SessionCookie);
   if C = nil then
@@ -291,6 +295,7 @@ end;
 
 procedure TTesterWebSession.RemoveVariable(VariableName: string);
 begin
+  CheckSession;
   FStorage.DeleteVariable(VarNameToStoragePath(VariableName));
 end;
 
