@@ -5,7 +5,7 @@ unit serverconfig;
 interface
 
 uses
-  Classes, SysUtils, datastorages;
+  Classes, SysUtils, datastorages, webstrconsts;
 
 type
 
@@ -17,15 +17,25 @@ type
   private
     FConstructing: boolean;
     FStorage: TAbstractDataStorage;
-    function GetTestInt: integer;
+    function GetCrypto_HashLen: integer;
+    function GetCrypto_SaltLen: integer;
+    function GetCrypto_SCrypt_LogN: integer;
+    function GetCrypto_SCrypt_R: integer;
+    function GetCrypto_SCrypt_P: integer;
   protected
     procedure FPOObservedChanged(ASender: TObject;
       Operation: TFPObservedOperation; Data: Pointer);
     procedure DefaultSettings; virtual;
     function CreateStorageConfig: TAbstractDataStorage; virtual;
   public
-    // temp prop, TO REMOVE IT
-    property TestInt: integer read GetTestInt;
+    // crypto parameters
+    // WARNING: changing them in config will lead to loss of ALL USERS PASSWORDS, because scrypt parameters will change.
+    // TODO : Move it somewhere out of config (?)
+    property Crypto_SaltLen: integer read GetCrypto_SaltLen;
+    property Crypto_HashLen: integer read GetCrypto_HashLen;
+    property Crypto_SCrypt_LogN: integer read GetCrypto_SCrypt_LogN;
+    property Crypto_SCrypt_R: integer read GetCrypto_SCrypt_R;
+    property Crypto_SCrypt_P: integer read GetCrypto_SCrypt_P;
 
     constructor Create;
     procedure Reload;
@@ -46,9 +56,29 @@ end;
 
 { TTesterServerConfig }
 
-function TTesterServerConfig.GetTestInt: integer;
+function TTesterServerConfig.GetCrypto_SaltLen: integer;
 begin
-  Result := FStorage.ReadInteger('tsrv.test.int', -1);
+  Result := FStorage.ReadInteger('crypto.saltLen', 64);
+end;
+
+function TTesterServerConfig.GetCrypto_HashLen: integer;
+begin
+  Result := FStorage.ReadInteger('crypto.hashLen', 64);
+end;
+
+function TTesterServerConfig.GetCrypto_SCrypt_LogN: integer;
+begin
+  Result := FStorage.ReadInteger('crypto.scrypt.logN', 14);
+end;
+
+function TTesterServerConfig.GetCrypto_SCrypt_R: integer;
+begin
+  Result := FStorage.ReadInteger('crypto.scrypt.r', 8);
+end;
+
+function TTesterServerConfig.GetCrypto_SCrypt_P: integer;
+begin
+  Result := FStorage.ReadInteger('crypto.scrypt.p', 1);
 end;
 
 procedure TTesterServerConfig.FPOObservedChanged(ASender: TObject;
@@ -66,8 +96,12 @@ procedure TTesterServerConfig.DefaultSettings;
 begin
   with FStorage do
   begin
-    // just temp code
-    WriteInteger('tsrv.test.int', GetTestInt);
+    WriteString('crypto.notice', SCryptoParamsNotice);
+    WriteInteger('crypto.saltLen', GetCrypto_SaltLen);
+    WriteInteger('crypto.hashLen', GetCrypto_HashLen);
+    WriteInteger('crypto.scrypt.logN', GetCrypto_SCrypt_LogN);
+    WriteInteger('crypto.scrypt.r', GetCrypto_SCrypt_R);
+    WriteInteger('crypto.scrypt.p', GetCrypto_SCrypt_P);
   end;
 end;
 

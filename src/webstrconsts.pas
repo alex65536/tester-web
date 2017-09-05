@@ -35,6 +35,7 @@ resourcestring
   SConflictingModifiers = 'Conflicting or repeating modifiers at variable "%s".';
   SInvalidVariableName = 'Invalid variable name "%s".';
   SVariableNotFound = 'Variable "%s" was not found.';
+  SCryptoParamsNotice = 'WARNING: Changing these parameters will lead to loss of ALL passwords, because encryption algorithm will change if you change the parameters.';
 
 implementation
 

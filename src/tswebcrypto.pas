@@ -31,6 +31,9 @@ procedure TrulyRandomSequence(Len: integer; out Bytes: TByteDynArray);
 function RandomSequenceBase64(Len: integer): ansistring;
 function BytesToBase64(const Bytes: TByteDynArray; Len: integer): ansistring;
 
+function GenSalt: ansistring;
+function HashPassword(const Password, Salt: ansistring): ansistring;
+
 implementation
 
 {$IfDef Unix}
@@ -53,7 +56,7 @@ uses
 {$IfDef __WinRandomSeq__}
   JwaWinCrypt,
 {$EndIf}
-  serverconfig;
+  serverconfig, scrypt;
 
 function RandomSequenceBase64(Len: integer): ansistring;
 var
@@ -88,6 +91,27 @@ begin
   finally
     FreeAndNil(DstStream);
   end;
+end;
+
+function GenSalt: ansistring;
+begin
+  Result := RandomSequenceBase64(Config.Crypto_SaltLen);
+end;
+
+function HashPassword(const Password, Salt: ansistring): ansistring;
+var
+  Hash: TByteDynArray;
+  HashLen, NeedLen: integer;
+  N, R, P: integer;
+begin
+  NeedLen := Config.Crypto_HashLen;
+  HashLen := (NeedLen * 6) div 8 + 4;
+  N := 1 shl Config.Crypto_SCrypt_LogN;
+  R := Config.Crypto_SCrypt_R;
+  P := Config.Crypto_SCrypt_P;
+  SetLength(Hash, HashLen);
+  scrypt_kdf(@Password[1], Length(Password), @Salt[1], Length(Salt), N, R, P, Hash[0], HashLen);
+  Result := Copy(BytesToBase64(Hash, HashLen), 1, NeedLen);
 end;
 
 {$IfDef __UnixRandomSeq__}

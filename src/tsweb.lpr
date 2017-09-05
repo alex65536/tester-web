@@ -34,7 +34,8 @@ uses
   datastorages,
   serverconfig,
   tswebcrypto,
-  Types;
+  Types,
+  dateutils;
 
 {
 
@@ -51,15 +52,24 @@ end;
 }
 
 var
-  Bytes: TByteDynArray;
+  Salt: ansistring;
+  Start, Finish: TDateTime;
 
 begin
   //OnGetApplicationName := @DoGetApplicationName;
-  TrulyRandomSequence(41, Bytes);
-  WriteLn(BytesToBase64(Bytes, Length(Bytes)));
-  WriteLn(RandomSequenceBase64(15));
 
-  ReadLn;
+  Salt := GenSalt;
+  WriteLn(Salt);
+
+  Start := Now;
+  WriteLn('Beg: ', FormatDateTime('hh:nn:ss.zzzz', Start));
+
+  WriteLn(HashPassword('Ubuntu GNU/Linux', Salt));
+
+  Finish := Now;
+  WriteLn('End: ', FormatDateTime('hh:nn:ss.zzzz', Finish));
+
+  WriteLn('Time = ', MilliSecondsBetween(Start, Finish), ' ms');
 
   Application.Title := 'Tester Web';
   {Application.Port := 8080;
