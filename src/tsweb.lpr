@@ -58,8 +58,9 @@ var
   AStorage: TAbstractDataStorage;
 
 begin
-  AStorage := TXmlDataStorage.Create('demo');
+  AStorage := TIniDataStorage.Create('demo');
   try
+    AStorage.WriteString('w', '-1');
     AStorage.WriteString('a', '0');
     AStorage.WriteString('a.a', '1');
     AStorage.WriteString('a.b', '2');
@@ -74,6 +75,12 @@ begin
     AStorage.WriteString('b.b.a', 'B');
     AStorage.WriteString('b.c.a', 'C');
     AStorage.WriteString('c.a.hello', 'D');
+
+    with AStorage.GetRootElements do
+    begin
+      WriteLn(Text);
+      Free;
+    end;
 
     AStorage.DeletePath('a.d');
 

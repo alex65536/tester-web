@@ -25,7 +25,8 @@ unit datastorages;
 interface
 
 uses
-  Classes, SysUtils, IniFiles, LazFileUtils, Laz2_DOM, Laz2_XMLRead, Laz2_XMLWrite;
+  Classes, SysUtils, IniFiles, LazFileUtils, Laz2_DOM, Laz2_XMLRead,
+  Laz2_XMLWrite, AvgLvlTree;
 
 type
 
@@ -36,6 +37,7 @@ type
     FStoragePath: string;
   public
     property StoragePath: string read FStoragePath;
+    function GetRootElements: TStringList; virtual; abstract;
     function VariableExists(const Path: string): boolean; virtual; abstract;
     procedure DeleteVariable(const Path: string); virtual;
     procedure DeletePath(const Path: string); virtual;
@@ -74,6 +76,8 @@ type
   { TIniDataStorage }
 
   TIniDataStorage = class(TFileDataStorage)
+  private const
+    GlobalSectionName = '$GLOBAL$';
   private
     FIniFile: TIniFile;
     FStream: TMemoryStream;
@@ -85,6 +89,7 @@ type
   protected
     function GetFileName: string; override;
   public
+    function GetRootElements: TStringList; override;
     function VariableExists(const Path: string): boolean; override;
     procedure DeleteVariable(const Path: string); override;
     procedure DeletePath(const Path: string); override;
@@ -119,6 +124,7 @@ type
   protected
     function GetFileName: string; override;
   public
+    function GetRootElements: TStringList; override;
     function VariableExists(const Path: string): boolean; override;
     procedure DeleteVariable(const Path: string); override;
     procedure DeletePath(const Path: string); override;
@@ -152,6 +158,24 @@ end;
 function TXmlDataStorage.GetFileName: string;
 begin
   Result := ChangeFileExt(inherited GetFileName, '.xml');
+end;
+
+function TXmlDataStorage.GetRootElements: TStringList;
+var
+  Elem: TDOMNode;
+begin
+  Result := TStringList.Create;
+  try
+    Elem := RootElement.FirstChild;
+    while Elem <> nil do
+    begin
+      Result.Add(Elem.NodeName);
+      Elem := Elem.NextSibling;
+    end;
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
 end;
 
 function TXmlDataStorage.FindNode(const Path: string): TDOMElement;
@@ -336,8 +360,6 @@ end;
 { TIniDataStorage }
 
 procedure TIniDataStorage.SplitPath(const Path: string; out Section, Ident: string);
-const
-  GlobalSectionName = '$GLOBAL$';
 var
   P: integer;
 begin
@@ -405,6 +427,47 @@ end;
 function TIniDataStorage.GetFileName: string;
 begin
   Result := ChangeFileExt(inherited GetFileName, '.ini');
+end;
+
+function TIniDataStorage.GetRootElements: TStringList;
+var
+  TempList: TStringList;
+  S: string;
+  Map: TStringToPointerTree;
+  It: PStringToPointerItem;
+begin
+  RemoveEmptySections;
+  Result := TStringList.Create;
+  try
+    TempList := TStringList.Create;
+    try
+      Map := TStringToPointerTree.Create(True);
+      try
+        // get from section names
+        FIniFile.ReadSections(TempList);
+        for S in TempList do
+          if S <> GlobalSectionName then
+            Map.Values[S] := Pointer(42);
+        // get from global section
+        if FIniFile.SectionExists(GlobalSectionName) then
+        begin
+          FIniFile.ReadSection(GlobalSectionName, TempList);
+          for S in TempList do
+            Map.Values[S] := Pointer(42);
+        end;
+        // push to result from map
+        for It in Map do
+          Result.Add(It^.Name);
+      finally
+        FreeAndNil(Map);
+      end;
+    finally
+      FreeAndNil(TempList);
+    end;
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
 end;
 
 function TIniDataStorage.VariableExists(const Path: string): boolean;
