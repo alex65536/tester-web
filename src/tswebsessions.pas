@@ -203,8 +203,8 @@ function TTesterWebSession.GenerateSessionID: string;
 begin
   Result := 's' + RandomSequenceBase64(Config.Session_IDLength);
   // replace some characters for better compatibility with data stroages
-  Result.Replace('+', '_');
-  Result.Replace('/', '-');
+  Result := Result.Replace('+', '_');
+  Result := Result.Replace('/', '-');
 end;
 
 function TTesterWebSession.GetSessionID: string;
