@@ -1,0 +1,102 @@
+body {
+	background-color: #B6F3D1;
+}
+
+
+.box {
+	box-shadow: 3pt 3pt 5pt #43594D;
+	border-style: groove;
+	border-width: 2pt;
+	border-color: #1CA757;
+	border-radius: 5pt;
+	font-family: "Trebuchet MS",sans-serif;
+	font-size: 12pt;
+	margin: 5pt;
+	margin-bottom: 0;
+	padding: 5pt 10pt;
+}
+table.container {
+	border-spacing: 5pt 3pt;
+	width: 100%;
+}
+
+
+.header {
+	background-color: #47BD7B;
+	color: white;
+	font-weight: bold;
+	font-size: 44pt;
+	text-align: center;
+}
+
+
+.logo {
+	height: 112pt;
+	width: auto;
+}
+.logo-box {
+	background-color: #E3FFF0;
+	padding: 5pt;
+	width: auto;
+}
+
+
+.login {
+	background-color: #7CE6AB;
+	font-size: 12pt;
+	text-align: right;
+	width: 100%;
+}
+.login a {
+	background-color: #075E2D;
+	border-style: ridge;
+	border-width: 2pt;
+	border-color: #1CA757;
+	border-radius: 5pt;
+	box-shadow: 0pt 0pt 1pt #43594D;
+	color: white;
+	text-decoration: none;
+	padding: 2pt 10pt;
+}
+.login a:hover {
+	background-color: #187842;
+	border-style: groove;
+}
+
+
+.nav {
+	background-color: #5C9978;
+	margin: 0;
+	padding: 0;
+	vertical-align: top;
+	width: 150pt;
+}
+.nav ul {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+.nav li a {
+	color: white;
+	display: block;
+	padding: 8pt 16pt;
+	text-decoration: none;
+}
+.nav li a.active {
+	background-color: #134027;
+}
+.nav li a:hover { 
+	background-color: #2F684A;
+}
+
+
+.content {
+	background-color: #E3FFF0;
+	vertical-align: top;
+}
+
+
+.footer {
+	background-color: #E3FFF0;
+	text-align: center;
+}
