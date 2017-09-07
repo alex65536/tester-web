@@ -37,7 +37,8 @@ uses
   tswebcrypto,
   Types,
   dateutils,
-  fpwebfile;
+  fpwebfile,
+  htmlpages;
 
 {
 

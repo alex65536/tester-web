@@ -106,6 +106,7 @@ type
     function GetValues(const Key: string): string; virtual; abstract;
     procedure SetValues(const Key: string; const AValue: string); virtual; abstract;
   public
+    procedure Clear; virtual; abstract;
     procedure Remove(const Key: string); virtual; abstract;
     function Contains(const Key: string): boolean; virtual; abstract;
     function GetItemAsStrings(const Key: string; Strings: TIndentTaggedStrings): boolean;
@@ -124,6 +125,7 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    procedure Clear; override;
     procedure Remove(const Key: string); override;
     function Contains(const Key: string): boolean; override;
   end;
@@ -207,6 +209,11 @@ destructor TTreeVariableStorage.Destroy;
 begin
   FreeAndNil(FTree);
   inherited Destroy;
+end;
+
+procedure TTreeVariableStorage.Clear;
+begin
+  FTree.Clear;
 end;
 
 procedure TTreeVariableStorage.Remove(const Key: string);

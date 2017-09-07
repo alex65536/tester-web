@@ -44,6 +44,7 @@ resourcestring
   SUnterminatedAssignment = 'Unterminated assignment.';
   SAssignmentQuoteExpected = 'Expected "''" after "=" in assignment.';
   SUnterminatedQuotes = 'Unterminated quotes in assignment.';
+  SLoopDependencies = 'Loop dependenices detected.';
 
 implementation
 
