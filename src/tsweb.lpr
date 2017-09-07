@@ -53,9 +53,25 @@ end;
 
 }
 
+var
+  Storage: TAbstractDataStorage;
+
 begin
-  WriteLn(JavaScriptEscapeString('~ is the "best" character!' + LineEnding + '\ ;) \'));
-  WriteLn(JavaScriptUnescapeString('\\Good! \x73\x7e\n\\\''\"\tHello\x21'));
+  Storage := TXmlDataStorage.Create('temp');
+  try
+    Storage.WriteString('bad.var1', '''"x86=64.' + LineEnding + '\\\\=\\\ \ \!@#$%^&*()_+=-\|/<>?.*-');
+    Storage.WriteString('bad.var2', #9#9#9'hello?');
+    Storage.Commit;
+    Storage.Reload;
+    WriteLn(Storage.ReadString('bad.var1', ''));
+    WriteLn(Storage.ReadString('bad.var2', ''));
+  finally
+    FreeAndNil(Storage);
+  end;
+
+
+  WriteLn(JsEscapeString('~ is the "best" character!' + LineEnding + '\ ;) \'));
+  WriteLn(JsUnescapeString('\\Good! \x73\x7e\n\\\''\"\tHello\x21'));
 
   //OnGetApplicationName := @DoGetApplicationName;
 

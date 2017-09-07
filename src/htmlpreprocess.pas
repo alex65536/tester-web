@@ -239,7 +239,7 @@ var
       if EscapeStyle = esJavaScript then
       begin
         // we ignore indentation guides, just escape the contents and put it
-        Line := Line + JavaScriptEscapeString(Strings.Text);
+        Line := Line + JsEscapeString(Strings.Text);
       end
       else
       begin

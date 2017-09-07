@@ -31,8 +31,8 @@ type
   EStringUnescape = class(Exception);
 
 function HtmlEscapeString(const S: string): string;
-function JavaScriptEscapeString(const S: string): string;
-function JavaScriptUnescapeString(const S: string): string;
+function JsEscapeString(const S: string): string;
+function JsUnescapeString(const S: string): string;
 
 implementation
 
@@ -54,7 +54,7 @@ begin
   end;
 end;
 
-function JavaScriptEscapeString(const S: string): string;
+function JsEscapeString(const S: string): string;
 var
   C: char;
 begin
@@ -78,7 +78,7 @@ begin
   end;
 end;
 
-function JavaScriptUnescapeString(const S: string): string;
+function JsUnescapeString(const S: string): string;
 const
   HexNumbers = ['0' .. '9', 'a' .. 'f', 'A' .. 'F'];
 var
