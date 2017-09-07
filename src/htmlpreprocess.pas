@@ -103,15 +103,18 @@ type
 
   TVariableStorage = class
   protected
-    function GetValues(const Key: string): string; virtual; abstract;
-    procedure SetValues(const Key: string; const AValue: string); virtual; abstract;
+    function GetItemAsText(const Key: string): string;
+    procedure SetItemAsText(const Key: string; const Text: string);
+    function GetItemAsRawText(const Key: string): string; virtual; abstract;
+    procedure SetItemAsRawText(const Key: string; const AValue: string); virtual; abstract;
   public
     procedure Clear; virtual; abstract;
     procedure Remove(const Key: string); virtual; abstract;
     function Contains(const Key: string): boolean; virtual; abstract;
     function GetItemAsStrings(const Key: string; Strings: TIndentTaggedStrings): boolean;
     procedure SetItemAsStrings(const Key: string; Strings: TIndentTaggedStrings);
-    property Values[const Key: string]: string read GetValues write SetValues; default;
+    property ItemsAsText[Key: string]: string read GetItemAsText write SetItemAsText;
+    property ItemsAsRawText[Key: string]: string read GetItemAsRawText write SetItemAsRawText;
   end;
 
   { TTreeVariableStorage }
@@ -120,8 +123,8 @@ type
   private
     FTree: TStringToStringTree;
   protected
-    function GetValues(const Key: string): string; override;
-    procedure SetValues(const Key: string; const AValue: string); override;
+    function GetItemAsRawText(const Key: string): string; override;
+    procedure SetItemAsRawText(const Key: string; const AValue: string); override;
   public
     constructor Create;
     destructor Destroy; override;
@@ -190,12 +193,12 @@ end;
 
 { TTreeVariableStorage }
 
-function TTreeVariableStorage.GetValues(const Key: string): string;
+function TTreeVariableStorage.GetItemAsRawText(const Key: string): string;
 begin
   Result := FTree[Key];
 end;
 
-procedure TTreeVariableStorage.SetValues(const Key: string; const AValue: string);
+procedure TTreeVariableStorage.SetItemAsRawText(const Key: string; const AValue: string);
 begin
   FTree[Key] := AValue;
 end;
@@ -351,7 +354,6 @@ var
     WasPos: integer;
     VarName: string;
     Content: string;
-    Strings: TIndentTaggedStrings;
   begin
     // parse variable name
     WasPos := Pos;
@@ -383,13 +385,7 @@ var
     Inc(Pos); // skip trailing "'"
 
     // append variable to the local storage
-    Strings := TIndentTaggedStrings.Create;
-    try
-      Strings.Text := Content;
-      FLocalStorage.SetItemAsStrings(VarName, Strings);
-    finally
-      FreeAndNil(Strings);
-    end;
+    FLocalStorage.SetItemAsText(VarName, Content);
   end;
 
 begin
@@ -594,13 +590,41 @@ function TVariableStorage.GetItemAsStrings(const Key: string;
 begin
   Result := Contains(Key);
   if Result then
-    Strings.RawText := Values[Key];
+    Strings.RawText := GetItemAsRawText(Key);
 end;
 
 procedure TVariableStorage.SetItemAsStrings(const Key: string;
   Strings: TIndentTaggedStrings);
 begin
-  Values[Key] := Strings.RawText;
+  SetItemAsRawText(Key, Strings.RawText);
+end;
+
+function TVariableStorage.GetItemAsText(const Key: string): string;
+var
+  Strings: TIndentTaggedStrings;
+begin
+  Strings := TIndentTaggedStrings.Create;
+  try
+    if GetItemAsStrings(Key, Strings) then
+      Result := Strings.Text
+    else
+      Result := '';
+  finally
+    FreeAndNil(Strings);
+  end;
+end;
+
+procedure TVariableStorage.SetItemAsText(const Key: string; const Text: string);
+var
+  Strings: TIndentTaggedStrings;
+begin
+  Strings := TIndentTaggedStrings.Create;
+  try
+    Strings.Text := Text;
+    SetItemAsStrings(Key, Strings);
+  finally
+    FreeAndNil(Strings);
+  end;
 end;
 
 { TIndentTaggedStrings }

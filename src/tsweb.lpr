@@ -38,7 +38,8 @@ uses
   Types,
   dateutils,
   fpwebfile,
-  htmlpages;
+  htmlpages,
+  tswebhtmlpages;
 
 {
 
@@ -74,7 +75,7 @@ begin
       try
         Preprocessor.PreprocessFileAndInsert('..' + PathDelim + 'test' +
           PathDelim + VarName + '.htpp', Storage, VarName);
-        WriteLn('Inserted, contents (raw) = ' + LineEnding + Storage[VarName]);
+        WriteLn('Inserted, contents (raw) = ' + LineEnding + Storage.ItemsAsRawText[VarName]);
       except
         on E: Exception do
           WriteLn(E.ClassName, ' : ', E.Message);
