@@ -326,12 +326,12 @@ var
           // escape line-by-line
           for I := 0 to Strings.Count - 1 do
             Strings[I] := HtmlEscapeString(Strings[I]);
-          // append (with indentation)
-          case IndentStyle of
-            isIndent: Line := Line + Strings.GetIndentedText(IndentStr, False, False);
-            isNoIndent: Line := Line + Strings.GetIndentedText('', False, False);
-            isVeryIndent: Line := Line + Strings.GetIndentedText(IndentStr, True, False);
-          end;
+        end;
+        // append (with indentation)
+        case IndentStyle of
+          isIndent: Line := Line + Strings.GetIndentedText(IndentStr, False, False);
+          isNoIndent: Line := Line + Strings.GetIndentedText('', False, False);
+          isVeryIndent: Line := Line + Strings.GetIndentedText(IndentStr, True, False);
         end;
       end;
     finally
@@ -675,6 +675,7 @@ end;
 
 constructor TIndentTaggedStrings.Create;
 begin
+  SkipLastLineBreak := True;
   FEnableIndents := True;
   FSetRawTextMode := False;
 end;
