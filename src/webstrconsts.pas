@@ -38,7 +38,9 @@ resourcestring
   SCryptoParamsNotice = 'WARNING: Changing these parameters will lead to loss of ALL passwords, because encryption algorithm will change if you change the parameters.';
   SErrSessionTerminated = 'No web session active: Session was terminated';
   SErrNoSession = 'No web session active: Session was not started';
-
+  SUnescapeExpectedChar = 'Expected character after "\"';
+  SUnescapeUnknownSequence = 'Unknown escape sequence : "%s"';
+  SUnescapeExpectedHexDigits = 'Expected two hex digits after "\x"';
 
 implementation
 

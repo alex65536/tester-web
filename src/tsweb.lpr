@@ -54,10 +54,13 @@ end;
 }
 
 begin
+  WriteLn(JavaScriptEscapeString('~ is the "best" character!' + LineEnding + '\ ;) \'));
+  WriteLn(JavaScriptUnescapeString('\\Good! \x73\x7e\n\\\''\"\tHello\x21'));
+
   //OnGetApplicationName := @DoGetApplicationName;
 
   // temp code, to test template page everywhere
-  MimeTypesFile := '/etc/mime.types';
+  {MimeTypesFile := '/etc/mime.types';
   RegisterFileLocation('templates', '../templates');
   RegisterFileLocation('data', '../data');
 
@@ -65,5 +68,5 @@ begin
   Application.Port := 8080;
   Application.DefaultModuleName := 'index';
   Application.Initialize;
-  Application.Run;
+  Application.Run; }
 end.
