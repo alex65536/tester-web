@@ -38,10 +38,9 @@ type
     FPreprocessor: THtmlPreprocessor;
     FRendered: boolean;
     procedure DoSetVariables; virtual; abstract;
-    function DoGetSkeleton: string; virtual; abstract;
-  protected
-    property Preprocessor: THtmlPreprocessor read FPreprocessor;
+    procedure DoGetSkeleton(Strings: TStrings); virtual; abstract;
   public
+    property Preprocessor: THtmlPreprocessor read FPreprocessor;
     property Content: string read FContent;
     procedure Render;
     procedure Clear; virtual;
@@ -80,7 +79,6 @@ type
     property Parent: TFeaturedHtmlPage read FParent;
     property State: THtmlPageFeatureState read FState write FState;
     procedure Satisfy; virtual; abstract;
-    procedure Unsatisfy; virtual; abstract;
     procedure DependsOn(ADependencies: THtmlPageFeatureList); virtual; abstract;
     constructor Create(AParent: TFeaturedHtmlPage); virtual;
   end;
@@ -96,7 +94,7 @@ type
     procedure AddFeature(AClass: THtmlPageFeatureClass);
     procedure AddFeatures; virtual; abstract;
     procedure DoSetVariables; override;
-    procedure StartupVariablesInitialize; virtual; abstract;
+    procedure StartupVariablesInitialize; virtual;
   public
     property Variables: TVariableStorage read FVariables;
     property PageParts: TVariableStorage read FPageParts;
@@ -117,6 +115,11 @@ end;
 procedure TFeaturedHtmlPage.DoSetVariables;
 begin
   AddFeatures;
+end;
+
+procedure TFeaturedHtmlPage.StartupVariablesInitialize;
+begin
+  // do nothing
 end;
 
 procedure TFeaturedHtmlPage.Clear;
@@ -218,10 +221,7 @@ var
 begin
   for It in FMap do
     with THtmlPageFeature(It^.Value) do
-    begin
-      Unsatisfy;
       State := hpfsUnsatisfied;
-    end;
 end;
 
 constructor THtmlPageFeatureMap.Create(AParent: TFeaturedHtmlPage);
@@ -248,7 +248,7 @@ begin
     Skeleton := TStringList.Create;
     try
       DoSetVariables;
-      Skeleton.Text := DoGetSkeleton;
+      DoGetSkeleton(Skeleton);
       FContent := FPreprocessor.Preprocess(Skeleton);
     finally
       FreeAndNil(Skeleton);

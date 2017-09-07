@@ -45,6 +45,9 @@ resourcestring
   SAssignmentQuoteExpected = 'Expected "''" after "=" in assignment.';
   SUnterminatedQuotes = 'Unterminated quotes in assignment.';
   SLoopDependencies = 'Loop dependenices detected.';
+  SCopyright = 'Copyright &copy; 2017 Alexander Kernozhitsky';
+  SLicenseNotice = 'Tester Web is licensed under the terms of <a href="~licenseLink;">GNU GPL</a> version 2 or any later version.';
+  SSourcesNotice = 'Sources are available on <a href="~githubLink;">Github</a>.';
 
 implementation
 
