@@ -40,8 +40,18 @@ uses
          This is default behaviour.
       <    Do not indent the contents.
       >    Indent the contents even ignoring ~!<.
+      ?    If variable with the name [VARNAME] was not found, add empty string
+         instead of the variable. Default behaviour is to panic when a variable
+         was not found.
     MODIFIERS may not conflict or repeat. VARNAME must contain latin letters,
     numbers and underscores, but not starting with number.
+
+    ~:[VARNAME]='[VALUE]'
+
+      Assign [VALUE] to variable [VARNAME]. Variable [VARNAME] is stored in the
+    local storage, which has the highest priority (variables from there are
+    checked first) and is destroyed after the preprocessing finishes.
+      The [VALUE] must be escaped as in JavaScript.
 
     ~~
 
@@ -247,6 +257,7 @@ var
   var
     IndentStyle: TIndentStyle;
     EscapeStyle: TEscapeStyle;
+    PanicIfNotFound: boolean;
     Pos: integer;
     VarName: string;
     Strings: TIndentTaggedStrings;
@@ -255,6 +266,7 @@ var
     // parse variable modifiers
     IndentStyle := isUnknown;
     EscapeStyle := esUnknown;
+    PanicIfNotFound := True;
     Pos := 2;
     while Pos < Length(Variable) do
     begin
@@ -262,13 +274,16 @@ var
         raise EHtmlPreprocessSyntaxError.CreateFmt(SConflictingModifiers, [Variable]);
       if (Variable[Pos] in ['<', '=', '>']) and (IndentStyle <> isUnknown) then
         raise EHtmlPreprocessSyntaxError.CreateFmt(SConflictingModifiers, [Variable]);
+      if (Variable[Pos] = '?') and (not PanicIfNotFound) then
+        raise EHtmlPreprocessSyntaxError.CreateFmt(SConflictingModifiers, [Variable]);
       case Variable[Pos] of
         '&': EscapeStyle := esHTML;
         '\': EscapeStyle := esJavaScript;
         '#': EscapeStyle := esNone;
         '=': IndentStyle := isIndent;
         '<': IndentStyle := isNoIndent;
-        '>': IndentStyle := isVeryIndent
+        '>': IndentStyle := isVeryIndent;
+        '?': PanicIfNotFound := False
         else
           Break;
       end;
@@ -288,7 +303,11 @@ var
     Strings := TIndentTaggedStrings.Create;
     try
       if not FStorages.GetItemAsStrings(VarName, Strings) then
-        raise EHtmlPreprocessSyntaxError.CreateFmt(SVariableNotFound, [VarName]);
+      begin
+        if PanicIfNotFound then
+          raise EHtmlPreprocessSyntaxError.CreateFmt(SVariableNotFound, [VarName]);
+        Strings.RawText := '';
+      end;
       if EscapeStyle = esJavaScript then
       begin
         // we ignore indentation guides, just escape the contents and put it
