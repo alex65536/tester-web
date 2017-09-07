@@ -91,11 +91,31 @@ type
 
   { TVariableStorage }
 
-  TVariableStorage = class(TStringToStringTree)
+  TVariableStorage = class
+  protected
+    function GetValues(const Key: string): string; virtual; abstract;
+    procedure SetValues(const Key: string; const AValue: string); virtual; abstract;
   public
-    constructor Create;
+    procedure Remove(const Key: string); virtual; abstract;
+    function Contains(const Key: string): boolean; virtual; abstract;
     function GetItemAsStrings(const Key: string; Strings: TIndentTaggedStrings): boolean;
     procedure SetItemAsStrings(const Key: string; Strings: TIndentTaggedStrings);
+    property Values[const Key: string]: string read GetValues write SetValues; default;
+  end;
+
+  { TTreeVariableStorage }
+
+  TTreeVariableStorage = class(TVariableStorage)
+  private
+    FTree: TStringToStringTree;
+  protected
+    function GetValues(const Key: string): string; override;
+    procedure SetValues(const Key: string; const AValue: string); override;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure Remove(const Key: string); override;
+    function Contains(const Key: string): boolean; override;
   end;
 
   { TVariableStorageList }
@@ -153,6 +173,39 @@ begin
       raise ERawTextParse.Create(SInvalidIndentMarker);
   end;
   Line := Copy(S, 2, Length(S) - 1);
+end;
+
+{ TTreeVariableStorage }
+
+function TTreeVariableStorage.GetValues(const Key: string): string;
+begin
+  Result := FTree[Key];
+end;
+
+procedure TTreeVariableStorage.SetValues(const Key: string; const AValue: string);
+begin
+  FTree[Key] := AValue;
+end;
+
+constructor TTreeVariableStorage.Create;
+begin
+  FTree := TStringToStringTree.Create(True);
+end;
+
+destructor TTreeVariableStorage.Destroy;
+begin
+  FreeAndNil(FTree);
+  inherited Destroy;
+end;
+
+procedure TTreeVariableStorage.Remove(const Key: string);
+begin
+ FTree.Remove(Key);
+end;
+
+function TTreeVariableStorage.Contains(const Key: string): boolean;
+begin
+  Result := FTree.Contains(Key);
 end;
 
 { THtmlPreprocessor }
@@ -441,19 +494,12 @@ end;
 
 { TVariableStorage }
 
-constructor TVariableStorage.Create;
-begin
-  inherited Create(True);
-end;
-
 function TVariableStorage.GetItemAsStrings(const Key: string;
   Strings: TIndentTaggedStrings): boolean;
-var
-  AName, AValue: string;
 begin
-  Result := GetNode(FindNode(Key), AName, AValue);
+  Result := Contains(Key);
   if Result then
-    Strings.RawText := AValue;
+    Strings.RawText := Values[Key];
 end;
 
 procedure TVariableStorage.SetItemAsStrings(const Key: string;
