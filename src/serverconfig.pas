@@ -22,6 +22,8 @@ type
     function GetCrypto_SCrypt_LogN: integer;
     function GetCrypto_SCrypt_R: integer;
     function GetCrypto_SCrypt_P: integer;
+    function GetLocation_DataDir: string;
+    function GetLocation_TemplatesDir: string;
     function GetSession_AliveTime: integer;
     function GetSession_IDLength: integer;
   protected
@@ -38,6 +40,10 @@ type
     property Crypto_SCrypt_LogN: integer read GetCrypto_SCrypt_LogN;
     property Crypto_SCrypt_R: integer read GetCrypto_SCrypt_R;
     property Crypto_SCrypt_P: integer read GetCrypto_SCrypt_P;
+
+    // data & templates location
+    property Location_DataDir: string read GetLocation_DataDir;
+    property Location_TemplatesDir: string read GetLocation_TemplatesDir;
 
     // session parameters
     property Session_IDLength: integer read GetSession_IDLength;
@@ -87,6 +93,16 @@ begin
   Result := FStorage.ReadInteger('crypto.scrypt.p', 1);
 end;
 
+function TTesterServerConfig.GetLocation_DataDir: string;
+begin
+  Result := FStorage.ReadString('location.dataDir', '..' + PathDelim + 'data');
+end;
+
+function TTesterServerConfig.GetLocation_TemplatesDir: string;
+begin
+  Result := FStorage.ReadString('location.templatesDir', '..' + PathDelim + 'templates');
+end;
+
 function TTesterServerConfig.GetSession_AliveTime: integer;
 begin
   Result := FStorage.ReadInteger('session.aliveTime', 60);
@@ -121,6 +137,9 @@ begin
 
     WriteInteger('session.aliveTime', Session_AliveTime);
     WriteInteger('session.idLength', Session_IDLength);
+
+    WriteString('location.dataDir', Location_DataDir);
+    WriteString('location.templatesDir', Location_TemplatesDir);
   end;
 end;
 
