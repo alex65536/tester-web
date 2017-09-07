@@ -1,0 +1,9 @@
+~:tilde='~'
+~:matilde='ma~'
+
+~\matilde;!
+
+Tilde escaped #1: "~&tilde;"
+Tilde escaped #2: "~\tilde;"
+Tilde unescaped : "~#tilde;"
+

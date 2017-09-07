@@ -140,6 +140,7 @@ type
   THtmlPreprocessor = class
   private
     FStorages: TVariableStorageList;
+    FLocalStorage: TVariableStorage;
     procedure PreprocessLine(const S: string; Target: TIndentTaggedStrings);
   public
     property Storages: TVariableStorageList read FStorages;
@@ -232,7 +233,7 @@ var
   WasPos, Pos: integer;
   IndentStr: string;
 
-  function ValidateVariableName(const VarName: string): boolean;
+  function IsVariableNameValid(const VarName: string): boolean;
   const
     BegApprovedSet = ['_', 'a' .. 'z', 'A' .. 'Z'];
     ApprovedSet = BegApprovedSet + ['0' .. '9'];
@@ -248,6 +249,12 @@ var
       if not (VarName[I] in ApprovedSet) then
         Exit;
     Result := True;
+  end;
+
+  procedure ValidateVariableName(const VarName: string);
+  begin
+    if not IsVariableNameValid(VarName) then
+      raise EHtmlPreprocessSyntaxError.CreateFmt(SInvalidVariableName, [VarName]);
   end;
 
   procedure ParseAndAppendVariable(const Variable: string);
@@ -296,8 +303,7 @@ var
 
     // parse variable name
     VarName := Copy(Variable, Pos, Length(Variable) - Pos);
-    if not ValidateVariableName(VarName) then
-      raise EHtmlPreprocessSyntaxError.CreateFmt(SInvalidVariableName, [VarName]);
+    ValidateVariableName(VarName);
 
     // apply everything and append to line
     Strings := TIndentTaggedStrings.Create;
@@ -328,6 +334,52 @@ var
           end;
         end;
       end;
+    finally
+      FreeAndNil(Strings);
+    end;
+  end;
+
+  procedure ParseAssignment(const S: string; var Pos: integer);
+  var
+    WasPos: integer;
+    VarName: string;
+    Content: string;
+    Strings: TIndentTaggedStrings;
+  begin
+    // parse variable name
+    WasPos := Pos;
+    while (Pos <= Length(S)) and (S[Pos] <> '=') do
+      Inc(Pos);
+    if Pos > Length(S) then
+      raise EHtmlPreprocessSyntaxError.Create(SUnterminatedAssignment);
+    VarName := Copy(S, WasPos, Pos - WasPos);
+    ValidateVariableName(VarName);
+
+    // skip characters between varname and contents
+    Inc(Pos); // skip "="
+    if (Pos > Length(S)) or (S[Pos] <> '''') then
+      raise EHtmlPreprocessSyntaxError.Create(SAssignmentQuoteExpected);
+    Inc(Pos); // skip leading "'"
+
+    // parse contents
+    WasPos := Pos;
+    while (Pos <= Length(S)) and (S[Pos] <> '''') do
+    begin
+      if S[Pos] = '\' then
+        Inc(Pos, 2)
+      else
+        Inc(Pos);
+    end;
+    if Pos > Length(S) then
+      raise EHtmlPreprocessSyntaxError.Create(SUnterminatedQuotes);
+    Content := JsUnescapeString(Copy(S, WasPos, Pos - WasPos));
+    Inc(Pos); // skip trailing "'"
+
+    // append variable to the local storage
+    Strings := TIndentTaggedStrings.Create;
+    try
+      Strings.Text := Content;
+      FLocalStorage.SetItemAsStrings(VarName, Strings);
     finally
       FreeAndNil(Strings);
     end;
@@ -382,7 +434,14 @@ begin
         if S[Pos + 1] = '~' then
         begin
           Line := Line + '~';
+          Inc(Pos, 2); // skip "~:"
+          Continue;
+        end;
+        // ":" assignment
+        if S[Pos + 1] = ':' then
+        begin
           Inc(Pos, 2);
+          ParseAssignment(S, Pos);
           Continue;
         end;
         // otherwise, variable
@@ -412,10 +471,20 @@ procedure THtmlPreprocessor.Preprocess(Source: TStrings;
 var
   I: integer;
 begin
-  if Clear then
-    Target.Clear;
-  for I := 0 to Source.Count - 1 do
-    PreprocessLine(Source[I], Target);
+  FLocalStorage := TTreeVariableStorage.Create;
+  try
+    FStorages.Insert(0, FLocalStorage);
+    try
+      if Clear then
+        Target.Clear;
+      for I := 0 to Source.Count - 1 do
+        PreprocessLine(Source[I], Target);
+    finally
+      FStorages.Remove(FLocalStorage);
+    end;
+  finally
+    FreeAndNil(FLocalStorage);
+  end;
 end;
 
 function THtmlPreprocessor.Preprocess(Source: TStrings): string;

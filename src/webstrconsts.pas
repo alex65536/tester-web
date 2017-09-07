@@ -41,6 +41,8 @@ resourcestring
   SUnescapeExpectedChar = 'Expected character after "\"';
   SUnescapeUnknownSequence = 'Unknown escape sequence : "%s"';
   SUnescapeExpectedHexDigits = 'Expected two hex digits after "\x"';
+  SUnterminatedAssignment = 'Unterminated assignment.';
+  SAssignmentQuoteExpected = 'Expected "''" after "=" in assignment.';
   SUnterminatedQuotes = 'Unterminated quotes in assignment.';
 
 implementation

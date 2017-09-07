@@ -54,24 +54,35 @@ end;
 }
 
 var
-  Storage: TAbstractDataStorage;
-
+  VarName: string;
+  Storage: TVariableStorage;
+  Preprocessor: THtmlPreprocessor;
 begin
-  Storage := TXmlDataStorage.Create('temp');
+  // testing HTML preprocessor
+  WriteLn('To quit, enter "quit" instead of VarName');
+  Storage := TTreeVariableStorage.Create;
+  Preprocessor := THtmlPreprocessor.Create;
   try
-    Storage.WriteString('bad.var1', '''"x86=64.' + LineEnding + '\\\\=\\\ \ \!@#$%^&*()_+=-\|/<>?.*-');
-    Storage.WriteString('bad.var2', #9#9#9'hello?');
-    Storage.Commit;
-    Storage.Reload;
-    WriteLn(Storage.ReadString('bad.var1', ''));
-    WriteLn(Storage.ReadString('bad.var2', ''));
+    Preprocessor.Storages.Add(Storage);
+    while 42 = 42 { True } do
+    begin
+      Write('VarName (will be loaded from ../test/VarName.htpp): ');
+      ReadLn(VarName);
+      if VarName = 'quit' then
+        Break;
+      try
+        Preprocessor.PreprocessFileAndInsert('..' + PathDelim + 'test' +
+          PathDelim + VarName + '.htpp', Storage, VarName);
+        WriteLn('Inserted, contents (raw) = ' + LineEnding + Storage[VarName]);
+      except
+        on E: Exception do
+          WriteLn(E.ClassName, ' : ', E.Message);
+      end;
+    end;
   finally
     FreeAndNil(Storage);
+    FreeAndNil(Preprocessor);
   end;
-
-
-  WriteLn(JsEscapeString('~ is the "best" character!' + LineEnding + '\ ;) \'));
-  WriteLn(JsUnescapeString('\\Good! \x73\x7e\n\\\''\"\tHello\x21'));
 
   //OnGetApplicationName := @DoGetApplicationName;
 
