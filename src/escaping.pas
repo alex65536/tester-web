@@ -25,10 +25,14 @@ unit escaping;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, webstrconsts;
+
+type
+  EStringUnescape = class(Exception);
 
 function HtmlEscapeString(const S: string): string;
-function JavaScriptEscapeString(const S: string): string;
+function JsEscapeString(const S: string): string;
+function JsUnescapeString(const S: string): string;
 
 implementation
 
@@ -43,13 +47,14 @@ begin
       '"': Result := Result + '&quot;';
       '&': Result := Result + '&amp;';
       '<': Result := Result + '&lt;';
-      '>': Result := Result + '&gt;'
+      '>': Result := Result + '&gt;';
+      '~': Result := Result + '&#126;' // we escape tilde too!
       else Result := Result + C;
     end;
   end;
 end;
 
-function JavaScriptEscapeString(const S: string): string;
+function JsEscapeString(const S: string): string;
 var
   C: char;
 begin
@@ -66,9 +71,58 @@ begin
       #13: Result := Result + '\r';
      '''': Result := Result + '\''';
       '"': Result := Result + '\"';
-      '\': Result := Result + '\\'
+      '\': Result := Result + '\\';
+      '~': Result := Result + '\x7e' // we escape tilde too!
       else Result := Result + C;
     end;
+  end;
+end;
+
+function JsUnescapeString(const S: string): string;
+const
+  HexNumbers = ['0' .. '9', 'a' .. 'f', 'A' .. 'F'];
+var
+  I: integer;
+begin
+  Result := '';
+  I := 1;
+  while I <= Length(S) do
+  begin
+    // simple characters - just insert
+    if S[I] <> '\' then
+    begin
+      Result := Result + S[I];
+      Inc(I);
+      Continue;
+    end;
+    // otherwise, try to unescape
+    if I = Length(S) then
+      raise EStringUnescape.Create(SUnescapeExpectedChar);
+    Inc(I);
+    case S[I] of
+      '0': Result := Result + #0;
+      'b': Result := Result + #8;
+      't': Result := Result + #9;
+      'n': Result := Result + #10;
+      'v': Result := Result + #11;
+      'f': Result := Result + #12;
+      'r': Result := Result + #13;
+     '''': Result := Result + '''';
+      '"': Result := Result + '"';
+      '\': Result := Result + '\';
+      'x':
+        begin
+          if I + 2 > Length(S) then
+            raise EStringUnescape.Create(SUnescapeExpectedHexDigits);
+          if not ((S[I + 1] in HexNumbers) and (S[I + 2] in HexNumbers)) then
+            raise EStringUnescape.Create(SUnescapeExpectedHexDigits);
+          Result := Result + Chr(StrToInt('$' + Copy(S, I + 1, 2)));
+          Inc(I, 2);
+        end
+      else
+        raise EStringUnescape.CreateFmt(SUnescapeUnknownSequence, ['\' + S[I]]);
+    end;
+    Inc(I);
   end;
 end;
 

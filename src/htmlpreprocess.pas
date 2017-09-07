@@ -40,8 +40,18 @@ uses
          This is default behaviour.
       <    Do not indent the contents.
       >    Indent the contents even ignoring ~!<.
+      ?    If variable with the name [VARNAME] was not found, add empty string
+         instead of the variable. Default behaviour is to panic when a variable
+         was not found.
     MODIFIERS may not conflict or repeat. VARNAME must contain latin letters,
     numbers and underscores, but not starting with number.
+
+    ~:[VARNAME]='[VALUE]'
+
+      Assign [VALUE] to variable [VARNAME]. Variable [VARNAME] is stored in the
+    local storage, which has the highest priority (variables from there are
+    checked first) and is destroyed after the preprocessing finishes.
+      The [VALUE] must be escaped as in JavaScript.
 
     ~~
 
@@ -91,11 +101,31 @@ type
 
   { TVariableStorage }
 
-  TVariableStorage = class(TStringToStringTree)
+  TVariableStorage = class
+  protected
+    function GetValues(const Key: string): string; virtual; abstract;
+    procedure SetValues(const Key: string; const AValue: string); virtual; abstract;
   public
-    constructor Create;
+    procedure Remove(const Key: string); virtual; abstract;
+    function Contains(const Key: string): boolean; virtual; abstract;
     function GetItemAsStrings(const Key: string; Strings: TIndentTaggedStrings): boolean;
     procedure SetItemAsStrings(const Key: string; Strings: TIndentTaggedStrings);
+    property Values[const Key: string]: string read GetValues write SetValues; default;
+  end;
+
+  { TTreeVariableStorage }
+
+  TTreeVariableStorage = class(TVariableStorage)
+  private
+    FTree: TStringToStringTree;
+  protected
+    function GetValues(const Key: string): string; override;
+    procedure SetValues(const Key: string; const AValue: string); override;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure Remove(const Key: string); override;
+    function Contains(const Key: string): boolean; override;
   end;
 
   { TVariableStorageList }
@@ -110,6 +140,7 @@ type
   THtmlPreprocessor = class
   private
     FStorages: TVariableStorageList;
+    FLocalStorage: TVariableStorage;
     procedure PreprocessLine(const S: string; Target: TIndentTaggedStrings);
   public
     property Storages: TVariableStorageList read FStorages;
@@ -155,6 +186,39 @@ begin
   Line := Copy(S, 2, Length(S) - 1);
 end;
 
+{ TTreeVariableStorage }
+
+function TTreeVariableStorage.GetValues(const Key: string): string;
+begin
+  Result := FTree[Key];
+end;
+
+procedure TTreeVariableStorage.SetValues(const Key: string; const AValue: string);
+begin
+  FTree[Key] := AValue;
+end;
+
+constructor TTreeVariableStorage.Create;
+begin
+  FTree := TStringToStringTree.Create(True);
+end;
+
+destructor TTreeVariableStorage.Destroy;
+begin
+  FreeAndNil(FTree);
+  inherited Destroy;
+end;
+
+procedure TTreeVariableStorage.Remove(const Key: string);
+begin
+ FTree.Remove(Key);
+end;
+
+function TTreeVariableStorage.Contains(const Key: string): boolean;
+begin
+  Result := FTree.Contains(Key);
+end;
+
 { THtmlPreprocessor }
 
 procedure THtmlPreprocessor.PreprocessLine(const S: string;
@@ -169,7 +233,7 @@ var
   WasPos, Pos: integer;
   IndentStr: string;
 
-  function ValidateVariableName(const VarName: string): boolean;
+  function IsVariableNameValid(const VarName: string): boolean;
   const
     BegApprovedSet = ['_', 'a' .. 'z', 'A' .. 'Z'];
     ApprovedSet = BegApprovedSet + ['0' .. '9'];
@@ -187,6 +251,12 @@ var
     Result := True;
   end;
 
+  procedure ValidateVariableName(const VarName: string);
+  begin
+    if not IsVariableNameValid(VarName) then
+      raise EHtmlPreprocessSyntaxError.CreateFmt(SInvalidVariableName, [VarName]);
+  end;
+
   procedure ParseAndAppendVariable(const Variable: string);
   type
     TIndentStyle = (isIndent, isNoIndent, isVeryIndent, isUnknown);
@@ -194,6 +264,7 @@ var
   var
     IndentStyle: TIndentStyle;
     EscapeStyle: TEscapeStyle;
+    PanicIfNotFound: boolean;
     Pos: integer;
     VarName: string;
     Strings: TIndentTaggedStrings;
@@ -202,6 +273,7 @@ var
     // parse variable modifiers
     IndentStyle := isUnknown;
     EscapeStyle := esUnknown;
+    PanicIfNotFound := True;
     Pos := 2;
     while Pos < Length(Variable) do
     begin
@@ -209,13 +281,16 @@ var
         raise EHtmlPreprocessSyntaxError.CreateFmt(SConflictingModifiers, [Variable]);
       if (Variable[Pos] in ['<', '=', '>']) and (IndentStyle <> isUnknown) then
         raise EHtmlPreprocessSyntaxError.CreateFmt(SConflictingModifiers, [Variable]);
+      if (Variable[Pos] = '?') and (not PanicIfNotFound) then
+        raise EHtmlPreprocessSyntaxError.CreateFmt(SConflictingModifiers, [Variable]);
       case Variable[Pos] of
         '&': EscapeStyle := esHTML;
         '\': EscapeStyle := esJavaScript;
         '#': EscapeStyle := esNone;
         '=': IndentStyle := isIndent;
         '<': IndentStyle := isNoIndent;
-        '>': IndentStyle := isVeryIndent
+        '>': IndentStyle := isVeryIndent;
+        '?': PanicIfNotFound := False
         else
           Break;
       end;
@@ -228,18 +303,21 @@ var
 
     // parse variable name
     VarName := Copy(Variable, Pos, Length(Variable) - Pos);
-    if not ValidateVariableName(VarName) then
-      raise EHtmlPreprocessSyntaxError.CreateFmt(SInvalidVariableName, [VarName]);
+    ValidateVariableName(VarName);
 
     // apply everything and append to line
     Strings := TIndentTaggedStrings.Create;
     try
       if not FStorages.GetItemAsStrings(VarName, Strings) then
-        raise EHtmlPreprocessSyntaxError.CreateFmt(SVariableNotFound, [VarName]);
+      begin
+        if PanicIfNotFound then
+          raise EHtmlPreprocessSyntaxError.CreateFmt(SVariableNotFound, [VarName]);
+        Strings.RawText := '';
+      end;
       if EscapeStyle = esJavaScript then
       begin
         // we ignore indentation guides, just escape the contents and put it
-        Line := Line + JavaScriptEscapeString(Strings.Text);
+        Line := Line + JsEscapeString(Strings.Text);
       end
       else
       begin
@@ -248,14 +326,60 @@ var
           // escape line-by-line
           for I := 0 to Strings.Count - 1 do
             Strings[I] := HtmlEscapeString(Strings[I]);
-          // append (with indentation)
-          case IndentStyle of
-            isIndent: Line := Line + Strings.GetIndentedText(IndentStr, False, False);
-            isNoIndent: Line := Line + Strings.GetIndentedText('', False, False);
-            isVeryIndent: Line := Line + Strings.GetIndentedText(IndentStr, True, False);
-          end;
+        end;
+        // append (with indentation)
+        case IndentStyle of
+          isIndent: Line := Line + Strings.GetIndentedText(IndentStr, False, False);
+          isNoIndent: Line := Line + Strings.GetIndentedText('', False, False);
+          isVeryIndent: Line := Line + Strings.GetIndentedText(IndentStr, True, False);
         end;
       end;
+    finally
+      FreeAndNil(Strings);
+    end;
+  end;
+
+  procedure ParseAssignment(const S: string; var Pos: integer);
+  var
+    WasPos: integer;
+    VarName: string;
+    Content: string;
+    Strings: TIndentTaggedStrings;
+  begin
+    // parse variable name
+    WasPos := Pos;
+    while (Pos <= Length(S)) and (S[Pos] <> '=') do
+      Inc(Pos);
+    if Pos > Length(S) then
+      raise EHtmlPreprocessSyntaxError.Create(SUnterminatedAssignment);
+    VarName := Copy(S, WasPos, Pos - WasPos);
+    ValidateVariableName(VarName);
+
+    // skip characters between varname and contents
+    Inc(Pos); // skip "="
+    if (Pos > Length(S)) or (S[Pos] <> '''') then
+      raise EHtmlPreprocessSyntaxError.Create(SAssignmentQuoteExpected);
+    Inc(Pos); // skip leading "'"
+
+    // parse contents
+    WasPos := Pos;
+    while (Pos <= Length(S)) and (S[Pos] <> '''') do
+    begin
+      if S[Pos] = '\' then
+        Inc(Pos, 2)
+      else
+        Inc(Pos);
+    end;
+    if Pos > Length(S) then
+      raise EHtmlPreprocessSyntaxError.Create(SUnterminatedQuotes);
+    Content := JsUnescapeString(Copy(S, WasPos, Pos - WasPos));
+    Inc(Pos); // skip trailing "'"
+
+    // append variable to the local storage
+    Strings := TIndentTaggedStrings.Create;
+    try
+      Strings.Text := Content;
+      FLocalStorage.SetItemAsStrings(VarName, Strings);
     finally
       FreeAndNil(Strings);
     end;
@@ -310,7 +434,14 @@ begin
         if S[Pos + 1] = '~' then
         begin
           Line := Line + '~';
+          Inc(Pos, 2); // skip "~:"
+          Continue;
+        end;
+        // ":" assignment
+        if S[Pos + 1] = ':' then
+        begin
           Inc(Pos, 2);
+          ParseAssignment(S, Pos);
           Continue;
         end;
         // otherwise, variable
@@ -340,10 +471,20 @@ procedure THtmlPreprocessor.Preprocess(Source: TStrings;
 var
   I: integer;
 begin
-  if Clear then
-    Target.Clear;
-  for I := 0 to Source.Count - 1 do
-    PreprocessLine(Source[I], Target);
+  FLocalStorage := TTreeVariableStorage.Create;
+  try
+    FStorages.Insert(0, FLocalStorage);
+    try
+      if Clear then
+        Target.Clear;
+      for I := 0 to Source.Count - 1 do
+        PreprocessLine(Source[I], Target);
+    finally
+      FStorages.Remove(FLocalStorage);
+    end;
+  finally
+    FreeAndNil(FLocalStorage);
+  end;
 end;
 
 function THtmlPreprocessor.Preprocess(Source: TStrings): string;
@@ -441,19 +582,12 @@ end;
 
 { TVariableStorage }
 
-constructor TVariableStorage.Create;
-begin
-  inherited Create(True);
-end;
-
 function TVariableStorage.GetItemAsStrings(const Key: string;
   Strings: TIndentTaggedStrings): boolean;
-var
-  AName, AValue: string;
 begin
-  Result := GetNode(FindNode(Key), AName, AValue);
+  Result := Contains(Key);
   if Result then
-    Strings.RawText := AValue;
+    Strings.RawText := Values[Key];
 end;
 
 procedure TVariableStorage.SetItemAsStrings(const Key: string;
@@ -541,6 +675,7 @@ end;
 
 constructor TIndentTaggedStrings.Create;
 begin
+  SkipLastLineBreak := True;
   FEnableIndents := True;
   FSetRawTextMode := False;
 end;
