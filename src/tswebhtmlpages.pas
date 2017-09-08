@@ -84,6 +84,18 @@ type
     property Title: string read FTitle write FTitle;
   end;
 
+  { TSimpleHtmlPage }
+
+  TSimpleHtmlPage = class(TTesterHtmlPage)
+  private
+    FTextContent: string;
+  protected
+    procedure AddFeatures; override;
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
+  public
+    property TextContent: string read FTextContent write FTextContent;
+  end;
+
 var
   DocumentRoot: string = '/';
   DataRoot: string = '/data';
@@ -95,6 +107,21 @@ implementation
 function TemplateLocation(const TemplateName: string): string;
 begin
   Result := AppendPathDelim(Config.Location_TemplatesDir) + TemplateName + '.html';
+end;
+
+{ TSimpleHtmlPage }
+
+procedure TSimpleHtmlPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(THeaderFeature);
+  AddFeature(TContentFeature);
+  AddFeature(TFooterFeature);
+end;
+
+procedure TSimpleHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
+begin
+  Strings.Text := FTextContent;
 end;
 
 { TContentFeature }

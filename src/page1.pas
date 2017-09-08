@@ -18,35 +18,34 @@
   to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
   MA 02111-1307, USA.
 }
-unit index;
+unit page1;
 
 {$mode objfpc}{$H+}
 
 interface
 
 uses
-  SysUtils, Classes, httpdefs, fpHTTP, fpWeb, fphttpapp, tswebhtmlpages,
-  dateutils;
+  SysUtils, Classes, httpdefs, fpHTTP, fpWeb, tswebhtmlpages, dateutils;
 
 type
 
-  { TIndexModule }
+  { TPage1Module }
 
-  TIndexModule = class(TFPWebModule)
+  TPage1Module = class(TFPWebModule)
     procedure DataModuleRequest(Sender: TObject; {%H-}ARequest: TRequest;
       AResponse: TResponse; var Handled: Boolean);
   end;
 
 var
-  IndexModule: TIndexModule;
+  Page1Module: TPage1Module;
 
 implementation
 
 {$R *.lfm}
 
-{ TIndexModule }
+{ TPage1Module }
 
-procedure TIndexModule.DataModuleRequest(Sender: TObject; ARequest: TRequest;
+procedure TPage1Module.DataModuleRequest(Sender: TObject; ARequest: TRequest;
   AResponse: TResponse; var Handled: Boolean);
 var
   APage: TSimpleHtmlPage;
@@ -55,8 +54,8 @@ begin
   Time := Now;
 
   APage := TSimpleHtmlPage.Create;
-  APage.Title := 'Main Page';
-  APage.TextContent := 'Hello World!';
+  APage.Title := 'Page 1';
+  APage.TextContent := 'This is page 1.';
   try
     APage.UpdateResponse(AResponse);
     Handled := True;
@@ -64,10 +63,10 @@ begin
     FreeAndNil(APage);
   end;
 
-  WriteLn('IndexPage rendered in ', SecondSpan(Time, Now) : 0 : 3, 's.');
+  WriteLn('Page1 rendered in ', SecondSpan(Time, Now) : 0 : 3, 's.');
 end;
 
 initialization
-  RegisterHTTPModule('index', TIndexModule);
+  RegisterHTTPModule('page1', TPage1Module);
 end.
 

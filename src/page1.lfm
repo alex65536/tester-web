@@ -1,0 +1,10 @@
+object Page1Module: TPage1Module
+  OldCreateOrder = False
+  Actions = <>
+  OnRequest = DataModuleRequest
+  CreateSession = True
+  Height = 150
+  HorizontalOffset = 118
+  VerticalOffset = 250
+  Width = 150
+end

@@ -45,7 +45,7 @@
         <PackageName Value="FCL"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="11">
+    <Units Count="13">
       <Unit0>
         <Filename Value="tsweb.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -93,6 +93,18 @@
         <Filename Value="tswebhtmlpages.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit10>
+      <Unit11>
+        <Filename Value="page1.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="Page1Module"/>
+        <ResourceBaseClass Value="DataModule"/>
+      </Unit11>
+      <Unit12>
+        <Filename Value="page2.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="Page2Module"/>
+        <ResourceBaseClass Value="DataModule"/>
+      </Unit12>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

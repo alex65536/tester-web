@@ -40,7 +40,9 @@ uses
   fpwebfile,
   htmlpages,
   tswebhtmlpages,
-  fpmimetypes;
+  fpmimetypes,
+  page1,
+  page2;
 
 {
 
@@ -67,6 +69,7 @@ begin
   Application.Title := 'Tester Web';
   Application.Port := 8080;
   Application.DefaultModuleName := 'index';
+  Application.PreferModuleName := True;
   Application.Initialize;
   Application.Run;
 end.

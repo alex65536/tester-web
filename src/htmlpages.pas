@@ -25,7 +25,7 @@ unit htmlpages;
 interface
 
 uses
-  Classes, SysUtils, htmlpreprocess, fgl, AvgLvlTree, webstrconsts;
+  Classes, SysUtils, htmlpreprocess, fgl, AvgLvlTree, webstrconsts, HTTPDefs;
 
 type
   EHtmlPage = class(Exception);
@@ -46,6 +46,7 @@ type
     property Content: string read GetContent;
     procedure Render;
     procedure Clear; virtual;
+    procedure UpdateResponse(AResponse: TResponse);
     constructor Create;
     destructor Destroy; override;
   end;
@@ -279,6 +280,12 @@ end;
 procedure THtmlPage.Clear;
 begin
   FRendered := False;
+end;
+
+procedure THtmlPage.UpdateResponse(AResponse: TResponse);
+begin
+  AResponse.ContentType := 'text/html;charset=utf-8';
+  AResponse.Content := Content;
 end;
 
 constructor THtmlPage.Create;
