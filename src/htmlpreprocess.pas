@@ -107,9 +107,21 @@ type
     constructor Create;
   end;
 
+  TVariableStorage = class;
+
+  { TVariableStorageList }
+
+  TVariableStorageList = class(specialize TFPGObjectList<TVariableStorage>)
+  public
+    function GetItemAsStrings(const Key: string; Strings: TIndentTaggedStrings): boolean;
+  end;
+
   { TVariableStorage }
 
   TVariableStorage = class
+  private
+    FOwner: TVariableStorageList;
+    procedure SetOwner(AValue: TVariableStorageList);
   protected
     function GetItemAsText(const Key: string): string;
     procedure SetItemAsText(const Key: string; const Text: string);
@@ -117,6 +129,7 @@ type
     procedure SetItemAsRawText(const Key: string; const AValue: string);
       virtual; abstract;
   public
+    property Owner: TVariableStorageList read FOwner write SetOwner;
     procedure Clear; virtual; abstract;
     procedure Remove(const Key: string); virtual; abstract;
     function Contains(const Key: string): boolean; virtual; abstract;
@@ -126,6 +139,8 @@ type
     property ItemsAsRawText[Key: string]: string
       read GetItemAsRawText write SetItemAsRawText;
     procedure SetFromFile(const Key, FileName: string);
+    constructor Create(AOwner: TVariableStorageList);
+    destructor Destroy; override;
   end;
 
   { TTreeVariableStorage }
@@ -137,18 +152,11 @@ type
     function GetItemAsRawText(const Key: string): string; override;
     procedure SetItemAsRawText(const Key: string; const AValue: string); override;
   public
-    constructor Create;
+    constructor Create(AOwner: TVariableStorageList);
     destructor Destroy; override;
     procedure Clear; override;
     procedure Remove(const Key: string); override;
     function Contains(const Key: string): boolean; override;
-  end;
-
-  { TVariableStorageList }
-
-  TVariableStorageList = class(specialize TFPGObjectList<TVariableStorage>)
-  public
-    function GetItemAsStrings(const Key: string; Strings: TIndentTaggedStrings): boolean;
   end;
 
   { TVariableState }
@@ -256,8 +264,9 @@ begin
   FTree[Key] := AValue;
 end;
 
-constructor TTreeVariableStorage.Create;
+constructor TTreeVariableStorage.Create(AOwner: TVariableStorageList);
 begin
+  inherited Create(AOwner);
   FTree := TStringToStringTree.Create(True);
 end;
 
@@ -550,16 +559,12 @@ var
   I: integer;
   LocalStorage: TVariableStorage;
 begin
-  LocalStorage := TTreeVariableStorage.Create;
+  LocalStorage := TTreeVariableStorage.Create(FStorages);
   try
     FStorages.Insert(0, LocalStorage);
-    try
-      for I := 0 to Source.Count - 1 do
-        PreprocessLine(Source[I], Source.IsIndented(I), Target, LocalStorage,
-          VarState);
-    finally
-      FStorages.Remove(LocalStorage);
-    end;
+    for I := 0 to Source.Count - 1 do
+      PreprocessLine(Source[I], Source.IsIndented(I), Target, LocalStorage,
+        VarState);
   finally
     FreeAndNil(LocalStorage);
   end;
@@ -700,6 +705,24 @@ begin
   finally
     FreeAndNil(Strings);
   end;
+end;
+
+constructor TVariableStorage.Create(AOwner: TVariableStorageList);
+begin
+  Owner := AOwner;
+end;
+
+destructor TVariableStorage.Destroy;
+begin
+  if FOwner <> nil then
+    FOwner.Remove(Self);
+  inherited Destroy;
+end;
+
+procedure TVariableStorage.SetOwner(AValue: TVariableStorageList);
+begin
+  if FOwner = AValue then Exit;
+  FOwner := AValue;
 end;
 
 function TVariableStorage.GetItemAsText(const Key: string): string;

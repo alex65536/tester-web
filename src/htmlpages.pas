@@ -144,8 +144,8 @@ constructor TFeaturedHtmlPage.Create;
 begin
   inherited Create;
   FMap := THtmlPageFeatureMap.Create(Self);
-  FVariables := TTreeVariableStorage.Create;
-  FPageParts := TTreeVariableStorage.Create;
+  FVariables := TTreeVariableStorage.Create(nil);
+  FPageParts := TTreeVariableStorage.Create(nil);
   Preprocessor.Storages.Add(FVariables);
   Preprocessor.Storages.Add(FPageParts);
   StartupVariablesInitialize;
