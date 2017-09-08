@@ -80,8 +80,6 @@ uses
     resulting text.
 }
 
-// ToDo : Add recursive preprocessing !
-
 type
   EHtmlPreprocessSyntaxError = class(Exception);
   ERawTextParse = class(Exception);
