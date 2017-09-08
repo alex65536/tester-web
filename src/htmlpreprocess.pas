@@ -116,7 +116,8 @@ type
     function GetItemAsText(const Key: string): string;
     procedure SetItemAsText(const Key: string; const Text: string);
     function GetItemAsRawText(const Key: string): string; virtual; abstract;
-    procedure SetItemAsRawText(const Key: string; const AValue: string); virtual; abstract;
+    procedure SetItemAsRawText(const Key: string; const AValue: string);
+      virtual; abstract;
   public
     procedure Clear; virtual; abstract;
     procedure Remove(const Key: string); virtual; abstract;
@@ -124,7 +125,8 @@ type
     function GetItemAsStrings(const Key: string; Strings: TIndentTaggedStrings): boolean;
     procedure SetItemAsStrings(const Key: string; Strings: TIndentTaggedStrings);
     property ItemsAsText[Key: string]: string read GetItemAsText write SetItemAsText;
-    property ItemsAsRawText[Key: string]: string read GetItemAsRawText write SetItemAsRawText;
+    property ItemsAsRawText[Key: string]: string
+      read GetItemAsRawText write SetItemAsRawText;
   end;
 
   { TTreeVariableStorage }
@@ -273,7 +275,7 @@ end;
 
 procedure TTreeVariableStorage.Remove(const Key: string);
 begin
- FTree.Remove(Key);
+  FTree.Remove(Key);
 end;
 
 function TTreeVariableStorage.Contains(const Key: string): boolean;
@@ -286,13 +288,10 @@ end;
 procedure THtmlPreprocessor.PreprocessLine(const S: string; Indent: boolean;
   Target: TIndentTaggedStrings; LocalStorage: TVariableStorage;
   VarState: TVariableState);
-
 const
   IndentChars = [#0 .. ' '];
 var
-  RawText: boolean;
   Line: TIndentTaggedStrings;
-  WasPos, Pos: integer;
   IndentStr: string;
 
   function IsVariableNameValid(const VarName: string): boolean;
@@ -343,9 +342,9 @@ var
     while Pos < Length(Variable) do
     begin
       if ((Variable[Pos] in ['&', '\', '#']) and (EscapeStyle <> esUnknown)) or
-         ((Variable[Pos] in ['<', '=', '>']) and (IndentStyle <> isUnknown)) or
-         ((Variable[Pos] = '?') and (not PanicIfNotFound)) or
-         ((Variable[Pos] = '+') and RecursePreprocess) then
+        ((Variable[Pos] in ['<', '=', '>']) and (IndentStyle <> isUnknown)) or
+        ((Variable[Pos] = '?') and (not PanicIfNotFound)) or
+        ((Variable[Pos] = '+') and RecursePreprocess) then
         raise EHtmlPreprocessSyntaxError.CreateFmt(SConflictingModifiers, [Variable]);
       case Variable[Pos] of
         '&': EscapeStyle := esHTML;
@@ -449,15 +448,25 @@ var
     LocalStorage.SetItemAsText(VarName, Content);
   end;
 
+var
+  RawText: boolean;
+  WasPos, Pos: integer;
+  AppendText: boolean;
 begin
   // initialize
   RawText := False;
+  AppendText := True;
   Line := TIndentTaggedStrings.Create;
   Pos := 1;
 
   try
     // parse the beginning of the line
-    if (Length(S) >= 3) and (Copy(S, 1, 3) = '~<!') then
+    if (Length(S) >= 3) and (Copy(S, 1, 3) = '~X!') then
+    begin
+      AppendText := False;
+      Pos := 4;
+    end
+    else if (Length(S) >= 3) and (Copy(S, 1, 3) = '~<!') then
     begin
       Indent := False;
       Pos := 4;
@@ -526,8 +535,11 @@ begin
     end;
 
     // append contents of line to the target
-    Target.EnableIndents := Indent;
-    Target.AppendIndentedLines(Line, True);
+    if AppendText then
+    begin
+      Target.EnableIndents := Indent;
+      Target.AppendIndentedLines(Line, True);
+    end;
   finally
     FreeAndNil(Line);
   end;
