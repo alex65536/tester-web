@@ -38,7 +38,7 @@ type
     FPreprocessor: THtmlPreprocessor;
     FRendered: boolean;
     procedure DoSetVariables; virtual; abstract;
-    procedure DoGetSkeleton(Strings: TStrings); virtual; abstract;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); virtual; abstract;
   public
     property Preprocessor: THtmlPreprocessor read FPreprocessor;
     property Content: string read FContent;
@@ -240,12 +240,12 @@ end;
 
 procedure THtmlPage.Render;
 var
-  Skeleton: TStringList;
+  Skeleton: TIndentTaggedStrings;
 begin
   if FRendered then
     Exit;
   try
-    Skeleton := TStringList.Create;
+    Skeleton := TIndentTaggedStrings.Create;
     try
       DoSetVariables;
       DoGetSkeleton(Skeleton);

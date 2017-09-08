@@ -43,6 +43,7 @@ uses
       ?    If variable with the name [VARNAME] was not found, add empty string
          instead of the variable. Default behaviour is to panic when a variable
          was not found.
+      +    Preprocess the contents of the variable recursively.
     MODIFIERS may not conflict or repeat. VARNAME must contain latin letters,
     numbers and underscores, but not starting with number.
 
@@ -73,6 +74,8 @@ uses
       Combines ~<! and ~-!.
 }
 
+// ToDo : Add recursive preprocessing !
+
 type
   EHtmlPreprocessSyntaxError = class(Exception);
   ERawTextParse = class(Exception);
@@ -85,15 +88,16 @@ type
     FSetRawTextMode: boolean;
     function GetRawText: string;
     procedure SetRawText(AValue: string);
+    function BoolToObj(B: boolean): TObject; inline;
+    function ObjToBool(O: TObject): boolean; inline;
   protected
     procedure InsertItem(Index: integer; const S: string); override; overload;
   public
     property EnableIndents: boolean read FEnableIndents write FEnableIndents;
     function IsIndented(Index: integer): boolean;
-    function GetIndentedLine(Index: integer; const AIndent: string = '';
-      AlwaysIndent: boolean = False): string;
-    function GetIndentedText(const AIndent: string = '';
-      AlwaysIndent: boolean = False; IndentFirstLine: boolean = True): string;
+    procedure AppendSingleLineText(const Contents: string; BreakLine: boolean);
+    procedure AppendIndentedLines(Contents: TIndentTaggedStrings;
+      BreakLine: boolean; const AIndent: string = ''; AlwaysIndent: boolean = False);
     property RawText: string read GetRawText write SetRawText;
     procedure AssignTo(Dest: TPersistent); override;
     constructor Create;
@@ -145,20 +149,16 @@ type
   THtmlPreprocessor = class
   private
     FStorages: TVariableStorageList;
-    FLocalStorage: TVariableStorage;
-    procedure PreprocessLine(const S: string; Target: TIndentTaggedStrings);
+    procedure PreprocessLine(const S: string; Indent: boolean;
+      Target: TIndentTaggedStrings; LocalStorage: TVariableStorage);
   public
     property Storages: TVariableStorageList read FStorages;
-    procedure Preprocess(Source: TStrings; Target: TIndentTaggedStrings;
+    procedure Preprocess(Source, Target: TIndentTaggedStrings;
       Clear: boolean = False); overload;
-    function Preprocess(Source: TStrings): string; overload;
-    procedure PreprocessAndInsert(Source: TStrings; AStorage: TVariableStorage;
-      const Key: string);
+    function Preprocess(Source: TIndentTaggedStrings): string; overload;
     procedure PreprocessFile(const FileName: string; Target: TIndentTaggedStrings);
       overload;
     function PreprocessFile(const FileName: string): string; overload;
-    procedure PreprocessFileAndInsert(const FileName: string;
-      AStorage: TVariableStorage; const Key: string);
     constructor Create;
     destructor Destroy; override;
   end;
@@ -231,15 +231,14 @@ end;
 
 { THtmlPreprocessor }
 
-procedure THtmlPreprocessor.PreprocessLine(const S: string;
-  Target: TIndentTaggedStrings);
+procedure THtmlPreprocessor.PreprocessLine(const S: string; Indent: boolean;
+  Target: TIndentTaggedStrings; LocalStorage: TVariableStorage);
 
 const
   IndentChars = [#0 .. ' '];
 var
-  Indent: boolean;
   RawText: boolean;
-  Line: string;
+  Line: TIndentTaggedStrings;
   WasPos, Pos: integer;
   IndentStr: string;
 
@@ -327,7 +326,7 @@ var
       if EscapeStyle = esJavaScript then
       begin
         // we ignore indentation guides, just escape the contents and put it
-        Line := Line + JsEscapeString(Strings.Text);
+        Line.AppendSingleLineText(JsEscapeString(Strings.Text), False);
       end
       else
       begin
@@ -339,9 +338,9 @@ var
         end;
         // append (with indentation)
         case IndentStyle of
-          isIndent: Line := Line + Strings.GetIndentedText(IndentStr, False, False);
-          isNoIndent: Line := Line + Strings.GetIndentedText('', False, False);
-          isVeryIndent: Line := Line + Strings.GetIndentedText(IndentStr, True, False);
+          isIndent: Line.AppendIndentedLines(Strings, False, IndentStr, False);
+          isNoIndent: Line.AppendIndentedLines(Strings, False, '', False);
+          isVeryIndent: Line.AppendIndentedLines(Strings, False, IndentStr, True);
         end;
       end;
     finally
@@ -385,112 +384,116 @@ var
     Inc(Pos); // skip trailing "'"
 
     // append variable to the local storage
-    FLocalStorage.SetItemAsText(VarName, Content);
+    LocalStorage.SetItemAsText(VarName, Content);
   end;
 
 begin
   // initialize
-  Indent := True;
   RawText := False;
-  Line := '';
+  Line := TIndentTaggedStrings.Create;
   Pos := 1;
 
-  // parse the beginning of the line
-  if (Length(S) >= 3) and (Copy(S, 1, 3) = '~<!') then
-  begin
-    Indent := False;
-    Pos := 4;
-  end
-  else if (Length(S) >= 3) and (Copy(S, 1, 3) = '~-!') then
-  begin
-    RawText := True;
-    Pos := 4;
-  end
-  else if (Length(S) >= 4) and ((Copy(S, 1, 4) = '~<-!') or (Copy(S, 1, 4) = '~-<!')) then
-  begin
-    Indent := False;
-    RawText := True;
-    Pos := 5;
-  end;
-
-  // detect indents
-  WasPos := Pos;
-  while (Pos <= Length(S)) and (S[Pos] in IndentChars) do
-    Inc(Pos);
-  IndentStr := Copy(S, WasPos, Pos - WasPos);
-  Line := Line + IndentStr;
-
-  // parse the rest of the line
-  if RawText then
-    // if raw text - we just append the rest of the line
-    Line := Line + Copy(S, Pos, Length(S) - Pos + 1)
-  else
-  begin
-    // otherwise, parse it
-    while Pos <= Length(S) do
+  try
+    // parse the beginning of the line
+    if (Length(S) >= 3) and (Copy(S, 1, 3) = '~<!') then
     begin
-      if S[Pos] = '~' then
+      Indent := False;
+      Pos := 4;
+    end
+    else if (Length(S) >= 3) and (Copy(S, 1, 3) = '~-!') then
+    begin
+      RawText := True;
+      Pos := 4;
+    end
+    else if (Length(S) >= 4) and ((Copy(S, 1, 4) = '~<-!') or (Copy(S, 1, 4) = '~-<!')) then
+    begin
+      Indent := False;
+      RawText := True;
+      Pos := 5;
+    end;
+
+    // detect indents
+    WasPos := Pos;
+    while (Pos <= Length(S)) and (S[Pos] in IndentChars) do
+      Inc(Pos);
+    IndentStr := Copy(S, WasPos, Pos - WasPos);
+    Line.AppendSingleLineText(IndentStr, False);
+
+    // parse the rest of the line
+    if RawText then
+      // if raw text - we just append the rest of the line
+      Line.AppendSingleLineText(Copy(S, Pos, Length(S) - Pos + 1), False)
+    else
+    begin
+      // otherwise, parse it
+      while Pos <= Length(S) do
       begin
-        if Pos = Length(S) then
-          raise EHtmlPreprocessSyntaxError.Create(SUnclosedVariable);
-        // "~" character
-        if S[Pos + 1] = '~' then
+        if S[Pos] = '~' then
         begin
-          Line := Line + '~';
-          Inc(Pos, 2); // skip "~:"
-          Continue;
-        end;
-        // ":" assignment
-        if S[Pos + 1] = ':' then
-        begin
-          Inc(Pos, 2);
-          ParseAssignment(S, Pos);
-          Continue;
-        end;
-        // otherwise, variable
-        WasPos := Pos;
-        while (Pos <= Length(S)) and (S[Pos] <> ';') do
+          if Pos = Length(S) then
+            raise EHtmlPreprocessSyntaxError.Create(SUnclosedVariable);
+          // "~" character
+          if S[Pos + 1] = '~' then
+          begin
+            Line.AppendSingleLineText('~', False);
+            Inc(Pos, 2); // skip "~:"
+            Continue;
+          end;
+          // ":" assignment
+          if S[Pos + 1] = ':' then
+          begin
+            Inc(Pos, 2);
+            ParseAssignment(S, Pos);
+            Continue;
+          end;
+          // otherwise, variable
+          WasPos := Pos;
+          while (Pos <= Length(S)) and (S[Pos] <> ';') do
+            Inc(Pos);
+          if Pos > Length(S) then
+            raise EHtmlPreprocessSyntaxError.Create(SUnclosedVariable);
           Inc(Pos);
-        if Pos > Length(S) then
-          raise EHtmlPreprocessSyntaxError.Create(SUnclosedVariable);
-        Inc(Pos);
-        ParseAndAppendVariable(Copy(S, WasPos, Pos - WasPos));
-      end
-      else
-      begin
-        Line := Line + S[Pos];
-        Inc(Pos);
+          ParseAndAppendVariable(Copy(S, WasPos, Pos - WasPos));
+        end
+        else
+        begin
+          Line.AppendSingleLineText(S[Pos], False);
+          Inc(Pos);
+        end;
       end;
     end;
-  end;
 
-  // append contents of line to the target
-  Target.EnableIndents := Indent;
-  Target.AddText(Line);
+    // append contents of line to the target
+    Target.EnableIndents := Indent;
+    Target.AppendIndentedLines(Line, True);
+  finally
+    FreeAndNil(Line);
+  end;
 end;
 
-procedure THtmlPreprocessor.Preprocess(Source: TStrings;
-  Target: TIndentTaggedStrings; Clear: boolean);
+procedure THtmlPreprocessor.Preprocess(Source, Target: TIndentTaggedStrings;
+  Clear: boolean);
 var
   I: integer;
+  LocalStorage: TVariableStorage;
 begin
-  FLocalStorage := TTreeVariableStorage.Create;
+  LocalStorage := TTreeVariableStorage.Create;
   try
-    FStorages.Insert(0, FLocalStorage);
+    FStorages.Insert(0, LocalStorage);
     try
       if Clear then
         Target.Clear;
       for I := 0 to Source.Count - 1 do
-        PreprocessLine(Source[I], Target);
+        PreprocessLine(Source[I], Source.IsIndented(I), Target, LocalStorage);
     finally
-      FStorages.Remove(FLocalStorage);
+      FStorages.Remove(LocalStorage);
     end;
   finally
-    FreeAndNil(FLocalStorage);
+    FreeAndNil(LocalStorage);
   end;
 end;
 
-function THtmlPreprocessor.Preprocess(Source: TStrings): string;
+function THtmlPreprocessor.Preprocess(Source: TIndentTaggedStrings): string;
 var
   Target: TIndentTaggedStrings;
 begin
@@ -503,26 +506,12 @@ begin
   end;
 end;
 
-procedure THtmlPreprocessor.PreprocessAndInsert(Source: TStrings;
-  AStorage: TVariableStorage; const Key: string);
-var
-  Target: TIndentTaggedStrings;
-begin
-  Target := TIndentTaggedStrings.Create;
-  try
-    Preprocess(Source, Target);
-    AStorage.SetItemAsStrings(Key, Target);
-  finally
-    FreeAndNil(Target);
-  end;
-end;
-
 procedure THtmlPreprocessor.PreprocessFile(const FileName: string;
   Target: TIndentTaggedStrings);
 var
-  Source: TStringList;
+  Source: TIndentTaggedStrings;
 begin
-  Source := TStringList.Create;
+  Source := TIndentTaggedStrings.Create;
   try
     Source.LoadFromFile(FileName);
     Preprocess(Source, Target);
@@ -539,20 +528,6 @@ begin
   try
     PreprocessFile(FileName, Target);
     Result := Target.Text;
-  finally
-    FreeAndNil(Target);
-  end;
-end;
-
-procedure THtmlPreprocessor.PreprocessFileAndInsert(const FileName: string;
-  AStorage: TVariableStorage; const Key: string);
-var
-  Target: TIndentTaggedStrings;
-begin
-  Target := TIndentTaggedStrings.Create;
-  try
-    PreprocessFile(FileName, Target);
-    AStorage.SetItemAsStrings(Key, Target);
   finally
     FreeAndNil(Target);
   end;
@@ -649,6 +624,16 @@ begin
   FSetRawTextMode := False;
 end;
 
+function TIndentTaggedStrings.BoolToObj(B: boolean): TObject;
+begin
+  Result := TObject(PtrInt(Ord(B)));
+end;
+
+function TIndentTaggedStrings.ObjToBool(O: TObject): boolean;
+begin
+  Result := PtrInt(O) = Ord(True);
+end;
+
 procedure TIndentTaggedStrings.InsertItem(Index: integer; const S: string);
 var
   Line: string;
@@ -657,40 +642,51 @@ begin
   if FSetRawTextMode then
   begin
     ParseRawLine(S, Indented, Line);
-    InsertItem(Index, Line, TObject(PtrInt(Ord(Indented))));
+    InsertItem(Index, Line, BoolToObj(Indented));
   end
   else
-    InsertItem(Index, S, TObject(PtrInt(Ord(EnableIndents))));
+    InsertItem(Index, S, BoolToObj(EnableIndents));
 end;
 
 function TIndentTaggedStrings.IsIndented(Index: integer): boolean;
 begin
-  Result := PtrInt(Objects[Index]) = Ord(True);
+  Result := ObjToBool(Objects[Index]);
 end;
 
-function TIndentTaggedStrings.GetIndentedLine(Index: integer;
-  const AIndent: string; AlwaysIndent: boolean): string;
+procedure TIndentTaggedStrings.AppendSingleLineText(const Contents: string;
+  BreakLine: boolean);
 begin
-  if AlwaysIndent or IsIndented(Index) then
-    Result := AIndent + Strings[Index]
+  if (Count = 0) or BreakLine then
+    Add(Contents)
   else
-    Result := Strings[Index];
+    Strings[Count - 1] := Strings[Count - 1] + Contents;
 end;
 
-function TIndentTaggedStrings.GetIndentedText(const AIndent: string;
-  AlwaysIndent: boolean; IndentFirstLine: boolean): string;
+procedure TIndentTaggedStrings.AppendIndentedLines(Contents: TIndentTaggedStrings;
+  BreakLine: boolean; const AIndent: string; AlwaysIndent: boolean);
 var
+  WasEnableIndents: boolean;
+  ApplyIndent: boolean;
   I: integer;
 begin
-  Result := '';
-  for I := 0 to Count - 1 do
-  begin
-    if I <> 0 then
-      Result := Result + LineEnding;
-    if (I = 0) and (not IndentFirstLine) then
-      Result := Result + Strings[I]
-    else
-      Result := Result + GetIndentedLine(I, AIndent, AlwaysIndent);
+  WasEnableIndents := EnableIndents;
+  try
+    for I := 0 to Contents.Count - 1 do
+    begin
+      if (I = 0) and (not BreakLine) then
+      begin
+        AppendSingleLineText(Contents[I], False);
+        Continue;
+      end;
+      ApplyIndent := AlwaysIndent or Contents.IsIndented(I);
+      EnableIndents := AlwaysIndent or (ApplyIndent and WasEnableIndents);
+      if ApplyIndent then
+        AppendSingleLineText(AIndent + Contents[I], True)
+      else
+        AppendSingleLineText(Contents[I], True);
+    end;
+  finally
+    EnableIndents := WasEnableIndents;
   end;
 end;
 

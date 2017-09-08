@@ -59,6 +59,8 @@ var
   VarName: string;
   Storage: TVariableStorage;
   Preprocessor: THtmlPreprocessor;
+  Content: TIndentTaggedStrings;
+
 begin
   // testing HTML preprocessor
   WriteLn('To quit, enter "quit" instead of VarName');
@@ -73,9 +75,15 @@ begin
       if VarName = 'quit' then
         Break;
       try
-        Preprocessor.PreprocessFileAndInsert('..' + PathDelim + 'test' +
-          PathDelim + VarName + '.htpp', Storage, VarName);
-        WriteLn('Inserted, contents (raw) = ' + LineEnding + Storage.ItemsAsRawText[VarName]);
+        Content := TIndentTaggedStrings.Create;
+        try
+          Preprocessor.PreprocessFile('..' + PathDelim + 'test' +
+            PathDelim + VarName + '.htpp', Content);
+          Storage.SetItemAsStrings(VarName, Content);
+          WriteLn('Inserted, contents (raw) = ' + LineEnding + Content.RawText);
+        finally
+          FreeAndNil(Content);
+        end;
       except
         on E: Exception do
           WriteLn(E.ClassName, ' : ', E.Message);
