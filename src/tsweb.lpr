@@ -42,7 +42,10 @@ uses
   tswebhtmlpages,
   fpmimetypes,
   page1,
-  page2;
+  page2,
+  navbars,
+  tswebpagesbase,
+  tswebnavbars;
 
 {
 

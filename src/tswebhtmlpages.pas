@@ -25,8 +25,7 @@ unit tswebhtmlpages;
 interface
 
 uses
-  Classes, SysUtils, htmlpages, serverconfig, LazFileUtils, htmlpreprocess,
-  webstrconsts;
+  SysUtils, htmlpages, htmlpreprocess, webstrconsts, tswebpagesbase;
 
 // TODO : Add users and login panel!
 // TODO : Add navbar also!
@@ -72,18 +71,6 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
-  { TTesterHtmlPage }
-
-  TTesterHtmlPage = class(TFeaturedHtmlPage)
-  private
-    FTitle: string;
-  protected
-    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); virtual; abstract;
-    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
-  public
-    property Title: string read FTitle write FTitle;
-  end;
-
   { TSimpleHtmlPage }
 
   TSimpleHtmlPage = class(TTesterHtmlPage)
@@ -96,18 +83,7 @@ type
     property TextContent: string read FTextContent write FTextContent;
   end;
 
-var
-  DocumentRoot: string = '/';
-  DataRoot: string = '/data';
-
-function TemplateLocation(const TemplateName: string): string;
-
 implementation
-
-function TemplateLocation(const TemplateName: string): string;
-begin
-  Result := AppendPathDelim(Config.Location_TemplatesDir) + TemplateName + '.html';
-end;
 
 { TSimpleHtmlPage }
 
@@ -134,7 +110,7 @@ begin
   try
     with (Parent as TTesterHtmlPage) do
     begin
-      DoGetInnerContents(Strings);
+      GetInnerContents(Strings);
       PageParts.SetItemAsStrings('content', Strings);
     end;
   finally
@@ -145,13 +121,6 @@ end;
 procedure TContentFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   ADependencies.Add(TPageBaseFeature);
-end;
-
-{ TTesterHtmlPage }
-
-procedure TTesterHtmlPage.DoGetSkeleton(Strings: TIndentTaggedStrings);
-begin
-  Strings.LoadFromFile(TemplateLocation('skeleton'));
 end;
 
 { TFooterFeature }
