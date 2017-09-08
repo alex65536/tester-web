@@ -71,6 +71,7 @@ end;
 
 constructor TIndexHtmlPage.Create;
 begin
+  inherited Create;
   Title := 'Main Page';
 end;
 

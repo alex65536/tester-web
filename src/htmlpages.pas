@@ -37,12 +37,13 @@ type
     FContent: string;
     FPreprocessor: THtmlPreprocessor;
     FRendered: boolean;
+    function GetContent: string;
   protected
     procedure DoSetVariables; virtual; abstract;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); virtual; abstract;
   public
     property Preprocessor: THtmlPreprocessor read FPreprocessor;
-    property Content: string read FContent;
+    property Content: string read GetContent;
     procedure Render;
     procedure Clear; virtual;
     constructor Create;
@@ -245,6 +246,13 @@ begin
 end;
 
 { THtmlPage }
+
+function THtmlPage.GetContent: string;
+begin
+  if not FRendered then
+    Render;
+  Result := FContent;
+end;
 
 procedure THtmlPage.Render;
 var
