@@ -3,8 +3,6 @@ object IndexModule: TIndexModule
   Actions = <>
   OnRequest = DataModuleRequest
   CreateSession = True
-  OnNewSession = DataModuleNewSession
-  OnSessionExpired = DataModuleSessionExpired
   Height = 150
   HorizontalOffset = 316
   VerticalOffset = 250

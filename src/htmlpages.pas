@@ -37,6 +37,7 @@ type
     FContent: string;
     FPreprocessor: THtmlPreprocessor;
     FRendered: boolean;
+  protected
     procedure DoSetVariables; virtual; abstract;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); virtual; abstract;
   public
@@ -71,6 +72,8 @@ type
     destructor Destroy; override;
   end;
 
+  { THtmlPageFeature }
+
   THtmlPageFeature = class
   private
     FParent: TFeaturedHtmlPage;
@@ -92,7 +95,7 @@ type
     FVariables: TVariableStorage;
     FPageParts: TVariableStorage;
     procedure AddFeature(AClass: THtmlPageFeatureClass);
-    procedure AddFeatures; virtual; abstract;
+    procedure AddFeatures; virtual;
     procedure DoSetVariables; override;
     procedure StartupVariablesInitialize; virtual;
   public
@@ -110,6 +113,11 @@ implementation
 procedure TFeaturedHtmlPage.AddFeature(AClass: THtmlPageFeatureClass);
 begin
   FMap.AddAndSatisfy(AClass);
+end;
+
+procedure TFeaturedHtmlPage.AddFeatures;
+begin
+  // do nothing
 end;
 
 procedure TFeaturedHtmlPage.DoSetVariables;

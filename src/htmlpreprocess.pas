@@ -127,6 +127,7 @@ type
     property ItemsAsText[Key: string]: string read GetItemAsText write SetItemAsText;
     property ItemsAsRawText[Key: string]: string
       read GetItemAsRawText write SetItemAsRawText;
+    procedure SetFromFile(const Key, FileName: string);
   end;
 
   { TTreeVariableStorage }
@@ -688,6 +689,19 @@ procedure TVariableStorage.SetItemAsStrings(const Key: string;
   Strings: TIndentTaggedStrings);
 begin
   SetItemAsRawText(Key, Strings.RawText);
+end;
+
+procedure TVariableStorage.SetFromFile(const Key, FileName: string);
+var
+  Strings: TIndentTaggedStrings;
+begin
+  Strings := TIndentTaggedStrings.Create;
+  try
+    Strings.LoadFromFile(FileName);
+    SetItemAsStrings(Key, Strings);
+  finally
+    FreeAndNil(Strings);
+  end;
 end;
 
 function TVariableStorage.GetItemAsText(const Key: string): string;

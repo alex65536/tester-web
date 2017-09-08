@@ -24,125 +24,167 @@ unit tswebhtmlpages;
 
 interface
 
-// Everything is commented and waiting for better times ...
+uses
+  Classes, SysUtils, htmlpages, serverconfig, LazFileUtils, htmlpreprocess,
+  webstrconsts;
 
-//uses
-//  Classes, SysUtils, htmlpages, serverconfig, LazFileUtils, htmlpreprocess,
-//  webstrconsts;
-//
-//// TODO : Add users and login panel!
-//// TODO : Add navbar also!
-//
-//type
-//
-//  { TTesterPageFeature }
-//
-//  TTesterPageFeature = class(THtmlPageFeature)
-//  protected
-//    function TemplateLocation(const TemplateName: string): string;
-//  end;
-//
-//  { TPageBaseFeature }
-//
-//  TPageBaseFeature = class(TTesterPageFeature)
-//  public
-//    procedure Satisfy; override;
-//    procedure DependsOn({%H-}ADependencies: THtmlPageFeatureList); override;
-//  end;
-//
-//  { THeaderFeature }
-//
-//  THeaderFeature = class(TTesterPageFeature)
-//  public
-//    procedure Satisfy; override;
-//    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
-//  end;
-//
-//  { TFooterFeature }
-//
-//  TFooterFeature = class(TTesterPageFeature)
-//  public
-//    procedure Satisfy; override;
-//    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
-//  end;
-//
-//  { TTesterHtmlPage }
-//
-//  TTesterHtmlPage = class(TFeaturedHtmlPage)
-//  private
-//    FTitle: string;
-//  protected
-//    procedure DoGetContents(Strings: TIndentTaggedStrings); virtual; abstract;
-//  public
-//    property Title: string read FTitle write FTitle;
-//  end;
+// TODO : Add users and login panel!
+// TODO : Add navbar also!
+
+type
+
+  { TTesterPageFeature }
+
+  TTesterPageFeature = class(THtmlPageFeature)
+  protected
+    procedure LoadPagePart(const VarName: string);
+  end;
+
+  { TPageBaseFeature }
+
+  TPageBaseFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn({%H-}ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { THeaderFeature }
+
+  THeaderFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TFooterFeature }
+
+  TFooterFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TContentFeature }
+
+  TContentFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TTesterHtmlPage }
+
+  TTesterHtmlPage = class(TFeaturedHtmlPage)
+  private
+    FTitle: string;
+  protected
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); virtual; abstract;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Title: string read FTitle write FTitle;
+  end;
 
 var
   DocumentRoot: string = '/';
   DataRoot: string = '/data';
 
+function TemplateLocation(const TemplateName: string): string;
+
 implementation
 
-//{ TFooterFeature }
-//
-//procedure TFooterFeature.Satisfy;
-//begin
-//  with Parent do
-//  begin
-//    Variables.ItemsAsText['copyright'] := SCopyright;
-//    Variables.ItemsAsText['license'] := ;
-//    Preprocessor.PreprocessFileAndInsert(TemplateLocation('footer'), PageParts, 'footer');
-//  end;
-//end;
-//
-//procedure TFooterFeature.DependsOn(ADependencies: THtmlPageFeatureList);
-//begin
-//  ADependencies.Add(TPageBaseFeature);
-//end;
-//
-//{ THeaderFeature }
-//
-//procedure THeaderFeature.Satisfy;
-//begin
-//  with Parent do
-//  begin
-//    Preprocessor.PreprocessFileAndInsert(TemplateLocation('header'), PageParts, 'header');
-//     TODO : Add login panel here!
-//  end;
-//end;
-//
-//procedure THeaderFeature.DependsOn(ADependencies: THtmlPageFeatureList);
-//begin
-//  ADependencies.Add(TPageBaseFeature);
-//end;
-//
-//{ TPageBaseFeature }
-//
-//procedure TPageBaseFeature.Satisfy;
-//begin
-//  with Parent.Variables do
-//  begin
-//    ItemsAsText['documentRoot'] := DocumentRoot;
-//    ItemsAsText['dataRoot'] := DataRoot;
-//    if Parent is TTesterHtmlPage then
-//    begin
-//      ItemsAsText['pageHeader'] := (Parent as TTesterHtmlPage).Title;
-//      ItemsAsText['title'] := (Parent as TTesterHtmlPage).Title;
-//    end;
-//  end;
-//end;
-//
-//procedure TPageBaseFeature.DependsOn(ADependencies: THtmlPageFeatureList);
-//begin
-//   do nothing
-//end;
-//
-//{ TTesterPageFeature }
-//
-//function TTesterPageFeature.TemplateLocation(const TemplateName: string): string;
-//begin
-//  Result := AppendPathDelim(Config.Location_TemplatesDir) + TemplateName + '.html';
-//end;
+function TemplateLocation(const TemplateName: string): string;
+begin
+  Result := AppendPathDelim(Config.Location_TemplatesDir) + TemplateName + '.html';
+end;
+
+{ TContentFeature }
+
+procedure TContentFeature.Satisfy;
+var
+  Strings: TIndentTaggedStrings;
+begin
+  Strings := TIndentTaggedStrings.Create;
+  try
+    with (Parent as TTesterHtmlPage) do
+    begin
+      DoGetInnerContents(Strings);
+      PageParts.SetItemAsStrings('content', Strings);
+    end;
+  finally
+    FreeAndNil(Strings);
+  end;
+end;
+
+procedure TContentFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  ADependencies.Add(TPageBaseFeature);
+end;
+
+{ TTesterHtmlPage }
+
+procedure TTesterHtmlPage.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('skeleton'));
+end;
+
+{ TFooterFeature }
+
+procedure TFooterFeature.Satisfy;
+begin
+  with Parent do
+  begin
+    Variables.ItemsAsText['copyright'] := SCopyright;
+    Variables.ItemsAsText['license'] := SLicenseNotice;
+    Variables.ItemsAsText['github'] := SSourcesNotice;
+  end;
+  LoadPagePart('footer');
+end;
+
+procedure TFooterFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  ADependencies.Add(TPageBaseFeature);
+end;
+
+{ THeaderFeature }
+
+procedure THeaderFeature.Satisfy;
+begin
+  LoadPagePart('header');
+  // TODO : Add login panel here!
+end;
+
+procedure THeaderFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  ADependencies.Add(TPageBaseFeature);
+end;
+
+{ TPageBaseFeature }
+
+procedure TPageBaseFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['documentRoot'] := DocumentRoot;
+    ItemsAsText['dataRoot'] := DataRoot;
+    if Parent is TTesterHtmlPage then
+    begin
+      ItemsAsText['pageHeader'] := (Parent as TTesterHtmlPage).Title;
+      ItemsAsText['title'] := (Parent as TTesterHtmlPage).Title;
+    end;
+  end;
+end;
+
+procedure TPageBaseFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  // do nothing
+end;
+
+{ TTesterPageFeature }
+
+procedure TTesterPageFeature.LoadPagePart(const VarName: string);
+begin
+  Parent.PageParts.SetFromFile(VarName, TemplateLocation(VarName));
+end;
 
 end.
 

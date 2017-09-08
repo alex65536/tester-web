@@ -39,7 +39,8 @@ uses
   dateutils,
   fpwebfile,
   htmlpages,
-  tswebhtmlpages;
+  tswebhtmlpages,
+  fpmimetypes;
 
 {
 
@@ -55,55 +56,17 @@ end;
 
 }
 
-var
-  VarName: string;
-  Storage: TVariableStorage;
-  Preprocessor: THtmlPreprocessor;
-  Content: TIndentTaggedStrings;
-
 begin
-  // testing HTML preprocessor
-  WriteLn('To quit, enter "quit" instead of VarName');
-  Storage := TTreeVariableStorage.Create;
-  Preprocessor := THtmlPreprocessor.Create;
-  try
-    Preprocessor.Storages.Add(Storage);
-    while 42 = 42 { True } do
-    begin
-      Write('VarName (will be loaded from ../test/VarName.htpp): ');
-      ReadLn(VarName);
-      if VarName = 'quit' then
-        Break;
-      try
-        Content := TIndentTaggedStrings.Create;
-        try
-          Preprocessor.PreprocessFile('..' + PathDelim + 'test' +
-            PathDelim + VarName + '.htpp', Content);
-          Storage.SetItemAsStrings(VarName, Content);
-          WriteLn('Inserted, contents (raw) = ' + LineEnding + Content.RawText);
-        finally
-          FreeAndNil(Content);
-        end;
-      except
-        on E: Exception do
-          WriteLn(E.ClassName, ' : ', E.Message);
-      end;
-    end;
-  finally
-    FreeAndNil(Storage);
-    FreeAndNil(Preprocessor);
-  end;
-
   //OnGetApplicationName := @DoGetApplicationName;
 
-  // temp code, to test template page everywhere
-  {MimeTypesFile := '/etc/mime.types';
-  RegisterFileLocation('templates', '../templates');
-  RegisterFileLocation('data', '../data');
+  MimeTypes.AddType('text/html', 'html');
+  MimeTypes.AddType('text/css', 'css');
+  MimeTypes.AddType('text/javascript', 'js');
+  RegisterFileLocation('data', Config.Location_DataDir);
 
   Application.Title := 'Tester Web';
   Application.Port := 8080;
   Application.DefaultModuleName := 'index';
   Application.Initialize;
-  Application.Run; }
+  Application.Run;
 end.

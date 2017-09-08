@@ -25,17 +25,26 @@ unit index;
 interface
 
 uses
-  SysUtils, Classes, httpdefs, fpHTTP, fpWeb, fphttpapp;
+  SysUtils, Classes, httpdefs, fpHTTP, fpWeb, fphttpapp, tswebhtmlpages,
+  htmlpreprocess;
 
 type
+
+  { TIndexHtmlPage }
+
+  TIndexHtmlPage = class(TTesterHtmlPage)
+  protected
+    procedure AddFeatures; override;
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
+  public
+    constructor Create;
+  end;
 
   { TIndexModule }
 
   TIndexModule = class(TFPWebModule)
-    procedure DataModuleNewSession(Sender: TObject);
     procedure DataModuleRequest(Sender: TObject; ARequest: TRequest;
       AResponse: TResponse; var Handled: Boolean);
-    procedure DataModuleSessionExpired(Sender: TObject);
   end;
 
 var
@@ -45,34 +54,41 @@ implementation
 
 {$R *.lfm}
 
-{ TIndexModule }
+{ TIndexHtmlPage }
 
-procedure TIndexModule.DataModuleNewSession(Sender: TObject);
+procedure TIndexHtmlPage.AddFeatures;
 begin
-  WriteLn('New Session : ', Session.SessionID);
+  inherited AddFeatures;
+  AddFeature(THeaderFeature);
+  AddFeature(TContentFeature);
+  AddFeature(TFooterFeature);
 end;
+
+procedure TIndexHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
+begin
+  Strings.Add('Hello world!');
+end;
+
+constructor TIndexHtmlPage.Create;
+begin
+  Title := 'Main Page';
+end;
+
+{ TIndexModule }
 
 procedure TIndexModule.DataModuleRequest(Sender: TObject; ARequest: TRequest;
   AResponse: TResponse; var Handled: Boolean);
+var
+  APage: TIndexHtmlPage;
 begin
-  AResponse.Contents.Add('Session id : ' + Session.SessionID + '<br>');
-  AResponse.Contents.Add('Var a = ' + Session.Variables['a'] + '<br>');
-  AResponse.Contents.Add('Var b = ' + Session.Variables['b'] + '<br>');
-  if ARequest.QueryFields.Values['addVar'] <> '' then
-  begin
-    AResponse.Contents.Add('Added variable : ' + ARequest.QueryFields.Values['addVar'] + '<br>');
-    Session.Variables[ARequest.QueryFields.Values['addVar']] := IntToStr(Random(256));
+  APage := TIndexHtmlPage.Create;
+  try
+    Response.ContentType := 'text/html;charset=utf-8';
+    Response.Content := APage.Content;
+    Handled := True;
+  finally
+    FreeAndNil(APage);
   end;
-  if ARequest.QueryFields.Values['stop'] <> '' then
-    Session.Terminate;
-  if ARequest.QueryFields.Values['kill'] <> '' then
-    Application.Terminate;
-  Handled := True;
-end;
-
-procedure TIndexModule.DataModuleSessionExpired(Sender: TObject);
-begin
-  WriteLn('Session expired!');
 end;
 
 initialization
