@@ -1,0 +1,7 @@
+~:unindented='hello!\n~<!I will not be indented!!!'
+
+	Before(~+unindented;)after
+	
+ln1
+ln2
+ln3
