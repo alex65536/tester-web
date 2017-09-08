@@ -1,6 +1,6 @@
 ~:unindented='hello!\n~<!I will not be indented!!!'
 
-	Before(~unindented;)after
+	Before(~+unindented;)after
 	
 ln1
 ln2

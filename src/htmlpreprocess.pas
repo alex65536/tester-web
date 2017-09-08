@@ -72,6 +72,12 @@ uses
     ~<-! or ~-<!
 
       Combines ~<! and ~-!.
+
+    ~X!
+      Indicates that the line will not appear in the preprocessed text. This
+    must appear at the beginning of the line. Note that assignments are working,
+    because the contents of this line are preprocessed, but not added to the
+    resulting text.
 }
 
 // ToDo : Add recursive preprocessing !
@@ -144,13 +150,31 @@ type
     function GetItemAsStrings(const Key: string; Strings: TIndentTaggedStrings): boolean;
   end;
 
+  { TVariableState }
+
+  TVariableState = class
+  private
+    FTree: TStringToPointerTree;
+  public
+    procedure Visit(const VarName: string);
+    procedure Unvisit(const VarName: string);
+    function Visited(const VarName: string): boolean;
+    constructor Create;
+    destructor Destroy; override;
+  end;
+
   { THtmlPreprocessor }
 
   THtmlPreprocessor = class
   private
     FStorages: TVariableStorageList;
     procedure PreprocessLine(const S: string; Indent: boolean;
-      Target: TIndentTaggedStrings; LocalStorage: TVariableStorage);
+      Target: TIndentTaggedStrings; LocalStorage: TVariableStorage;
+      VarState: TVariableState);
+    procedure InternalPreprocessor(Source, Target: TIndentTaggedStrings;
+      VarState: TVariableState);
+    function PreprocessVariable(const VarName: string; Target: TIndentTaggedStrings;
+      VarState: TVariableState): boolean;
   public
     property Storages: TVariableStorageList read FStorages;
     procedure Preprocess(Source, Target: TIndentTaggedStrings;
@@ -189,6 +213,34 @@ begin
       raise ERawTextParse.Create(SInvalidIndentMarker);
   end;
   Line := Copy(S, 2, Length(S) - 1);
+end;
+
+{ TVariableState }
+
+procedure TVariableState.Visit(const VarName: string);
+begin
+  FTree.Values[VarName] := nil;
+end;
+
+procedure TVariableState.Unvisit(const VarName: string);
+begin
+  FTree.Remove(VarName);
+end;
+
+function TVariableState.Visited(const VarName: string): boolean;
+begin
+  Result := FTree.Contains(VarName);
+end;
+
+constructor TVariableState.Create;
+begin
+  FTree := TStringToPointerTree.Create(True);
+end;
+
+destructor TVariableState.Destroy;
+begin
+  FreeAndNil(FTree);
+  inherited Destroy;
 end;
 
 { TTreeVariableStorage }
@@ -232,7 +284,8 @@ end;
 { THtmlPreprocessor }
 
 procedure THtmlPreprocessor.PreprocessLine(const S: string; Indent: boolean;
-  Target: TIndentTaggedStrings; LocalStorage: TVariableStorage);
+  Target: TIndentTaggedStrings; LocalStorage: TVariableStorage;
+  VarState: TVariableState);
 
 const
   IndentChars = [#0 .. ' '];
@@ -274,23 +327,25 @@ var
     IndentStyle: TIndentStyle;
     EscapeStyle: TEscapeStyle;
     PanicIfNotFound: boolean;
+    RecursePreprocess: boolean;
     Pos: integer;
     VarName: string;
     Strings: TIndentTaggedStrings;
     I: integer;
+    Success: boolean;
   begin
     // parse variable modifiers
     IndentStyle := isUnknown;
     EscapeStyle := esUnknown;
     PanicIfNotFound := True;
+    RecursePreprocess := False;
     Pos := 2;
     while Pos < Length(Variable) do
     begin
-      if (Variable[Pos] in ['&', '\', '#']) and (EscapeStyle <> esUnknown) then
-        raise EHtmlPreprocessSyntaxError.CreateFmt(SConflictingModifiers, [Variable]);
-      if (Variable[Pos] in ['<', '=', '>']) and (IndentStyle <> isUnknown) then
-        raise EHtmlPreprocessSyntaxError.CreateFmt(SConflictingModifiers, [Variable]);
-      if (Variable[Pos] = '?') and (not PanicIfNotFound) then
+      if ((Variable[Pos] in ['&', '\', '#']) and (EscapeStyle <> esUnknown)) or
+         ((Variable[Pos] in ['<', '=', '>']) and (IndentStyle <> isUnknown)) or
+         ((Variable[Pos] = '?') and (not PanicIfNotFound)) or
+         ((Variable[Pos] = '+') and RecursePreprocess) then
         raise EHtmlPreprocessSyntaxError.CreateFmt(SConflictingModifiers, [Variable]);
       case Variable[Pos] of
         '&': EscapeStyle := esHTML;
@@ -299,7 +354,8 @@ var
         '=': IndentStyle := isIndent;
         '<': IndentStyle := isNoIndent;
         '>': IndentStyle := isVeryIndent;
-        '?': PanicIfNotFound := False
+        '?': PanicIfNotFound := False;
+        '+': RecursePreprocess := True
         else
           Break;
       end;
@@ -317,12 +373,18 @@ var
     // apply everything and append to line
     Strings := TIndentTaggedStrings.Create;
     try
-      if not FStorages.GetItemAsStrings(VarName, Strings) then
+      // retreive contents (preprocessed or not)
+      if RecursePreprocess then
+        Success := PreprocessVariable(VarName, Strings, VarState)
+      else
+        Success := FStorages.GetItemAsStrings(VarName, Strings);
+      if not Success then
       begin
         if PanicIfNotFound then
           raise EHtmlPreprocessSyntaxError.CreateFmt(SVariableNotFound, [VarName]);
         Strings.RawText := '';
       end;
+      // then, we escape & append
       if EscapeStyle = esJavaScript then
       begin
         // we ignore indentation guides, just escape the contents and put it
@@ -471,8 +533,8 @@ begin
   end;
 end;
 
-procedure THtmlPreprocessor.Preprocess(Source, Target: TIndentTaggedStrings;
-  Clear: boolean);
+procedure THtmlPreprocessor.InternalPreprocessor(Source, Target: TIndentTaggedStrings;
+  VarState: TVariableState);
 var
   I: integer;
   LocalStorage: TVariableStorage;
@@ -481,15 +543,57 @@ begin
   try
     FStorages.Insert(0, LocalStorage);
     try
-      if Clear then
-        Target.Clear;
       for I := 0 to Source.Count - 1 do
-        PreprocessLine(Source[I], Source.IsIndented(I), Target, LocalStorage);
+        PreprocessLine(Source[I], Source.IsIndented(I), Target, LocalStorage,
+          VarState);
     finally
       FStorages.Remove(LocalStorage);
     end;
   finally
     FreeAndNil(LocalStorage);
+  end;
+end;
+
+function THtmlPreprocessor.PreprocessVariable(const VarName: string;
+  Target: TIndentTaggedStrings; VarState: TVariableState): boolean;
+var
+  Source: TIndentTaggedStrings;
+
+  procedure DoPreprocess;
+  begin
+    if VarState.Visited(VarName) then
+      raise EHtmlPreprocessSyntaxError.Create(SLoopVariables);
+    try
+      VarState.Visit(VarName);
+      InternalPreprocessor(Source, Target, VarState);
+    finally
+      VarState.Unvisit(VarName);
+    end;
+  end;
+
+begin
+  Source := TIndentTaggedStrings.Create;
+  try
+    Result := FStorages.GetItemAsStrings(VarName, Source);
+    if Result then
+      DoPreprocess;
+  finally
+    FreeAndNil(Source);
+  end;
+end;
+
+procedure THtmlPreprocessor.Preprocess(Source, Target: TIndentTaggedStrings;
+  Clear: boolean);
+var
+  VarState: TVariableState;
+begin
+  VarState := TVariableState.Create;
+  try
+    if Clear then
+      Target.Clear;
+    InternalPreprocessor(Source, Target, VarState);
+  finally
+    FreeAndNil(VarState);
   end;
 end;
 
