@@ -27,7 +27,6 @@ uses
   tswebsessions,
   hash_3rdparty,
   fphttpapp,
-  index,
   htmlpreprocess,
   escaping,
   webstrconsts,
@@ -36,7 +35,14 @@ uses
   serverconfig,
   tswebcrypto,
   Types,
-  dateutils;
+  dateutils,
+  fpwebfile,
+  htmlpages,
+  tswebfeatures,
+  fpmimetypes,
+  navbars,
+  tswebpagesbase,
+  tswebnavbars, htmlpagewebmodules, webpages;
 
 {
 
@@ -55,8 +61,16 @@ end;
 begin
   //OnGetApplicationName := @DoGetApplicationName;
 
+  MimeTypes.AddType('text/html', 'html');
+  MimeTypes.AddType('text/css', 'css');
+  MimeTypes.AddType('text/javascript', 'js');
+  MimeTypes.AddType('image/png', 'png');
+  RegisterFileLocation('data', Config.Location_DataDir);
+
   Application.Title := 'Tester Web';
   Application.Port := 8080;
+  Application.DefaultModuleName := 'index';
+  Application.PreferModuleName := True;
   Application.Initialize;
   Application.Run;
 end.

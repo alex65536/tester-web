@@ -38,7 +38,17 @@ resourcestring
   SCryptoParamsNotice = 'WARNING: Changing these parameters will lead to loss of ALL passwords, because encryption algorithm will change if you change the parameters.';
   SErrSessionTerminated = 'No web session active: Session was terminated';
   SErrNoSession = 'No web session active: Session was not started';
-
+  SUnescapeExpectedChar = 'Expected character after "\"';
+  SUnescapeUnknownSequence = 'Unknown escape sequence : "%s"';
+  SUnescapeExpectedHexDigits = 'Expected two hex digits after "\x"';
+  SUnterminatedAssignment = 'Unterminated assignment.';
+  SAssignmentQuoteExpected = 'Expected "''" after "=" in assignment.';
+  SUnterminatedQuotes = 'Unterminated quotes in assignment.';
+  SLoopDependencies = 'Loop dependenices detected.';
+  SLoopVariables = 'Variables require each other in loop.';
+  SCopyright = 'Copyright &copy; 2017 Alexander Kernozhitsky';
+  SLicenseNotice = 'Tester Web is licensed under the terms of <a href="~licenseLink;">GNU GPL</a> version 2 or any later version.';
+  SSourcesNotice = 'Sources are available on <a href="~githubLink;">Github</a>.';
 
 implementation
 

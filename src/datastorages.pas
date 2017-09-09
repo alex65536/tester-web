@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, IniFiles, LazFileUtils, Laz2_DOM, Laz2_XMLRead,
-  Laz2_XMLWrite, AvgLvlTree;
+  Laz2_XMLWrite, AvgLvlTree, escaping;
 
 type
 
@@ -63,7 +63,7 @@ type
   { IStorageUser }
 
   IStorageUser = interface
-  ['{D891B260-67E5-46F0-A3E7-D190F2410B4A}']
+    ['{D891B260-67E5-46F0-A3E7-D190F2410B4A}']
     procedure ReloadFromStorage(AStorage: TAbstractDataStorage);
     procedure CommitToStorage(AStorage: TAbstractDataStorage);
   end;
@@ -546,7 +546,8 @@ var
   Section, Ident: string;
 begin
   SplitPath(Path, Section, Ident);
-  Result := FIniFile.ReadString(Section, Ident, Default);
+  Result := JsUnescapeString(FIniFile.ReadString(Section, Ident,
+    JsEscapeString(Default)));
 end;
 
 function TIniDataStorage.ReadBool(const Path: string; Default: boolean): boolean;
@@ -588,7 +589,7 @@ var
   Section, Ident: string;
 begin
   SplitPath(Path, Section, Ident);
-  FIniFile.WriteString(Section, Ident, Value);
+  FIniFile.WriteString(Section, Ident, JsEscapeString(Value));
   inherited WriteString(Path, Value);
 end;
 
