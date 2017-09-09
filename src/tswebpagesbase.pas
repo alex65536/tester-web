@@ -43,7 +43,7 @@ type
   end;
 
 var
-  DocumentRoot: string = '/';
+  DocumentRoot: string = '';
   DataRoot: string = '/data';
 
 function TemplateLocation(const TemplateName: string): string;

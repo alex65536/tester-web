@@ -67,6 +67,7 @@ begin
   MimeTypes.AddType('text/html', 'html');
   MimeTypes.AddType('text/css', 'css');
   MimeTypes.AddType('text/javascript', 'js');
+  MimeTypes.AddType('image/png', 'png');
   RegisterFileLocation('data', Config.Location_DataDir);
 
   Application.Title := 'Tester Web';

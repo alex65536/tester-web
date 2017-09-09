@@ -25,26 +25,28 @@ unit tswebfeatures;
 interface
 
 uses
-  SysUtils, htmlpages, htmlpreprocess, webstrconsts, tswebpagesbase;
+  SysUtils, htmlpages, htmlpreprocess, webstrconsts, tswebpagesbase,
+  navbars, tswebnavbars;
 
 // TODO : Add users and login panel!
-// TODO : Add navbar also!
 
 type
+
+  { TPageBaseFeature }
+
+  TPageBaseFeature = class(THtmlPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn({%H-}ADependencies: THtmlPageFeatureList); override;
+  end;
 
   { TTesterPageFeature }
 
   TTesterPageFeature = class(THtmlPageFeature)
   protected
     procedure LoadPagePart(const VarName: string);
-  end;
-
-  { TPageBaseFeature }
-
-  TPageBaseFeature = class(TTesterPageFeature)
   public
-    procedure Satisfy; override;
-    procedure DependsOn({%H-}ADependencies: THtmlPageFeatureList); override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
   { THeaderFeature }
@@ -52,7 +54,6 @@ type
   THeaderFeature = class(TTesterPageFeature)
   public
     procedure Satisfy; override;
-    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
   { TFooterFeature }
@@ -60,7 +61,6 @@ type
   TFooterFeature = class(TTesterPageFeature)
   public
     procedure Satisfy; override;
-    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
   { TContentFeature }
@@ -68,22 +68,74 @@ type
   TContentFeature = class(TTesterPageFeature)
   public
     procedure Satisfy; override;
-    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TNavBarFeature }
+
+  TNavBarFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+  end;
+
+  // ToDo : Move TSimpleHtmlPage and TDefaultNavBar out of here !!!
+
+  { TDefaultNavBar }
+
+  TDefaultNavBar = class(TTesterNavBar)
+  protected
+    procedure DoCreateElements; override;
   end;
 
   { TSimpleHtmlPage }
 
-  TSimpleHtmlPage = class(TTesterHtmlPage)
+  TSimpleHtmlPage = class(TTesterHtmlPage, IPageNavBar)
   private
     FTextContent: string;
+    FNavBar: TDefaultNavBar;
   protected
     procedure AddFeatures; override;
     procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
+    procedure DoSetVariables; override;
+    // IPageNavBar
+    function GetNavBar: TNavBar;
+    // IUnknown
+    function QueryInterface(constref iid: tguid; out obj): longint; cdecl;
+    function _AddRef: longint; cdecl;
+    function _Release: longint; cdecl;
   public
     property TextContent: string read FTextContent write FTextContent;
+    procedure Clear; override;
+    constructor Create;
+    destructor Destroy; override;
   end;
 
 implementation
+
+{ TNavBarFeature }
+
+procedure TNavBarFeature.Satisfy;
+var
+  Strings: TIndentTaggedStrings;
+  NavBarIntf: IPageNavBar;
+begin
+  NavBarIntf := Parent as IPageNavBar;
+  Strings := TIndentTaggedStrings.Create;
+  try
+    NavBarIntf.NavBar.GetContents(Strings);
+    Parent.PageParts.SetItemAsStrings('nav', Strings);
+  finally
+    FreeAndNil(Strings);
+  end;
+end;
+
+{ TDefaultNavBar }
+
+procedure TDefaultNavBar.DoCreateElements;
+begin
+  AddElement('Main Page', '~documentRoot;/index');
+  AddElement('Page 1', '~documentRoot;/page1');
+  AddElement('Page 2', '~documentRoot;/page2');
+end;
 
 { TSimpleHtmlPage }
 
@@ -91,6 +143,7 @@ procedure TSimpleHtmlPage.AddFeatures;
 begin
   inherited AddFeatures;
   AddFeature(THeaderFeature);
+  AddFeature(TNavBarFeature);
   AddFeature(TContentFeature);
   AddFeature(TFooterFeature);
 end;
@@ -98,6 +151,53 @@ end;
 procedure TSimpleHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
 begin
   Strings.Text := FTextContent;
+end;
+
+procedure TSimpleHtmlPage.DoSetVariables;
+begin
+  FNavBar.ActiveCaption := Title;
+  inherited DoSetVariables;
+end;
+
+function TSimpleHtmlPage.GetNavBar: TNavBar;
+begin
+  Result := FNavBar;
+end;
+
+function TSimpleHtmlPage.QueryInterface(constref iid: tguid; out obj): longint; cdecl;
+begin
+  if GetInterface(IID, Obj) then
+    Result := 0
+  else
+    Result := E_NOINTERFACE;
+end;
+
+function TSimpleHtmlPage._AddRef: longint; cdecl;
+begin
+  Result := -1;
+end;
+
+function TSimpleHtmlPage._Release: longint; cdecl;
+begin
+  Result := -1;
+end;
+
+procedure TSimpleHtmlPage.Clear;
+begin
+  inherited Clear;
+  FNavBar.Clear;
+end;
+
+constructor TSimpleHtmlPage.Create;
+begin
+  inherited Create;
+  FNavBar := TDefaultNavBar.Create(Self);
+end;
+
+destructor TSimpleHtmlPage.Destroy;
+begin
+  FreeAndNil(FNavBar);
+  inherited Destroy;
 end;
 
 { TContentFeature }
@@ -118,11 +218,6 @@ begin
   end;
 end;
 
-procedure TContentFeature.DependsOn(ADependencies: THtmlPageFeatureList);
-begin
-  ADependencies.Add(TPageBaseFeature);
-end;
-
 { TFooterFeature }
 
 procedure TFooterFeature.Satisfy;
@@ -136,22 +231,12 @@ begin
   LoadPagePart('footer');
 end;
 
-procedure TFooterFeature.DependsOn(ADependencies: THtmlPageFeatureList);
-begin
-  ADependencies.Add(TPageBaseFeature);
-end;
-
 { THeaderFeature }
 
 procedure THeaderFeature.Satisfy;
 begin
   LoadPagePart('header');
   // TODO : Add login panel here!
-end;
-
-procedure THeaderFeature.DependsOn(ADependencies: THtmlPageFeatureList);
-begin
-  ADependencies.Add(TPageBaseFeature);
 end;
 
 { TPageBaseFeature }
@@ -180,6 +265,11 @@ end;
 procedure TTesterPageFeature.LoadPagePart(const VarName: string);
 begin
   Parent.PageParts.SetFromFile(VarName, TemplateLocation(VarName));
+end;
+
+procedure TTesterPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  ADependencies.Add(TPageBaseFeature);
 end;
 
 end.

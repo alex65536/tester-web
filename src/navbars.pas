@@ -55,13 +55,14 @@ type
     FElements: TNavBarElementList;
   protected
     procedure BuildElementsList(Strings: TIndentTaggedStrings);
-    procedure CreateElements; virtual; abstract;
+    procedure DoCreateElements; virtual; abstract;
     procedure DoFillVariables; override;
     function DoCreateElement(AParent: THtmlPage): TNavBarElement; virtual; abstract;
   public
     property ActiveCaption: string read FActiveCaption write FActiveCaption;
     property Elements: TNavBarElementList read FElements;
     function CreateElement(const ACaption, ALink: string): TNavBarElement;
+    function AddElement(const ACaption, ALink: string): TNavBarElement;
     constructor Create(AParent: THtmlPage);
     destructor Destroy; override;
   end;
@@ -100,7 +101,12 @@ begin
   begin
     Item := TIndentTaggedStrings.Create;
     try
-      FElements[I].GetContents(Item);
+      with FElements[I] do
+      begin
+        Active := Self.ActiveCaption = Caption;
+        GetContents(Item);
+        Clear;
+      end;
       Strings.AppendIndentedLines(Item, True);
     finally
       FreeAndNil(Item);
@@ -127,18 +133,23 @@ begin
   try
     Result.Caption := ACaption;
     Result.Link := ALink;
-    Result.Active := ACaption = ActiveCaption;
   except
     FreeAndNil(Result);
     raise;
   end;
 end;
 
+function TNavBar.AddElement(const ACaption, ALink: string): TNavBarElement;
+begin
+  Elements.Add(CreateElement(ACaption, ALink));
+  Result := Elements.Last;
+end;
+
 constructor TNavBar.Create(AParent: THtmlPage);
 begin
   inherited Create(AParent);
   FElements := TNavBarElementList.Create(True);
-  CreateElements;
+  DoCreateElements;
 end;
 
 destructor TNavBar.Destroy;

@@ -141,6 +141,7 @@ var
 begin
   Source := TIndentTaggedStrings.Create;
   try
+    DoFillVariables;
     DoGetSkeleton(Source);
     Parent.Preprocessor.Preprocess(Source, Strings);
   finally
