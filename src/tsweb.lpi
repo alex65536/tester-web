@@ -45,80 +45,67 @@
         <PackageName Value="FCL"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="16">
+    <Units Count="15">
       <Unit0>
         <Filename Value="tsweb.lpr"/>
         <IsPartOfProject Value="True"/>
       </Unit0>
       <Unit1>
-        <Filename Value="index.pas"/>
+        <Filename Value="htmlpreprocess.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="IndexModule"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="DataModule"/>
       </Unit1>
       <Unit2>
-        <Filename Value="htmlpreprocess.pas"/>
+        <Filename Value="escaping.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
       <Unit3>
-        <Filename Value="escaping.pas"/>
+        <Filename Value="webstrconsts.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit3>
       <Unit4>
-        <Filename Value="webstrconsts.pas"/>
+        <Filename Value="datastorages.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit4>
       <Unit5>
-        <Filename Value="datastorages.pas"/>
+        <Filename Value="serverconfig.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit5>
       <Unit6>
-        <Filename Value="serverconfig.pas"/>
+        <Filename Value="tswebcrypto.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit6>
       <Unit7>
-        <Filename Value="tswebcrypto.pas"/>
+        <Filename Value="tswebsessions.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit7>
       <Unit8>
-        <Filename Value="tswebsessions.pas"/>
+        <Filename Value="htmlpages.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit8>
       <Unit9>
-        <Filename Value="htmlpages.pas"/>
+        <Filename Value="tswebfeatures.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit9>
       <Unit10>
-        <Filename Value="tswebfeatures.pas"/>
+        <Filename Value="navbars.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit10>
       <Unit11>
-        <Filename Value="page1.pas"/>
+        <Filename Value="tswebpagesbase.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="Page1Module"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="DataModule"/>
       </Unit11>
       <Unit12>
-        <Filename Value="page2.pas"/>
+        <Filename Value="tswebnavbars.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="Page2Module"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="DataModule"/>
       </Unit12>
       <Unit13>
-        <Filename Value="navbars.pas"/>
+        <Filename Value="htmlpagewebmodules.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit13>
       <Unit14>
-        <Filename Value="tswebpagesbase.pas"/>
+        <Filename Value="webpages.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit14>
-      <Unit15>
-        <Filename Value="tswebnavbars.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit15>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

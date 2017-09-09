@@ -27,7 +27,6 @@ uses
   tswebsessions,
   hash_3rdparty,
   fphttpapp,
-  index,
   htmlpreprocess,
   escaping,
   webstrconsts,
@@ -41,11 +40,9 @@ uses
   htmlpages,
   tswebfeatures,
   fpmimetypes,
-  page1,
-  page2,
   navbars,
   tswebpagesbase,
-  tswebnavbars;
+  tswebnavbars, htmlpagewebmodules, webpages;
 
 {
 

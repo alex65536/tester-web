@@ -26,7 +26,7 @@ interface
 
 uses
   SysUtils, htmlpages, htmlpreprocess, webstrconsts, tswebpagesbase,
-  navbars, tswebnavbars;
+  navbars;
 
 // TODO : Add users and login panel!
 
@@ -77,38 +77,6 @@ type
     procedure Satisfy; override;
   end;
 
-  // ToDo : Move TSimpleHtmlPage and TDefaultNavBar out of here !!!
-
-  { TDefaultNavBar }
-
-  TDefaultNavBar = class(TTesterNavBar)
-  protected
-    procedure DoCreateElements; override;
-  end;
-
-  { TSimpleHtmlPage }
-
-  TSimpleHtmlPage = class(TTesterHtmlPage, IPageNavBar)
-  private
-    FTextContent: string;
-    FNavBar: TDefaultNavBar;
-  protected
-    procedure AddFeatures; override;
-    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
-    procedure DoSetVariables; override;
-    // IPageNavBar
-    function GetNavBar: TNavBar;
-    // IUnknown
-    function QueryInterface(constref iid: tguid; out obj): longint; cdecl;
-    function _AddRef: longint; cdecl;
-    function _Release: longint; cdecl;
-  public
-    property TextContent: string read FTextContent write FTextContent;
-    procedure Clear; override;
-    constructor Create;
-    destructor Destroy; override;
-  end;
-
 implementation
 
 { TNavBarFeature }
@@ -126,78 +94,6 @@ begin
   finally
     FreeAndNil(Strings);
   end;
-end;
-
-{ TDefaultNavBar }
-
-procedure TDefaultNavBar.DoCreateElements;
-begin
-  AddElement('Main Page', '~documentRoot;/index');
-  AddElement('Page 1', '~documentRoot;/page1');
-  AddElement('Page 2', '~documentRoot;/page2');
-end;
-
-{ TSimpleHtmlPage }
-
-procedure TSimpleHtmlPage.AddFeatures;
-begin
-  inherited AddFeatures;
-  AddFeature(THeaderFeature);
-  AddFeature(TNavBarFeature);
-  AddFeature(TContentFeature);
-  AddFeature(TFooterFeature);
-end;
-
-procedure TSimpleHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
-begin
-  Strings.Text := FTextContent;
-end;
-
-procedure TSimpleHtmlPage.DoSetVariables;
-begin
-  FNavBar.ActiveCaption := Title;
-  inherited DoSetVariables;
-end;
-
-function TSimpleHtmlPage.GetNavBar: TNavBar;
-begin
-  Result := FNavBar;
-end;
-
-function TSimpleHtmlPage.QueryInterface(constref iid: tguid; out obj): longint; cdecl;
-begin
-  if GetInterface(IID, Obj) then
-    Result := 0
-  else
-    Result := E_NOINTERFACE;
-end;
-
-function TSimpleHtmlPage._AddRef: longint; cdecl;
-begin
-  Result := -1;
-end;
-
-function TSimpleHtmlPage._Release: longint; cdecl;
-begin
-  Result := -1;
-end;
-
-procedure TSimpleHtmlPage.Clear;
-begin
-  inherited Clear;
-  FNavBar.Clear;
-end;
-
-constructor TSimpleHtmlPage.Create;
-begin
-  inherited Create;
-  FNavBar := TDefaultNavBar.Create(Self);
-end;
-
-destructor TSimpleHtmlPage.Destroy;
-begin
-  FreeAndNil(FNavBar);
-  inherited Destroy;
 end;
 
 { TContentFeature }

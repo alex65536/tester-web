@@ -37,17 +37,25 @@ type
     FContent: string;
     FPreprocessor: THtmlPreprocessor;
     FRendered: boolean;
+    FRequest: TRequest;
+    FResponse: TResponse;
+    FSession: TCustomSession;
     function GetContent: string;
   protected
     procedure DoSetVariables; virtual; abstract;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); virtual; abstract;
+    procedure DoUpdateRequest; virtual;
   public
+    property Request: TRequest read FRequest write FRequest;
+    property Response: TResponse read FResponse write FResponse;
+    property Session: TCustomSession read FSession write FSession;
     property Preprocessor: THtmlPreprocessor read FPreprocessor;
     property Content: string read GetContent;
     procedure Render;
     procedure Clear; virtual;
-    procedure UpdateResponse(AResponse: TResponse);
-    constructor Create;
+    procedure UpdateRequest;
+    procedure UpdateResponse;
+    constructor Create; virtual;
     destructor Destroy; override;
   end;
 
@@ -104,7 +112,7 @@ type
     property Variables: TVariableStorage read FVariables;
     property PageParts: TVariableStorage read FPageParts;
     procedure Clear; override;
-    constructor Create;
+    constructor Create; override;
     destructor Destroy; override;
   end;
 
@@ -310,6 +318,11 @@ begin
   Result := FContent;
 end;
 
+procedure THtmlPage.DoUpdateRequest;
+begin
+  // do nothing
+end;
+
 procedure THtmlPage.Render;
 var
   Skeleton: TIndentTaggedStrings;
@@ -337,10 +350,15 @@ begin
   FRendered := False;
 end;
 
-procedure THtmlPage.UpdateResponse(AResponse: TResponse);
+procedure THtmlPage.UpdateRequest;
 begin
-  AResponse.ContentType := 'text/html;charset=utf-8';
-  AResponse.Content := Content;
+  DoUpdateRequest;
+end;
+
+procedure THtmlPage.UpdateResponse;
+begin
+  Response.ContentType := 'text/html;charset=utf-8';
+  Response.Content := Content;
 end;
 
 constructor THtmlPage.Create;
