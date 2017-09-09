@@ -78,6 +78,10 @@ uses
     must appear at the beginning of the line. Note that assignments are working,
     because the contents of this line are preprocessed, but not added to the
     resulting text.
+
+    ~C!
+      If the line after preprocessing contains only separators, then it works as
+    ~X!. Otherwise, this option is just ignored.
 }
 
 type
@@ -456,14 +460,29 @@ var
     LocalStorage.SetItemAsText(VarName, Content);
   end;
 
+  function IsLineEmpty: boolean;
+  var
+    I: integer;
+    C: char;
+  begin
+    Result := False;
+    for I := 0 to Line.Count - 1 do
+      for C in Line[I] do
+        if not (C in IndentChars) then
+          Exit;
+    Result := True;
+  end;
+
 var
   RawText: boolean;
   WasPos, Pos: integer;
   AppendText: boolean;
+  CheckEmpty: boolean;
 begin
   // initialize
   RawText := False;
   AppendText := True;
+  CheckEmpty := False;
   Line := TIndentTaggedStrings.Create;
   Pos := 1;
 
@@ -472,6 +491,11 @@ begin
     if (Length(S) >= 3) and (Copy(S, 1, 3) = '~X!') then
     begin
       AppendText := False;
+      Pos := 4;
+    end
+    else if (Length(S) >= 3) and (Copy(S, 1, 3) = '~C!') then
+    begin
+      CheckEmpty := True;
       Pos := 4;
     end
     else if (Length(S) >= 3) and (Copy(S, 1, 3) = '~<!') then
@@ -541,6 +565,10 @@ begin
         end;
       end;
     end;
+
+    // if  set ~C!, check for empty
+    if CheckEmpty then
+      AppendText := not IsLineEmpty;
 
     // append contents of line to the target
     if AppendText then
