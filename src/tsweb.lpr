@@ -39,7 +39,7 @@ uses
   dateutils,
   fpwebfile,
   htmlpages,
-  tswebhtmlpages,
+  tswebfeatures,
   fpmimetypes,
   page1,
   page2,

@@ -25,7 +25,7 @@ unit page1;
 interface
 
 uses
-  SysUtils, Classes, httpdefs, fpHTTP, fpWeb, tswebhtmlpages, dateutils;
+  SysUtils, Classes, httpdefs, fpHTTP, fpWeb, tswebfeatures, dateutils;
 
 type
 

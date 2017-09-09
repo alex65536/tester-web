@@ -25,7 +25,7 @@ unit index;
 interface
 
 uses
-  SysUtils, Classes, httpdefs, fpHTTP, fpWeb, fphttpapp, tswebhtmlpages,
+  SysUtils, Classes, httpdefs, fpHTTP, fpWeb, fphttpapp, tswebfeatures,
   dateutils;
 
 type
