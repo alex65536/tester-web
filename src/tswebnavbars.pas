@@ -25,7 +25,7 @@ unit tswebnavbars;
 interface
 
 uses
-  Classes, SysUtils, navbars, htmlpreprocess, tswebpagesbase;
+  Classes, SysUtils, navbars, htmlpages, htmlpreprocess, tswebpagesbase;
 
 type
 
@@ -42,7 +42,7 @@ type
   TTesterNavBar = class(TNavBar)
   protected
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
-    function DoCreateElement(AParent: TNavBar): TNavBarElement; override;
+    function DoCreateElement(AParent: THtmlPage): TNavBarElement; override;
   end;
 
 implementation
@@ -54,7 +54,7 @@ begin
   Strings.LoadFromFile(TemplateLocation('nav'));
 end;
 
-function TTesterNavBar.DoCreateElement(AParent: TNavBar): TNavBarElement;
+function TTesterNavBar.DoCreateElement(AParent: THtmlPage): TNavBarElement;
 begin
   Result := TTesterNavBarElement.Create(AParent);
 end;

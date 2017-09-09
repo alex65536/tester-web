@@ -108,7 +108,61 @@ type
     destructor Destroy; override;
   end;
 
+  { THtmlPageElement }
+
+  THtmlPageElement = class
+  private
+    FStorage: TVariableStorage;
+    FParent: THtmlPage;
+  protected
+    procedure DoFillVariables; virtual; abstract;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); virtual; abstract;
+  public
+    property Storage: TVariableStorage read FStorage;
+    property Parent: THtmlPage read FParent;
+    procedure Clear; virtual;
+    procedure GetContents(Strings: TIndentTaggedStrings);
+    constructor Create(AParent: THtmlPage);
+    destructor Destroy; override;
+  end;
+
 implementation
+
+{ THtmlPageElement }
+
+procedure THtmlPageElement.Clear;
+begin
+  FStorage.Clear;
+end;
+
+procedure THtmlPageElement.GetContents(Strings: TIndentTaggedStrings);
+var
+  Source: TIndentTaggedStrings;
+begin
+  Source := TIndentTaggedStrings.Create;
+  try
+    DoGetSkeleton(Source);
+    Parent.Preprocessor.Preprocess(Source, Strings);
+  finally
+    FreeAndNil(Source);
+  end;
+end;
+
+constructor THtmlPageElement.Create(AParent: THtmlPage);
+begin
+  FParent := AParent;
+  with Parent.Preprocessor do
+  begin
+    FStorage := TTreeVariableStorage.Create(Storages);
+    Storages.Add(FStorage);
+  end;
+end;
+
+destructor THtmlPageElement.Destroy;
+begin
+  FreeAndNil(FStorage);
+  inherited Destroy;
+end;
 
 { TFeaturedHtmlPage }
 

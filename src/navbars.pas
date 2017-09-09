@@ -32,49 +32,35 @@ type
 
   { TNavBarElement }
 
-  TNavBarElement = class
+  TNavBarElement = class(THtmlPageElement)
   private
     FActive: boolean;
-    FStorage: TVariableStorage;
     FCaption: string;
     FLink: string;
-    FParent: TNavBar;
   protected
-    procedure DoFillVariables; virtual;
-    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); virtual; abstract;
+    procedure DoFillVariables; override;
   public
-    property Storage: TVariableStorage read FStorage;
-    property Parent: TNavBar read FParent;
     property Caption: string read FCaption write FCaption;
     property Link: string read FLink write FLink;
     property Active: boolean read FActive write FActive;
-    procedure GetContents(Strings: TIndentTaggedStrings);
-    constructor Create(AParent: TNavBar);
-    destructor Destroy; override;
   end;
 
   TNavBarElementList = specialize TFPGObjectList<TNavBarElement>;
 
   { TNavBar }
 
-  TNavBar = class
+  TNavBar = class(THtmlPageElement)
   private
     FActiveCaption: string;
-    FStorage: TVariableStorage;
     FElements: TNavBarElementList;
-    FParent: THtmlPage;
   protected
-    property Storage: TVariableStorage read FStorage;
     procedure BuildElementsList(Strings: TIndentTaggedStrings);
     procedure CreateElements; virtual; abstract;
-    procedure DoFillVariables; virtual;
-    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); virtual; abstract;
-    function DoCreateElement(AParent: TNavBar): TNavBarElement; virtual; abstract;
+    procedure DoFillVariables; override;
+    function DoCreateElement(AParent: THtmlPage): TNavBarElement; virtual; abstract;
   public
     property ActiveCaption: string read FActiveCaption write FActiveCaption;
-    property Parent: THtmlPage read FParent;
     property Elements: TNavBarElementList read FElements;
-    procedure GetContents(Strings: TIndentTaggedStrings);
     function CreateElement(const ACaption, ALink: string): TNavBarElement;
     constructor Create(AParent: THtmlPage);
     destructor Destroy; override;
@@ -94,42 +80,13 @@ implementation
 
 procedure TNavBarElement.DoFillVariables;
 begin
-  with FStorage do
+  with Storage do
   begin
     ItemsAsText['navTitle'] := Caption;
     ItemsAsText['navRef'] := Link;
     if Active then
       ItemsAsText['navIsActive'] := '~#+navActive;';
   end;
-end;
-
-procedure TNavBarElement.GetContents(Strings: TIndentTaggedStrings);
-var
-  Source: TIndentTaggedStrings;
-begin
-  Source := TIndentTaggedStrings.Create;
-  try
-    DoGetSkeleton(Source);
-    Parent.Parent.Preprocessor.Preprocess(Source, Strings);
-  finally
-    FreeAndNil(Source);
-  end;
-end;
-
-constructor TNavBarElement.Create(AParent: TNavBar);
-begin
-  FParent := AParent;
-  with Parent.Parent.Preprocessor do
-  begin
-    FStorage := TTreeVariableStorage.Create(Storages);
-    Storages.Add(FStorage);
-  end;
-end;
-
-destructor TNavBarElement.Destroy;
-begin
-  FreeAndNil(FStorage);
-  inherited Destroy;
 end;
 
 { TNavBar }
@@ -158,28 +115,15 @@ begin
   ListInner := TIndentTaggedStrings.Create;
   try
     BuildElementsList(ListInner);
-    FStorage.SetItemAsStrings('navItems', ListInner);
+    Storage.SetItemAsStrings('navItems', ListInner);
   finally
     FreeAndNil(ListInner);
   end;
 end;
 
-procedure TNavBar.GetContents(Strings: TIndentTaggedStrings);
-var
-  Source: TIndentTaggedStrings;
-begin
-  Source := TIndentTaggedStrings.Create;
-  try
-    DoGetSkeleton(Source);
-    Parent.Preprocessor.Preprocess(Source, Strings);
-  finally
-    FreeAndNil(Source);
-  end;
-end;
-
 function TNavBar.CreateElement(const ACaption, ALink: string): TNavBarElement;
 begin
-  Result := DoCreateElement(Self);
+  Result := DoCreateElement(Parent);
   try
     Result.Caption := ACaption;
     Result.Link := ALink;
@@ -192,19 +136,14 @@ end;
 
 constructor TNavBar.Create(AParent: THtmlPage);
 begin
-  FParent := AParent;
+  inherited Create(AParent);
   FElements := TNavBarElementList.Create(True);
-  with Parent.Preprocessor do
-  begin
-    FStorage := TTreeVariableStorage.Create(Storages);
-    Storages.Add(FStorage);
-  end;
+  CreateElements;
 end;
 
 destructor TNavBar.Destroy;
 begin
   FreeAndNil(FElements);
-  FreeAndNil(FStorage);
   inherited Destroy;
 end;
 
