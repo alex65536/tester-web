@@ -35,7 +35,13 @@ resourcestring
   SConflictingModifiers = 'Conflicting or repeating modifiers at variable "%s".';
   SInvalidVariableName = 'Invalid variable name "%s".';
   SVariableNotFound = 'Variable "%s" was not found.';
-  SCryptoParamsNotice = 'WARNING: Changing these parameters will lead to loss of ALL passwords, because encryption algorithm will change if you change the parameters.';
+  SCryptoParamsNotice = 'WARNING: Changing these parameters will lead to loss ' +
+    'of ALL passwords, because encryption algorithm will change if you change ' +
+    'the parameters.';
+  SOwnerParamsNotice = 'WARNING: do not store your actual password here, use ' +
+    'Change password option right after your first login! This settings must ' +
+    'be set only for INITIAL owner profile setup. It is also good to change ' +
+    'this on something random after first login.';
   SErrSessionTerminated = 'No web session active: Session was terminated';
   SErrNoSession = 'No web session active: Session was not started';
   SUnescapeExpectedChar = 'Expected character after "\"';
@@ -49,6 +55,22 @@ resourcestring
   SCopyright = 'Copyright &copy; 2017 Alexander Kernozhitsky';
   SLicenseNotice = 'Tester Web is licensed under the terms of <a href="~licenseLink;">GNU GPL</a> version 2 or any later version.';
   SSourcesNotice = 'Sources are available on <a href="~githubLink;">Github</a>.';
+  SNoSuchUserRole = 'No such TUserRole!';
+  SUsernameLength = 'Username length must be from %d to %d characters.';
+  SUsernameChars = 'Username must contain only the following characters: %s';
+  SNameLength = 'First or last name length must be from %d to %d characters.';
+  SInvalidUsernamePassword = 'Invalid username or password.';
+  SUnableLogIn = 'Unable to log in (maybe, the user is blocked?)';
+  SUserExists = 'User with name "%s" already exists.';
+  SCannotTerminateServer = 'Cannot terminate server!';
+  SAccessDenied = 'Access denied :|';
+  SUpdateAlreadyUpdating = 'Already updating!';
+  SUpdateNoUpdation = 'Updating is disabled! Use BeginUpdate to enable updating.';
+  SUserDoesNotExist = 'User with name "%s" doesn''t exist!';
+  SAuthDataNotStored = 'Authentification data is not stored!';
+  SNewPasswordsNotEqual = 'New password is not equal to repeated new password.';
+  SAuthRequired = 'This action requires authentification.';
+  SNotImplemented = 'Not implemented!';
 
 implementation
 

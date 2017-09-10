@@ -25,7 +25,7 @@ unit serverconfig;
 interface
 
 uses
-  Classes, SysUtils, datastorages, webstrconsts;
+  serverevents, Classes, SysUtils, datastorages, webstrconsts;
 
 type
 
@@ -44,6 +44,10 @@ type
     function GetCrypto_SCrypt_P: integer;
     function GetLocation_DataDir: string;
     function GetLocation_TemplatesDir: string;
+    function GetOwner_DefaultFirstName: string;
+    function GetOwner_DefaultLastName: string;
+    function GetOwner_DefaultPassword: string;
+    function GetOwner_DefaultUsername: string;
     function GetSession_AliveTime: integer;
     function GetSession_IDLength: integer;
   protected
@@ -68,6 +72,16 @@ type
     // session parameters
     property Session_IDLength: integer read GetSession_IDLength;
     property Session_AliveTime: integer read GetSession_AliveTime;
+
+    // owner default settings
+    // WARNING: don't store your actual password here, use "Change password"
+    // option right after your first login!
+    // This settings must be set only for INITIAL owner profile setup.
+    // It is also good to change this on something random after first login.
+    property Owner_DefaultUsername: string read GetOwner_DefaultUsername;
+    property Owner_DefaultPassword: string read GetOwner_DefaultPassword;
+    property Owner_DefaultFirstName: string read GetOwner_DefaultFirstName;
+    property Owner_DefaultLastName: string read GetOwner_DefaultLastName;
 
     constructor Create;
     procedure Reload;
@@ -123,6 +137,26 @@ begin
   Result := FStorage.ReadString('location.templatesDir', '..' + PathDelim + 'templates');
 end;
 
+function TTesterServerConfig.GetOwner_DefaultFirstName: string;
+begin
+  Result := FStorage.ReadString('owner.defaults.firstName', 'Admin');
+end;
+
+function TTesterServerConfig.GetOwner_DefaultLastName: string;
+begin
+  Result := FStorage.ReadString('owner.defaults.lastName', 'Admin');
+end;
+
+function TTesterServerConfig.GetOwner_DefaultPassword: string;
+begin
+  Result := FStorage.ReadString('owner.defaults.password', 'admin');
+end;
+
+function TTesterServerConfig.GetOwner_DefaultUsername: string;
+begin
+  Result := FStorage.ReadString('owner.defaults.userName', 'admin');
+end;
+
 function TTesterServerConfig.GetSession_AliveTime: integer;
 begin
   Result := FStorage.ReadInteger('session.aliveTime', 60);
@@ -160,6 +194,12 @@ begin
 
     WriteString('location.dataDir', Location_DataDir);
     WriteString('location.templatesDir', Location_TemplatesDir);
+
+    WriteString('owner.defaults.notice', SOwnerParamsNotice);
+    WriteString('owner.defaults.firstName', Owner_DefaultFirstName);
+    WriteString('owner.defaults.lastName', Owner_DefaultLastName);
+    WriteString('owner.defaults.password', Owner_DefaultPassword);
+    WriteString('owner.defaults.userName', Owner_DefaultUsername);
   end;
 end;
 

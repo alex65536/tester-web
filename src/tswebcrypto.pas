@@ -25,14 +25,16 @@ unit tswebcrypto;
 interface
 
 uses
-  Classes, SysUtils, Types, base64;
+  Classes, SysUtils, Types, base64, math;
 
 procedure TrulyRandomSequence(Len: integer; out Bytes: TByteDynArray);
-function RandomSequenceBase64(Len: integer): ansistring;
-function BytesToBase64(const Bytes: TByteDynArray; Len: integer): ansistring;
+function RandomSequenceBase64(Len: integer): string;
+function BytesToBase64(const Bytes: TByteDynArray; Len: integer): string;
 
-function GenSalt: ansistring;
-function HashPassword(const Password, Salt: ansistring): ansistring;
+function GenSalt: string;
+function HashPassword(const Password, Salt: string): string;
+
+function SlowCompareStrings(const A, B: string): boolean;
 
 implementation
 
@@ -58,7 +60,7 @@ uses
 {$EndIf}
   serverconfig, scrypt;
 
-function RandomSequenceBase64(Len: integer): ansistring;
+function RandomSequenceBase64(Len: integer): string;
 var
   ArrLen: integer;
   Bytes: TByteDynArray;
@@ -70,7 +72,7 @@ begin
   Result := Copy(BytesToBase64(Bytes, ArrLen), 1, Len);
 end;
 
-function BytesToBase64(const Bytes: TByteDynArray; Len: integer): ansistring;
+function BytesToBase64(const Bytes: TByteDynArray; Len: integer): string;
 var
   DstStream: TMemoryStream;
   Encoder: TBase64EncodingStream;
@@ -93,12 +95,12 @@ begin
   end;
 end;
 
-function GenSalt: ansistring;
+function GenSalt: string;
 begin
   Result := RandomSequenceBase64(Config.Crypto_SaltLen);
 end;
 
-function HashPassword(const Password, Salt: ansistring): ansistring;
+function HashPassword(const Password, Salt: string): string;
 var
   Hash: TByteDynArray;
   HashLen, NeedLen: integer;
@@ -112,6 +114,17 @@ begin
   SetLength(Hash, HashLen);
   scrypt_kdf(@Password[1], Length(Password), @Salt[1], Length(Salt), N, R, P, Hash[0], HashLen);
   Result := Copy(BytesToBase64(Hash, HashLen), 1, NeedLen);
+end;
+
+function SlowCompareStrings(const A, B: string): boolean;
+var
+  Diff: integer;
+  I: integer;
+begin
+  Diff := Length(A) xor Length(B);
+  for I := 1 to Min(Length(A), Length(B)) do
+    Diff := Diff or (Ord(A[I]) xor Ord(B[I]));
+  Result := Diff = 0;
 end;
 
 {$IfDef __UnixRandomSeq__}

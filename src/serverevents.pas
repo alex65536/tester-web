@@ -18,48 +18,32 @@
   to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
   MA 02111-1307, USA.
 }
-program tsweb;
+unit serverevents;
+
+// WARNING : This unit should be added as early as possible!
 
 {$mode objfpc}{$H+}
 
+interface
+
 uses
-  heaptrc,
-  serverevents,
-  tswebsessions,
-  hash_3rdparty,
-  fphttpapp,
-  htmlpreprocess,
-  escaping,
-  webstrconsts,
-  SysUtils,
-  datastorages,
-  serverconfig,
-  tswebcrypto,
-  Types,
-  dateutils,
-  fpwebfile,
-  htmlpages,
-  tswebfeatures,
-  fpmimetypes,
-  navbars,
-  tswebpagesbase,
-  tswebnavbars,
-  htmlpagewebmodules,
-  webpages,
-  users;
+  Classes, SysUtils;
 
+type
+  TTerminateMethod = procedure of object;
+
+var
+  OnServerTerminate: TTerminateMethod = nil;
+
+implementation
+
+function DoGetApplicationName: string;
 begin
-  MimeTypes.AddType('text/html', 'html');
-  MimeTypes.AddType('text/css', 'css');
-  MimeTypes.AddType('text/javascript', 'js');
-  MimeTypes.AddType('image/png', 'png');
-  RegisterFileLocation('data', Config.Location_DataDir);
+  Result := 'tsweb';
+end;
 
-  Application.Title := 'Tester Web';
-  Application.Port := 8080;
-  Application.DefaultModuleName := 'index';
-  Application.PreferModuleName := True;
-  Application.Initialize;
-  OnServerTerminate := @Application.Terminate;
-  Application.Run;
+initialization
+  OnGetApplicationName := @DoGetApplicationName;
+
 end.
+
