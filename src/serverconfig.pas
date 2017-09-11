@@ -92,6 +92,9 @@ function Config: TTesterServerConfig;
 
 implementation
 
+uses
+  tswebcrypto;
+
 var
   FConfig: TTesterServerConfig;
 
@@ -149,7 +152,9 @@ end;
 
 function TTesterServerConfig.GetOwner_DefaultPassword: string;
 begin
-  Result := FStorage.ReadString('owner.defaults.password', 'admin');
+  Result := FStorage.ReadString('owner.defaults.password', '');
+  if Result = '' then
+    Result := RandomSequenceBase64(12);
 end;
 
 function TTesterServerConfig.GetOwner_DefaultUsername: string;

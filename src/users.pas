@@ -20,7 +20,7 @@
 }
 unit users;
 
-{$mode objfpc}{$H+}{$M+}
+{$mode objfpc}{$H+}{$M+}{$inline on}
 
 interface
 
@@ -32,8 +32,8 @@ type
   EUserAction = class(Exception);
   EUserAuthentificate = class(EUserAction);
   EUserAccessDenied = class(EUserAction);
-  EUserNeedsAuthentification = class(EUserAction);
   EUserValidate = class(EUserAction);
+  EUserNotExist = class(EUserAction);
 
   TUserManager = class;
   TUserRole = (urBlocked, urSimple, urAdmin, urOwner);
@@ -59,6 +59,8 @@ type
     function ValidatePassword(const Password: string): boolean;
     function FullKeyName(const Key: string): string;
     function DoGetRole: TUserRole; virtual;
+    // creating users should only be done via TUserManager!
+    {%H-}constructor Create(AManager: TUserManager; const AUsername: string); virtual;
   public
     property Manager: TUserManager read FManager;
     property Role: TUserRole read FRole;
@@ -71,9 +73,11 @@ type
       const OldPassword, NewPassword, NewPasswordConfirm: string);
     procedure Authentificate(const Password: string);
     procedure NeedsAuthentification;
-    constructor Create(AManager: TUserManager; const AUsername: string); virtual;
     procedure UpdateLastVisit;
+    constructor Create;
   end;
+
+  TUserClass = class of TUser;
 
   { TAdminUser }
 
@@ -100,7 +104,10 @@ type
   TUserManager = class
   private
     FStorage: TAbstractDataStorage;
+    function GetUserCount: integer;
+    procedure IncUserCount;
   protected
+    function CreateUserClass(AClass: TUserClass; const Username: string): TUser;
     function CreateUser(ARole: TUserRole; const Username: string): TUser; virtual;
   public
     property Storage: TAbstractDataStorage read FStorage;
@@ -117,13 +124,26 @@ type
     destructor Destroy; override;
   end;
 
+const
+  UserClassesByRole: array [TUserRole] of TUserClass = (
+    nil,        // urBlocked : we don't create blocked users!
+    TUser,      // urSimple
+    TAdminUser, // urAdmin
+    TOwnerUser  // urOwner
+    );
+
 function UserRoleToStr(ARole: TUserRole): string;
 function StrToUserRole(const S: string): TUserRole;
 
 procedure ValidateUsername(const Username: string);
 procedure ValidateFirstLastName(const Name: string);
 
+function Manager: TUserManager; inline;
+
 implementation
+
+var
+  FManager: TUserManager;
 
 function UserRoleToStr(ARole: TUserRole): string;
 begin
@@ -146,7 +166,7 @@ const
   MaxUsernameLen = 24;
   UsernameAvailableChars = ['A' .. 'Z', 'a' .. 'z', '0' .. '9', '_', '-'];
 
-  function AvailableCharsStr: string;
+  function AvailableCharsStr: string; inline;
   begin
     Result := '[''A'' .. ''Z'', ''a'' .. ''z'', ''0'' .. ''9'', ''_'', ''-'']';
   end;
@@ -170,23 +190,44 @@ begin
     raise EUserValidate.CreateFmt(SNameLength, [MinNameLen, MaxNameLen]);
 end;
 
+function Manager: TUserManager;
+begin
+  Result := FManager;
+end;
+
 { TUserManager }
+
+function TUserManager.GetUserCount: integer;
+begin
+  Result := FStorage.ReadInteger('userCount', 0);
+end;
+
+procedure TUserManager.IncUserCount;
+begin
+  FStorage.WriteInteger('userCount', GetUserCount + 1);
+end;
+
+function TUserManager.CreateUserClass(AClass: TUserClass; const Username: string): TUser;
+begin
+  if AClass = nil then
+    Result := nil
+  else
+    Result := AClass.Create(Self, Username);
+end;
 
 function TUserManager.CreateUser(ARole: TUserRole; const Username: string): TUser;
 begin
-  case ARole of
-    urBlocked: Result := nil; // we don't create blocked users!
-    urSimple: Result := TUser.Create(Self, Username);
-    urAdmin: Result := TAdminUser.Create(Self, Username);
-    urOwner: Result := TOwnerUser.Create(Self, Username)
-    else
-      raise ENotImplemented.Create(SNotImplemented);
-  end;
+  Result := CreateUserClass(UserClassesByRole[ARole], Username);
 end;
 
 function TUserManager.UserExists(const Username: string): boolean;
 begin
-  Result := FStorage.VariableExists(Username + '.role');
+  try
+    ValidateUsername(Username);
+    Result := FStorage.VariableExists(Username + '.role');
+  except
+    Result := False;
+  end;
 end;
 
 function TUserManager.LoadUserFromUsername(const Username: string): TUser;
@@ -212,9 +253,11 @@ procedure TUserManager.AuthentificateSession(ASession: TCustomSession;
 var
   AUser: TUser;
 begin
+  if not UserExists(Username) then
+    raise EUserAuthentificate.Create(SInvalidUsernamePassword);
   AUser := LoadUserFromUsername(Username);
   if AUser = nil then
-    raise EUserAuthentificate.Create(SInvalidUsernamePassword);
+    raise EUserAuthentificate.Create(SUnableLogIn);
   try
     AUser.Authentificate(Password);
     AUser.NeedsAuthentification;
@@ -237,6 +280,7 @@ begin
   // create user
   with CreateUser(ARole, AUsername) do
     try
+      IncUserCount;
       GeneratePassword(APassword);
       BeginUpdate;
       try
@@ -256,14 +300,14 @@ end;
 function TUserManager.GetRole(const AUsername: string): TUserRole;
 begin
   if not UserExists(AUsername) then
-    raise EUserValidate.Create(SUserDoesNotExist);
+    raise EUserNotExist.Create(SUserDoesNotExist);
   Result := StrToUserRole(FStorage.ReadString(AUsername + '.role', ''));
 end;
 
 procedure TUserManager.GrantRole(const AUsername: string; ARole: TUserRole);
 begin
   if not UserExists(AUsername) then
-    raise EUserValidate.Create(SUserDoesNotExist);
+    raise EUserNotExist.Create(SUserDoesNotExist);
   FStorage.WriteString(AUsername + '.role', UserRoleToStr(ARole));
 end;
 
@@ -271,7 +315,7 @@ constructor TUserManager.Create;
 begin
   FStorage := TIniDataStorage.Create('users');
   FStorage.Reload;
-  if FStorage.ReadInteger('userCount', 0) = 0 then
+  if GetUserCount = 0 then
   begin
     // if there is nobody, create an owner.
     with Config do
@@ -303,7 +347,7 @@ end;
 procedure TOwnerUser.TerminateServer;
 begin
   if Assigned(OnServerTerminate) then
-    OnServerTerminate
+    OnServerTerminate()
   else
     raise EUserAction.Create(SCannotTerminateServer);
 end;
@@ -382,12 +426,14 @@ end;
 procedure TUser.SetFirstName(AValue: string);
 begin
   RequireUpdating;
+  ValidateFirstLastName(AValue);
   FFirstName := AValue;
 end;
 
 procedure TUser.SetLastName(AValue: string);
 begin
   RequireUpdating;
+  ValidateFirstLastName(AValue);
   FLastName := AValue;
 end;
 
@@ -443,7 +489,8 @@ end;
 procedure TUser.NeedsAuthentification;
 begin
   if not FAuthentificated then
-    raise EUserAction.Create(SAuthRequired);
+    raise EUserAuthentificate.Create(SAuthRequired);
+  FAuthentificated := False;
 end;
 
 constructor TUser.Create(AManager: TUserManager; const AUsername: string);
@@ -460,5 +507,16 @@ begin
   Manager.Storage.WriteFloat(FullKeyName('lastVisit'), Now);
 end;
 
-end.
+constructor TUser.Create;
+begin
+  // we don't want the users to be created publicly!
+  raise EInvalidOperation.Create(SUserCreationPublic);
+end;
 
+initialization
+  FManager := TUserManager.Create;
+
+finalization
+  FreeAndNil(FManager);
+
+end.

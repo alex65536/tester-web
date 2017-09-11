@@ -70,7 +70,7 @@ resourcestring
   SAuthDataNotStored = 'Authentification data is not stored!';
   SNewPasswordsNotEqual = 'New password is not equal to repeated new password.';
   SAuthRequired = 'This action requires authentification.';
-  SNotImplemented = 'Not implemented!';
+  SUserCreationPublic = 'User creation via public constructor is forbidden!';
 
 implementation
 
