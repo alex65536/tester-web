@@ -47,12 +47,7 @@ type
     procedure AddFeatures; override;
     procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
     procedure DoSetVariables; override;
-    // IPageNavBar
     function GetNavBar: TNavBar;
-    // IUnknown
-    function QueryInterface(constref iid: tguid; out obj): longint; cdecl;
-    function _AddRef: longint; cdecl;
-    function _Release: longint; cdecl;
   public
     property TextContent: string read FTextContent write FTextContent;
     procedure Clear; override;
@@ -150,6 +145,7 @@ procedure TSimpleHtmlPage.AddFeatures;
 begin
   inherited AddFeatures;
   AddFeature(THeaderFeature);
+  AddFeature(TUserBarFeature);
   AddFeature(TNavBarFeature);
   AddFeature(TContentFeature);
   AddFeature(TFooterFeature);
@@ -169,24 +165,6 @@ end;
 function TSimpleHtmlPage.GetNavBar: TNavBar;
 begin
   Result := FNavBar;
-end;
-
-function TSimpleHtmlPage.QueryInterface(constref iid: tguid; out obj): longint; cdecl;
-begin
-  if GetInterface(IID, Obj) then
-    Result := 0
-  else
-    Result := E_NOINTERFACE;
-end;
-
-function TSimpleHtmlPage._AddRef: longint; cdecl;
-begin
-  Result := -1;
-end;
-
-function TSimpleHtmlPage._Release: longint; cdecl;
-begin
-  Result := -1;
 end;
 
 procedure TSimpleHtmlPage.Clear;

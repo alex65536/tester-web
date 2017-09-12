@@ -69,11 +69,13 @@ type
 
   { IPageNavBar }
 
+  {$interfaces CORBA}
   IPageNavBar = interface
     ['{3952DAAF-61C6-4077-A84C-A09305B3FC4F}']
     function GetNavBar: TNavBar;
     property NavBar: TNavBar read GetNavBar;
   end;
+  {$interfaces COM}
 
 implementation
 

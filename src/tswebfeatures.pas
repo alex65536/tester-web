@@ -26,7 +26,7 @@ interface
 
 uses
   SysUtils, htmlpages, htmlpreprocess, webstrconsts, tswebpagesbase,
-  navbars;
+  navbars, users, userpages;
 
 // TODO : Add users and login panel!
 
@@ -77,7 +77,56 @@ type
     procedure Satisfy; override;
   end;
 
+  { TUserBarFeature }
+
+  TUserBarFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TUserBarFeature }
+
+procedure TUserBarFeature.Satisfy;
+var
+  User: TUser;
+begin
+  User := (Parent as TUserPage).User;
+  if User = nil then
+  begin
+    // guest session
+    with Parent.Variables do
+    begin
+      ItemsAsText['loggedAsGuest'] := SLoggedAsGuest;
+      ItemsAsText['doLogIn'] := SUserDoLogIn;
+      ItemsAsText['doRegister'] := SUserDoRegister;
+    end;
+    LoadPagePart('userGuest');
+    Parent.PageParts.ItemsAsText['userBarInner'] := '~#+userGuest;';
+  end
+  else
+  begin
+    // user logged in
+    with Parent.Variables do
+    begin
+      ItemsAsText['loggedAsUser'] := SLoggedAsUser;
+      ItemsAsText['userName'] := User.Username;
+      ItemsAsText['doViewProfile'] := SUserDoViewProfile;
+      ItemsAsText['doLogout'] := SUserDoLogOut;
+    end;
+    LoadPagePart('userLogged');
+    Parent.PageParts.ItemsAsText['userBarInner'] := '~#+userLogged;';
+  end;
+  LoadPagePart('userBox');
+end;
+
+procedure TUserBarFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(THeaderFeature);
+end;
 
 { TNavBarFeature }
 

@@ -59,7 +59,7 @@ table.container {
 	text-decoration: none;
 	padding: 2pt 10pt;
 }
-.userbar a:active {
+.userbar a:hover {
 	background-color: #187842;
 	border-style: groove;
 }

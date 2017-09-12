@@ -71,6 +71,12 @@ resourcestring
   SNewPasswordsNotEqual = 'New password is not equal to repeated new password.';
   SAuthRequired = 'This action requires authentification.';
   SUserCreationPublic = 'User creation via public constructor is forbidden!';
+  SLoggedAsGuest = 'You are a guest.';
+  SLoggedAsUser = 'You are logged in as';
+  SUserDoLogIn = 'Log in';
+  SUserDoLogOut = 'Log out';
+  SUserDoViewProfile = 'View profile';
+  SUserDoRegister = 'Register';
 
 implementation
 

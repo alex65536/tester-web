@@ -35,7 +35,6 @@ uses
   datastorages,
   serverconfig,
   tswebcrypto,
-  Types,
   dateutils,
   fpwebfile,
   htmlpages,
@@ -46,7 +45,8 @@ uses
   tswebnavbars,
   htmlpagewebmodules,
   webpages,
-  users;
+  users,
+  userpages;
 
 begin
   MimeTypes.AddType('text/html', 'html');

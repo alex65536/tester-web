@@ -45,6 +45,7 @@ type
     procedure DoSetVariables; virtual; abstract;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); virtual; abstract;
     procedure DoUpdateRequest; virtual;
+    procedure DoUpdateResponse; virtual;
   public
     property Request: TRequest read FRequest write FRequest;
     property Response: TResponse read FResponse write FResponse;
@@ -323,6 +324,11 @@ begin
   // do nothing
 end;
 
+procedure THtmlPage.DoUpdateResponse;
+begin
+  // do nothing
+end;
+
 procedure THtmlPage.Render;
 var
   Skeleton: TIndentTaggedStrings;
@@ -357,6 +363,7 @@ end;
 
 procedure THtmlPage.UpdateResponse;
 begin
+  DoUpdateResponse;
   Response.ContentType := 'text/html;charset=utf-8';
   Response.Content := Content;
 end;

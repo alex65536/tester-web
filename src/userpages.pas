@@ -18,53 +18,50 @@
   to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
   MA 02111-1307, USA.
 }
-unit tswebpagesbase;
+unit userpages;
 
 {$mode objfpc}{$H+}
 
 interface
 
 uses
-  Classes, SysUtils, userpages, htmlpreprocess, LazFileUtils, serverconfig;
+  Classes, SysUtils, htmlpages, users;
 
 type
 
-  { TTesterHtmlPage }
+  { TUserPage }
 
-  TTesterHtmlPage = class(TUserPage)
+  TUserPage = class(TFeaturedHtmlPage)
   private
-    FTitle: string;
+    FUser: TUser;
   protected
-    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); virtual; abstract;
-    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+    procedure DoUpdateRequest; override;
   public
-    property Title: string read FTitle write FTitle;
-    procedure GetInnerContents(Strings: TIndentTaggedStrings);
+    property User: TUser read FUser;
+    constructor Create; override;
+    destructor Destroy; override;
   end;
-
-var
-  DocumentRoot: string = '';
-  DataRoot: string = '/data';
-
-function TemplateLocation(const TemplateName: string): string;
 
 implementation
 
-function TemplateLocation(const TemplateName: string): string;
+{ TUserPage }
+
+procedure TUserPage.DoUpdateRequest;
 begin
-  Result := AppendPathDelim(Config.Location_TemplatesDir) + TemplateName + '.html';
+  inherited DoUpdateRequest;
+  FUser := Manager.LoadUserFromSession(Session);
 end;
 
-{ TTesterHtmlPage }
-
-procedure TTesterHtmlPage.DoGetSkeleton(Strings: TIndentTaggedStrings);
+constructor TUserPage.Create;
 begin
-  Strings.LoadFromFile(TemplateLocation('skeleton'));
+  inherited Create;
+  FUser := nil;
 end;
 
-procedure TTesterHtmlPage.GetInnerContents(Strings: TIndentTaggedStrings);
+destructor TUserPage.Destroy;
 begin
-  DoGetInnerContents(Strings);
+  FreeAndNil(FUser);
+  inherited Destroy;
 end;
 
 end.
