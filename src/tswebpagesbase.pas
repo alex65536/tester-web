@@ -46,20 +46,23 @@ var
   DocumentRoot: string = '';
   DataRoot: string = '/data';
 
-function TemplateLocation(const TemplateName: string): string;
+function TemplateLocation(const ALocation, AName: string): string;
 
 implementation
 
-function TemplateLocation(const TemplateName: string): string;
+function TemplateLocation(const ALocation, AName: string): string;
+var
+  Dir: string;
 begin
-  Result := AppendPathDelim(Config.Location_TemplatesDir) + TemplateName + '.html';
+  Dir := AppendPathDelim(Config.Location_TemplatesDir) + ALocation;
+  Result := AppendPathDelim(Dir) + AName + '.html';
 end;
 
 { TTesterHtmlPage }
 
 procedure TTesterHtmlPage.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('skeleton'));
+  Strings.LoadFromFile(TemplateLocation('', 'skeleton'));
 end;
 
 procedure TTesterHtmlPage.GetInnerContents(Strings: TIndentTaggedStrings);

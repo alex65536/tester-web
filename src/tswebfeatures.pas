@@ -44,7 +44,7 @@ type
 
   TTesterPageFeature = class(THtmlPageFeature)
   protected
-    procedure LoadPagePart(const VarName: string);
+    procedure LoadPagePart(const ALocation, AName: string);
   public
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
@@ -103,7 +103,7 @@ begin
       ItemsAsText['doLogIn'] := SUserDoLogIn;
       ItemsAsText['doRegister'] := SUserDoRegister;
     end;
-    LoadPagePart('userGuest');
+    LoadPagePart('', 'userGuest');
     Parent.PageParts.ItemsAsText['userBarInner'] := '~#+userGuest;';
   end
   else
@@ -116,10 +116,10 @@ begin
       ItemsAsText['doViewProfile'] := SUserDoViewProfile;
       ItemsAsText['doLogout'] := SUserDoLogOut;
     end;
-    LoadPagePart('userLogged');
+    LoadPagePart('', 'userLogged');
     Parent.PageParts.ItemsAsText['userBarInner'] := '~#+userLogged;';
   end;
-  LoadPagePart('userBox');
+  LoadPagePart('', 'userBox');
 end;
 
 procedure TUserBarFeature.DependsOn(ADependencies: THtmlPageFeatureList);
@@ -173,15 +173,14 @@ begin
     Variables.ItemsAsText['license'] := SLicenseNotice;
     Variables.ItemsAsText['github'] := SSourcesNotice;
   end;
-  LoadPagePart('footer');
+  LoadPagePart('', 'footer');
 end;
 
 { THeaderFeature }
 
 procedure THeaderFeature.Satisfy;
 begin
-  LoadPagePart('header');
-  // TODO : Add login panel here!
+  LoadPagePart('', 'header');
 end;
 
 { TPageBaseFeature }
@@ -207,9 +206,9 @@ end;
 
 { TTesterPageFeature }
 
-procedure TTesterPageFeature.LoadPagePart(const VarName: string);
+procedure TTesterPageFeature.LoadPagePart(const ALocation, AName: string);
 begin
-  Parent.PageParts.SetFromFile(VarName, TemplateLocation(VarName));
+  Parent.PageParts.SetFromFile(AName, TemplateLocation(ALocation, AName));
 end;
 
 procedure TTesterPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
