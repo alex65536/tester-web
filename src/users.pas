@@ -314,7 +314,6 @@ end;
 constructor TUserManager.Create;
 begin
   FStorage := TIniDataStorage.Create('users');
-  FStorage.Reload;
   if GetUserCount = 0 then
   begin
     // if there is nobody, create an owner.
@@ -327,7 +326,6 @@ end;
 
 destructor TUserManager.Destroy;
 begin
-  FStorage.Commit;
   FreeAndNil(FStorage);
   inherited Destroy;
 end;

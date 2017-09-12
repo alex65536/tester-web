@@ -218,7 +218,6 @@ begin
   FConstructing := True;
   FStorage := CreateStorageConfig;
   FStorage.FPOAttachObserver(Self);
-  FStorage.Reload;
   DefaultSettings;
   FStorage.Commit;
   FConstructing := False;
@@ -231,7 +230,6 @@ end;
 
 destructor TTesterServerConfig.Destroy;
 begin
-  FStorage.Commit;
   FreeAndNil(FStorage);
   inherited Destroy;
 end;

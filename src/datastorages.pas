@@ -58,6 +58,8 @@ type
     procedure Commit; virtual; abstract;
     procedure Reload; virtual;
     constructor Create(const AStoragePath: string);
+    procedure AfterConstruction; override;
+    procedure BeforeDestruction; override;
   end;
 
   { IStorageUser }
@@ -687,6 +689,18 @@ end;
 constructor TAbstractDataStorage.Create(const AStoragePath: string);
 begin
   FStoragePath := AStoragePath;
+end;
+
+procedure TAbstractDataStorage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Reload;
+end;
+
+procedure TAbstractDataStorage.BeforeDestruction;
+begin
+  Commit;
+  inherited BeforeDestruction;
 end;
 
 {$Hints On}

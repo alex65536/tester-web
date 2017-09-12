@@ -154,13 +154,11 @@ constructor TTesterWebSessionFactory.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
   CreateDataStorage;
-  FStorage.Reload;
 end;
 
 destructor TTesterWebSessionFactory.Destroy;
 begin
   CleanupSessions;
-  FStorage.Commit;
   FreeAndNil(FStorage);
   inherited Destroy;
 end;
