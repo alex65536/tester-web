@@ -42,13 +42,13 @@ table.container {
 }
 
 
-.login {
+.userbar {
 	background-color: #7CE6AB;
 	font-size: 12pt;
 	text-align: right;
 	width: 100%;
 }
-.login a {
+.userbar a {
 	background-color: #075E2D;
 	border-style: ridge;
 	border-width: 2pt;
@@ -59,7 +59,7 @@ table.container {
 	text-decoration: none;
 	padding: 2pt 10pt;
 }
-.login a:hover {
+.userbar a:active {
 	background-color: #187842;
 	border-style: groove;
 }
@@ -94,10 +94,54 @@ table.container {
 .content {
 	background-color: #E3FFF0;
 	vertical-align: top;
+	height: 100%;
+}
+table.center-wrapper {
+	height: 100%;
+	margin: auto;
+	text-align: center;
 }
 
 
 .footer {
 	background-color: #E3FFF0;
 	text-align: center;
+}
+
+
+.auth-form {
+	background-color: #FFFFFF;
+	border-style: ridge;
+	box-shadow: 1pt 1pt 2pt #43594D;
+	padding: 3pt 8pt;
+	width: auto;
+}
+.auth-error {
+	color: red;
+	font-size: 11pt;
+	margin: 3pt 5pt;
+}
+.auth-field {
+	text-align: right;
+}
+.auth-edit {
+	font-family: inherit;
+}
+.auth-btn {
+	background-color: #47BD7B;
+	border-style: groove;
+	border-width: 2pt;
+	border-color: #1CA757;
+	border-radius: 5pt;
+	box-shadow: 0pt 0pt 1pt #43594D;
+	color: white;
+	font-family: inherit;
+	font-size: inherit;
+	margin: 3pt 5pt;
+	padding: 3pt 10pt;
+	text-decoration: none;
+}
+.auth-btn:active {
+	background-color: #2DA35D;
+	border-style: ridge;
 }
