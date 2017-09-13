@@ -39,7 +39,7 @@ type
 
   { TSimpleHtmlPage }
 
-  TSimpleHtmlPage = class(TTesterHtmlPage, IPageNavBar)
+  TSimpleHtmlPage = class(TContentHtmlPage, IPageNavBar)
   private
     FTextContent: string;
     FNavBar: TDefaultNavBar;

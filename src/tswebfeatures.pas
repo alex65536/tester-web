@@ -44,7 +44,7 @@ type
 
   TTesterPageFeature = class(THtmlPageFeature)
   protected
-    procedure LoadPagePart(const ALocation, AName: string);
+    procedure LoadPagePart(const ALocation, AName: string; AVarName: string = '');
   public
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
@@ -103,8 +103,7 @@ begin
       ItemsAsText['doLogIn'] := SUserDoLogIn;
       ItemsAsText['doRegister'] := SUserDoRegister;
     end;
-    LoadPagePart('', 'userGuest');
-    Parent.PageParts.ItemsAsText['userBarInner'] := '~#+userGuest;';
+    LoadPagePart('', 'userGuest', 'userBarInner');
   end
   else
   begin
@@ -116,8 +115,7 @@ begin
       ItemsAsText['doViewProfile'] := SUserDoViewProfile;
       ItemsAsText['doLogout'] := SUserDoLogOut;
     end;
-    LoadPagePart('', 'userLogged');
-    Parent.PageParts.ItemsAsText['userBarInner'] := '~#+userLogged;';
+    LoadPagePart('', 'userLogged', 'userBarInner');
   end;
   LoadPagePart('', 'userBox');
 end;
@@ -153,7 +151,7 @@ var
 begin
   Strings := TIndentTaggedStrings.Create;
   try
-    with (Parent as TTesterHtmlPage) do
+    with (Parent as TContentHtmlPage) do
     begin
       GetInnerContents(Strings);
       PageParts.SetItemAsStrings('content', Strings);
@@ -206,9 +204,12 @@ end;
 
 { TTesterPageFeature }
 
-procedure TTesterPageFeature.LoadPagePart(const ALocation, AName: string);
+procedure TTesterPageFeature.LoadPagePart(const ALocation, AName: string;
+  AVarName: string);
 begin
-  Parent.PageParts.SetFromFile(AName, TemplateLocation(ALocation, AName));
+  if AVarName = '' then
+    AVarName := AName;
+  Parent.PageParts.SetFromFile(AVarName, TemplateLocation(ALocation, AName));
 end;
 
 procedure TTesterPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);

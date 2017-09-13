@@ -77,6 +77,14 @@ resourcestring
   SUserDoLogOut = 'Log out';
   SUserDoViewProfile = 'View profile';
   SUserDoRegister = 'Register';
+  SAuthUsername = 'Username:';
+  SAuthUsernamePrompt = 'Enter username';
+  SAuthPassword = 'Password:';
+  SAuthPasswordPrompt = 'Enter password';
+  SAuthFirstName = 'First name:';
+  SAuthFirstNamePrompt = 'Enter first name';
+  SAuthLastName = 'Last name:';
+  SAuthLastNamePrompt = 'Enter last name';
 
 implementation
 

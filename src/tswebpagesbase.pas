@@ -35,10 +35,24 @@ type
   private
     FTitle: string;
   protected
-    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); virtual; abstract;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
     property Title: string read FTitle write FTitle;
+  end;
+
+  TAuthHtmlPageBase = class(TTesterHtmlPage)
+  protected
+    FError: string;
+  public
+    property Error: string read FError;
+  end;
+
+  { TContentHtmlPage }
+
+  TContentHtmlPage = class(TTesterHtmlPage)
+  protected
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); virtual; abstract;
+  public
     procedure GetInnerContents(Strings: TIndentTaggedStrings);
   end;
 
@@ -58,16 +72,18 @@ begin
   Result := AppendPathDelim(Dir) + AName + '.html';
 end;
 
+{ TContentHtmlPage }
+
+procedure TContentHtmlPage.GetInnerContents(Strings: TIndentTaggedStrings);
+begin
+  DoGetInnerContents(Strings);
+end;
+
 { TTesterHtmlPage }
 
 procedure TTesterHtmlPage.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
   Strings.LoadFromFile(TemplateLocation('', 'skeleton'));
-end;
-
-procedure TTesterHtmlPage.GetInnerContents(Strings: TIndentTaggedStrings);
-begin
-  DoGetInnerContents(Strings);
 end;
 
 end.

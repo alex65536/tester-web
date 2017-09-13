@@ -46,7 +46,8 @@ uses
   htmlpagewebmodules,
   webpages,
   users,
-  userpages;
+  userpages,
+  tswebauthfeatures;
 
 begin
   MimeTypes.AddType('text/html', 'html');
