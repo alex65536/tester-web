@@ -43,7 +43,68 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TAuthLoginFormFeature }
+
+  TAuthLoginFormFeature = class(TTesterPageFeature)
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TAuthRegisterFormFeature }
+
+  TAuthRegisterFormFeature = class(TTesterPageFeature)
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TAuthConfirmPasswordFeature }
+
+  TAuthConfirmPasswordFeature = class(TTesterPageFeature)
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TAuthConfirmPasswordFeature }
+
+procedure TAuthConfirmPasswordFeature.Satisfy;
+begin
+  LoadPagePart('auth', 'authConfirmPassword', 'authForm');
+end;
+
+procedure TAuthConfirmPasswordFeature.DependsOn(
+  ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TAuthFormFeature);
+end;
+
+{ TAuthRegisterFormFeature }
+
+procedure TAuthRegisterFormFeature.Satisfy;
+begin
+  LoadPagePart('auth', 'authRegister', 'authForm');
+end;
+
+procedure TAuthRegisterFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TAuthFormFeature);
+end;
+
+{ TAuthLoginFormFeature }
+
+procedure TAuthLoginFormFeature.Satisfy;
+begin
+  LoadPagePart('auth', 'authLogin', 'authForm');
+end;
+
+procedure TAuthLoginFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TAuthFormFeature);
+end;
 
 { TAuthBaseFeature }
 
