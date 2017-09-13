@@ -87,6 +87,13 @@ resourcestring
   SAuthLastNamePrompt = 'Enter last name';
   SLoginTitle = 'Log in';
   SRegisterTitle = 'Register';
+  SConfirmPasswordTitle = 'Password confirmation';
+  SLoginRequest = 'To log into the system, please fill in the following form.';
+  SLoginSubmit = 'Log in';
+  SRegisterRequest = 'To register in the system, please fill in the following form.';
+  SRegisterSubmit = 'Register';
+  SConfirmPasswordRequest = 'Please confirm your password to continue.';
+  SConfirmPasswordSubmit = 'Confirm';
 
 implementation
 

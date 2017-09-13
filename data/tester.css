@@ -115,6 +115,7 @@ table.center-wrapper {
 	box-shadow: 1pt 1pt 2pt #43594D;
 	padding: 3pt 8pt;
 	width: auto;
+	display: inline-block;
 }
 .auth-error {
 	color: red;

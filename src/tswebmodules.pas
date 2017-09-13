@@ -70,7 +70,21 @@ type
     function DoCreatePage: THtmlPage; override;
   end;
 
+  { TLoginWebModule }
+
+  TLoginWebModule = class(THtmlPageWebModule)
+  protected
+    function DoCreatePage: THtmlPage; override;
+  end;
+
 implementation
+
+{ TLoginWebModule }
+
+function TLoginWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TLoginHtmlPage.Create;
+end;
 
 { TPage2WebModule }
 
@@ -149,6 +163,7 @@ initialization
   RegisterHTTPModule('index', TIndexWebModule, True);
   RegisterHTTPModule('page1', TPage1WebModule, True);
   RegisterHTTPModule('page2', TPage2WebModule, True);
+  RegisterHTTPModule('login', TLoginWebModule, True);
 
 end.
 

@@ -65,10 +65,14 @@ implementation
 procedure TAuthConfirmPasswordFeature.Satisfy;
 begin
   LoadPagePart('auth', 'authConfirmPassword', 'authForm');
+  with Parent.Variables do
+  begin
+    ItemsAsText['authFillRequest'] := SConfirmPasswordRequest;
+    ItemsAsText['authSubmit'] := SConfirmPasswordSubmit;
+  end;
 end;
 
-procedure TAuthConfirmPasswordFeature.DependsOn(
-  ADependencies: THtmlPageFeatureList);
+procedure TAuthConfirmPasswordFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TAuthFormFeature);
@@ -79,6 +83,11 @@ end;
 procedure TAuthRegisterFormFeature.Satisfy;
 begin
   LoadPagePart('auth', 'authRegister', 'authForm');
+  with Parent.Variables do
+  begin
+    ItemsAsText['authFillRequest'] := SRegisterRequest;
+    ItemsAsText['authSubmit'] := SRegisterSubmit;
+  end;
 end;
 
 procedure TAuthRegisterFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
@@ -92,6 +101,11 @@ end;
 procedure TAuthLoginFormFeature.Satisfy;
 begin
   LoadPagePart('auth', 'authLogin', 'authForm');
+  with Parent.Variables do
+  begin
+    ItemsAsText['authFillRequest'] := SLoginRequest;
+    ItemsAsText['authSubmit'] := SLoginSubmit;
+  end;
 end;
 
 procedure TAuthLoginFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
@@ -111,6 +125,7 @@ begin
   with (Parent as TAuthHtmlPageBase) do
     with Variables do
     begin
+      ItemsAsText['authError'] := Error;
       ItemsAsText['authUsername'] := SAuthUsername;
       ItemsAsText['authUsernamePrompt'] := SAuthUsernamePrompt;
       ItemsAsText['authPassword'] := SAuthPassword;
