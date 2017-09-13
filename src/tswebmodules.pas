@@ -18,15 +18,15 @@
   to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
   MA 02111-1307, USA.
 }
-unit webpages;
+unit tswebmodules;
 
 {$mode objfpc}{$H+}
 
 interface
 
 uses
-  Classes, SysUtils, htmlpagewebmodules, tswebpagesbase, tswebfeatures,
-  tswebnavbars, navbars, htmlpreprocess, fphttp, htmlpages;
+  Classes, SysUtils, htmlpagewebmodules, tswebnavbars, navbars, htmlpreprocess,
+  fphttp, htmlpages, tswebpages;
 
 type
 
@@ -39,20 +39,14 @@ type
 
   { TSimpleHtmlPage }
 
-  TSimpleHtmlPage = class(TContentHtmlPage, IPageNavBar)
+  TSimpleHtmlPage = class(TDefaultHtmlPage)
   private
     FTextContent: string;
-    FNavBar: TDefaultNavBar;
   protected
-    procedure AddFeatures; override;
+    function CreateNavBar: TNavBar; override;
     procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
-    procedure DoSetVariables; override;
-    function GetNavBar: TNavBar;
   public
     property TextContent: string read FTextContent write FTextContent;
-    procedure Clear; override;
-    constructor Create; override;
-    destructor Destroy; override;
   end;
 
   { TIndexWebModule }
@@ -141,48 +135,14 @@ end;
 
 { TSimpleHtmlPage }
 
-procedure TSimpleHtmlPage.AddFeatures;
+function TSimpleHtmlPage.CreateNavBar: TNavBar;
 begin
-  inherited AddFeatures;
-  AddFeature(THeaderFeature);
-  AddFeature(TUserBarFeature);
-  AddFeature(TNavBarFeature);
-  AddFeature(TContentFeature);
-  AddFeature(TFooterFeature);
+  Result := TDefaultNavBar.Create(Self);
 end;
 
 procedure TSimpleHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
 begin
   Strings.Text := FTextContent;
-end;
-
-procedure TSimpleHtmlPage.DoSetVariables;
-begin
-  FNavBar.ActiveCaption := Title;
-  inherited DoSetVariables;
-end;
-
-function TSimpleHtmlPage.GetNavBar: TNavBar;
-begin
-  Result := FNavBar;
-end;
-
-procedure TSimpleHtmlPage.Clear;
-begin
-  inherited Clear;
-  FNavBar.Clear;
-end;
-
-constructor TSimpleHtmlPage.Create;
-begin
-  inherited Create;
-  FNavBar := TDefaultNavBar.Create(Self);
-end;
-
-destructor TSimpleHtmlPage.Destroy;
-begin
-  FreeAndNil(FNavBar);
-  inherited Destroy;
 end;
 
 initialization

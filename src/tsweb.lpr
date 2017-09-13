@@ -44,10 +44,11 @@ uses
   tswebpagesbase,
   tswebnavbars,
   htmlpagewebmodules,
-  webpages,
   users,
   userpages,
-  tswebauthfeatures;
+  tswebauthfeatures,
+  tswebpages,
+  tswebmodules;
 
 begin
   {$ifdef Windows}

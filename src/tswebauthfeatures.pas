@@ -30,17 +30,11 @@ uses
 
 type
 
-  { TAuthBaseFeature }
-
-  TAuthBaseFeature = class(TTesterPageFeature)
-  public
-    procedure Satisfy; override;
-  end;
-
   { TAuthFormFeature }
 
   TAuthFormFeature = class(TTesterPageFeature)
-    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  public
+    procedure Satisfy; override;
   end;
 
   { TAuthLoginFormFeature }
@@ -106,9 +100,9 @@ begin
   ADependencies.Add(TAuthFormFeature);
 end;
 
-{ TAuthBaseFeature }
+{ TAuthFormFeature }
 
-procedure TAuthBaseFeature.Satisfy;
+procedure TAuthFormFeature.Satisfy;
 begin
   LoadPagePart('auth', 'auth', 'content');
   LoadPagePart('auth', 'authNameItem');
@@ -126,14 +120,6 @@ begin
       ItemsAsText['authLastName'] := SAuthLastName;
       ItemsAsText['authLastNamePrompt'] := SAuthLastNamePrompt;
     end;
-end;
-
-{ TAuthFormFeature }
-
-procedure TAuthFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
-begin
-  inherited DependsOn(ADependencies);
-  ADependencies.Add(TAuthBaseFeature);
 end;
 
 end.

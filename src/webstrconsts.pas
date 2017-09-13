@@ -85,6 +85,8 @@ resourcestring
   SAuthFirstNamePrompt = 'Enter first name';
   SAuthLastName = 'Last name:';
   SAuthLastNamePrompt = 'Enter last name';
+  SLoginTitle = 'Log in';
+  SRegisterTitle = 'Register';
 
 implementation
 
