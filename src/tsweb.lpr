@@ -50,6 +50,10 @@ uses
   tswebauthfeatures;
 
 begin
+  {$ifdef Windows}
+    SetHeapTraceOutput('heap.trc');
+  {$endif}
+
   MimeTypes.AddType('text/html', 'html');
   MimeTypes.AddType('text/css', 'css');
   MimeTypes.AddType('text/javascript', 'js');

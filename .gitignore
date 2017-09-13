@@ -6,6 +6,7 @@
 *.lps
 *.log
 *.res
+*.trc
 **/backup/**
 **/lib/**
 .fuse*
