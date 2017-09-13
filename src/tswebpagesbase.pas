@@ -44,7 +44,7 @@ type
   protected
     FError: string;
   public
-    property Error: string read FError;
+    property Error: string read FError write FError;
   end;
 
   { TContentHtmlPage }

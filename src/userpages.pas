@@ -49,7 +49,7 @@ implementation
 procedure TUserPage.DoUpdateRequest;
 begin
   inherited DoUpdateRequest;
-  FUser := Manager.LoadUserFromSession(Session);
+  FUser := UserManager.LoadUserFromSession(Session);
 end;
 
 constructor TUserPage.Create;

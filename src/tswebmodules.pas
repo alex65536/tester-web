@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, htmlpagewebmodules, tswebnavbars, navbars, htmlpreprocess,
-  fphttp, htmlpages, tswebpages;
+  fphttp, htmlpages, tswebpages, HTTPDefs, users;
 
 type
 
@@ -73,17 +73,77 @@ type
   { TLoginWebModule }
 
   TLoginWebModule = class(THtmlPageWebModule)
+  private type
+
+    { TInternalWebModuleHandler }
+
+    TInternalWebModuleHandler = class(TWebModuleHandler)
+    public
+      procedure HandleRequest(ARequest: TRequest; AResponse: TResponse;
+        var Handled: boolean); override;
+    end;
+  private
+    FError: string;
   protected
     function DoCreatePage: THtmlPage; override;
+    procedure DoBeforeRequest; override;
+    procedure DoAfterRequest; override;
+  public
+    procedure AfterConstruction; override;
   end;
 
 implementation
+
+{ TLoginWebModule.TInternalWebModuleHandler }
+
+procedure TLoginWebModule.TInternalWebModuleHandler.HandleRequest(
+  ARequest: TRequest; AResponse: TResponse; var Handled: boolean);
+var
+  Username, Password: string;
+begin
+  if ARequest.Method.ToUpper = 'POST' then
+  begin
+    try
+      Username := ARequest.ContentFields.Values['username'];
+      Password := ARequest.ContentFields.Values['password'];
+      UserManager.AuthentificateSession(Parent.Session, Username, Password);
+      // if no exception, we send redirect and don't render that page
+      AResponse.Location := '/';
+      AResponse.Code := 303;
+      Handled := True;
+    except
+      on E: EUserAction do
+        (Parent as TLoginWebModule).FError := E.Message
+      else
+        raise;
+    end;
+  end;
+end;
 
 { TLoginWebModule }
 
 function TLoginWebModule.DoCreatePage: THtmlPage;
 begin
   Result := TLoginHtmlPage.Create;
+  (Result as TAuthHtmlPage).Error := FError;
+end;
+
+procedure TLoginWebModule.DoBeforeRequest;
+begin
+  inherited DoBeforeRequest;
+  FError := '';
+end;
+
+procedure TLoginWebModule.DoAfterRequest;
+begin
+  inherited DoAfterRequest;
+  FError := '';
+end;
+
+procedure TLoginWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Handlers.Add(TInternalWebModuleHandler);
 end;
 
 { TPage2WebModule }
@@ -165,4 +225,3 @@ initialization
   RegisterHTTPModule('login', TLoginWebModule, True);
 
 end.
-

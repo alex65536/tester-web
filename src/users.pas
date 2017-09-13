@@ -74,6 +74,7 @@ type
     procedure Authentificate(const Password: string);
     procedure NeedsAuthentification;
     procedure UpdateLastVisit;
+    procedure WriteRole;
     constructor Create;
   end;
 
@@ -138,7 +139,7 @@ function StrToUserRole(const S: string): TUserRole;
 procedure ValidateUsername(const Username: string);
 procedure ValidateFirstLastName(const Name: string);
 
-function Manager: TUserManager; inline;
+function UserManager: TUserManager; inline;
 
 implementation
 
@@ -190,7 +191,7 @@ begin
     raise EUserValidate.CreateFmt(SNameLength, [MinNameLen, MaxNameLen]);
 end;
 
-function Manager: TUserManager;
+function UserManager: TUserManager;
 begin
   Result := FManager;
 end;
@@ -281,6 +282,7 @@ begin
   with CreateUser(ARole, AUsername) do
     try
       IncUserCount;
+      WriteRole;
       GeneratePassword(APassword);
       BeginUpdate;
       try
@@ -503,6 +505,11 @@ end;
 procedure TUser.UpdateLastVisit;
 begin
   Manager.Storage.WriteFloat(FullKeyName('lastVisit'), Now);
+end;
+
+procedure TUser.WriteRole;
+begin
+  Manager.Storage.WriteString(FullKeyName('role'), UserRoleToStr(Role));
 end;
 
 constructor TUser.Create;

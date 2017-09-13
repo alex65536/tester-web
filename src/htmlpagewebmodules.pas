@@ -37,7 +37,8 @@ type
     FParent: THtmlPageWebModule;
   public
     property Parent: THtmlPageWebModule read FParent;
-    procedure HandleRequest(ARequest: TRequest; AResponse: TResponse; var Handled: boolean); virtual; abstract;
+    procedure HandleRequest(ARequest: TRequest; AResponse: TResponse;
+      var Handled: boolean); virtual; abstract;
     constructor Create(AParent: THtmlPageWebModule); virtual;
   end;
 
@@ -77,13 +78,15 @@ type
     procedure DoPageAfterConstruction({%H-}APage: THtmlPage); virtual;
     function CreatePage: THtmlPage;
     procedure InternalHandleRequest; virtual;
+    procedure DoBeforeRequest; virtual;
+    procedure DoAfterRequest; virtual;
   public
     property Handlers: TWebModuleHandlerList read FHandlers;
     property Request: TRequest read FRequest;
     property Response: TResponse read FResponse;
     procedure HandleRequest(ARequest: TRequest; AResponse: TResponse); override;
     procedure AfterConstruction; override;
-    constructor CreateNew(AOwner: TComponent; CreateMode: Integer); override;
+    constructor CreateNew(AOwner: TComponent; CreateMode: integer); override;
     destructor Destroy; override;
   end;
 
@@ -177,8 +180,17 @@ begin
   end;
 end;
 
-procedure THtmlPageWebModule.HandleRequest(ARequest: TRequest;
-  AResponse: TResponse);
+procedure THtmlPageWebModule.DoBeforeRequest;
+begin
+  // do nothing
+end;
+
+procedure THtmlPageWebModule.DoAfterRequest;
+begin
+  // do nothing
+end;
+
+procedure THtmlPageWebModule.HandleRequest(ARequest: TRequest; AResponse: TResponse);
 var
   Handled: boolean;
   I: integer;
@@ -187,6 +199,7 @@ begin
   FRequest := ARequest;
   FResponse := AResponse;
   try
+    DoBeforeRequest;
     CheckSession(ARequest);
     InitSession(AResponse);
     try
@@ -207,6 +220,7 @@ begin
         AResponse.SendContent;
     finally
       DoneSession;
+      DoAfterRequest;
     end;
   finally
     FRequest := nil;
@@ -220,7 +234,7 @@ begin
   CreateSession := True;
 end;
 
-constructor THtmlPageWebModule.CreateNew(AOwner: TComponent; CreateMode: Integer);
+constructor THtmlPageWebModule.CreateNew(AOwner: TComponent; CreateMode: integer);
 begin
   inherited CreateNew(AOwner, CreateMode);
   FHandlers := TWebModuleHandlerList.Create(Self);
@@ -233,4 +247,3 @@ begin
 end;
 
 end.
-
