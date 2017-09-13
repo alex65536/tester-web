@@ -25,35 +25,44 @@ unit htmlpagewebmodules;
 interface
 
 uses
-  Classes, SysUtils, htmlpages, fphttp, HTTPDefs;
+  Classes, SysUtils, htmlpages, fphttp, HTTPDefs, fgl;
 
 type
   THtmlPageWebModule = class;
 
   { TWebModuleHandler }
 
-  TWebModuleHandler = class(TCollectionItem)
+  TWebModuleHandler = class
   private
     FParent: THtmlPageWebModule;
   public
     property Parent: THtmlPageWebModule read FParent;
     procedure HandleRequest(ARequest: TRequest; AResponse: TResponse; var Handled: boolean); virtual; abstract;
-    constructor Create(ACollection: TCollection); override;
+    constructor Create(AParent: THtmlPageWebModule); virtual;
   end;
+
+  TWebModuleHandlerClass = class of TWebModuleHandler;
 
   { TWebModuleHandlerList }
 
-  TWebModuleHandlerList = class(TCollection)
+  TWebModuleHandlerList = class
+  private type
+    TInternalList = specialize TFPGObjectList<TWebModuleHandler>;
   private
     FParent: THtmlPageWebModule;
-    function GetItem(Index: integer): TWebModuleHandler;
-    procedure SetItem(Index: integer; AValue: TWebModuleHandler);
+    FList: TInternalList;
+    function GetCount: integer;
+    function GetItems(I: integer): TWebModuleHandler;
   public
     property Parent: THtmlPageWebModule read FParent;
-    function Add: TWebModuleHandler;
-    function Insert(Index: integer): TWebModuleHandler;
-    property Items[Index: integer]: TWebModuleHandler read GetItem write SetItem; default;
+    property Count: integer read GetCount;
+    property Items[I: integer]: TWebModuleHandler read GetItems; default;
+    function Add(AClass: TWebModuleHandlerClass): TWebModuleHandler;
+    function Insert(Index: integer; AClass: TWebModuleHandlerClass): TWebModuleHandler;
+    procedure Delete(Index: integer);
+    procedure Remove(AHandler: TWebModuleHandler);
     constructor Create(AParent: THtmlPageWebModule);
+    destructor Destroy; override;
   end;
 
   { THtmlPageWebModule }
@@ -82,42 +91,56 @@ implementation
 
 { TWebModuleHandler }
 
-constructor TWebModuleHandler.Create(ACollection: TCollection);
+constructor TWebModuleHandler.Create(AParent: THtmlPageWebModule);
 begin
-  inherited Create(ACollection);
-  if ACollection = nil then
-    FParent := nil
-  else
-    FParent := (ACollection as TWebModuleHandlerList).Parent;
+  FParent := AParent;
 end;
 
 { TWebModuleHandlerList }
 
-function TWebModuleHandlerList.GetItem(Index: integer): TWebModuleHandler;
+function TWebModuleHandlerList.GetCount: integer;
 begin
-  Result := (inherited GetItem(Index)) as TWebModuleHandler;
+  Result := FList.Count;
 end;
 
-procedure TWebModuleHandlerList.SetItem(Index: integer;
-  AValue: TWebModuleHandler);
+function TWebModuleHandlerList.GetItems(I: integer): TWebModuleHandler;
 begin
-  inherited SetItem(Index, AValue);
+  Result := FList.Items[I];
 end;
 
-function TWebModuleHandlerList.Add: TWebModuleHandler;
+function TWebModuleHandlerList.Add(AClass: TWebModuleHandlerClass): TWebModuleHandler;
 begin
-  Result := (inherited Add) as TWebModuleHandler;
+  Result := AClass.Create(FParent);
+  FList.Add(Result);
 end;
 
-function TWebModuleHandlerList.Insert(Index: integer): TWebModuleHandler;
+function TWebModuleHandlerList.Insert(Index: integer;
+  AClass: TWebModuleHandlerClass): TWebModuleHandler;
 begin
-  Result := (inherited Insert(Index)) as TWebModuleHandler;
+  Result := AClass.Create(FParent);
+  FList.Insert(Index, Result);
+end;
+
+procedure TWebModuleHandlerList.Delete(Index: integer);
+begin
+  FList.Delete(Index);
+end;
+
+procedure TWebModuleHandlerList.Remove(AHandler: TWebModuleHandler);
+begin
+  FList.Remove(AHandler);
 end;
 
 constructor TWebModuleHandlerList.Create(AParent: THtmlPageWebModule);
 begin
-  inherited Create(TWebModuleHandler);
   FParent := AParent;
+  FList := TInternalList.Create(True);
+end;
+
+destructor TWebModuleHandlerList.Destroy;
+begin
+  FreeAndNil(FList);
+  inherited Destroy;
 end;
 
 { THtmlPageWebModule }

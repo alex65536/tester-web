@@ -137,7 +137,6 @@ begin
   end;
 end;
 
-
 { TDefaultNavBar }
 
 procedure TDefaultNavBar.DoCreateElements;
