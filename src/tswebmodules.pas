@@ -73,17 +73,12 @@ type
   { TLoginWebModule }
 
   TLoginWebModule = class(THtmlPageWebModule)
-  private type
-
-    { TInternalWebModuleHandler }
-
-    TInternalWebModuleHandler = class(TWebModuleHandler)
-    public
-      procedure HandleRequest(ARequest: TRequest; AResponse: TResponse;
-        var Handled: boolean); override;
-    end;
   private
     FError: string;
+    procedure RedirectIfLoggedRequest(Sender: TObject; {%H-}ARequest: TRequest;
+      AResponse: TResponse; var Handled: boolean);
+    procedure PostHandleRequest(Sender: TObject; ARequest: TRequest;
+      AResponse: TResponse; var Handled: boolean);
   protected
     function DoCreatePage: THtmlPage; override;
     procedure DoBeforeRequest; override;
@@ -92,11 +87,57 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TLogoutWebModule }
+
+  TLogoutWebModule = class(TSessionHTTPModule)
+  public
+    procedure HandleRequest(ARequest: TRequest; AResponse: TResponse); override;
+    procedure AfterConstruction; override;
+  end;
+
 implementation
 
-{ TLoginWebModule.TInternalWebModuleHandler }
+{ TLogoutWebModule }
 
-procedure TLoginWebModule.TInternalWebModuleHandler.HandleRequest(
+procedure TLogoutWebModule.HandleRequest(ARequest: TRequest;
+  AResponse: TResponse);
+begin
+  CheckSession(ARequest);
+  InitSession(AResponse);
+  try
+    Session.Terminate;
+    AResponse.Location := '/';
+    AResponse.Code := 303;
+    UpdateSession(AResponse);
+  finally
+    DoneSession;
+  end;
+end;
+
+procedure TLogoutWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  CreateSession := True;
+end;
+
+{ TLoginWebModule }
+
+procedure TLoginWebModule.RedirectIfLoggedRequest(Sender: TObject;
+  ARequest: TRequest; AResponse: TResponse; var Handled: boolean);
+var
+  AUser: TUser;
+begin
+  AUser := UserManager.LoadUserFromSession(Session);
+  if AUser <> nil then
+  begin
+    FreeAndNil(AUser);
+    AResponse.Location := '/';
+    AResponse.Code := 303;
+    Handled := True;
+  end;
+end;
+
+procedure TLoginWebModule.PostHandleRequest(Sender: TObject;
   ARequest: TRequest; AResponse: TResponse; var Handled: boolean);
 var
   Username, Password: string;
@@ -106,21 +147,19 @@ begin
     try
       Username := ARequest.ContentFields.Values['username'];
       Password := ARequest.ContentFields.Values['password'];
-      UserManager.AuthentificateSession(Parent.Session, Username, Password);
+      UserManager.AuthentificateSession(Session, Username, Password);
       // if no exception, we send redirect and don't render that page
       AResponse.Location := '/';
       AResponse.Code := 303;
       Handled := True;
     except
       on E: EUserAction do
-        (Parent as TLoginWebModule).FError := E.Message
+        FError := E.Message
       else
         raise;
     end;
   end;
 end;
-
-{ TLoginWebModule }
 
 function TLoginWebModule.DoCreatePage: THtmlPage;
 begin
@@ -143,7 +182,8 @@ end;
 procedure TLoginWebModule.AfterConstruction;
 begin
   inherited AfterConstruction;
-  Handlers.Add(TInternalWebModuleHandler);
+  AddEventHandler(@RedirectIfLoggedRequest);
+  AddEventHandler(@PostHandleRequest);
 end;
 
 { TPage2WebModule }
@@ -223,5 +263,6 @@ initialization
   RegisterHTTPModule('page1', TPage1WebModule, True);
   RegisterHTTPModule('page2', TPage2WebModule, True);
   RegisterHTTPModule('login', TLoginWebModule, True);
+  RegisterHTTPModule('logout', TLogoutWebModule, True);
 
 end.

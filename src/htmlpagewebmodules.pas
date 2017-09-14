@@ -44,6 +44,17 @@ type
 
   TWebModuleHandlerClass = class of TWebModuleHandler;
 
+  { TEventWebModuleHandler }
+
+  TEventWebModuleHandler = class(TWebModuleHandler)
+  private
+    FOnRequest: TWebActionEvent;
+  public
+    property OnRequest: TWebActionEvent read FOnRequest write FOnRequest;
+    procedure HandleRequest(ARequest: TRequest; AResponse: TResponse;
+      var Handled: boolean); override;
+  end;
+
   { TWebModuleHandlerList }
 
   TWebModuleHandlerList = class
@@ -80,6 +91,7 @@ type
     procedure InternalHandleRequest; virtual;
     procedure DoBeforeRequest; virtual;
     procedure DoAfterRequest; virtual;
+    procedure AddEventHandler(AEvent: TWebActionEvent);
   public
     property Handlers: TWebModuleHandlerList read FHandlers;
     property Request: TRequest read FRequest;
@@ -91,6 +103,15 @@ type
   end;
 
 implementation
+
+{ TEventWebModuleHandler }
+
+procedure TEventWebModuleHandler.HandleRequest(ARequest: TRequest;
+  AResponse: TResponse; var Handled: boolean);
+begin
+  if Assigned(FOnRequest) then
+    FOnRequest(Self, ARequest, AResponse, Handled);
+end;
 
 { TWebModuleHandler }
 
@@ -188,6 +209,14 @@ end;
 procedure THtmlPageWebModule.DoAfterRequest;
 begin
   // do nothing
+end;
+
+procedure THtmlPageWebModule.AddEventHandler(AEvent: TWebActionEvent);
+var
+  AHandler: TEventWebModuleHandler;
+begin
+  AHandler := FHandlers.Add(TEventWebModuleHandler) as TEventWebModuleHandler;
+  AHandler.OnRequest := AEvent;
 end;
 
 procedure THtmlPageWebModule.HandleRequest(ARequest: TRequest; AResponse: TResponse);
