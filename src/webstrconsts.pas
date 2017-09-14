@@ -57,9 +57,11 @@ resourcestring
   SSourcesNotice = 'Sources are available on <a href="~githubLink;">Github</a>.';
   SNoSuchUserRole = 'No such TUserRole!';
   SUsernameLength = 'Username length must be from %d to %d characters.';
+  SPasswordLength = 'Password length must be from %d to %d characters.';
   SUsernameChars = 'Username must contain only the following characters: %s';
   SNameLength = 'First or last name length must be from %d to %d characters.';
   SInvalidUsernamePassword = 'Invalid username or password.';
+  SInvalidPassword = 'Invalid password.';
   SUnableLogIn = 'Unable to log in (maybe, the user is blocked?)';
   SUserExists = 'User with name "%s" already exists.';
   SCannotTerminateServer = 'Cannot terminate server!';

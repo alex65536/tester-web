@@ -57,7 +57,7 @@ type
     procedure SetLastName(AValue: string);
   protected
     procedure GeneratePassword(const Password: string);
-    function ValidatePassword(const Password: string): boolean;
+    function CheckPassword(const Password: string): boolean;
     function FullKeyName(const Key: string): string;
     function DoGetRole: TUserRole; virtual;
     // creating users should only be done via TUserManager!
@@ -138,6 +138,7 @@ function UserRoleToStr(ARole: TUserRole): string;
 function StrToUserRole(const S: string): TUserRole;
 
 procedure ValidateUsername(const Username: string);
+procedure ValidatePassword(const Password: string);
 procedure ValidateFirstLastName(const Name: string);
 
 function UserManager: TUserManager; inline;
@@ -181,6 +182,15 @@ begin
   for C in Username do
     if not (C in UsernameAvailableChars) then
       raise EUserValidate.CreateFmt(SUsernameChars, [AvailableCharsStr]);
+end;
+
+procedure ValidatePassword(const Password: string);
+const
+  MinPasswordLen = 8;
+  MaxPasswordLen = 64;
+begin
+  if (Length(Password) < MinPasswordLen) or (Length(Password) > MaxPasswordLen) then
+    raise EUserValidate.CreateFmt(SPasswordLength, [MinPasswordLen, MaxPasswordLen]);
 end;
 
 procedure ValidateFirstLastName(const Name: string);
@@ -261,7 +271,18 @@ begin
   if AUser = nil then
     raise EUserAuthentificate.Create(SUnableLogIn);
   try
-    AUser.Authentificate(Password);
+    try
+      AUser.Authentificate(Password);
+    except
+      on E: EUserAuthentificate do
+      begin
+        if E.Message = SInvalidPassword then
+          E.Message := SInvalidUsernamePassword;
+        raise E;
+      end
+      else
+        raise;
+    end;
     AUser.NeedsAuthentification;
     AUser.UpdateLastVisit;
     ASession.Variables['userName'] := Username;
@@ -275,10 +296,11 @@ procedure TUserManager.AddNewUser(
 begin
   // check pre-requisites
   ValidateUsername(AUsername);
+  ValidatePassword(APassword);
   ValidateFirstLastName(AFirstName);
   ValidateFirstLastName(ALastName);
   if UserExists(AUsername) then
-    EUserValidate.CreateFmt(SUserExists, [AUsername]);
+    raise EUserValidate.CreateFmt(SUserExists, [AUsername]);
   // create user
   with CreateUser(ARole, AUsername) do
     try
@@ -405,7 +427,7 @@ begin
   end;
 end;
 
-function TUser.ValidatePassword(const Password: string): boolean;
+function TUser.CheckPassword(const Password: string): boolean;
 var
   Hash, Salt: string;
   FoundHash: string;
@@ -477,13 +499,14 @@ begin
   NeedsAuthentification;
   if NewPassword <> NewPasswordConfirm then
     raise EUserValidate.Create(SNewPasswordsNotEqual);
+  ValidatePassword(NewPassword);
   GeneratePassword(NewPassword);
 end;
 
 procedure TUser.Authentificate(const Password: string);
 begin
-  if not ValidatePassword(Password) then
-    raise EUserAuthentificate.Create(SInvalidUsernamePassword);
+  if not CheckPassword(Password) then
+    raise EUserAuthentificate.Create(SInvalidPassword);
   FAuthentificated := True;
 end;
 

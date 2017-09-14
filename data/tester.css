@@ -122,6 +122,9 @@ table.center-wrapper {
 	font-size: 11pt;
 	margin: 3pt 5pt;
 }
+.auth-table {
+	margin: auto;
+}
 .auth-field {
 	text-align: right;
 }
