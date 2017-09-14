@@ -37,6 +37,7 @@ type
 
   TUserManager = class;
   TUserRole = (urBlocked, urSimple, urAdmin, urOwner);
+  TUserRoleSet = set of TUserRole;
 
   { TUser }
 

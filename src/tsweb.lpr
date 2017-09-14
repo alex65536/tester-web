@@ -48,18 +48,20 @@ uses
   userpages,
   tswebauthfeatures,
   tswebpages,
-  tswebmodules;
+  tswebmodules,
+  authwebmodules;
 
+{$ifdef Windows}
 var
   F: TextFile;
+{$endif}
 
 begin
+  {$ifdef Windows}
   AssignFile(F, 'heap.trc');
   Rewrite(F);
   CloseFile(F);
-
-  {$ifdef Windows}
-    SetHeapTraceOutput('heap.trc');
+  SetHeapTraceOutput('heap.trc');
   {$endif}
 
   MimeTypes.AddType('text/html', 'html');

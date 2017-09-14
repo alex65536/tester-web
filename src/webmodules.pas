@@ -25,7 +25,7 @@ unit webmodules;
 interface
 
 uses
-  Classes, SysUtils, htmlpages, fphttp, HTTPDefs, fgl, users;
+  Classes, SysUtils, htmlpages, fphttp, HTTPDefs, fgl;
 
 type
 
@@ -46,21 +46,19 @@ type
     procedure AfterConstruction; override;
   end;
 
-  THtmlPageWebModule = class;
+  THandlerWebModule = class;
 
   { TWebModuleHandler }
 
   TWebModuleHandler = class
   private
-    FParent: THtmlPageWebModule;
+    FParent: THandlerWebModule;
   public
-    property Parent: THtmlPageWebModule read FParent write FParent;
+    property Parent: THandlerWebModule read FParent write FParent;
     procedure HandleRequest(ARequest: TRequest; AResponse: TResponse;
       var Handled: boolean); virtual; abstract;
-    constructor Create; virtual;
+    constructor Create;
   end;
-
-  TWebModuleHandlerClass = class of TWebModuleHandler;
 
   { TEventWebModuleHandler }
 
@@ -73,46 +71,35 @@ type
       var Handled: boolean); override;
   end;
 
-  { TRedirectLoggedWebModuleHandler }
-
-  TRedirectLoggedWebModuleHandler = class(TWebModuleHandler)
-  public
-    procedure HandleRequest({%H-}ARequest: TRequest; AResponse: TResponse;
-      var Handled: boolean); override;
-  end;
-
   { TWebModuleHandlerList }
 
   TWebModuleHandlerList = class
   private type
     TInternalList = specialize TFPGObjectList<TWebModuleHandler>;
   private
-    FParent: THtmlPageWebModule;
+    FParent: THandlerWebModule;
     FList: TInternalList;
     function GetCount: integer;
     function GetItems(I: integer): TWebModuleHandler;
   public
-    property Parent: THtmlPageWebModule read FParent;
+    property Parent: THandlerWebModule read FParent;
     property Count: integer read GetCount;
     property Items[I: integer]: TWebModuleHandler read GetItems; default;
     procedure Add(AHandler: TWebModuleHandler);
     procedure Insert(Index: integer; AHandler: TWebModuleHandler);
     procedure Delete(Index: integer);
     procedure Remove(AHandler: TWebModuleHandler);
-    constructor Create(AParent: THtmlPageWebModule);
+    constructor Create(AParent: THandlerWebModule);
     destructor Destroy; override;
   end;
 
-  { THtmlPageWebModule }
+  { THandlerWebModule }
 
-  THtmlPageWebModule = class(TTesterWebModule)
+  THandlerWebModule = class(TTesterWebModule)
   private
     FHandlers: TWebModuleHandlerList;
   protected
-    function DoCreatePage: THtmlPage; virtual; abstract;
-    procedure DoPageAfterConstruction({%H-}APage: THtmlPage); virtual;
-    function CreatePage: THtmlPage;
-    procedure InternalHandleRequest; virtual;
+    procedure InternalHandleRequest; virtual; abstract;
     procedure DoInsideRequest; override;
   public
     property Handlers: TWebModuleHandlerList read FHandlers;
@@ -121,22 +108,49 @@ type
     destructor Destroy; override;
   end;
 
+  { THtmlPageWebModule }
+
+  THtmlPageWebModule = class(THandlerWebModule)
+  protected
+    function DoCreatePage: THtmlPage; virtual; abstract;
+    procedure DoPageAfterConstruction({%H-}APage: THtmlPage); virtual;
+    function CreatePage: THtmlPage;
+    procedure InternalHandleRequest; override;
+  end;
+
 implementation
 
-{ TRedirectLoggedWebModuleHandler }
+{ THtmlPageWebModule }
 
-procedure TRedirectLoggedWebModuleHandler.HandleRequest(ARequest: TRequest;
-  AResponse: TResponse; var Handled: boolean);
-var
-  AUser: TUser;
+procedure THtmlPageWebModule.DoPageAfterConstruction(APage: THtmlPage);
 begin
-  AUser := UserManager.LoadUserFromSession(Parent.Session);
-  if AUser <> nil then
-  begin
-    FreeAndNil(AUser);
-    AResponse.Location := '/';
-    AResponse.Code := 303;
-    Handled := True;
+  // do nothing
+end;
+
+function THtmlPageWebModule.CreatePage: THtmlPage;
+begin
+  Result := DoCreatePage;
+  try
+    Result.Request := Request;
+    Result.Response := Response;
+    Result.Session := Session;
+    DoPageAfterConstruction(Result);
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
+end;
+
+procedure THtmlPageWebModule.InternalHandleRequest;
+var
+  APage: THtmlPage;
+begin
+  APage := CreatePage;
+  try
+    APage.UpdateRequest;
+    APage.UpdateResponse;
+  finally
+    FreeAndNil(APage);
   end;
 end;
 
@@ -237,7 +251,7 @@ begin
     Delete(Index);
 end;
 
-constructor TWebModuleHandlerList.Create(AParent: THtmlPageWebModule);
+constructor TWebModuleHandlerList.Create(AParent: THandlerWebModule);
 begin
   FParent := AParent;
   FList := TInternalList.Create(True);
@@ -249,41 +263,9 @@ begin
   inherited Destroy;
 end;
 
-{ THtmlPageWebModule }
+{ THandlerWebModule }
 
-procedure THtmlPageWebModule.DoPageAfterConstruction(APage: THtmlPage);
-begin
-  // do nothing
-end;
-
-function THtmlPageWebModule.CreatePage: THtmlPage;
-begin
-  Result := DoCreatePage;
-  try
-    Result.Request := Request;
-    Result.Response := Response;
-    Result.Session := Session;
-    DoPageAfterConstruction(Result);
-  except
-    FreeAndNil(Result);
-    raise;
-  end;
-end;
-
-procedure THtmlPageWebModule.InternalHandleRequest;
-var
-  APage: THtmlPage;
-begin
-  APage := CreatePage;
-  try
-    APage.UpdateRequest;
-    APage.UpdateResponse;
-  finally
-    FreeAndNil(APage);
-  end;
-end;
-
-procedure THtmlPageWebModule.DoInsideRequest;
+procedure THandlerWebModule.DoInsideRequest;
 var
   Handled: boolean;
   I: integer;
@@ -301,7 +283,7 @@ begin
     InternalHandleRequest;
 end;
 
-procedure THtmlPageWebModule.AddEventHandler(AEvent: TWebActionEvent);
+procedure THandlerWebModule.AddEventHandler(AEvent: TWebActionEvent);
 var
   AHandler: TEventWebModuleHandler;
 begin
@@ -310,13 +292,13 @@ begin
   FHandlers.Add(AHandler);
 end;
 
-constructor THtmlPageWebModule.CreateNew(AOwner: TComponent; CreateMode: integer);
+constructor THandlerWebModule.CreateNew(AOwner: TComponent; CreateMode: integer);
 begin
   inherited CreateNew(AOwner, CreateMode);
   FHandlers := TWebModuleHandlerList.Create(Self);
 end;
 
-destructor THtmlPageWebModule.Destroy;
+destructor THandlerWebModule.Destroy;
 begin
   FreeAndNil(FHandlers);
   inherited Destroy;

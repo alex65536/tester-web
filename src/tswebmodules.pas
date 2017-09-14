@@ -26,7 +26,8 @@ interface
 
 uses
   Classes, SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess,
-  fphttp, htmlpages, tswebpages, HTTPDefs, users, serverevents, webstrconsts;
+  fphttp, htmlpages, tswebpages, HTTPDefs, users, serverevents, webstrconsts,
+  authwebmodules;
 
 type
 
@@ -109,9 +110,11 @@ type
 
   { TLogoutWebModule }
 
-  TLogoutWebModule = class(TTesterWebModule)
+  TLogoutWebModule = class(THandlerWebModule)
   protected
-    procedure DoInsideRequest; override;
+    procedure InternalHandleRequest; override;
+  public
+    procedure AfterConstruction; override;
   end;
 
 implementation
@@ -187,11 +190,17 @@ end;
 
 { TLogoutWebModule }
 
-procedure TLogoutWebModule.DoInsideRequest;
+procedure TLogoutWebModule.InternalHandleRequest;
 begin
   Session.Terminate;
   Response.Location := '/';
   Response.Code := 303;
+end;
+
+procedure TLogoutWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Handlers.Add(TDeclineNotLoggedWebModuleHandler.Create);
 end;
 
 { TLoginWebModule }
