@@ -112,6 +112,8 @@ begin
     begin
       ItemsAsText['loggedAsUser'] := SLoggedAsUser;
       ItemsAsText['userName'] := User.Username;
+      ItemsAsText['firstName'] := User.FirstName;
+      ItemsAsText['lastName'] := User.LastName;
       ItemsAsText['doViewProfile'] := SUserDoViewProfile;
       ItemsAsText['doLogout'] := SUserDoLogOut;
     end;

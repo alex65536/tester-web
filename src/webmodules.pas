@@ -25,7 +25,7 @@ unit webmodules;
 interface
 
 uses
-  Classes, SysUtils, htmlpages, fphttp, HTTPDefs, fgl;
+  Classes, SysUtils, htmlpages, fphttp, HTTPDefs, fgl, users;
 
 type
 
@@ -73,6 +73,14 @@ type
       var Handled: boolean); override;
   end;
 
+  { TRedirectLoggedWebModuleHandler }
+
+  TRedirectLoggedWebModuleHandler = class(TWebModuleHandler)
+  public
+    procedure HandleRequest(ARequest: TRequest; AResponse: TResponse;
+      var Handled: boolean); override;
+  end;
+
   { TWebModuleHandlerList }
 
   TWebModuleHandlerList = class
@@ -114,6 +122,23 @@ type
   end;
 
 implementation
+
+{ TRedirectLoggedWebModuleHandler }
+
+procedure TRedirectLoggedWebModuleHandler.HandleRequest(ARequest: TRequest;
+  AResponse: TResponse; var Handled: boolean);
+var
+  AUser: TUser;
+begin
+  AUser := UserManager.LoadUserFromSession(Parent.Session);
+  if AUser <> nil then
+  begin
+    FreeAndNil(AUser);
+    AResponse.Location := '/';
+    AResponse.Code := 303;
+    Handled := True;
+  end;
+end;
 
 { TTesterWebModule }
 
@@ -293,4 +318,3 @@ begin
 end;
 
 end.
-

@@ -75,8 +75,21 @@ type
   TLoginWebModule = class(THtmlPageWebModule)
   private
     FError: string;
-    procedure RedirectIfLoggedRequest(Sender: TObject; {%H-}ARequest: TRequest;
+    procedure PostHandleRequest(Sender: TObject; ARequest: TRequest;
       AResponse: TResponse; var Handled: boolean);
+  protected
+    function DoCreatePage: THtmlPage; override;
+    procedure DoBeforeRequest; override;
+    procedure DoAfterRequest; override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
+  { TRegisterWebModule }
+
+  TRegisterWebModule = class(THtmlPageWebModule)
+  private
+    FError: string;
     procedure PostHandleRequest(Sender: TObject; ARequest: TRequest;
       AResponse: TResponse; var Handled: boolean);
   protected
@@ -96,6 +109,58 @@ type
 
 implementation
 
+{ TRegisterWebModule }
+
+procedure TRegisterWebModule.PostHandleRequest(Sender: TObject;
+  ARequest: TRequest; AResponse: TResponse; var Handled: boolean);
+var
+  Username, Password, FirstName, LastName: string;
+begin
+  if ARequest.Method.ToUpper = 'POST' then
+  begin
+    try
+      Username := ARequest.ContentFields.Values['username'];
+      Password := ARequest.ContentFields.Values['password'];
+      FirstName := ARequest.ContentFields.Values['first-name'];
+      LastName := ARequest.ContentFields.Values['last-name'];
+      UserManager.AddNewUser(Username, Password, FirstName, LastName);
+      UserManager.AuthentificateSession(Session, Username, Password);
+      // if no exception, we send redirect and don't render that page
+      AResponse.Location := '/';
+      AResponse.Code := 303;
+      Handled := True;
+    except
+      on E: EUserAction do
+        FError := E.Message
+      else
+        raise;
+    end;
+  end;
+end;
+
+function TRegisterWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TRegisterHtmlPage.Create;
+end;
+
+procedure TRegisterWebModule.DoBeforeRequest;
+begin
+  inherited DoBeforeRequest;
+  FError := '';
+end;
+
+procedure TRegisterWebModule.DoAfterRequest;
+begin
+  inherited DoAfterRequest;
+  FError := '';
+end;
+
+procedure TRegisterWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  AddEventHandler(@PostHandleRequest);
+end;
+
 { TLogoutWebModule }
 
 procedure TLogoutWebModule.DoInsideRequest;
@@ -106,21 +171,6 @@ begin
 end;
 
 { TLoginWebModule }
-
-procedure TLoginWebModule.RedirectIfLoggedRequest(Sender: TObject;
-  ARequest: TRequest; AResponse: TResponse; var Handled: boolean);
-var
-  AUser: TUser;
-begin
-  AUser := UserManager.LoadUserFromSession(Session);
-  if AUser <> nil then
-  begin
-    FreeAndNil(AUser);
-    AResponse.Location := '/';
-    AResponse.Code := 303;
-    Handled := True;
-  end;
-end;
 
 procedure TLoginWebModule.PostHandleRequest(Sender: TObject;
   ARequest: TRequest; AResponse: TResponse; var Handled: boolean);
@@ -167,7 +217,7 @@ end;
 procedure TLoginWebModule.AfterConstruction;
 begin
   inherited AfterConstruction;
-  AddEventHandler(@RedirectIfLoggedRequest);
+  Handlers.Add(TRedirectLoggedWebModuleHandler);
   AddEventHandler(@PostHandleRequest);
 end;
 
@@ -249,5 +299,6 @@ initialization
   RegisterHTTPModule('page2', TPage2WebModule, True);
   RegisterHTTPModule('login', TLoginWebModule, True);
   RegisterHTTPModule('logout', TLogoutWebModule, True);
+  RegisterHTTPModule('register', TRegisterWebModule, True);
 
 end.
