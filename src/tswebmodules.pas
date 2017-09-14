@@ -25,9 +25,8 @@ unit tswebmodules;
 interface
 
 uses
-  Classes, SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess,
-  fphttp, htmlpages, tswebpages, HTTPDefs, users, serverevents, webstrconsts,
-  authwebmodules;
+  SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess, fphttp,
+  htmlpages, tswebpages, HTTPDefs, users, webstrconsts, authwebmodules;
 
 type
 
@@ -73,32 +72,18 @@ type
 
   { TLoginWebModule }
 
-  TLoginWebModule = class(THtmlPageWebModule)
-  private
-    FError: string;
-    procedure PostHandleRequest(Sender: TObject; ARequest: TRequest;
-      AResponse: TResponse; var Handled: boolean);
+  TLoginWebModule = class(TAuthWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
-    procedure DoBeforeRequest; override;
-    procedure DoAfterRequest; override;
-  public
-    procedure AfterConstruction; override;
+    procedure DoHandleAuth(ARequest: TRequest); override;
   end;
 
   { TRegisterWebModule }
 
-  TRegisterWebModule = class(THtmlPageWebModule)
-  private
-    FError: string;
-    procedure PostHandleRequest(Sender: TObject; ARequest: TRequest;
-      AResponse: TResponse; var Handled: boolean);
+  TRegisterWebModule = class(TAuthWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
-    procedure DoBeforeRequest; override;
-    procedure DoAfterRequest; override;
-  public
-    procedure AfterConstruction; override;
+    procedure DoHandleAuth(ARequest: TRequest); override;
   end;
 
   { TKillServerWebModule }
@@ -106,15 +91,6 @@ type
   TKillServerWebModule = class(TTesterWebModule)
   protected
     procedure DoInsideRequest; override;
-  end;
-
-  { TLogoutWebModule }
-
-  TLogoutWebModule = class(THandlerWebModule)
-  protected
-    procedure InternalHandleRequest; override;
-  public
-    procedure AfterConstruction; override;
   end;
 
 implementation
@@ -137,121 +113,37 @@ end;
 
 { TRegisterWebModule }
 
-procedure TRegisterWebModule.PostHandleRequest(Sender: TObject;
-  ARequest: TRequest; AResponse: TResponse; var Handled: boolean);
-var
-  Username, Password, FirstName, LastName: string;
-begin
-  if ARequest.Method.ToUpper = 'POST' then
-  begin
-    try
-      Username := ARequest.ContentFields.Values['username'];
-      Password := ARequest.ContentFields.Values['password'];
-      FirstName := ARequest.ContentFields.Values['first-name'];
-      LastName := ARequest.ContentFields.Values['last-name'];
-      UserManager.AddNewUser(Username, Password, FirstName, LastName);
-      UserManager.AuthentificateSession(Session, Username, Password);
-      // if no exception, we send redirect and don't render that page
-      AResponse.Location := '/';
-      AResponse.Code := 303;
-      Handled := True;
-    except
-      on E: EUserAction do
-        FError := E.Message
-      else
-        raise;
-    end;
-  end;
-end;
-
 function TRegisterWebModule.DoCreatePage: THtmlPage;
 begin
   Result := TRegisterHtmlPage.Create;
-  (Result as TAuthHtmlPage).Error := FError;
 end;
 
-procedure TRegisterWebModule.DoBeforeRequest;
+procedure TRegisterWebModule.DoHandleAuth(ARequest: TRequest);
+var
+  Username, Password, FirstName, LastName: string;
 begin
-  inherited DoBeforeRequest;
-  FError := '';
-end;
-
-procedure TRegisterWebModule.DoAfterRequest;
-begin
-  inherited DoAfterRequest;
-  FError := '';
-end;
-
-procedure TRegisterWebModule.AfterConstruction;
-begin
-  inherited AfterConstruction;
-  AddEventHandler(@PostHandleRequest);
-end;
-
-{ TLogoutWebModule }
-
-procedure TLogoutWebModule.InternalHandleRequest;
-begin
-  Session.Terminate;
-  Response.Location := '/';
-  Response.Code := 303;
-end;
-
-procedure TLogoutWebModule.AfterConstruction;
-begin
-  inherited AfterConstruction;
-  Handlers.Add(TDeclineNotLoggedWebModuleHandler.Create);
+  Username := ARequest.ContentFields.Values['username'];
+  Password := ARequest.ContentFields.Values['password'];
+  FirstName := ARequest.ContentFields.Values['first-name'];
+  LastName := ARequest.ContentFields.Values['last-name'];
+  UserManager.AddNewUser(Username, Password, FirstName, LastName);
+  UserManager.AuthentificateSession(Session, Username, Password);
 end;
 
 { TLoginWebModule }
 
-procedure TLoginWebModule.PostHandleRequest(Sender: TObject;
-  ARequest: TRequest; AResponse: TResponse; var Handled: boolean);
-var
-  Username, Password: string;
-begin
-  if ARequest.Method.ToUpper = 'POST' then
-  begin
-    try
-      Username := ARequest.ContentFields.Values['username'];
-      Password := ARequest.ContentFields.Values['password'];
-      UserManager.AuthentificateSession(Session, Username, Password);
-      // if no exception, we send redirect and don't render that page
-      AResponse.Location := '/';
-      AResponse.Code := 303;
-      Handled := True;
-    except
-      on E: EUserAction do
-        FError := E.Message
-      else
-        raise;
-    end;
-  end;
-end;
-
 function TLoginWebModule.DoCreatePage: THtmlPage;
 begin
   Result := TLoginHtmlPage.Create;
-  (Result as TAuthHtmlPage).Error := FError;
 end;
 
-procedure TLoginWebModule.DoBeforeRequest;
+procedure TLoginWebModule.DoHandleAuth(ARequest: TRequest);
+var
+  Username, Password: string;
 begin
-  inherited DoBeforeRequest;
-  FError := '';
-end;
-
-procedure TLoginWebModule.DoAfterRequest;
-begin
-  inherited DoAfterRequest;
-  FError := '';
-end;
-
-procedure TLoginWebModule.AfterConstruction;
-begin
-  inherited AfterConstruction;
-  Handlers.Add(TRedirectLoggedWebModuleHandler.Create);
-  AddEventHandler(@PostHandleRequest);
+  Username := ARequest.ContentFields.Values['username'];
+  Password := ARequest.ContentFields.Values['password'];
+  UserManager.AuthentificateSession(Session, Username, Password);
 end;
 
 { TPage2WebModule }

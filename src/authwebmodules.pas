@@ -25,7 +25,7 @@ unit authwebmodules;
 interface
 
 uses
-  Classes, SysUtils, webmodules, users, HTTPDefs, webstrconsts;
+  SysUtils, webmodules, users, HTTPDefs, webstrconsts, htmlpages, tswebpages;
 
 type
 
@@ -48,7 +48,94 @@ type
     constructor Create(AAllowUsers: TUserRoleSet = [Low(TUserRoleSet) .. High(TUserRoleSet)]);
   end;
 
+  { TAuthWebModule }
+
+  TAuthWebModule = class(THtmlPageWebModule)
+  private
+    FError: string;
+    procedure PostHandleRequest(Sender: TObject; ARequest: TRequest;
+      AResponse: TResponse; var Handled: boolean);
+  protected
+    procedure DoHandleAuth(ARequest: TRequest); virtual; abstract;
+    procedure DoPageAfterConstruction(APage: THtmlPage); override;
+    procedure DoBeforeRequest; override;
+    procedure DoAfterRequest; override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
+  { TLogoutWebModule }
+
+  TLogoutWebModule = class(THandlerWebModule)
+  protected
+    procedure InternalHandleRequest; override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
 implementation
+
+{ TLogoutWebModule }
+
+procedure TLogoutWebModule.InternalHandleRequest;
+begin
+  Session.Terminate;
+  Response.Location := '/';
+  Response.Code := 303;
+end;
+
+procedure TLogoutWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Handlers.Add(TDeclineNotLoggedWebModuleHandler.Create);
+end;
+
+{ TAuthWebModule }
+
+procedure TAuthWebModule.PostHandleRequest(Sender: TObject; ARequest: TRequest;
+  AResponse: TResponse; var Handled: boolean);
+begin
+  if ARequest.Method.ToUpper = 'POST' then
+  begin
+    try
+      DoHandleAuth(ARequest);
+      // if no exception, we send redirect and don't render that page
+      AResponse.Location := '/';
+      AResponse.Code := 303;
+      Handled := True;
+    except
+      on E: EUserAction do
+        FError := E.Message
+      else
+        raise;
+    end;
+  end;
+end;
+
+procedure TAuthWebModule.DoPageAfterConstruction(APage: THtmlPage);
+begin
+  inherited DoPageAfterConstruction(APage);
+  (APage as TAuthHtmlPage).Error := FError;
+end;
+
+procedure TAuthWebModule.DoBeforeRequest;
+begin
+  inherited DoBeforeRequest;
+  FError := '';
+end;
+
+procedure TAuthWebModule.DoAfterRequest;
+begin
+  inherited DoAfterRequest;
+  FError := '';
+end;
+
+procedure TAuthWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Handlers.Add(TRedirectLoggedWebModuleHandler.Create);
+  AddEventHandler(@PostHandleRequest);
+end;
 
 { TDeclineNotLoggedWebModuleHandler }
 
