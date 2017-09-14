@@ -92,6 +92,7 @@ table.container {
 
 
 .content {
+	padding: 10pt 10pt;
 	background-color: #E3FFF0;
 	vertical-align: top;
 	height: 100%;
@@ -148,4 +149,23 @@ table.center-wrapper {
 .auth-btn:active {
 	background-color: #2DA35D;
 	border-style: ridge;
+}
+
+.profile-table-key {
+	vertical-align: middle;
+	text-align: right;
+}
+.profile-table-value {
+	vertical-align: middle;
+	text-align: left;
+}
+table.profile-role-table {
+	/* TODO : Finish it! */
+}
+.profile-role-text {
+	width: 0;
+}
+img.profile-role {
+	height: 1.5em;
+	vertical-align: middle;
 }
