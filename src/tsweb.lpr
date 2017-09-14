@@ -43,7 +43,7 @@ uses
   navbars,
   tswebpagesbase,
   tswebnavbars,
-  htmlpagewebmodules,
+  webmodules,
   users,
   userpages,
   tswebauthfeatures,

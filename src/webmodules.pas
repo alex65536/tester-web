@@ -18,7 +18,7 @@
   to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
   MA 02111-1307, USA.
 }
-unit htmlpagewebmodules;
+unit webmodules;
 
 {$mode objfpc}{$H+}
 
@@ -28,6 +28,24 @@ uses
   Classes, SysUtils, htmlpages, fphttp, HTTPDefs, fgl;
 
 type
+
+  { TTesterWebModule }
+
+  TTesterWebModule = class(TSessionHTTPModule)
+  private
+    FRequest: TRequest;
+    FResponse: TResponse;
+  protected
+    procedure DoBeforeRequest; virtual;
+    procedure DoAfterRequest; virtual;
+    procedure DoInsideRequest; virtual; abstract;
+  public
+    property Request: TRequest read FRequest;
+    property Response: TResponse read FResponse;
+    procedure HandleRequest(ARequest: TRequest; AResponse: TResponse); override;
+    procedure AfterConstruction; override;
+  end;
+
   THtmlPageWebModule = class;
 
   { TWebModuleHandler }
@@ -79,30 +97,65 @@ type
 
   { THtmlPageWebModule }
 
-  THtmlPageWebModule = class(TSessionHTTPModule)
+  THtmlPageWebModule = class(TTesterWebModule)
   private
     FHandlers: TWebModuleHandlerList;
-    FRequest: TRequest;
-    FResponse: TResponse;
   protected
     function DoCreatePage: THtmlPage; virtual; abstract;
     procedure DoPageAfterConstruction({%H-}APage: THtmlPage); virtual;
     function CreatePage: THtmlPage;
     procedure InternalHandleRequest; virtual;
-    procedure DoBeforeRequest; virtual;
-    procedure DoAfterRequest; virtual;
+    procedure DoInsideRequest; override;
     procedure AddEventHandler(AEvent: TWebActionEvent);
   public
     property Handlers: TWebModuleHandlerList read FHandlers;
-    property Request: TRequest read FRequest;
-    property Response: TResponse read FResponse;
-    procedure HandleRequest(ARequest: TRequest; AResponse: TResponse); override;
-    procedure AfterConstruction; override;
     constructor CreateNew(AOwner: TComponent; CreateMode: integer); override;
     destructor Destroy; override;
   end;
 
 implementation
+
+{ TTesterWebModule }
+
+procedure TTesterWebModule.DoBeforeRequest;
+begin
+  // do nothing
+end;
+
+procedure TTesterWebModule.DoAfterRequest;
+begin
+  // do nothing
+end;
+
+procedure TTesterWebModule.HandleRequest(ARequest: TRequest; AResponse: TResponse);
+begin
+  inherited HandleRequest(ARequest, AResponse);
+  FRequest := ARequest;
+  FResponse := AResponse;
+  try
+    DoBeforeRequest;
+    CheckSession(ARequest);
+    InitSession(AResponse);
+    try
+      DoInsideRequest;
+      UpdateSession(AResponse);
+      if not AResponse.ContentSent then
+        AResponse.SendContent;
+    finally
+      DoneSession;
+      DoAfterRequest;
+    end;
+  finally
+    FRequest := nil;
+    FResponse := nil;
+  end;
+end;
+
+procedure TTesterWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  CreateSession := True;
+end;
 
 { TEventWebModuleHandler }
 
@@ -201,14 +254,22 @@ begin
   end;
 end;
 
-procedure THtmlPageWebModule.DoBeforeRequest;
+procedure THtmlPageWebModule.DoInsideRequest;
+var
+  Handled: boolean;
+  I: integer;
 begin
-  // do nothing
-end;
-
-procedure THtmlPageWebModule.DoAfterRequest;
-begin
-  // do nothing
+  // handle web handlers
+  Handled := False;
+  for I := 0 to FHandlers.Count - 1 do
+  begin
+    FHandlers[I].HandleRequest(Request, Response, Handled);
+    if Handled then
+      Break;
+  end;
+  // if not handled, run HTML page rendering
+  if not Handled then
+    InternalHandleRequest;
 end;
 
 procedure THtmlPageWebModule.AddEventHandler(AEvent: TWebActionEvent);
@@ -217,50 +278,6 @@ var
 begin
   AHandler := FHandlers.Add(TEventWebModuleHandler) as TEventWebModuleHandler;
   AHandler.OnRequest := AEvent;
-end;
-
-procedure THtmlPageWebModule.HandleRequest(ARequest: TRequest; AResponse: TResponse);
-var
-  Handled: boolean;
-  I: integer;
-begin
-  inherited HandleRequest(ARequest, AResponse);
-  FRequest := ARequest;
-  FResponse := AResponse;
-  try
-    DoBeforeRequest;
-    CheckSession(ARequest);
-    InitSession(AResponse);
-    try
-      // handle web handlers
-      Handled := False;
-      for I := 0 to FHandlers.Count - 1 do
-      begin
-        FHandlers[I].HandleRequest(ARequest, AResponse, Handled);
-        if Handled then
-          Break;
-      end;
-      // if not handled, run HTML page rendering
-      if not Handled then
-        InternalHandleRequest;
-      // update session & send content
-      UpdateSession(AResponse);
-      if not AResponse.ContentSent then
-        AResponse.SendContent;
-    finally
-      DoneSession;
-      DoAfterRequest;
-    end;
-  finally
-    FRequest := nil;
-    FResponse := nil;
-  end;
-end;
-
-procedure THtmlPageWebModule.AfterConstruction;
-begin
-  inherited AfterConstruction;
-  CreateSession := True;
 end;
 
 constructor THtmlPageWebModule.CreateNew(AOwner: TComponent; CreateMode: integer);
@@ -276,3 +293,4 @@ begin
 end;
 
 end.
+

@@ -99,7 +99,7 @@
         <IsPartOfProject Value="True"/>
       </Unit12>
       <Unit13>
-        <Filename Value="htmlpagewebmodules.pas"/>
+        <Filename Value="webmodules.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit13>
       <Unit14>

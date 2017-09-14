@@ -25,7 +25,7 @@ unit tswebmodules;
 interface
 
 uses
-  Classes, SysUtils, htmlpagewebmodules, tswebnavbars, navbars, htmlpreprocess,
+  Classes, SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess,
   fphttp, htmlpages, tswebpages, HTTPDefs, users;
 
 type
@@ -89,35 +89,20 @@ type
 
   { TLogoutWebModule }
 
-  TLogoutWebModule = class(TSessionHTTPModule)
-  public
-    procedure HandleRequest(ARequest: TRequest; AResponse: TResponse); override;
-    procedure AfterConstruction; override;
+  TLogoutWebModule = class(TTesterWebModule)
+  protected
+    procedure DoInsideRequest; override;
   end;
 
 implementation
 
 { TLogoutWebModule }
 
-procedure TLogoutWebModule.HandleRequest(ARequest: TRequest;
-  AResponse: TResponse);
+procedure TLogoutWebModule.DoInsideRequest;
 begin
-  CheckSession(ARequest);
-  InitSession(AResponse);
-  try
-    Session.Terminate;
-    AResponse.Location := '/';
-    AResponse.Code := 303;
-    UpdateSession(AResponse);
-  finally
-    DoneSession;
-  end;
-end;
-
-procedure TLogoutWebModule.AfterConstruction;
-begin
-  inherited AfterConstruction;
-  CreateSession := True;
+  Session.Terminate;
+  Response.Location := '/';
+  Response.Code := 303;
 end;
 
 { TLoginWebModule }
