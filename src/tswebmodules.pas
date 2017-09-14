@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess,
-  fphttp, htmlpages, tswebpages, HTTPDefs, users;
+  fphttp, htmlpages, tswebpages, HTTPDefs, users, serverevents, webstrconsts;
 
 type
 
@@ -100,6 +100,13 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TKillServerWebModule }
+
+  TKillServerWebModule = class(TTesterWebModule)
+  protected
+    procedure DoInsideRequest; override;
+  end;
+
   { TLogoutWebModule }
 
   TLogoutWebModule = class(TTesterWebModule)
@@ -108,6 +115,22 @@ type
   end;
 
 implementation
+
+{ TKillServerWebModule }
+
+procedure TKillServerWebModule.DoInsideRequest;
+var
+  User: TUser;
+begin
+  User := UserManager.LoadUserFromSession(Session);
+  try
+    if (User = nil) or not (User is TOwnerUser) then
+      raise EUserAccessDenied.Create(SAccessDenied);
+    (User as TOwnerUser).TerminateServer;
+  finally
+    FreeAndNil(User);
+  end;
+end;
 
 { TRegisterWebModule }
 
@@ -141,6 +164,7 @@ end;
 function TRegisterWebModule.DoCreatePage: THtmlPage;
 begin
   Result := TRegisterHtmlPage.Create;
+  (Result as TAuthHtmlPage).Error := FError;
 end;
 
 procedure TRegisterWebModule.DoBeforeRequest;
@@ -300,5 +324,6 @@ initialization
   RegisterHTTPModule('login', TLoginWebModule, True);
   RegisterHTTPModule('logout', TLogoutWebModule, True);
   RegisterHTTPModule('register', TRegisterWebModule, True);
+  RegisterHTTPModule('kill', TKillServerWebModule, True);
 
 end.

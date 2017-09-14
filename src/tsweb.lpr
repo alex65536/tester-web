@@ -50,7 +50,14 @@ uses
   tswebpages,
   tswebmodules;
 
+var
+  F: TextFile;
+
 begin
+  AssignFile(F, 'heap.trc');
+  Rewrite(F);
+  CloseFile(F);
+
   {$ifdef Windows}
     SetHeapTraceOutput('heap.trc');
   {$endif}

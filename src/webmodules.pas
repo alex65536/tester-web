@@ -77,7 +77,7 @@ type
 
   TRedirectLoggedWebModuleHandler = class(TWebModuleHandler)
   public
-    procedure HandleRequest(ARequest: TRequest; AResponse: TResponse;
+    procedure HandleRequest({%H-}ARequest: TRequest; AResponse: TResponse;
       var Handled: boolean); override;
   end;
 

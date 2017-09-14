@@ -306,6 +306,7 @@ end;
 
 destructor THtmlPageFeatureMap.Destroy;
 begin
+  FMap.ClearWithFree;
   FreeAndNil(FMap);
   inherited Destroy;
 end;
