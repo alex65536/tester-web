@@ -54,10 +54,10 @@ type
   private
     FParent: THtmlPageWebModule;
   public
-    property Parent: THtmlPageWebModule read FParent;
+    property Parent: THtmlPageWebModule read FParent write FParent;
     procedure HandleRequest(ARequest: TRequest; AResponse: TResponse;
       var Handled: boolean); virtual; abstract;
-    constructor Create(AParent: THtmlPageWebModule); virtual;
+    constructor Create; virtual;
   end;
 
   TWebModuleHandlerClass = class of TWebModuleHandler;
@@ -95,8 +95,8 @@ type
     property Parent: THtmlPageWebModule read FParent;
     property Count: integer read GetCount;
     property Items[I: integer]: TWebModuleHandler read GetItems; default;
-    function Add(AClass: TWebModuleHandlerClass): TWebModuleHandler;
-    function Insert(Index: integer; AClass: TWebModuleHandlerClass): TWebModuleHandler;
+    procedure Add(AHandler: TWebModuleHandler);
+    procedure Insert(Index: integer; AHandler: TWebModuleHandler);
     procedure Delete(Index: integer);
     procedure Remove(AHandler: TWebModuleHandler);
     constructor Create(AParent: THtmlPageWebModule);
@@ -114,9 +114,9 @@ type
     function CreatePage: THtmlPage;
     procedure InternalHandleRequest; virtual;
     procedure DoInsideRequest; override;
-    procedure AddEventHandler(AEvent: TWebActionEvent);
   public
     property Handlers: TWebModuleHandlerList read FHandlers;
+    procedure AddEventHandler(AEvent: TWebActionEvent);
     constructor CreateNew(AOwner: TComponent; CreateMode: integer); override;
     destructor Destroy; override;
   end;
@@ -193,9 +193,9 @@ end;
 
 { TWebModuleHandler }
 
-constructor TWebModuleHandler.Create(AParent: THtmlPageWebModule);
+constructor TWebModuleHandler.Create;
 begin
-  FParent := AParent;
+  // do nothing
 end;
 
 { TWebModuleHandlerList }
@@ -210,27 +210,31 @@ begin
   Result := FList.Items[I];
 end;
 
-function TWebModuleHandlerList.Add(AClass: TWebModuleHandlerClass): TWebModuleHandler;
+procedure TWebModuleHandlerList.Add(AHandler: TWebModuleHandler);
 begin
-  Result := AClass.Create(FParent);
-  FList.Add(Result);
+  AHandler.Parent := Parent;
+  FList.Add(AHandler);
 end;
 
-function TWebModuleHandlerList.Insert(Index: integer;
-  AClass: TWebModuleHandlerClass): TWebModuleHandler;
+procedure TWebModuleHandlerList.Insert(Index: integer; AHandler: TWebModuleHandler);
 begin
-  Result := AClass.Create(FParent);
-  FList.Insert(Index, Result);
+  AHandler.Parent := Parent;
+  FList.Insert(Index, AHandler);
 end;
 
 procedure TWebModuleHandlerList.Delete(Index: integer);
 begin
+  FList[Index].Parent := nil;
   FList.Delete(Index);
 end;
 
 procedure TWebModuleHandlerList.Remove(AHandler: TWebModuleHandler);
+var
+  Index: integer;
 begin
-  FList.Remove(AHandler);
+  Index := FList.IndexOf(AHandler);
+  if Index >= 0 then
+    Delete(Index);
 end;
 
 constructor TWebModuleHandlerList.Create(AParent: THtmlPageWebModule);
@@ -301,8 +305,9 @@ procedure THtmlPageWebModule.AddEventHandler(AEvent: TWebActionEvent);
 var
   AHandler: TEventWebModuleHandler;
 begin
-  AHandler := FHandlers.Add(TEventWebModuleHandler) as TEventWebModuleHandler;
+  AHandler := TEventWebModuleHandler.Create;
   AHandler.OnRequest := AEvent;
+  FHandlers.Add(AHandler);
 end;
 
 constructor THtmlPageWebModule.CreateNew(AOwner: TComponent; CreateMode: integer);

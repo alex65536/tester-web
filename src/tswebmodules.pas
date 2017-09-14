@@ -241,7 +241,7 @@ end;
 procedure TLoginWebModule.AfterConstruction;
 begin
   inherited AfterConstruction;
-  Handlers.Add(TRedirectLoggedWebModuleHandler);
+  Handlers.Add(TRedirectLoggedWebModuleHandler.Create);
   AddEventHandler(@PostHandleRequest);
 end;
 
