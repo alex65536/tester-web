@@ -62,14 +62,6 @@ type
     procedure BeforeDestruction; override;
   end;
 
-  { IStorageUser }
-
-  IStorageUser = interface
-    ['{D891B260-67E5-46F0-A3E7-D190F2410B4A}']
-    procedure ReloadFromStorage(AStorage: TAbstractDataStorage);
-    procedure CommitToStorage(AStorage: TAbstractDataStorage);
-  end;
-
   { TFileDataStorage }
 
   TFileDataStorage = class(TAbstractDataStorage)

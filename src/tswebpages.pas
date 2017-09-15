@@ -26,13 +26,13 @@ interface
 
 uses
   Classes, SysUtils, tswebauthfeatures, tswebfeatures, tswebpagesbase, navbars,
-  webstrconsts;
+  webstrconsts, htmlpreprocess;
 
 type
 
-  { TDefaultHtmlPage }
+  { TDefaultHtmlPageBase }
 
-  TDefaultHtmlPage = class(TContentHtmlPage, IPageNavBar)
+  TDefaultHtmlPageBase = class(TContentHtmlPage, IPageNavBar)
   private
     FNavBar: TNavBar;
   protected
@@ -46,11 +46,23 @@ type
     destructor Destroy; override;
   end;
 
-  { TAuthHtmlPage }
+  { TDefaultHtmlPage }
 
-  TAuthHtmlPage = class(TAuthHtmlPageBase)
+  TDefaultHtmlPage = class(TDefaultHtmlPageBase)
   protected
     procedure AddFeatures; override;
+  end;
+
+  { TAuthHtmlPage }
+
+  TAuthHtmlPage = class(TDefaultHtmlPageBase, IAuthHtmlPage)
+  private
+    FError: string;
+  protected
+    procedure AddFeatures; override;
+    procedure SetError(AValue: string);
+    function GetError: string;
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
   end;
 
   { TLoginHtmlPage }
@@ -72,6 +84,14 @@ type
   end;
 
 implementation
+
+{ TDefaultHtmlPage }
+
+procedure TDefaultHtmlPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TUserBarFeature);
+end;
 
 { TRegisterHtmlPage }
 
@@ -106,47 +126,59 @@ end;
 procedure TAuthHtmlPage.AddFeatures;
 begin
   inherited AddFeatures;
-  AddFeature(THeaderFeature);
   AddFeature(TAuthFormFeature);
-  AddFeature(TFooterFeature);
 end;
 
-{ TDefaultHtmlPage }
+procedure TAuthHtmlPage.SetError(AValue: string);
+begin
+  FError := AValue;
+end;
 
-procedure TDefaultHtmlPage.AddFeatures;
+function TAuthHtmlPage.GetError: string;
+begin
+  Result := FError;
+end;
+
+procedure TAuthHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
+begin
+  Strings.Text := '~#+authContent;';
+end;
+
+{ TDefaultHtmlPageBase }
+
+procedure TDefaultHtmlPageBase.AddFeatures;
 begin
   inherited AddFeatures;
   AddFeature(THeaderFeature);
-  AddFeature(TUserBarFeature);
   AddFeature(TNavBarFeature);
   AddFeature(TContentFeature);
   AddFeature(TFooterFeature);
 end;
 
-procedure TDefaultHtmlPage.DoSetVariables;
+procedure TDefaultHtmlPageBase.DoSetVariables;
 begin
   FNavBar.ActiveCaption := Title;
   inherited DoSetVariables;
 end;
 
-function TDefaultHtmlPage.GetNavBar: TNavBar;
+function TDefaultHtmlPageBase.GetNavBar: TNavBar;
 begin
   Result := FNavBar;
 end;
 
-procedure TDefaultHtmlPage.Clear;
+procedure TDefaultHtmlPageBase.Clear;
 begin
   inherited Clear;
   FNavBar.Clear;
 end;
 
-constructor TDefaultHtmlPage.Create;
+constructor TDefaultHtmlPageBase.Create;
 begin
   inherited Create;
   FNavBar := CreateNavBar;
 end;
 
-destructor TDefaultHtmlPage.Destroy;
+destructor TDefaultHtmlPageBase.Destroy;
 begin
   FreeAndNil(FNavBar);
   inherited Destroy;

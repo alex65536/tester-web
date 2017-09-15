@@ -25,7 +25,7 @@ unit authwebmodules;
 interface
 
 uses
-  SysUtils, webmodules, users, HTTPDefs, webstrconsts, htmlpages, tswebpages;
+  SysUtils, webmodules, users, HTTPDefs, webstrconsts, htmlpages, tswebpagesbase;
 
 type
 
@@ -115,7 +115,7 @@ end;
 procedure TAuthWebModule.DoPageAfterConstruction(APage: THtmlPage);
 begin
   inherited DoPageAfterConstruction(APage);
-  (APage as TAuthHtmlPage).Error := FError;
+  (APage as IAuthHtmlPage).Error := FError;
 end;
 
 procedure TAuthWebModule.DoBeforeRequest;

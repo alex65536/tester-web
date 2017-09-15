@@ -40,12 +40,16 @@ type
     property Title: string read FTitle write FTitle;
   end;
 
-  TAuthHtmlPageBase = class(TTesterHtmlPage)
-  protected
-    FError: string;
-  public
-    property Error: string read FError write FError;
+  { IAuthHtmlPage }
+
+  {$interfaces CORBA}
+  IAuthHtmlPage = interface
+    ['{48726FDF-4025-4D9C-A462-1D88AEE0DF89}']
+    function GetError: string;
+    procedure SetError(AValue: string);
+    property Error: string read GetError write SetError;
   end;
+  {$interfaces COM}
 
   { TContentHtmlPage }
 

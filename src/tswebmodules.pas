@@ -49,6 +49,20 @@ type
     property TextContent: string read FTextContent write FTextContent;
   end;
 
+  { TNavLoginPage }
+
+  TNavLoginPage = class(TLoginHtmlPage)
+  protected
+    function CreateNavBar: TNavBar; override;
+  end;
+
+  { TNavRegisterPage }
+
+  TNavRegisterPage = class(TRegisterHtmlPage)
+  protected
+    function CreateNavBar: TNavBar; override;
+  end;
+
   { TIndexWebModule }
 
   TIndexWebModule = class(THtmlPageWebModule)
@@ -95,6 +109,20 @@ type
 
 implementation
 
+{ TNavRegisterPage }
+
+function TNavRegisterPage.CreateNavBar: TNavBar;
+begin
+  Result := TDefaultNavBar.Create(Self);
+end;
+
+{ TNavLoginPage }
+
+function TNavLoginPage.CreateNavBar: TNavBar;
+begin
+  Result := TDefaultNavBar.Create(Self);
+end;
+
 { TKillServerWebModule }
 
 procedure TKillServerWebModule.DoInsideRequest;
@@ -115,7 +143,7 @@ end;
 
 function TRegisterWebModule.DoCreatePage: THtmlPage;
 begin
-  Result := TRegisterHtmlPage.Create;
+  Result := TNavRegisterPage.Create;
 end;
 
 procedure TRegisterWebModule.DoHandleAuth(ARequest: TRequest);
@@ -135,7 +163,7 @@ end;
 
 function TLoginWebModule.DoCreatePage: THtmlPage;
 begin
-  Result := TLoginHtmlPage.Create;
+  Result := TNavLoginPage.Create;
 end;
 
 procedure TLoginWebModule.DoHandleAuth(ARequest: TRequest);

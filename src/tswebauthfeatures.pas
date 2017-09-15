@@ -118,26 +118,25 @@ end;
 
 procedure TAuthFormFeature.Satisfy;
 begin
-  LoadPagePart('auth', 'auth', 'content');
+  LoadPagePart('auth', 'auth', 'authContent');
   LoadPagePart('auth', 'authNameItem');
   LoadPagePart('auth', 'authUsernameItem');
   LoadPagePart('auth', 'authPasswordItem');
   LoadPagePart('auth', 'authEnterPasswordItem');
-  with (Parent as TAuthHtmlPageBase) do
-    with Variables do
-    begin
-      ItemsAsText['authError'] := Error;
-      ItemsAsText['authUsername'] := SAuthUsername;
-      ItemsAsText['authUsernamePrompt'] := SAuthUsernamePrompt;
-      ItemsAsText['authFirstName'] := SAuthFirstName;
-      ItemsAsText['authFirstNamePrompt'] := SAuthFirstNamePrompt;
-      ItemsAsText['authLastName'] := SAuthLastName;
-      ItemsAsText['authLastNamePrompt'] := SAuthLastNamePrompt;
-      ItemsAsText['authEnterPassword'] := SAuthEnterPassword;
-      ItemsAsText['authEnterPasswordPrompt'] := SAuthEnterPasswordPrompt;
-      ItemsAsText['authRetypePassword'] := SAuthRetypePassword;
-      ItemsAsText['authRetypePasswordPrompt'] := SAuthRetypePasswordPrompt;
-    end;
+  with Parent.Variables do
+  begin
+    ItemsAsText['authError'] := (Parent as IAuthHtmlPage).Error;
+    ItemsAsText['authUsername'] := SAuthUsername;
+    ItemsAsText['authUsernamePrompt'] := SAuthUsernamePrompt;
+    ItemsAsText['authFirstName'] := SAuthFirstName;
+    ItemsAsText['authFirstNamePrompt'] := SAuthFirstNamePrompt;
+    ItemsAsText['authLastName'] := SAuthLastName;
+    ItemsAsText['authLastNamePrompt'] := SAuthLastNamePrompt;
+    ItemsAsText['authEnterPassword'] := SAuthEnterPassword;
+    ItemsAsText['authEnterPasswordPrompt'] := SAuthEnterPasswordPrompt;
+    ItemsAsText['authRetypePassword'] := SAuthRetypePassword;
+    ItemsAsText['authRetypePasswordPrompt'] := SAuthRetypePasswordPrompt;
+  end;
 end;
 
 end.
