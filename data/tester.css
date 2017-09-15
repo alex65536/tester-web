@@ -58,6 +58,7 @@ table.container {
 	color: white;
 	text-decoration: none;
 	padding: 2pt 10pt;
+	white-space: nowrap;
 }
 .userbar a:hover {
 	background-color: #187842;
@@ -104,6 +105,26 @@ table.center-wrapper {
 }
 
 
+.styled-btn {
+	background-color: #47BD7B;
+	border-style: groove;
+	border-width: 2pt;
+	border-color: #1CA757;
+	border-radius: 5pt;
+	box-shadow: 0pt 0pt 1pt #43594D;
+	color: white;
+	font-family: inherit;
+	font-size: inherit;
+	margin: 10pt 5pt;
+	padding: 3pt 10pt;
+	text-decoration: none;
+}
+button.styled-btn:active, a.styled-btn:hover {
+	background-color: #2DA35D;
+	border-style: ridge;
+}
+
+
 .footer {
 	background-color: #E3FFF0;
 	text-align: center;
@@ -132,40 +153,37 @@ table.center-wrapper {
 .auth-edit {
 	font-family: inherit;
 }
-.auth-btn {
-	background-color: #47BD7B;
-	border-style: groove;
-	border-width: 2pt;
-	border-color: #1CA757;
-	border-radius: 5pt;
-	box-shadow: 0pt 0pt 1pt #43594D;
-	color: white;
-	font-family: inherit;
-	font-size: inherit;
-	margin: 3pt 5pt;
-	padding: 3pt 10pt;
-	text-decoration: none;
-}
-.auth-btn:active {
-	background-color: #2DA35D;
-	border-style: ridge;
-}
 
+
+table.profile-table {
+	border-spacing: 3pt 5pt;
+}
 .profile-table-key {
 	vertical-align: middle;
 	text-align: right;
 }
 .profile-table-value {
-	vertical-align: middle;
+	padding-left: 10pt;
 	text-align: left;
+	vertical-align: middle;
+}
+.profile-table-btn {
+	padding: 10pt;
+	text-align: center;
+	vertical-align: middle;
 }
 table.profile-role-table {
-	/* TODO : Finish it! */
+	border: none;
+	border-collapse: collapse;
+	margin: 0;
+	padding: 0;
 }
 .profile-role-text {
+	padding: 0;
+	padding-right: 5pt;
 	width: 0;
 }
 img.profile-role {
-	height: 1.5em;
+	height: 1.6em;
 	vertical-align: middle;
 }
