@@ -103,6 +103,10 @@ table.center-wrapper {
 	margin: auto;
 	text-align: center;
 }
+.text-header {
+	text-height: 16pt;
+	font-weight: bold;
+}
 
 
 .styled-btn {
@@ -115,7 +119,7 @@ table.center-wrapper {
 	color: white;
 	font-family: inherit;
 	font-size: inherit;
-	margin: 10pt 5pt;
+	margin: 3pt 5pt;
 	padding: 3pt 10pt;
 	text-decoration: none;
 }
@@ -135,9 +139,11 @@ button.styled-btn:active, a.styled-btn:hover {
 	background-color: #FFFFFF;
 	border-style: ridge;
 	box-shadow: 1pt 1pt 2pt #43594D;
-	padding: 3pt 8pt;
-	width: auto;
 	display: inline-block;
+	margin: 5pt 0;
+	padding: 3pt 8pt;
+	text-align: center;
+	width: auto;
 }
 .auth-error {
 	color: red;
@@ -168,7 +174,7 @@ table.profile-table {
 	vertical-align: middle;
 }
 .profile-table-btn {
-	padding: 10pt;
+	padding: 5pt;
 	text-align: center;
 	vertical-align: middle;
 }
