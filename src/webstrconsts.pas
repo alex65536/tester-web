@@ -70,7 +70,7 @@ resourcestring
   SUpdateNoUpdation = 'Updating is disabled! Use BeginUpdate to enable updating.';
   SUserDoesNotExist = 'User with name "%s" doesn''t exist!';
   SAuthDataNotStored = 'Authentification data is not stored!';
-  SNewPasswordsNotEqual = 'New password is not equal to repeated new password.';
+  SPasswordsNotEqual = 'Wrong password confirmation!';
   SAuthRequired = 'This action requires authentification.';
   SUserCreationPublic = 'User creation via public constructor is forbidden!';
   SLoggedAsGuest = 'You are a guest.';
@@ -81,8 +81,10 @@ resourcestring
   SUserDoRegister = 'Register';
   SAuthUsername = 'Username:';
   SAuthUsernamePrompt = 'Enter username';
-  SAuthPassword = 'Password:';
-  SAuthPasswordPrompt = 'Enter password';
+  SAuthEnterPassword = 'Password:';
+  SAuthEnterPasswordPrompt = 'Enter password';
+  SAuthRetypePassword = 'Confirm password:';
+  SAuthRetypePasswordPrompt = 'Enter password again';
   SAuthFirstName = 'First name:';
   SAuthFirstNamePrompt = 'Enter first name';
   SAuthLastName = 'Last name:';

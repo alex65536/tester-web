@@ -118,8 +118,8 @@ type
     function LoadUserFromSession(ASession: TCustomSession): TUser;
     procedure AuthentificateSession(ASession: TCustomSession;
       const Username, Password: string);
-    procedure AddNewUser(const AUsername, APassword, AFirstName, ALastName: string;
-      ARole: TUserRole = urSimple);
+    procedure AddNewUser(const AUsername, APassword, APasswordConfirm: string;
+      const AFirstName, ALastName: string; ARole: TUserRole = urSimple);
     function GetRole(const AUsername: string): TUserRole;
     procedure GrantRole(const AUsername: string; ARole: TUserRole);
     constructor Create;
@@ -264,6 +264,7 @@ procedure TUserManager.AuthentificateSession(ASession: TCustomSession;
   const Username, Password: string);
 var
   AUser: TUser;
+  Msg: string;
 begin
   if not UserExists(Username) then
     raise EUserAuthentificate.Create(SInvalidUsernamePassword);
@@ -276,9 +277,10 @@ begin
     except
       on E: EUserAuthentificate do
       begin
-        if E.Message = SInvalidPassword then
-          E.Message := SInvalidUsernamePassword;
-        raise E;
+        Msg := E.Message;
+        if Msg = SInvalidPassword then
+          Msg := SInvalidUsernamePassword;
+        raise EUserAuthentificate.Create(Msg)
       end
       else
         raise;
@@ -291,8 +293,9 @@ begin
   end;
 end;
 
-procedure TUserManager.AddNewUser(
-  const AUsername, APassword, AFirstName, ALastName: string; ARole: TUserRole);
+procedure TUserManager.AddNewUser(const AUsername, APassword,
+  APasswordConfirm: string; const AFirstName, ALastName: string;
+  ARole: TUserRole);
 begin
   // check pre-requisites
   ValidateUsername(AUsername);
@@ -301,6 +304,8 @@ begin
   ValidateFirstLastName(ALastName);
   if UserExists(AUsername) then
     raise EUserValidate.CreateFmt(SUserExists, [AUsername]);
+  if APassword <> APasswordConfirm then
+    raise EUserValidate.Create(SPasswordsNotEqual);
   // create user
   with CreateUser(ARole, AUsername) do
     try
@@ -316,6 +321,7 @@ begin
         raise;
       end;
       EndUpdate(True);
+      Storage.WriteFloat(AUsername + '.registerTime', Now);
       UpdateLastVisit;
     finally
       Free;
@@ -343,8 +349,8 @@ begin
   begin
     // if there is nobody, create an owner.
     with Config do
-      AddNewUser(Owner_DefaultUsername, Owner_DefaultPassword, Owner_DefaultFirstName,
-        Owner_DefaultLastName, urOwner);
+      AddNewUser(Owner_DefaultUsername, Owner_DefaultPassword, Owner_DefaultPassword,
+        Owner_DefaultFirstName, Owner_DefaultLastName, urOwner);
     FStorage.Commit;
   end;
 end;
@@ -498,7 +504,7 @@ begin
   Authentificate(OldPassword);
   NeedsAuthentification;
   if NewPassword <> NewPasswordConfirm then
-    raise EUserValidate.Create(SNewPasswordsNotEqual);
+    raise EUserValidate.Create(SPasswordsNotEqual);
   ValidatePassword(NewPassword);
   GeneratePassword(NewPassword);
 end;

@@ -120,13 +120,14 @@ end;
 
 procedure TRegisterWebModule.DoHandleAuth(ARequest: TRequest);
 var
-  Username, Password, FirstName, LastName: string;
+  Username, Password, Password2, FirstName, LastName: string;
 begin
   Username := ARequest.ContentFields.Values['username'];
   Password := ARequest.ContentFields.Values['password'];
+  Password2 := ARequest.ContentFields.Values['password2'];
   FirstName := ARequest.ContentFields.Values['first-name'];
   LastName := ARequest.ContentFields.Values['last-name'];
-  UserManager.AddNewUser(Username, Password, FirstName, LastName);
+  UserManager.AddNewUser(Username, Password, Password2, FirstName, LastName);
   UserManager.AuthentificateSession(Session, Username, Password);
 end;
 

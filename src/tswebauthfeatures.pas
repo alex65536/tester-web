@@ -122,18 +122,21 @@ begin
   LoadPagePart('auth', 'authNameItem');
   LoadPagePart('auth', 'authUsernameItem');
   LoadPagePart('auth', 'authPasswordItem');
+  LoadPagePart('auth', 'authEnterPasswordItem');
   with (Parent as TAuthHtmlPageBase) do
     with Variables do
     begin
       ItemsAsText['authError'] := Error;
       ItemsAsText['authUsername'] := SAuthUsername;
       ItemsAsText['authUsernamePrompt'] := SAuthUsernamePrompt;
-      ItemsAsText['authPassword'] := SAuthPassword;
-      ItemsAsText['authPasswordPrompt'] := SAuthPasswordPrompt;
       ItemsAsText['authFirstName'] := SAuthFirstName;
       ItemsAsText['authFirstNamePrompt'] := SAuthFirstNamePrompt;
       ItemsAsText['authLastName'] := SAuthLastName;
       ItemsAsText['authLastNamePrompt'] := SAuthLastNamePrompt;
+      ItemsAsText['authEnterPassword'] := SAuthEnterPassword;
+      ItemsAsText['authEnterPasswordPrompt'] := SAuthEnterPasswordPrompt;
+      ItemsAsText['authRetypePassword'] := SAuthRetypePassword;
+      ItemsAsText['authRetypePasswordPrompt'] := SAuthRetypePasswordPrompt;
     end;
 end;
 
