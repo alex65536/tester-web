@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, tswebpagesbase, tswebfeatures, users, htmlpages,
-  webstrconsts;
+  webstrconsts, userpages, htmlpreprocess;
 
 type
 
@@ -58,7 +58,75 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TProfileChangeRoleFeature }
+
+  TProfileChangeRoleFeature = class(TUserInfoFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TProfileChangeRoleFeature }
+
+procedure TProfileChangeRoleFeature.InternalSatisfy;
+var
+  CanIntoRole: array [TUserRole] of boolean;
+  User: TUser;
+  Role: TUserRole;
+  CanChange: boolean;
+  Options: TIndentTaggedStrings;
+begin
+  User := (Parent as TUserPage).User;
+  if User = nil then
+    raise EInvalidPointer.CreateFmt(SMustNonNil, ['User']);
+  // find available roles
+  CanChange := False;
+  for Role in TUserRole do
+  begin
+    if User is TAdminUser then
+      CanIntoRole[Role] := (User as TAdminUser).CanGrantRole(Info, Role)
+    else
+      CanIntoRole[Role] := False;
+    if CanIntoRole[Role] then
+      CanChange := True;
+  end;
+  // if cannot change, do not create profile changer
+  if not CanChange then
+    Exit;
+  // fill options
+  Options := TIndentTaggedStrings.Create;
+  try
+    for Role in TUserRole do
+      if CanIntoRole[Role] then
+      begin
+        with Parent.Variables do
+        begin
+          ItemsAsText['profileNewUserRole'] := UserRoleToStr(Role);
+          ItemsAsText['profileNewUserRoleName'] := UserRoleNames[Role];
+        end;
+        Options.Add(Parent.Preprocessor.PreprocessFile(TemplateLocation('', 'profileChangeRoleOption')));
+      end;
+    Parent.PageParts.SetItemAsStrings('profileRoleOptions', Options);
+  finally
+    FreeAndNil(Options);
+  end;
+  // fill other variables
+  with Parent.Variables do
+  begin
+    ItemsAsText['profileChangeRoleKey'] := SProfileChangeRoleKey;
+    ItemsAsText['profileDoChangeRole'] := SProfileDoChangeRole;
+  end;
+  LoadPagePart('', 'profileChangeRole');
+end;
+
+procedure TProfileChangeRoleFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TProfilePageFeature);
+end;
 
 { TProfileTitlePageFeature }
 

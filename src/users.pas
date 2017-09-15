@@ -128,10 +128,10 @@ type
   TAdminUser = class(TUser)
   protected
     function DoGetRole: TUserRole; override;
+    function DoCanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean; virtual;
   public
-    function CanGrantRole(WasRole, NewRole: TUserRole): boolean; virtual;
-    procedure GrantRole(const AUsername: string; ARole: TUserRole);
-    // TODO : Grant role by UserInfo, not UserName!
+    function CanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean;
+    procedure GrantRole(Target: TUserInfo; ARole: TUserRole);
   end;
 
   { TOwnerUser }
@@ -139,8 +139,8 @@ type
   TOwnerUser = class(TAdminUser)
   protected
     function DoGetRole: TUserRole; override;
+    function DoCanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean; override;
   public
-    function CanGrantRole(WasRole, NewRole: TUserRole): boolean; override;
     procedure TerminateServer;
   end;
 
@@ -465,14 +465,14 @@ end;
 
 { TOwnerUser }
 
-function TOwnerUser.CanGrantRole(WasRole, NewRole: TUserRole): boolean;
-begin
-  Result := (WasRole <> urOwner) and (NewRole <> urOwner);
-end;
-
 function TOwnerUser.DoGetRole: TUserRole;
 begin
   Result := urOwner;
+end;
+
+function TOwnerUser.DoCanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean;
+begin
+  Result := (Target.Role <> urOwner) and (ARole <> urOwner);
 end;
 
 procedure TOwnerUser.TerminateServer;
@@ -485,10 +485,10 @@ end;
 
 { TAdminUser }
 
-function TAdminUser.CanGrantRole(WasRole, NewRole: TUserRole): boolean;
+function TAdminUser.DoCanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean;
 begin
-  Result := (WasRole <> urOwner) and (WasRole <> urAdmin) and
-    (NewRole <> urOwner) and (NewRole <> urAdmin);
+  Result := (Target.Role <> urOwner) and (Target.Role <> urAdmin) and
+    (ARole <> urOwner) and (ARole <> urAdmin);
 end;
 
 function TAdminUser.DoGetRole: TUserRole;
@@ -496,12 +496,20 @@ begin
   Result := urAdmin;
 end;
 
-procedure TAdminUser.GrantRole(const AUsername: string; ARole: TUserRole);
+function TAdminUser.CanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean;
+begin
+  if Target.Username = Username then
+    Result := False
+  else
+    Result := DoCanGrantRole(Target, ARole);
+end;
+
+procedure TAdminUser.GrantRole(Target: TUserInfo; ARole: TUserRole);
 begin
   NeedsAuthentification;
-  if not CanGrantRole(Manager.GetRole(AUsername), ARole) then
+  if not CanGrantRole(Target, ARole) then
     raise EUserAccessDenied.Create(SAccessDenied);
-  Manager.GrantRole(AUsername, ARole);
+  Manager.GrantRole(Target.Username, ARole);
 end;
 
 { TUser }

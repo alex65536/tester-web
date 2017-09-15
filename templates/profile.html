@@ -20,23 +20,7 @@
 			</tr></table>
 		</td>
 	</tr>
-	<!-- tr>
-		<td class="profile-table-key">Change role to:</td>
-		<td class="profile-table-value">
-			<form action="change-role" method="get">
-				<input type="hidden" name="username" value="~profileUserName;">
-				<select name="newrole" required>
-					<option value="urAdmin">Admin</option>
-					<option value="urBlocked">Blocked</option>
-					<option value="urUser">User</option>
-					<option value="urOwner">Owner</option>
-				</select>
-				<button type="submit">
-					Change
-				</button>
-			</form>
-		</td>
-	</tr -->
+~C!	~#+?profileChangeRole;
 	<tr>
 		<td class="profile-table-key">~profileRegisterTimeKey;</td>
 		<td class="profile-table-value">~profileRegisterTime;</td>
@@ -45,9 +29,14 @@
 		<td class="profile-table-key">~profileLoginTimeKey;</td>
 		<td class="profile-table-value">~profileLoginTime;</td>
 	</tr>
-	<!-- tr>
-		<td colspan="2" class="profile-table-btn">
-			<a class="styled-btn" href="~documentRoot;/settings">Update settings</a>
-		</td>
-	</tr -->
+	<tr>
+		<!-- td colspan="2">
+			<div class="profile-table-btn">
+				<a class="styled-btn" href="~documentRoot;/settings">Update settings</a>
+			</div>
+			<div class="profile-table-btn">
+				<a class="styled-btn red-btn" href="~documentRoot;/delete?username=~profileUserName;">Delete user</a>
+			</div>
+		</td -->
+	</tr>
 </table>

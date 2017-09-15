@@ -156,6 +156,7 @@ begin
   inherited AddFeatures;
   AddFeature(TProfileTitlePageFeature);
   AddFeature(TProfilePageFeature);
+  AddFeature(TProfileChangeRoleFeature);
 end;
 
 function TProfileHtmlPage.GetInfo: TUserInfo;

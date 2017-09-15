@@ -98,10 +98,10 @@ resourcestring
   SRegisterSubmit = 'Register';
   SConfirmPasswordRequest = 'Please confirm your password to continue.';
   SConfirmPasswordSubmit = 'Confirm';
-  SBlockedUserRole = 'Blocked';
+  SBlockedUserRole = 'Banned';
   SSimpleUserRole = 'User';
-  SAdminUserRole = 'Admin';
-  SOwnerUserRole = 'Owner';
+  SAdminUserRole = 'Administrator';
+  SOwnerUserRole = 'Server Owner';
   SMustNonNil = '%s expected to be non-nil :(';
   SProfileUserNameKey = 'Username:';
   SProfileRealNameKey = 'Real name:';
@@ -110,6 +110,8 @@ resourcestring
   SProfileRegisterTimeKey = 'Registered at:';
   SProfileLoginTimeLey = 'Last visit at:';
   SPreferredDateTimeFormat = 'dd.mm.yyyy hh:nn:ss';
+  SProfileChangeRoleKey = 'Change role:';
+  SProfileDoChangeRole = 'Change';
 
 implementation
 

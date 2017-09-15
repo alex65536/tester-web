@@ -122,10 +122,18 @@ table.center-wrapper {
 	margin: 3pt 5pt;
 	padding: 3pt 10pt;
 	text-decoration: none;
+	white-space: nowrap;
 }
 button.styled-btn:active, a.styled-btn:hover {
 	background-color: #2DA35D;
 	border-style: ridge;
+}
+.red-btn {
+	background-color: #BD5447;
+	border-color: #A72E1C;
+}
+button.red-btn:active, a.red-btn:hover {
+	background-color: #A33F2D;
 }
 
 
@@ -174,8 +182,8 @@ table.profile-table {
 	vertical-align: middle;
 }
 .profile-table-btn {
-	padding: 5pt;
-	text-align: center;
+	padding: 7pt;
+	text-align: left;
 	vertical-align: middle;
 }
 table.profile-role-table {
@@ -188,6 +196,7 @@ table.profile-role-table {
 	padding: 0;
 	padding-right: 5pt;
 	width: 0;
+	white-space: nowrap;
 }
 img.profile-role {
 	height: 1.6em;
