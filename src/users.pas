@@ -39,11 +39,47 @@ type
   TUserRole = (urBlocked, urSimple, urAdmin, urOwner);
   TUserRoleSet = set of TUserRole;
 
+  { TUserInfo }
+
+  TUserInfo = class
+  private
+    FManager: TUserManager;
+    FUsername: string;
+    function GetFirstName: string;
+    function GetLastName: string;
+    function GetLastVisit: TDateTime;
+    function GetRegisteredAt: TDateTime;
+    function GetUserRole: TUserRole;
+  protected
+    function FullKeyName(const Key: string): string;
+    // creating users should only be done via TUserManager or TUser!
+    {%H-}constructor Create(AManager: TUserManager; const AUsername: string);
+  public
+    property Manager: TUserManager read FManager;
+    property Username: string read FUsername;
+    property Role: TUserRole read GetUserRole;
+    property FirstName: string read GetFirstName;
+    property LastName: string read GetLastName;
+    property LastVisit: TDateTime read GetLastVisit;
+    property RegisteredAt: TDateTime read GetRegisteredAt;
+    constructor Create;
+  end;
+
+  { IUserInfo }
+
+  {$interfaces CORBA}
+  IUserInfo = interface
+    ['{A6032A55-52B8-4715-890C-E436A25951EE}']
+    function GetInfo: TUserInfo;
+  end;
+  {$interfaces COM}
+
   { TUser }
 
   TUser = class
   private
     FAuthentificated: boolean;
+    FInfo: TUserInfo;
     FManager: TUserManager;
     FRole: TUserRole;
     FUsername: string;
@@ -66,6 +102,7 @@ type
     {%H-}constructor Create(AManager: TUserManager; const AUsername: string); virtual;
   public
     property Manager: TUserManager read FManager;
+    property Info: TUserInfo read FInfo;
     property Role: TUserRole read FRole;
     property Username: string read FUsername;
     property FirstName: string read GetFirstName write SetFirstName;
@@ -81,6 +118,7 @@ type
     procedure UpdateLastVisit;
     procedure WriteRole;
     constructor Create;
+    destructor Destroy; override;
   end;
 
   TUserClass = class of TUser;
@@ -93,6 +131,7 @@ type
   public
     function CanGrantRole(WasRole, NewRole: TUserRole): boolean; virtual;
     procedure GrantRole(const AUsername: string; ARole: TUserRole);
+    // TODO : Grant role by UserInfo, not UserName!
   end;
 
   { TOwnerUser }
@@ -120,6 +159,7 @@ type
     function UserExists(const Username: string): boolean;
     function LoadUserFromUsername(const Username: string): TUser;
     function LoadUserFromSession(ASession: TCustomSession): TUser;
+    function GetUserInfo(const Username: string): TUserInfo;
     procedure AuthentificateSession(ASession: TCustomSession;
       const Username, Password: string);
     procedure AddNewUser(const AUsername, APassword, APasswordConfirm: string;
@@ -218,6 +258,50 @@ begin
   Result := FManager;
 end;
 
+{ TUserInfo }
+
+function TUserInfo.GetFirstName: string;
+begin
+  Result := Manager.Storage.ReadString(FullKeyName('firstName'), '');
+end;
+
+function TUserInfo.GetLastName: string;
+begin
+  Result := Manager.Storage.ReadString(FullKeyName('lastName'), '');
+end;
+
+function TUserInfo.GetLastVisit: TDateTime;
+begin
+  Result := Manager.Storage.ReadFloat(FullKeyName('lastVisit'), 0);
+end;
+
+function TUserInfo.GetRegisteredAt: TDateTime;
+begin
+  Result := Manager.Storage.ReadFloat(FullKeyName('registerTime'), 0);
+end;
+
+function TUserInfo.GetUserRole: TUserRole;
+begin
+  Result := StrToUserRole(Manager.Storage.ReadString(FullKeyName('role'), ''));
+end;
+
+constructor TUserInfo.Create(AManager: TUserManager; const AUsername: string);
+begin
+  FManager := AManager;
+  FUsername := AUsername;
+end;
+
+function TUserInfo.FullKeyName(const Key: string): string;
+begin
+  Result := FUsername + '.' + Key;
+end;
+
+constructor TUserInfo.Create;
+begin
+  // we don't want the users to be created publicly!
+  raise EInvalidOperation.CreateFmt(SCreationPublic, ['TUserInfo']);
+end;
+
 { TUserManager }
 
 function TUserManager.GetUserCount: integer;
@@ -269,6 +353,13 @@ begin
   Result := LoadUserFromUsername(ASession.Variables['userName']);
   if Result <> nil then
     Result.UpdateLastVisit;
+end;
+
+function TUserManager.GetUserInfo(const Username: string): TUserInfo;
+begin
+  if not UserExists(Username) then
+    raise EUserNotExist.CreateFmt(SUserDoesNotExist, [Username]);
+  Result := TUserInfo.Create(Self, Username);
 end;
 
 procedure TUserManager.AuthentificateSession(ASession: TCustomSession;
@@ -417,22 +508,22 @@ end;
 
 function TUser.GetFirstName: string;
 begin
-  Result := Manager.Storage.ReadString(FullKeyName('firstName'), '');
+  Result := FInfo.FirstName;
 end;
 
 function TUser.GetLastName: string;
 begin
-  Result := Manager.Storage.ReadString(FullKeyName('lastName'), '');
+  Result := FInfo.LastName;
 end;
 
 function TUser.GetLastVisit: TDateTime;
 begin
-  Result := Manager.Storage.ReadFloat(FullKeyName('lastVisit'), 0);
+  Result := FInfo.LastVisit;
 end;
 
 function TUser.GetRegisteredAt: TDateTime;
 begin
-  Result := Manager.Storage.ReadFloat(FullKeyName('registerTime'), 0);
+  Result := FInfo.RegisteredAt;
 end;
 
 procedure TUser.RequireUpdating;
@@ -489,7 +580,7 @@ end;
 
 function TUser.FullKeyName(const Key: string): string;
 begin
-  Result := FUsername + '.' + Key;
+  Result := FInfo.FullKeyName(Key);
 end;
 
 function TUser.DoGetRole: TUserRole;
@@ -547,6 +638,7 @@ end;
 constructor TUser.Create(AManager: TUserManager; const AUsername: string);
 begin
   FManager := AManager;
+  FInfo := TUserInfo.Create(AManager, AUsername);
   FUsername := AUsername;
   FRole := DoGetRole;
   FAuthentificated := False;
@@ -566,7 +658,13 @@ end;
 constructor TUser.Create;
 begin
   // we don't want the users to be created publicly!
-  raise EInvalidOperation.Create(SUserCreationPublic);
+  raise EInvalidOperation.CreateFmt(SCreationPublic, ['TUser']);
+end;
+
+destructor TUser.Destroy;
+begin
+  FreeAndNil(FInfo);
+  inherited Destroy;
 end;
 
 initialization

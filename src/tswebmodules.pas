@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess, fphttp,
   htmlpages, tswebpages, HTTPDefs, users, webstrconsts, authwebmodules,
-  tswebfeatures;
+  tswebprofilefeatures;
 
 type
 
@@ -52,11 +52,17 @@ type
 
   { TProfileHtmlPage }
 
-  TProfileHtmlPage = class(TDefaultHtmlPage)
+  TProfileHtmlPage = class(TDefaultHtmlPage, IUserInfo)
+  private
+    FUsername: string;
   protected
     function CreateNavBar: TNavBar; override;
     procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
     procedure AddFeatures; override;
+    function GetInfo: TUserInfo;
+  public
+    constructor Create; override;
+    constructor Create(const AUsername: string);
   end;
 
   { TNavLoginPage }
@@ -130,7 +136,7 @@ implementation
 
 function TProfileWebModule.DoCreatePage: THtmlPage;
 begin
-  Result := TProfileHtmlPage.Create;
+  Result := TProfileHtmlPage.Create(Request.QueryFields.Values['user']);
 end;
 
 { TProfileHtmlPage }
@@ -150,6 +156,31 @@ begin
   inherited AddFeatures;
   AddFeature(TProfileTitlePageFeature);
   AddFeature(TProfilePageFeature);
+end;
+
+function TProfileHtmlPage.GetInfo: TUserInfo;
+begin
+  if FUsername = '' then
+  begin
+    if User = nil then
+      raise EUserAccessDenied.Create(SAccessDenied)
+    else
+      Result := UserManager.GetUserInfo(User.Username);
+  end
+  else
+    Result := UserManager.GetUserInfo(FUsername);
+end;
+
+constructor TProfileHtmlPage.Create;
+begin
+  inherited Create;
+  FUsername := '';
+end;
+
+constructor TProfileHtmlPage.Create(const AUsername: string);
+begin
+  inherited Create;
+  FUsername := AUsername;
 end;
 
 { TNavRegisterPage }

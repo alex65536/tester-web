@@ -1,21 +1,21 @@
 <table>
 	<tr>
 		<td class="profile-table-key">~profileUserNameKey;</td>
-		<td class="profile-table-value">~userName;</td>
+		<td class="profile-table-value">~profileUserName;</td>
 	</tr>
 	<tr>
 		<td class="profile-table-key">~profileRealNameKey;</td>
-		<td class="profile-table-value">~firstName; ~lastName;</td>
+		<td class="profile-table-value">~profileFirstName; ~profileLastName;</td>
 	</tr>
 	<tr>
 		<td class="profile-table-key">~profileUserRoleKey;</td>
 		<td class="profile-table-value">
 			<table class="profile-role-table"><tr>
 				<td class="profile-role-text">
-					<span class="role-label-~userRoleLower;">~userRoleName;</span>
+					<span class="role-label-~profileUserRoleLower;">~profileUserRoleName;</span>
 				</td>
 				<td>
-					<img class="profile-role" src="~dataRoot;/user~userRole;.png" alt="~userRoleName;">
+					<img class="profile-role" src="~dataRoot;/user~profileUserRole;.png" alt="~profileUserRoleName;">
 				</td>
 			</tr></table>
 		</td>
@@ -23,7 +23,8 @@
 	<!-- tr>
 		<td class="profile-table-key">Change role to:</td>
 		<td class="profile-table-value">
-			<form action="profile/change-role" method="get">
+			<form action="change-role" method="get">
+				<input type="hidden" name="username" value="~profileUserName;">
 				<select name="newrole" required>
 					<option value="urAdmin">Admin</option>
 					<option value="urBlocked">Blocked</option>

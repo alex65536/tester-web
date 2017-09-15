@@ -28,8 +28,6 @@ uses
   SysUtils, htmlpages, htmlpreprocess, webstrconsts, tswebpagesbase,
   navbars, users, userpages;
 
-// TODO : Add users and login panel!
-
 type
 
   { TPageBaseFeature }
@@ -92,73 +90,7 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
-  { TProfilePageFeature }
-
-  TProfilePageFeature = class(TTesterPageFeature)
-  public
-    procedure Satisfy; override;
-    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
-  end;
-
-  { TProfileTitlePageFeature }
-
-  TProfileTitlePageFeature = class(TTesterPageFeature)
-  public
-    procedure Satisfy; override;
-    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
-  end;
-
 implementation
-
-{ TProfileTitlePageFeature }
-
-procedure TProfileTitlePageFeature.Satisfy;
-var
-  User: TUser;
-begin
-  User := (Parent as TUserPage).User;
-  if User = nil then
-    raise EInvalidPointer.CreateFmt(SMustNonNil, ['User']);
-  with Parent.Variables do
-  begin
-    ItemsAsText['title'] := Format(SProfileOf, [User.Username]);
-    ItemsAsText['pageHeader'] := Format(SProfileOf, [User.Username]);
-  end;
-end;
-
-procedure TProfileTitlePageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
-begin
-  inherited DependsOn(ADependencies);
-  ADependencies.Add(TUserInfoFeature);
-end;
-
-{ TProfilePageFeature }
-
-procedure TProfilePageFeature.Satisfy;
-var
-  User: TUser;
-begin
-  User := (Parent as TUserPage).User;
-  if User = nil then
-    raise EInvalidPointer.CreateFmt(SMustNonNil, ['User']);
-  with Parent.Variables, User do
-  begin
-    ItemsAsText['profileUserNameKey'] := SProfileUserNameKey;
-    ItemsAsText['profileRealNameKey'] := SProfileRealNameKey;
-    ItemsAsText['profileUserRoleKey'] := SProfileUserRoleKey;
-    ItemsAsText['profileRegisterTimeKey'] := SProfileRegisterTimeKey;
-    ItemsAsText['profileLoginTimeKey'] := SProfileLoginTimeLey;
-    ItemsAsText['profileLoginTime'] := FormatDateTime(SPreferredDateTimeFormat, LastVisit);
-    ItemsAsText['profileRegisterTime'] := FormatDateTime(SPreferredDateTimeFormat, RegisteredAt);
-  end;
-  LoadPagePart('', 'profile');
-end;
-
-procedure TProfilePageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
-begin
-  inherited DependsOn(ADependencies);
-  ADependencies.Add(TUserInfoFeature);
-end;
 
 { TUserInfoFeature }
 

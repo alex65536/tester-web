@@ -49,7 +49,8 @@ uses
   tswebauthfeatures,
   tswebpages,
   tswebmodules,
-  authwebmodules;
+  authwebmodules,
+  tswebprofilefeatures;
 
 {$ifdef Windows}
 var

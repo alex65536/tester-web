@@ -72,7 +72,7 @@ resourcestring
   SAuthDataNotStored = 'Authentification data is not stored!';
   SPasswordsNotEqual = 'Wrong password confirmation!';
   SAuthRequired = 'This action requires authentification.';
-  SUserCreationPublic = 'User creation via public constructor is forbidden!';
+  SCreationPublic = '%s creation via public constructor is forbidden!';
   SLoggedAsGuest = 'You are a guest.';
   SLoggedAsUser = 'You are logged in as';
   SUserDoLogIn = 'Log in';
