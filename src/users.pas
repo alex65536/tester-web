@@ -52,6 +52,8 @@ type
     FUpdating: boolean;
     function GetFirstName: string;
     function GetLastName: string;
+    function GetLastVisit: TDateTime;
+    function GetRegisteredAt: TDateTime;
     procedure RequireUpdating;
     procedure SetFirstName(AValue: string);
     procedure SetLastName(AValue: string);
@@ -68,6 +70,8 @@ type
     property Username: string read FUsername;
     property FirstName: string read GetFirstName write SetFirstName;
     property LastName: string read GetLastName write SetLastName;
+    property LastVisit: TDateTime read GetLastVisit;
+    property RegisteredAt: TDateTime read GetRegisteredAt;
     procedure BeginUpdate; virtual;
     procedure EndUpdate(Apply: boolean); virtual;
     procedure ChangePassword(
@@ -132,6 +136,13 @@ const
     TUser,      // urSimple
     TAdminUser, // urAdmin
     TOwnerUser  // urOwner
+    );
+
+  UserRoleNames: array [TUserRole] of string = (
+    SBlockedUserRole, // urBlocked
+    SSimpleUserRole,  // urSimple
+    SAdminUserRole,   // urAdmin
+    SOwnerUserRole    // urOwner
     );
 
 function UserRoleToStr(ARole: TUserRole): string;
@@ -412,6 +423,16 @@ end;
 function TUser.GetLastName: string;
 begin
   Result := Manager.Storage.ReadString(FullKeyName('lastName'), '');
+end;
+
+function TUser.GetLastVisit: TDateTime;
+begin
+  Result := Manager.Storage.ReadFloat(FullKeyName('lastVisit'), 0);
+end;
+
+function TUser.GetRegisteredAt: TDateTime;
+begin
+  Result := Manager.Storage.ReadFloat(FullKeyName('registerTime'), 0);
 end;
 
 procedure TUser.RequireUpdating;

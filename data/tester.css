@@ -193,3 +193,28 @@ img.profile-role {
 	height: 1.6em;
 	vertical-align: middle;
 }
+
+
+.role-label-owner {
+	color: #B00000;
+	font-weight: bold;
+	text-decoration-color: #B00000;
+	text-decoration-line: underline;
+	text-decoration-style: double;
+}
+.role-label-admin {
+	color: #DB5303;
+	font-weight: bold;
+	text-decoration-color: #DB5303;
+	text-decoration-line: underline;
+}
+.role-label-simple {
+	color: #006524;
+	font-weight: bold;
+}
+.role-label-blocked {
+	color: black;
+	font-weight: bold;
+	text-decoration-color: black;
+	text-decoration-line: line-through;
+}

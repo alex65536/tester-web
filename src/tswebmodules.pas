@@ -26,7 +26,8 @@ interface
 
 uses
   SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess, fphttp,
-  htmlpages, tswebpages, HTTPDefs, users, webstrconsts, authwebmodules;
+  htmlpages, tswebpages, HTTPDefs, users, webstrconsts, authwebmodules,
+  tswebfeatures;
 
 type
 
@@ -47,6 +48,15 @@ type
     procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
   public
     property TextContent: string read FTextContent write FTextContent;
+  end;
+
+  { TProfileHtmlPage }
+
+  TProfileHtmlPage = class(TDefaultHtmlPage)
+  protected
+    function CreateNavBar: TNavBar; override;
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
+    procedure AddFeatures; override;
   end;
 
   { TNavLoginPage }
@@ -100,6 +110,13 @@ type
     procedure DoHandleAuth(ARequest: TRequest); override;
   end;
 
+  { TProfileWebModule }
+
+  TProfileWebModule = class(THtmlPageWebModule)
+  protected
+    function DoCreatePage: THtmlPage; override;
+  end;
+
   { TKillServerWebModule }
 
   TKillServerWebModule = class(TTesterWebModule)
@@ -108,6 +125,32 @@ type
   end;
 
 implementation
+
+{ TProfileWebModule }
+
+function TProfileWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProfileHtmlPage.Create;
+end;
+
+{ TProfileHtmlPage }
+
+function TProfileHtmlPage.CreateNavBar: TNavBar;
+begin
+  Result := TDefaultNavBar.Create(Self);
+end;
+
+procedure TProfileHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
+begin
+  Strings.Text := '~#+profile;';
+end;
+
+procedure TProfileHtmlPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TProfileTitlePageFeature);
+  AddFeature(TProfilePageFeature);
+end;
 
 { TNavRegisterPage }
 
@@ -255,5 +298,6 @@ initialization
   RegisterHTTPModule('logout', TLogoutWebModule, True);
   RegisterHTTPModule('register', TRegisterWebModule, True);
   RegisterHTTPModule('kill', TKillServerWebModule, True);
+  RegisterHTTPModule('profile', TProfileWebModule, True);
 
 end.
