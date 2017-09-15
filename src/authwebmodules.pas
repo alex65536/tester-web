@@ -56,9 +56,40 @@ type
     procedure PostHandleRequest(Sender: TObject; ARequest: TRequest;
       AResponse: TResponse; var Handled: boolean);
   protected
+    function CanRedirect: boolean; virtual;
+    function RedirectLocation: string; virtual;
     procedure DoHandleAuth(ARequest: TRequest); virtual; abstract;
     procedure DoPageAfterConstruction(APage: THtmlPage); override;
     procedure DoBeforeRequest; override;
+    procedure DoAfterRequest; override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
+  { TAuthCreateUserWebModule }
+
+  TAuthCreateUserWebModule = class(TAuthWebModule)
+  public
+    procedure AfterConstruction; override;
+  end;
+
+  { TConfirmPasswordWebModule }
+
+  TConfirmPasswordWebModule = class(TAuthWebModule)
+  private
+    FUser: TUser;
+    FSuccess: boolean;
+    procedure ConfirmedHandleRequest(Sender: TObject; {%H-}ARequest: TRequest;
+      AResponse: TResponse; var Handled: boolean);
+  protected
+    property User: TUser read FUser;
+    property Success: boolean read FSuccess;
+    procedure ConfirmationSuccess(var ACanRedirect: boolean; var ARedirect: string);
+      virtual; abstract;
+    function CanRedirect: boolean; override;
+    procedure DoHandleAuth(ARequest: TRequest); override;
+    procedure DoBeforeRequest; override;
+    procedure DoSessionCreated; override;
     procedure DoAfterRequest; override;
   public
     procedure AfterConstruction; override;
@@ -75,12 +106,83 @@ type
 
 implementation
 
+{ TAuthCreateUserWebModule }
+
+procedure TAuthCreateUserWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Handlers.Insert(0, TRedirectLoggedWebModuleHandler.Create);
+end;
+
+{ TConfirmPasswordWebModule }
+
+procedure TConfirmPasswordWebModule.ConfirmedHandleRequest(Sender: TObject;
+  ARequest: TRequest; AResponse: TResponse; var Handled: boolean);
+var
+  ACanRedirect: boolean;
+  ARedirect: string;
+begin
+  if FSuccess then
+  begin
+    ACanRedirect := True;
+    ARedirect := DocumentRoot + '/';
+    ConfirmationSuccess(ACanRedirect, ARedirect);
+    if ACanRedirect then
+    begin
+      AResponse.Location := ARedirect;
+      AResponse.Code := 303;
+      Handled := True;
+    end;
+  end;
+end;
+
+function TConfirmPasswordWebModule.CanRedirect: boolean;
+begin
+  Result := False;
+end;
+
+procedure TConfirmPasswordWebModule.DoHandleAuth(ARequest: TRequest);
+var
+  Password: string;
+begin
+  if User = nil then
+    raise EUserAccessDenied.Create(SAccessDenied);
+  Password := ARequest.ContentFields.Values['password'];
+  User.Authentificate(Password);
+  FSuccess := True;
+end;
+
+procedure TConfirmPasswordWebModule.DoBeforeRequest;
+begin
+  inherited DoBeforeRequest;
+  FSuccess := False;
+end;
+
+procedure TConfirmPasswordWebModule.DoSessionCreated;
+begin
+  inherited DoSessionCreated;
+  FUser := UserManager.LoadUserFromSession(Session);
+end;
+
+procedure TConfirmPasswordWebModule.DoAfterRequest;
+begin
+  inherited DoAfterRequest;
+  FSuccess := False;
+  FreeAndNil(FUser);
+end;
+
+procedure TConfirmPasswordWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  AddEventHandler(@ConfirmedHandleRequest);
+end;
+
 { TLogoutWebModule }
 
 procedure TLogoutWebModule.InternalHandleRequest;
 begin
   Session.Terminate;
-  Response.Location := '/';
+  Response.Location := DocumentRoot + '/';
   Response.Code := 303;
 end;
 
@@ -100,9 +202,12 @@ begin
     try
       DoHandleAuth(ARequest);
       // if no exception, we send redirect and don't render that page
-      AResponse.Location := '/';
-      AResponse.Code := 303;
-      Handled := True;
+      if CanRedirect then
+      begin
+        AResponse.Location := RedirectLocation;
+        AResponse.Code := 303;
+        Handled := True;
+      end;
     except
       on E: EUserAction do
         FError := E.Message
@@ -110,6 +215,16 @@ begin
         raise;
     end;
   end;
+end;
+
+function TAuthWebModule.CanRedirect: boolean;
+begin
+  Result := True;
+end;
+
+function TAuthWebModule.RedirectLocation: string;
+begin
+  Result := DocumentRoot + '/';
 end;
 
 procedure TAuthWebModule.DoPageAfterConstruction(APage: THtmlPage);
@@ -133,7 +248,6 @@ end;
 procedure TAuthWebModule.AfterConstruction;
 begin
   inherited AfterConstruction;
-  Handlers.Add(TRedirectLoggedWebModuleHandler.Create);
   AddEventHandler(@PostHandleRequest);
 end;
 
@@ -169,7 +283,7 @@ begin
   if AUser <> nil then
   begin
     FreeAndNil(AUser);
-    AResponse.Location := '/';
+    AResponse.Location := DocumentRoot + '/';
     AResponse.Code := 303;
     Handled := True;
   end;

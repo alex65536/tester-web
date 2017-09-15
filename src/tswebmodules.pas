@@ -20,14 +20,14 @@
 }
 unit tswebmodules;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}{$H+}{$B-}
 
 interface
 
 uses
   SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess, fphttp,
   htmlpages, tswebpages, HTTPDefs, users, webstrconsts, authwebmodules,
-  tswebprofilefeatures;
+  tswebprofilefeatures, tswebpagesbase;
 
 type
 
@@ -79,6 +79,13 @@ type
     function CreateNavBar: TNavBar; override;
   end;
 
+  { TNavConfirmPasswordPage }
+
+  TNavConfirmPasswordPage = class(TConfirmPasswordHtmlPage)
+  protected
+    function CreateNavBar: TNavBar; override;
+  end;
+
   { TIndexWebModule }
 
   TIndexWebModule = class(THtmlPageWebModule)
@@ -102,7 +109,7 @@ type
 
   { TLoginWebModule }
 
-  TLoginWebModule = class(TAuthWebModule)
+  TLoginWebModule = class(TAuthCreateUserWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
     procedure DoHandleAuth(ARequest: TRequest); override;
@@ -110,10 +117,21 @@ type
 
   { TRegisterWebModule }
 
-  TRegisterWebModule = class(TAuthWebModule)
+  TRegisterWebModule = class(TAuthCreateUserWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
     procedure DoHandleAuth(ARequest: TRequest); override;
+  end;
+
+  { TChangeUserRoleWebModule }
+
+  TChangeUserRoleWebModule = class(TConfirmPasswordWebModule)
+  protected
+    procedure ConfirmationSuccess(var ACanRedirect: boolean;
+      var ARedirect: string); override;
+    function DoCreatePage: THtmlPage; override;
+  public
+    procedure AfterConstruction; override;
   end;
 
   { TProfileWebModule }
@@ -131,6 +149,50 @@ type
   end;
 
 implementation
+
+{ TChangeUserRoleWebModule }
+
+procedure TChangeUserRoleWebModule.ConfirmationSuccess(var ACanRedirect: boolean;
+  var ARedirect: string);
+var
+  AdminUser: TAdminUser;
+  Username: string;
+  Info: TUserInfo;
+  Role: TUserRole;
+begin
+  // load admin, info & role
+  AdminUser := User as TAdminUser;
+  Username := Request.QueryFields.Values['user'];
+  Info := UserManager.GetUserInfo(Username);
+  try
+    Role := StrToUserRole(Request.QueryFields.Values['newrole']);
+    // try to perform the action
+    AdminUser.GrantRole(Info, Role);
+    // if success, redirect back to users
+    ACanRedirect := True;
+    ARedirect := DocumentRoot + '/profile?user=' + Username;
+  finally
+    FreeAndNil(Info);
+  end;
+end;
+
+function TChangeUserRoleWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TNavConfirmPasswordPage.Create;
+end;
+
+procedure TChangeUserRoleWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create([urAdmin, urOwner]));
+end;
+
+{ TNavConfirmPasswordPage }
+
+function TNavConfirmPasswordPage.CreateNavBar: TNavBar;
+begin
+  Result := TDefaultNavBar.Create(Self);
+end;
 
 { TProfileWebModule }
 
@@ -331,5 +393,6 @@ initialization
   RegisterHTTPModule('register', TRegisterWebModule, True);
   RegisterHTTPModule('kill', TKillServerWebModule, True);
   RegisterHTTPModule('profile', TProfileWebModule, True);
+  RegisterHTTPModule('change-role', TChangeUserRoleWebModule, True);
 
 end.

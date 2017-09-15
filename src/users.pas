@@ -498,7 +498,7 @@ end;
 
 function TAdminUser.CanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean;
 begin
-  if Target.Username = Username then
+  if (Target.Username = Username) or (Target.Role = ARole) then
     Result := False
   else
     Result := DoCanGrantRole(Target, ARole);

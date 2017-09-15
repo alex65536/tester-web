@@ -83,7 +83,30 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TConfirmPasswordHtmlPage }
+
+  TConfirmPasswordHtmlPage = class(TAuthHtmlPage)
+  protected
+    procedure AddFeatures; override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
 implementation
+
+{ TConfirmPasswordHtmlPage }
+
+procedure TConfirmPasswordHtmlPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TAuthConfirmPasswordFeature);
+end;
+
+procedure TConfirmPasswordHtmlPage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Title := SConfirmPasswordTitle;
+end;
 
 { TDefaultHtmlPage }
 

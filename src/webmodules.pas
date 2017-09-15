@@ -38,6 +38,7 @@ type
   protected
     procedure DoBeforeRequest; virtual;
     procedure DoAfterRequest; virtual;
+    procedure DoSessionCreated; virtual;
     procedure DoInsideRequest; virtual; abstract;
   public
     property Request: TRequest read FRequest;
@@ -166,6 +167,11 @@ begin
   // do nothing
 end;
 
+procedure TTesterWebModule.DoSessionCreated;
+begin
+  // do nothing
+end;
+
 procedure TTesterWebModule.HandleRequest(ARequest: TRequest; AResponse: TResponse);
 begin
   inherited HandleRequest(ARequest, AResponse);
@@ -176,6 +182,7 @@ begin
     CheckSession(ARequest);
     InitSession(AResponse);
     try
+      DoSessionCreated;
       DoInsideRequest;
       UpdateSession(AResponse);
       if not AResponse.ContentSent then
