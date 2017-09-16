@@ -134,9 +134,12 @@ type
   protected
     function DoGetRole: TUserRole; override;
     function DoCanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean; virtual;
+    function DoCanDeleteUser({%H-}Target: TUserInfo): boolean; virtual;
   public
     function CanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean;
+    function CanDeleteUser(Target: TUserInfo): boolean;
     procedure GrantRole(Target: TUserInfo; ARole: TUserRole);
+    procedure DeleteUser(Target: TUserInfo);
   end;
 
   { TOwnerUser }
@@ -145,6 +148,7 @@ type
   protected
     function DoGetRole: TUserRole; override;
     function DoCanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean; override;
+    function DoCanDeleteUser({%H-}Target: TUserInfo): boolean; override;
   public
     procedure TerminateServer;
   end;
@@ -171,6 +175,7 @@ type
       const AFirstName, ALastName: string; ARole: TUserRole = urSimple);
     function GetRole(const AUsername: string): TUserRole;
     procedure GrantRole(const AUsername: string; ARole: TUserRole);
+    procedure DeleteUser(const AUsername: string);
     constructor Create;
     destructor Destroy; override;
   end;
@@ -438,6 +443,7 @@ begin
     try
       IncUserCount;
       WriteRole;
+      GenerateToken;
       GeneratePassword(APassword);
       BeginUpdate;
       try
@@ -467,6 +473,13 @@ begin
   if not UserExists(AUsername) then
     raise EUserNotExist.Create(SUserDoesNotExist);
   FStorage.WriteString(AUsername + '.role', UserRoleToStr(ARole));
+end;
+
+procedure TUserManager.DeleteUser(const AUsername: string);
+begin
+  if not UserExists(AUsername) then
+    raise EUserNotExist.Create(SUserDoesNotExist);
+  FStorage.DeletePath(AUsername);
 end;
 
 constructor TUserManager.Create;
@@ -500,6 +513,11 @@ begin
   Result := (Target.Role <> urOwner) and (ARole <> urOwner);
 end;
 
+function TOwnerUser.DoCanDeleteUser(Target: TUserInfo): boolean;
+begin
+  Result := True;
+end;
+
 procedure TOwnerUser.TerminateServer;
 begin
   if Assigned(OnServerTerminate) then
@@ -516,6 +534,11 @@ begin
     (ARole <> urOwner) and (ARole <> urAdmin);
 end;
 
+function TAdminUser.DoCanDeleteUser(Target: TUserInfo): boolean;
+begin
+  Result := False;
+end;
+
 function TAdminUser.DoGetRole: TUserRole;
 begin
   Result := urAdmin;
@@ -523,10 +546,18 @@ end;
 
 function TAdminUser.CanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean;
 begin
-  if (Target.Username = Username) or (Target.Role = ARole) then
+  if Target.Username = Username then
     Result := False
   else
     Result := DoCanGrantRole(Target, ARole);
+end;
+
+function TAdminUser.CanDeleteUser(Target: TUserInfo): boolean;
+begin
+  if Target.Username = Username then
+    Result := False
+  else
+    Result := DoCanDeleteUser(Target);
 end;
 
 procedure TAdminUser.GrantRole(Target: TUserInfo; ARole: TUserRole);
@@ -535,6 +566,14 @@ begin
   if not CanGrantRole(Target, ARole) then
     raise EUserAccessDenied.Create(SAccessDenied);
   Manager.GrantRole(Target.Username, ARole);
+end;
+
+procedure TAdminUser.DeleteUser(Target: TUserInfo);
+begin
+  NeedsAuthentification;
+  if not CanDeleteUser(Target) then
+    raise EUserAccessDenied.Create(SAccessDenied);
+  Manager.DeleteUser(Target.Username);
 end;
 
 { TUser }

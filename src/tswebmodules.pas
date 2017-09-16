@@ -130,13 +130,41 @@ type
     procedure DoHandleAuth(ARequest: TRequest); override;
   end;
 
-  { TChangeUserRoleWebModule }
+  { TNavConfirmPasswordWebModule }
 
-  TChangeUserRoleWebModule = class(TConfirmPasswordWebModule)
+  TNavConfirmPasswordWebModule = class(TConfirmPasswordWebModule)
   protected
+    function DoCreatePage: THtmlPage; override;
+  end;
+
+  { TUserActionPerformModule }
+
+  TUserActionPerformModule = class(TNavConfirmPasswordWebModule)
+  private
+    FInfo: TUserInfo;
+  protected
+    property Info: TUserInfo read FInfo;
     procedure ConfirmationSuccess(var ACanRedirect: boolean;
       var ARedirect: string); override;
-    function DoCreatePage: THtmlPage; override;
+    procedure DoPerformAction(var ACanRedirect: boolean;
+      var ARedirect: string); virtual; abstract;
+  end;
+
+  { TChangeUserRoleWebModule }
+
+  TChangeUserRoleWebModule = class(TUserActionPerformModule)
+  protected
+    procedure DoPerformAction(var ACanRedirect: boolean; var ARedirect: string);
+      override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
+  { TDeleteUserWebModule }
+
+  TDeleteUserWebModule = class(TUserActionPerformModule)
+  protected
+    procedure DoPerformAction(var ACanRedirect: boolean; var ARedirect: string); override;
   public
     procedure AfterConstruction; override;
   end;
@@ -164,6 +192,42 @@ type
 
 implementation
 
+{ TDeleteUserWebModule }
+
+procedure TDeleteUserWebModule.DoPerformAction(var ACanRedirect: boolean;
+  var ARedirect: string);
+begin
+  (User as TAdminUser).DeleteUser(Info);
+  ACanRedirect := True;
+  ARedirect := DocumentRoot + '/';
+end;
+
+procedure TDeleteUserWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create([urAdmin, urOwner]));
+end;
+
+{ TUserActionPerformModule }
+
+procedure TUserActionPerformModule.ConfirmationSuccess(
+  var ACanRedirect: boolean; var ARedirect: string);
+begin
+  FInfo := UserManager.GetUserInfo(Request.QueryFields.Values['user']);
+  try
+    DoPerformAction(ACanRedirect, ARedirect);
+  finally
+    FreeAndNil(FInfo);
+  end;
+end;
+
+{ TNavConfirmPasswordWebModule }
+
+function TNavConfirmPasswordWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TNavConfirmPasswordPage.Create;
+end;
+
 { TNavSettingsWebModule }
 
 function TNavSettingsWebModule.DoCreatePage: THtmlPage;
@@ -180,33 +244,15 @@ end;
 
 { TChangeUserRoleWebModule }
 
-procedure TChangeUserRoleWebModule.ConfirmationSuccess(var ACanRedirect: boolean;
+procedure TChangeUserRoleWebModule.DoPerformAction(var ACanRedirect: boolean;
   var ARedirect: string);
 var
-  AdminUser: TAdminUser;
-  Username: string;
-  Info: TUserInfo;
   Role: TUserRole;
 begin
-  // load admin, info & role
-  AdminUser := User as TAdminUser;
-  Username := Request.QueryFields.Values['user'];
-  Info := UserManager.GetUserInfo(Username);
-  try
-    Role := StrToUserRole(Request.QueryFields.Values['newrole']);
-    // try to perform the action
-    AdminUser.GrantRole(Info, Role);
-    // if success, redirect back to users
-    ACanRedirect := True;
-    ARedirect := DocumentRoot + '/profile?user=' + Username;
-  finally
-    FreeAndNil(Info);
-  end;
-end;
-
-function TChangeUserRoleWebModule.DoCreatePage: THtmlPage;
-begin
-  Result := TNavConfirmPasswordPage.Create;
+  Role := StrToUserRole(Request.QueryFields.Values['newrole']);
+  (User as TAdminUser).GrantRole(Info, Role);
+  ACanRedirect := True;
+  ARedirect := DocumentRoot + '/profile?user=' + Info.Username;
 end;
 
 procedure TChangeUserRoleWebModule.AfterConstruction;
@@ -248,6 +294,7 @@ begin
   AddFeature(TProfilePageFeature);
   AddFeature(TProfileChangeRoleFeature);
   AddFeature(TProfileSettingsBtnFeature);
+  AddFeature(TProfileDeleteBtnFeature);
 end;
 
 function TProfileHtmlPage.GetInfo: TUserInfo;
@@ -424,5 +471,6 @@ initialization
   RegisterHTTPModule('profile', TProfileWebModule, True);
   RegisterHTTPModule('change-role', TChangeUserRoleWebModule, True);
   RegisterHTTPModule('settings', TNavSettingsWebModule, True);
+  RegisterHTTPModule('delete-user', TDeleteUserWebModule, True);
 
 end.

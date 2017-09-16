@@ -129,6 +129,7 @@ resourcestring
   SSettingsConfirmPassword = 'Confirm password:';
   SBackToProfile = 'Back to profile';
   SSettingsNothingToUpdate = 'Nothing to update!';
+  SDeleteUserTitle = 'Delete user';
 
 implementation
 

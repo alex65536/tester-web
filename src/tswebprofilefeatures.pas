@@ -20,7 +20,7 @@
 }
 unit tswebprofilefeatures;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}{$H+}{$B-}
 
 interface
 
@@ -76,7 +76,37 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TProfileDeleteBtnFeature }
+
+  TProfileDeleteBtnFeature = class(TUserInfoFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TProfileDeleteBtnFeature }
+
+procedure TProfileDeleteBtnFeature.InternalSatisfy;
+var
+  User: TUser;
+begin
+  User := (Parent as TUserPage).User;
+  if (User = nil) or not (User is TAdminUser) then
+    Exit;
+  if not (User as TAdminUser).CanDeleteUser(Info) then
+    Exit;
+  LoadPagePart('profile', 'profileDeleteUserBtn');
+  Parent.Variables.ItemsAsText['profileDeleteUserBtnPrompt'] := SDeleteUserTitle;
+end;
+
+procedure TProfileDeleteBtnFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TProfilePageFeature);
+end;
 
 { TProfileSettingsBtnFeature }
 
