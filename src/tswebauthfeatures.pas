@@ -119,8 +119,11 @@ end;
 procedure TAuthFormFeature.Satisfy;
 begin
   LoadPagePart('auth', 'auth', 'authContent');
+  LoadPagePart('auth', 'authInner');
   LoadPagePart('auth', 'authNameItem');
   LoadPagePart('auth', 'authUsernameItem');
+  LoadPagePart('auth', 'authFirstNameItem');
+  LoadPagePart('auth', 'authLastNameItem');
   LoadPagePart('auth', 'authPasswordItem');
   LoadPagePart('auth', 'authEnterPasswordItem');
   with Parent.Variables do

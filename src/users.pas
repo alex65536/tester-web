@@ -368,6 +368,8 @@ var
   AUser: TUser;
   Msg: string;
 begin
+  if UserName = '' then
+    raise EUserAuthentificate.Create(SUsernameEmpty);
   if not UserExists(Username) then
     raise EUserAuthentificate.Create(SInvalidUsernamePassword);
   AUser := LoadUserFromUsername(Username);
@@ -631,6 +633,8 @@ end;
 
 procedure TUser.Authentificate(const Password: string);
 begin
+  if Password = '' then
+    raise EUserAuthentificate.Create(SPasswordEmpty);
   if not CheckPassword(Password) then
     raise EUserAuthentificate.Create(SInvalidPassword);
   FAuthentificated := True;

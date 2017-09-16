@@ -112,6 +112,8 @@ resourcestring
   SPreferredDateTimeFormat = 'dd.mm.yyyy hh:nn:ss';
   SProfileChangeRoleKey = 'Change role:';
   SProfileDoChangeRole = 'Change';
+  SUsernameEmpty = 'Username must be non-empty!';
+  SPasswordEmpty = 'Password must be non-empty!';
 
 implementation
 
