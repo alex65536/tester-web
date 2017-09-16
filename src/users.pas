@@ -20,7 +20,7 @@
 }
 unit users;
 
-{$mode objfpc}{$H+}{$M+}{$inline on}
+{$mode objfpc}{$H+}{$M+}{$B-}{$inline on}
 
 interface
 
@@ -49,6 +49,7 @@ type
     function GetLastName: string;
     function GetLastVisit: TDateTime;
     function GetRegisteredAt: TDateTime;
+    function GetToken: string;
     function GetUserRole: TUserRole;
   protected
     function FullKeyName(const Key: string): string;
@@ -62,6 +63,7 @@ type
     property LastName: string read GetLastName;
     property LastVisit: TDateTime read GetLastVisit;
     property RegisteredAt: TDateTime read GetRegisteredAt;
+    property Token: string read GetToken;
     constructor Create;
   end;
 
@@ -90,10 +92,12 @@ type
     function GetLastName: string;
     function GetLastVisit: TDateTime;
     function GetRegisteredAt: TDateTime;
+    function GetToken: string;
     procedure RequireUpdating;
     procedure SetFirstName(AValue: string);
     procedure SetLastName(AValue: string);
   protected
+    procedure GenerateToken;
     procedure GeneratePassword(const Password: string);
     function CheckPassword(const Password: string): boolean;
     function FullKeyName(const Key: string): string;
@@ -109,10 +113,11 @@ type
     property LastName: string read GetLastName write SetLastName;
     property LastVisit: TDateTime read GetLastVisit;
     property RegisteredAt: TDateTime read GetRegisteredAt;
+    property Token: string read GetToken;
     procedure BeginUpdate; virtual;
     procedure EndUpdate(Apply: boolean); virtual;
-    procedure ChangePassword(
-      const OldPassword, NewPassword, NewPasswordConfirm: string);
+    procedure ChangePassword(const OldPassword, NewPassword,
+      NewPasswordConfirm: string);
     procedure Authentificate(const Password: string);
     procedure NeedsAuthentification;
     procedure UpdateLastVisit;
@@ -280,6 +285,11 @@ begin
   Result := Manager.Storage.ReadFloat(FullKeyName('registerTime'), 0);
 end;
 
+function TUserInfo.GetToken: string;
+begin
+  Result := Manager.Storage.ReadString(FullKeyName('token'), '');
+end;
+
 function TUserInfo.GetUserRole: TUserRole;
 begin
   Result := StrToUserRole(Manager.Storage.ReadString(FullKeyName('role'), ''));
@@ -350,9 +360,22 @@ end;
 
 function TUserManager.LoadUserFromSession(ASession: TCustomSession): TUser;
 begin
+  // load user
   Result := LoadUserFromUsername(ASession.Variables['userName']);
-  if Result <> nil then
+  if Result = nil then
+    Exit;
+  try
+    // verify token
+    if Result.Token <> ASession.Variables['token'] then
+    begin
+      FreeAndNil(Result);
+      Exit;
+    end;
     Result.UpdateLastVisit;
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
 end;
 
 function TUserManager.GetUserInfo(const Username: string): TUserInfo;
@@ -384,7 +407,7 @@ begin
         Msg := E.Message;
         if Msg = SInvalidPassword then
           Msg := SInvalidUsernamePassword;
-        raise EUserAuthentificate.Create(Msg)
+        raise EUserAuthentificate.Create(Msg);
       end
       else
         raise;
@@ -392,14 +415,14 @@ begin
     AUser.NeedsAuthentification;
     AUser.UpdateLastVisit;
     ASession.Variables['userName'] := Username;
+    ASession.Variables['token'] := AUser.Token;
   finally
     FreeAndNil(AUser);
   end;
 end;
 
-procedure TUserManager.AddNewUser(const AUsername, APassword,
-  APasswordConfirm: string; const AFirstName, ALastName: string;
-  ARole: TUserRole);
+procedure TUserManager.AddNewUser(const AUsername, APassword, APasswordConfirm: string;
+  const AFirstName, ALastName: string; ARole: TUserRole);
 begin
   // check pre-requisites
   ValidateUsername(AUsername);
@@ -536,6 +559,11 @@ begin
   Result := FInfo.RegisteredAt;
 end;
 
+function TUser.GetToken: string;
+begin
+  Result := Info.Token;
+end;
+
 procedure TUser.RequireUpdating;
 begin
   if not FUpdating then
@@ -588,6 +616,12 @@ begin
   FLastName := AValue;
 end;
 
+procedure TUser.GenerateToken;
+begin
+  Manager.Storage.WriteString(FullKeyName('token'),
+    RandomSequenceBase64(Config.Users_TokenLength));
+end;
+
 function TUser.FullKeyName(const Key: string): string;
 begin
   Result := FInfo.FullKeyName(Key);
@@ -620,8 +654,8 @@ begin
   end;
 end;
 
-procedure TUser.ChangePassword(
-  const OldPassword, NewPassword, NewPasswordConfirm: string);
+procedure TUser.ChangePassword(const OldPassword, NewPassword,
+  NewPasswordConfirm: string);
 begin
   if OldPassword = '' then
     raise EUserAuthentificate.Create(SPasswordEmpty);

@@ -50,6 +50,7 @@ type
     function GetOwner_DefaultUsername: string;
     function GetSession_AliveTime: integer;
     function GetSession_IDLength: integer;
+    function GetUsers_TokenLength: integer;
   protected
     procedure FPOObservedChanged(ASender: TObject;
       Operation: TFPObservedOperation; Data: Pointer);
@@ -82,6 +83,9 @@ type
     property Owner_DefaultPassword: string read GetOwner_DefaultPassword;
     property Owner_DefaultFirstName: string read GetOwner_DefaultFirstName;
     property Owner_DefaultLastName: string read GetOwner_DefaultLastName;
+
+    // users parameters
+    property Users_TokenLength: integer read GetUsers_TokenLength;
 
     constructor Create;
     procedure Reload;
@@ -172,6 +176,11 @@ begin
   Result := FStorage.ReadInteger('session.idLength', 32);
 end;
 
+function TTesterServerConfig.GetUsers_TokenLength: integer;
+begin
+  Result := FStorage.ReadInteger('users.tokenLength', 42);
+end;
+
 procedure TTesterServerConfig.FPOObservedChanged(ASender: TObject;
   Operation: TFPObservedOperation; Data: Pointer);
 begin
@@ -205,6 +214,8 @@ begin
     WriteString('owner.defaults.lastName', Owner_DefaultLastName);
     WriteString('owner.defaults.password', Owner_DefaultPassword);
     WriteString('owner.defaults.userName', Owner_DefaultUsername);
+
+    WriteInteger('users.tokenLength', Users_TokenLength);
   end;
 end;
 
