@@ -139,6 +139,9 @@ begin
     NewPassword := Values['new-password'];
     ConfirmPassword := Values['confirm-password'];
   end;
+  if (FirstName = '') and (LastName = '') and (OldPassword = '') and
+    (NewPassword = '') and (ConfirmPassword = '') then
+    raise EUserAction.Create(SSettingsNothingToUpdate);
   User.BeginUpdate;
   try
     if FirstName <> '' then

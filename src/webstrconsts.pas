@@ -128,6 +128,7 @@ resourcestring
   SSettingsNewPassword = 'New password:';
   SSettingsConfirmPassword = 'Confirm password:';
   SBackToProfile = 'Back to profile';
+  SSettingsNothingToUpdate = 'Nothing to update!';
 
 implementation
 

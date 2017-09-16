@@ -87,7 +87,7 @@ begin
   User := (Parent as TUserPage).User;
   if (User = nil) or (User.Username <> Info.Username) then
     Exit;
-  LoadPagePart('', 'profileUpdateSettingsBtn');
+  LoadPagePart('profile', 'profileUpdateSettingsBtn');
   Parent.Variables.ItemsAsText['profileUpdateSettingsBtnPrompt'] := SUpdateSettingsTitle;
 end;
 
@@ -135,7 +135,7 @@ begin
           ItemsAsText['profileNewUserRole'] := UserRoleToStr(Role);
           ItemsAsText['profileNewUserRoleName'] := UserRoleNames[Role];
         end;
-        Options.Add(Parent.Preprocessor.PreprocessFile(TemplateLocation('', 'profileChangeRoleOption')));
+        Options.Add(Parent.Preprocessor.PreprocessFile(TemplateLocation('profile', 'profileChangeRoleOption')));
       end;
     Parent.PageParts.SetItemAsStrings('profileRoleOptions', Options);
   finally
@@ -147,7 +147,7 @@ begin
     ItemsAsText['profileChangeRoleKey'] := SProfileChangeRoleKey;
     ItemsAsText['profileDoChangeRole'] := SProfileDoChangeRole;
   end;
-  LoadPagePart('', 'profileChangeRole');
+  LoadPagePart('profile', 'profileChangeRole');
 end;
 
 procedure TProfileChangeRoleFeature.DependsOn(ADependencies: THtmlPageFeatureList);
@@ -202,7 +202,7 @@ begin
     ItemsAsText['profileLoginTimeKey'] := SProfileLoginTimeLey;
     ItemsAsText['profileLoginTime'] := FormatDateTime(SPreferredDateTimeFormat, LastVisit);
   end;
-  LoadPagePart('', 'profile');
+  LoadPagePart('profile', 'profile');
 end;
 
 { TUserInfoFeature }
