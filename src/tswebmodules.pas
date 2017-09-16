@@ -86,6 +86,13 @@ type
     function CreateNavBar: TNavBar; override;
   end;
 
+  { TNavSettingsPage }
+
+  TNavSettingsPage = class(TSettingsHtmlPage)
+  protected
+    function CreateNavBar: TNavBar; override;
+  end;
+
   { TIndexWebModule }
 
   TIndexWebModule = class(THtmlPageWebModule)
@@ -134,6 +141,13 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TNavSettingsWebModule }
+
+  TNavSettingsWebModule = class(TSettingsWebModule)
+  protected
+    function DoCreatePage: THtmlPage; override;
+  end;
+
   { TProfileWebModule }
 
   TProfileWebModule = class(THtmlPageWebModule)
@@ -149,6 +163,20 @@ type
   end;
 
 implementation
+
+{ TNavSettingsWebModule }
+
+function TNavSettingsWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TNavSettingsPage.Create;
+end;
+
+{ TNavSettingsPage }
+
+function TNavSettingsPage.CreateNavBar: TNavBar;
+begin
+  Result := TDefaultNavBar.Create(Self);
+end;
 
 { TChangeUserRoleWebModule }
 
@@ -219,6 +247,7 @@ begin
   AddFeature(TProfileTitlePageFeature);
   AddFeature(TProfilePageFeature);
   AddFeature(TProfileChangeRoleFeature);
+  AddFeature(TProfileSettingsBtnFeature);
 end;
 
 function TProfileHtmlPage.GetInfo: TUserInfo;
@@ -394,5 +423,6 @@ initialization
   RegisterHTTPModule('kill', TKillServerWebModule, True);
   RegisterHTTPModule('profile', TProfileWebModule, True);
   RegisterHTTPModule('change-role', TChangeUserRoleWebModule, True);
+  RegisterHTTPModule('settings', TNavSettingsWebModule, True);
 
 end.

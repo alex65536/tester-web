@@ -53,9 +53,12 @@ type
   TAuthWebModule = class(THtmlPageWebModule)
   private
     FError: string;
+    FSuccess: string;
     procedure PostHandleRequest(Sender: TObject; ARequest: TRequest;
       AResponse: TResponse; var Handled: boolean);
   protected
+    property Error: string read FError write FError;
+    property Success: string read FSuccess write FSuccess;
     function CanRedirect: boolean; virtual;
     function RedirectLocation: string; virtual;
     procedure DoHandleAuth(ARequest: TRequest); virtual; abstract;
@@ -73,26 +76,41 @@ type
     procedure AfterConstruction; override;
   end;
 
-  { TConfirmPasswordWebModule }
+  { TAuthUserWebModule }
 
-  TConfirmPasswordWebModule = class(TAuthWebModule)
+  TAuthUserWebModule = class(TAuthWebModule)
   private
     FUser: TUser;
-    FSuccess: boolean;
+  protected
+    property User: TUser read FUser;
+    procedure DoSessionCreated; override;
+    procedure DoAfterRequest; override;
+    function CanRedirect: boolean; override;
+  end;
+
+  { TConfirmPasswordWebModule }
+
+  TConfirmPasswordWebModule = class(TAuthUserWebModule)
+  private
+    FConfirmed: boolean;
     procedure ConfirmedHandleRequest(Sender: TObject; {%H-}ARequest: TRequest;
       AResponse: TResponse; var Handled: boolean);
   protected
-    property User: TUser read FUser;
-    property Success: boolean read FSuccess;
+    property Confirmed: boolean read FConfirmed;
     procedure ConfirmationSuccess(var ACanRedirect: boolean; var ARedirect: string);
       virtual; abstract;
-    function CanRedirect: boolean; override;
     procedure DoHandleAuth(ARequest: TRequest); override;
     procedure DoBeforeRequest; override;
-    procedure DoSessionCreated; override;
     procedure DoAfterRequest; override;
   public
     procedure AfterConstruction; override;
+  end;
+
+  { TSettingsWebModule }
+
+  TSettingsWebModule = class(TAuthUserWebModule)
+  protected
+    procedure DoHandleAuth(ARequest: TRequest); override;
   end;
 
   { TLogoutWebModule }
@@ -105,6 +123,56 @@ type
   end;
 
 implementation
+
+{ TSettingsWebModule }
+
+procedure TSettingsWebModule.DoHandleAuth(ARequest: TRequest);
+var
+  FirstName, LastName: string;
+  OldPassword, NewPassword, ConfirmPassword: string;
+begin
+  with ARequest.ContentFields do
+  begin
+    FirstName := Values['first-name'];
+    LastName := Values['last-name'];
+    OldPassword := Values['old-password'];
+    NewPassword := Values['new-password'];
+    ConfirmPassword := Values['confirm-password'];
+  end;
+  User.BeginUpdate;
+  try
+    if FirstName <> '' then
+      User.FirstName := FirstName;
+    if LastName <> '' then
+      User.LastName := LastName;
+    if (OldPassword <> '') or (NewPassword <> '') or (ConfirmPassword <> '') then
+      User.ChangePassword(OldPassword, NewPassword, ConfirmPassword);
+  except
+    User.EndUpdate(False);
+    raise;
+  end;
+  User.EndUpdate(True);
+  Success := SSettingsUpdateSuccessful;
+end;
+
+{ TAuthUserWebModule }
+
+procedure TAuthUserWebModule.DoSessionCreated;
+begin
+  inherited DoSessionCreated;
+  FUser := UserManager.LoadUserFromSession(Session);
+end;
+
+procedure TAuthUserWebModule.DoAfterRequest;
+begin
+  inherited DoAfterRequest;
+  FreeAndNil(FUser);
+end;
+
+function TAuthUserWebModule.CanRedirect: boolean;
+begin
+  Result := False;
+end;
 
 { TAuthCreateUserWebModule }
 
@@ -122,7 +190,7 @@ var
   ACanRedirect: boolean;
   ARedirect: string;
 begin
-  if FSuccess then
+  if FConfirmed then
   begin
     ACanRedirect := True;
     ARedirect := DocumentRoot + '/';
@@ -136,11 +204,6 @@ begin
   end;
 end;
 
-function TConfirmPasswordWebModule.CanRedirect: boolean;
-begin
-  Result := False;
-end;
-
 procedure TConfirmPasswordWebModule.DoHandleAuth(ARequest: TRequest);
 var
   Password: string;
@@ -149,26 +212,19 @@ begin
     raise EUserAccessDenied.Create(SAccessDenied);
   Password := ARequest.ContentFields.Values['password'];
   User.Authentificate(Password);
-  FSuccess := True;
+  FConfirmed := True;
 end;
 
 procedure TConfirmPasswordWebModule.DoBeforeRequest;
 begin
   inherited DoBeforeRequest;
-  FSuccess := False;
-end;
-
-procedure TConfirmPasswordWebModule.DoSessionCreated;
-begin
-  inherited DoSessionCreated;
-  FUser := UserManager.LoadUserFromSession(Session);
+  FConfirmed := False;
 end;
 
 procedure TConfirmPasswordWebModule.DoAfterRequest;
 begin
   inherited DoAfterRequest;
-  FSuccess := False;
-  FreeAndNil(FUser);
+  FConfirmed := False;
 end;
 
 procedure TConfirmPasswordWebModule.AfterConstruction;
@@ -231,18 +287,21 @@ procedure TAuthWebModule.DoPageAfterConstruction(APage: THtmlPage);
 begin
   inherited DoPageAfterConstruction(APage);
   (APage as IAuthHtmlPage).Error := FError;
+  (APage as IAuthHtmlPage).Success := FSuccess;
 end;
 
 procedure TAuthWebModule.DoBeforeRequest;
 begin
   inherited DoBeforeRequest;
   FError := '';
+  FSuccess := '';
 end;
 
 procedure TAuthWebModule.DoAfterRequest;
 begin
   inherited DoAfterRequest;
   FError := '';
+  FSuccess := '';
 end;
 
 procedure TAuthWebModule.AfterConstruction;

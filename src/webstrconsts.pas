@@ -98,7 +98,7 @@ resourcestring
   SRegisterSubmit = 'Register';
   SConfirmPasswordRequest = 'Please confirm your password to continue.';
   SConfirmPasswordSubmit = 'Confirm';
-  SBlockedUserRole = 'Banned';
+  SBlockedUserRole = 'Blocked User';
   SSimpleUserRole = 'User';
   SAdminUserRole = 'Administrator';
   SOwnerUserRole = 'Server Owner';
@@ -114,6 +114,20 @@ resourcestring
   SProfileDoChangeRole = 'Change';
   SUsernameEmpty = 'Username must be non-empty!';
   SPasswordEmpty = 'Password must be non-empty!';
+  SSettingsUpdateData = 'Update data:';
+  SSettingsChangePassword = 'Change password:';
+  SSettingsUpdate = 'Update';
+  SSettingsUpdateSuccessful = 'Update successful.';
+  SUpdateSettingsTitle = 'Update settings';
+  SSettingsFirstNamePrompt = 'Enter first name to change';
+  SSettingsLastNamePrompt = 'Enter last name to change';
+  SSettingsOldPasswordPrompt = 'Enter old password to change';
+  SSettingsNewPasswordPrompt = 'Enter new password';
+  SSettingsConfirmPasswordPrompt = 'Confirm new password';
+  SSettingsOldPassword = 'Old password:';
+  SSettingsNewPassword = 'New password:';
+  SSettingsConfirmPassword = 'Confirm password:';
+  SBackToProfile = 'Back to profile';
 
 implementation
 

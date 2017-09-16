@@ -58,10 +58,13 @@ type
   TAuthHtmlPage = class(TDefaultHtmlPageBase, IAuthHtmlPage)
   private
     FError: string;
+    FSuccess: string;
   protected
     procedure AddFeatures; override;
     procedure SetError(AValue: string);
     function GetError: string;
+    procedure SetSuccess(AValue: string);
+    function GetSuccess: string;
     procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
   end;
 
@@ -92,13 +95,44 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TSettingsHtmlPage }
+
+  TSettingsHtmlPage = class(TAuthHtmlPage)
+  protected
+    procedure AddFeatures; override;
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
 implementation
+
+{ TSettingsHtmlPage }
+
+procedure TSettingsHtmlPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TUserBarFeature);
+  AddFeature(TSettingsPageFeature);
+end;
+
+procedure TSettingsHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
+begin
+  Strings.Text := '~#+settings;';
+end;
+
+procedure TSettingsHtmlPage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Title := SUpdateSettingsTitle;
+end;
 
 { TConfirmPasswordHtmlPage }
 
 procedure TConfirmPasswordHtmlPage.AddFeatures;
 begin
   inherited AddFeatures;
+  AddFeature(TUserBarFeature);
   AddFeature(TAuthConfirmPasswordFeature);
 end;
 
@@ -160,6 +194,16 @@ end;
 function TAuthHtmlPage.GetError: string;
 begin
   Result := FError;
+end;
+
+procedure TAuthHtmlPage.SetSuccess(AValue: string);
+begin
+  FSuccess := AValue;
+end;
+
+function TAuthHtmlPage.GetSuccess: string;
+begin
+  Result := FSuccess;
 end;
 
 procedure TAuthHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);

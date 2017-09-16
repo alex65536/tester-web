@@ -46,8 +46,11 @@ type
   IAuthHtmlPage = interface
     ['{48726FDF-4025-4D9C-A462-1D88AEE0DF89}']
     function GetError: string;
+    function GetSuccess: string;
     procedure SetError(AValue: string);
+    procedure SetSuccess(AValue: string);
     property Error: string read GetError write SetError;
+    property Success: string read GetSuccess write SetSuccess;
   end;
   {$interfaces COM}
 

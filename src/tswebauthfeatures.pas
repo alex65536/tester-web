@@ -40,6 +40,7 @@ type
   { TAuthLoginFormFeature }
 
   TAuthLoginFormFeature = class(TTesterPageFeature)
+  public
     procedure Satisfy; override;
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
@@ -47,6 +48,7 @@ type
   { TAuthRegisterFormFeature }
 
   TAuthRegisterFormFeature = class(TTesterPageFeature)
+  public
     procedure Satisfy; override;
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
@@ -54,11 +56,49 @@ type
   { TAuthConfirmPasswordFeature }
 
   TAuthConfirmPasswordFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TSettingsPageFeature }
+
+  TSettingsPageFeature = class(TTesterPageFeature)
+  public
     procedure Satisfy; override;
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
 implementation
+
+{ TSettingsPageFeature }
+
+procedure TSettingsPageFeature.Satisfy;
+begin
+  LoadPagePart('', 'settings');
+  LoadPagePart('', 'settingsForm', 'authForm');
+  with Parent.Variables do
+  begin
+    ItemsAsText['settingsUpdateData'] := SSettingsUpdateData;
+    ItemsAsText['settingsChangePassword'] := SSettingsChangePassword;
+    ItemsAsText['authSubmit'] := SSettingsUpdate;
+    ItemsAsText['authFirstNamePrompt'] := SSettingsFirstNamePrompt;
+    ItemsAsText['authLastNamePrompt'] := SSettingsLastNamePrompt;
+    ItemsAsText['authOldPasswordPrompt'] := SSettingsOldPasswordPrompt;
+    ItemsAsText['authOldPassword'] := SSettingsOldPassword;
+    ItemsAsText['authNewPasswordPrompt'] := SSettingsNewPasswordPrompt;
+    ItemsAsText['authNewPassword'] := SSettingsNewPassword;
+    ItemsAsText['authConfirmPasswordPrompt'] := SSettingsConfirmPasswordPrompt;
+    ItemsAsText['authConfirmPassword'] := SSettingsConfirmPassword;
+    ItemsAsText['backToProfile'] := SBackToProfile;
+  end;
+end;
+
+procedure TSettingsPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TAuthFormFeature);
+end;
 
 { TAuthConfirmPasswordFeature }
 
@@ -129,6 +169,7 @@ begin
   with Parent.Variables do
   begin
     ItemsAsText['authError'] := (Parent as IAuthHtmlPage).Error;
+    ItemsAsText['authSuccess'] := (Parent as IAuthHtmlPage).Success;
     ItemsAsText['authUsername'] := SAuthUsername;
     ItemsAsText['authUsernamePrompt'] := SAuthUsernamePrompt;
     ItemsAsText['authFirstName'] := SAuthFirstName;

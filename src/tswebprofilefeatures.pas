@@ -67,7 +67,35 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TProfileSettingsBtnFeature }
+
+  TProfileSettingsBtnFeature = class(TUserInfoFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TProfileSettingsBtnFeature }
+
+procedure TProfileSettingsBtnFeature.InternalSatisfy;
+var
+  User: TUser;
+begin
+  User := (Parent as TUserPage).User;
+  if (User = nil) or (User.Username <> Info.Username) then
+    Exit;
+  LoadPagePart('', 'profileUpdateSettingsBtn');
+  Parent.Variables.ItemsAsText['profileUpdateSettingsBtnPrompt'] := SUpdateSettingsTitle;
+end;
+
+procedure TProfileSettingsBtnFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TProfilePageFeature);
+end;
 
 { TProfileChangeRoleFeature }
 
@@ -81,7 +109,7 @@ var
 begin
   User := (Parent as TUserPage).User;
   if User = nil then
-    raise EInvalidPointer.CreateFmt(SMustNonNil, ['User']);
+    Exit;
   // find available roles
   CanChange := False;
   for Role in TUserRole do

@@ -623,6 +623,8 @@ end;
 procedure TUser.ChangePassword(
   const OldPassword, NewPassword, NewPasswordConfirm: string);
 begin
+  if OldPassword = '' then
+    raise EUserAuthentificate.Create(SPasswordEmpty);
   Authentificate(OldPassword);
   NeedsAuthentification;
   if NewPassword <> NewPasswordConfirm then
