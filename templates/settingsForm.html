@@ -1,0 +1,17 @@
+<tr><td colspan="2"><hr></td></tr>
+<tr><td colspan="2">
+		<div class="text-header">~settingsUpdateData;</div>
+</td></tr>
+~#+authFirstNameItem;
+~#+authLastNameItem;
+<tr><td colspan="2"><hr></td></tr>
+<tr><td colspan="2">
+		<div class="text-header">~settingsChangePassword;</div>
+</td></tr>
+~X! ~:authPasswordName='old-password' ~:authPasswordPrompt='~authOldPasswordPrompt;' ~:authPassword='~authOldPassword;'
+~#+authPasswordItem;
+~X! ~:authPasswordName='new-password' ~:authPasswordPrompt='~authNewPasswordPrompt;' ~:authPassword='~authNewPassword;'
+~#+authPasswordItem;
+~X! ~:authPasswordName='confirm-password' ~:authPasswordPrompt='~authConfirmPasswordPrompt;' ~:authPassword='~authConfirmPassword;'
+~#+authPasswordItem;
+<tr><td colspan="2"><hr></td></tr>

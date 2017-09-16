@@ -24,35 +24,58 @@ program tsweb;
 
 uses
   heaptrc,
+  serverevents,
+  tswebsessions,
+  hash_3rdparty,
   fphttpapp,
-  index,
   htmlpreprocess,
   escaping,
   webstrconsts,
   SysUtils,
   datastorages,
-  serverconfig;
+  serverconfig,
+  tswebcrypto,
+  dateutils,
+  fpwebfile,
+  htmlpages,
+  tswebfeatures,
+  fpmimetypes,
+  navbars,
+  tswebpagesbase,
+  tswebnavbars,
+  webmodules,
+  users,
+  userpages,
+  tswebauthfeatures,
+  tswebpages,
+  tswebmodules,
+  authwebmodules,
+  tswebprofilefeatures;
 
-{
+{$ifdef Windows}
+var
+  F: TextFile;
+{$endif}
 
-  This leads to hard-to-find bugs, because config is created before
-this is assigned.
-
-TODO : Move DoGetApplicationName somewhere where it can be included as first unit!
-
-function DoGetApplicationName: string;
 begin
-  Result := 'tsweb';
-end;
+  {$ifdef Windows}
+  AssignFile(F, 'heap.trc');
+  Rewrite(F);
+  CloseFile(F);
+  SetHeapTraceOutput('heap.trc');
+  {$endif}
 
-}
-
-begin
-  //OnGetApplicationName := @DoGetApplicationName;
-  WriteLn('int is ', Config.TestInt);
+  MimeTypes.AddType('text/html', 'html');
+  MimeTypes.AddType('text/css', 'css');
+  MimeTypes.AddType('text/javascript', 'js');
+  MimeTypes.AddType('image/png', 'png');
+  RegisterFileLocation('data', Config.Location_DataDir);
 
   Application.Title := 'Tester Web';
-  {Application.Port := 8080;
+  Application.Port := 8080;
+  Application.DefaultModuleName := 'index';
+  Application.PreferModuleName := True;
   Application.Initialize;
-  Application.Run;}
+  OnServerTerminate := @Application.Terminate;
+  Application.Run;
 end.

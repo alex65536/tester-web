@@ -1,0 +1,34 @@
+<table>
+	<tr>
+		<td class="profile-table-key">~profileUserNameKey;</td>
+		<td class="profile-table-value">~profileUserName;</td>
+	</tr>
+	<tr>
+		<td class="profile-table-key">~profileRealNameKey;</td>
+		<td class="profile-table-value">~profileFirstName; ~profileLastName;</td>
+	</tr>
+	<tr>
+		<td class="profile-table-key">~profileUserRoleKey;</td>
+		<td class="profile-table-value">
+			<table class="profile-role-table"><tr>
+				<td class="profile-role-text">
+					<span class="role-label-~profileUserRoleLower;">~profileUserRoleName;</span>
+				</td>
+				<td>
+					<img class="profile-role" src="~dataRoot;/user~profileUserRole;.png" alt="~profileUserRoleName;">
+				</td>
+			</tr></table>
+		</td>
+	</tr>
+~C!	~#+?profileChangeRole;
+	<tr>
+		<td class="profile-table-key">~profileRegisterTimeKey;</td>
+		<td class="profile-table-value">~profileRegisterTime;</td>
+	</tr>
+	<tr>
+		<td class="profile-table-key">~profileLoginTimeKey;</td>
+		<td class="profile-table-value">~profileLoginTime;</td>
+	</tr>
+~C!	~#+?profileUpdateSettingsBtn;
+~C! ~#+?profileDeleteUserBtn;
+</table>

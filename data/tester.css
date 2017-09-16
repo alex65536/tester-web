@@ -1,0 +1,239 @@
+body {
+	background-color: #B6F3D1;
+}
+
+
+.box {
+	box-shadow: 3pt 3pt 5pt #43594D;
+	border-style: groove;
+	border-width: 2pt;
+	border-color: #1CA757;
+	border-radius: 5pt;
+	font-family: "Trebuchet MS",sans-serif;
+	font-size: 12pt;
+	margin: 5pt;
+	margin-bottom: 0;
+	padding: 5pt 10pt;
+}
+table.container {
+	border-spacing: 5pt 3pt;
+	width: 100%;
+}
+
+
+.header {
+	background-color: #47BD7B;
+	color: white;
+	font-weight: bold;
+	font-size: 44pt;
+	text-align: center;
+	width: 100%;
+}
+
+
+.logo {
+	height: 112pt;
+	width: auto;
+}
+.logo-box {
+	background-color: #E3FFF0;
+	padding: 5pt;
+	width: auto;
+}
+
+
+.userbar {
+	background-color: #7CE6AB;
+	font-size: 12pt;
+	text-align: right;
+	width: 100%;
+}
+.userbar a {
+	background-color: #075E2D;
+	border-style: ridge;
+	border-width: 2pt;
+	border-color: #1CA757;
+	border-radius: 5pt;
+	box-shadow: 0pt 0pt 1pt #43594D;
+	color: white;
+	text-decoration: none;
+	padding: 2pt 10pt;
+	white-space: nowrap;
+}
+.userbar a:hover {
+	background-color: #187842;
+	border-style: groove;
+}
+
+
+.nav {
+	background-color: #5C9978;
+	margin: 0;
+	padding: 0;
+	vertical-align: top;
+	width: 150pt;
+}
+.nav ul {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+.nav li a {
+	color: white;
+	display: block;
+	padding: 8pt 16pt;
+	text-decoration: none;
+}
+.nav li a.active {
+	background-color: #134027;
+}
+.nav li a:hover { 
+	background-color: #2F684A;
+}
+
+
+.content {
+	padding: 10pt 10pt;
+	background-color: #E3FFF0;
+	vertical-align: top;
+	height: 100%;
+}
+table.center-wrapper {
+	height: 100%;
+	margin: auto;
+	text-align: center;
+}
+.text-header {
+	text-height: 16pt;
+	font-weight: bold;
+	padding: 3pt 0;
+}
+.content hr {
+	border-style: inset;
+	border-color: #1CA757;
+}
+
+
+.styled-btn {
+	background-color: #47BD7B;
+	border-style: groove;
+	border-width: 2pt;
+	border-color: #1CA757;
+	border-radius: 5pt;
+	box-shadow: 0pt 0pt 1pt #43594D;
+	color: white;
+	font-family: inherit;
+	font-size: inherit;
+	margin: 3pt 5pt;
+	padding: 3pt 10pt;
+	text-decoration: none;
+	white-space: nowrap;
+}
+button.styled-btn:active, a.styled-btn:hover {
+	background-color: #2DA35D;
+	border-style: ridge;
+}
+.red-btn {
+	background-color: #BD5447;
+	border-color: #A72E1C;
+}
+button.red-btn:active, a.red-btn:hover {
+	background-color: #A33F2D;
+}
+
+
+.footer {
+	background-color: #E3FFF0;
+	text-align: center;
+}
+
+
+.auth-form {
+	background-color: #FFFFFF;
+	border-style: ridge;
+	box-shadow: 1pt 1pt 2pt #43594D;
+	display: inline-block;
+	margin: 5pt 0;
+	padding: 3pt 8pt;
+	text-align: center;
+	width: auto;
+}
+.auth-error {
+	color: red;
+	font-size: 11pt;
+	margin: 3pt 5pt;
+}
+.auth-success {
+	color: green;
+	font-size: 11pt;
+	margin: 3pt 5pt;
+}
+.auth-table {
+	margin: auto;
+}
+.auth-field {
+	text-align: right;
+}
+.auth-edit {
+	font-family: inherit;
+}
+
+
+table.profile-table {
+	border-spacing: 3pt 5pt;
+}
+.profile-table-key {
+	vertical-align: middle;
+	text-align: right;
+}
+.profile-table-value {
+	padding-left: 10pt;
+	text-align: left;
+	vertical-align: middle;
+}
+.profile-table-btn {
+	padding: 7pt;
+	text-align: left;
+	vertical-align: middle;
+}
+table.profile-role-table {
+	border: none;
+	border-collapse: collapse;
+	margin: 0;
+	padding: 0;
+}
+.profile-role-text {
+	padding: 0;
+	padding-right: 5pt;
+	width: 0;
+	white-space: nowrap;
+}
+img.profile-role {
+	height: 1.6em;
+	vertical-align: middle;
+}
+
+
+.role-label-owner {
+	color: #B00000;
+	font-weight: bold;
+	text-decoration-color: #B00000;
+	text-decoration-line: underline;
+	text-decoration-style: double;
+}
+.role-label-admin {
+	color: #DB5303;
+	font-weight: bold;
+	text-decoration-color: #DB5303;
+	text-decoration-line: underline;
+}
+.role-label-simple {
+	color: #006524;
+	font-weight: bold;
+}
+.role-label-blocked {
+	color: black;
+	font-weight: bold;
+	text-decoration-color: black;
+	text-decoration-line: line-through;
+}

@@ -18,28 +18,32 @@
   to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
   MA 02111-1307, USA.
 }
-unit index;
+unit serverevents;
+
+// WARNING : This unit should be added as early as possible!
 
 {$mode objfpc}{$H+}
 
 interface
 
 uses
-  SysUtils, Classes, httpdefs, fpHTTP, fpWeb;
+  Classes, SysUtils;
 
 type
-  TIndexModule = class(TFPWebModule)
-    // ToDo : Write it later !!!
-  end;
+  TTerminateMethod = procedure of object;
 
 var
-  IndexModule: TIndexModule;
+  OnServerTerminate: TTerminateMethod = nil;
 
 implementation
 
-{$R *.lfm}
+function DoGetApplicationName: string;
+begin
+  Result := 'tsweb';
+end;
 
 initialization
-  RegisterHTTPModule('index', TIndexModule);
+  OnGetApplicationName := @DoGetApplicationName;
+
 end.
 

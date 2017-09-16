@@ -20,12 +20,15 @@
 }
 unit datastorages;
 
+// This unit implements hierachical data storages. Path delimiter is '.' character.
+
 {$mode objfpc}{$H+}{$B-}
 
 interface
 
 uses
-  Classes, SysUtils, IniFiles, LazFileUtils, Laz2_DOM, Laz2_XMLRead, Laz2_XMLWrite;
+  Classes, SysUtils, IniFiles, LazFileUtils, Laz2_DOM, Laz2_XMLRead,
+  Laz2_XMLWrite, AvgLvlTree, escaping;
 
 type
 
@@ -36,8 +39,10 @@ type
     FStoragePath: string;
   public
     property StoragePath: string read FStoragePath;
+    function GetRootElements: TStringList; virtual; abstract;
     function VariableExists(const Path: string): boolean; virtual; abstract;
     procedure DeleteVariable(const Path: string); virtual;
+    procedure DeletePath(const Path: string); virtual;
     function ReadInteger(const Path: string; Default: integer): integer;
       virtual; abstract;
     function ReadInt64(const Path: string; Default: int64): int64; virtual; abstract;
@@ -53,6 +58,8 @@ type
     procedure Commit; virtual; abstract;
     procedure Reload; virtual;
     constructor Create(const AStoragePath: string);
+    procedure AfterConstruction; override;
+    procedure BeforeDestruction; override;
   end;
 
   { TFileDataStorage }
@@ -65,17 +72,23 @@ type
   { TIniDataStorage }
 
   TIniDataStorage = class(TFileDataStorage)
+  private const
+    GlobalSectionName = '$GLOBAL$';
   private
     FIniFile: TIniFile;
     FStream: TMemoryStream;
     procedure SplitPath(const Path: string; out Section, Ident: string);
     procedure CreateIniFile;
     procedure LoadStream;
+    procedure RemoveSectionIfEmpty(const Section: string);
+    procedure RemoveEmptySections;
   protected
     function GetFileName: string; override;
   public
+    function GetRootElements: TStringList; override;
     function VariableExists(const Path: string): boolean; override;
     procedure DeleteVariable(const Path: string); override;
+    procedure DeletePath(const Path: string); override;
     function ReadInteger(const Path: string; Default: integer): integer; override;
     function ReadInt64(const Path: string; Default: int64): int64; override;
     function ReadString(const Path: string; const Default: string): string; override;
@@ -107,8 +120,10 @@ type
   protected
     function GetFileName: string; override;
   public
+    function GetRootElements: TStringList; override;
     function VariableExists(const Path: string): boolean; override;
     procedure DeleteVariable(const Path: string); override;
+    procedure DeletePath(const Path: string); override;
     function ReadInteger(const Path: string; Default: integer): integer; override;
     function ReadInt64(const Path: string; Default: int64): int64; override;
     function ReadString(const Path: string; const Default: string): string; override;
@@ -139,6 +154,24 @@ end;
 function TXmlDataStorage.GetFileName: string;
 begin
   Result := ChangeFileExt(inherited GetFileName, '.xml');
+end;
+
+function TXmlDataStorage.GetRootElements: TStringList;
+var
+  Elem: TDOMNode;
+begin
+  Result := TStringList.Create;
+  try
+    Elem := RootElement.FirstChild;
+    while Elem <> nil do
+    begin
+      Result.Add(Elem.NodeName);
+      Elem := Elem.NextSibling;
+    end;
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
 end;
 
 function TXmlDataStorage.FindNode(const Path: string): TDOMElement;
@@ -196,9 +229,29 @@ begin
   Elem := FindNode(Path);
   if Elem = nil then
     Exit;
+  if Elem.HasChildNodes then
+  begin
+    if Elem.HasAttribute(ValueAttr) then
+      Elem.RemoveAttribute(ValueAttr);
+  end
+  else
+  begin
+    Elem := Elem.ParentNode.RemoveChild(Elem) as TDOMElement;
+    FreeAndNil(Elem);
+  end;
+  inherited DeleteVariable(Path);
+end;
+
+procedure TXmlDataStorage.DeletePath(const Path: string);
+var
+  Elem: TDOMElement;
+begin
+  Elem := FindNode(Path);
+  if Elem = nil then
+    Exit;
   Elem := Elem.ParentNode.RemoveChild(Elem) as TDOMElement;
   FreeAndNil(Elem);
-  inherited DeleteVariable(Path);
+  inherited DeletePath(Path);
 end;
 
 function TXmlDataStorage.ReadInteger(const Path: string; Default: integer): integer;
@@ -303,8 +356,6 @@ end;
 { TIniDataStorage }
 
 procedure TIniDataStorage.SplitPath(const Path: string; out Section, Ident: string);
-const
-  GlobalSectionName = '$GLOBAL$';
 var
   P: integer;
 begin
@@ -339,9 +390,80 @@ begin
   FStream.Position := 0;
 end;
 
+procedure TIniDataStorage.RemoveSectionIfEmpty(const Section: string);
+var
+  StrList: TStringList;
+begin
+  // have nothing more effective than this :(
+  StrList := TStringList.Create;
+  try
+    FIniFile.ReadSection(Section, StrList);
+    if StrList.Count = 0 then
+      FIniFile.EraseSection(Section);
+  finally
+    FreeAndNil(StrList);
+  end;
+end;
+
+procedure TIniDataStorage.RemoveEmptySections;
+var
+  Sections: TStringList;
+  Section: string;
+begin
+  Sections := TStringList.Create;
+  try
+    FIniFile.ReadSections(Sections);
+    for Section in Sections do
+      RemoveSectionIfEmpty(Section);
+  finally
+    FreeAndNil(Sections);
+  end;
+end;
+
 function TIniDataStorage.GetFileName: string;
 begin
   Result := ChangeFileExt(inherited GetFileName, '.ini');
+end;
+
+function TIniDataStorage.GetRootElements: TStringList;
+var
+  TempList: TStringList;
+  S: string;
+  Map: TStringToPointerTree;
+  It: PStringToPointerItem;
+begin
+  RemoveEmptySections;
+  Result := TStringList.Create;
+  try
+    TempList := TStringList.Create;
+    try
+      Map := TStringToPointerTree.Create(True);
+      try
+        // get from section names
+        FIniFile.ReadSections(TempList);
+        for S in TempList do
+          if S <> GlobalSectionName then
+            Map.Values[S] := Pointer(42);
+        // get from global section
+        if FIniFile.SectionExists(GlobalSectionName) then
+        begin
+          FIniFile.ReadSection(GlobalSectionName, TempList);
+          for S in TempList do
+            Map.Values[S] := Pointer(42);
+        end;
+        // push to result from map
+        for It in Map do
+          Result.Add(It^.Name);
+      finally
+        FreeAndNil(Map);
+      end;
+    finally
+      FreeAndNil(TempList);
+    end;
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
 end;
 
 function TIniDataStorage.VariableExists(const Path: string): boolean;
@@ -359,6 +481,42 @@ begin
   SplitPath(Path, Section, Ident);
   FIniFile.DeleteKey(Section, Ident);
   inherited DeleteVariable(Path);
+end;
+
+procedure TIniDataStorage.DeletePath(const Path: string);
+var
+  Section, Ident: string;
+  P: integer;
+  Idents: TStringList;
+  S: string;
+begin
+  // delete the key
+  SplitPath(Path, Section, Ident);
+  if FIniFile.ValueExists(Section, Ident) then
+    FIniFile.DeleteKey(Section, Ident);
+  // retreive the subsection and ident beginning
+  P := Pos('.', Path);
+  if P = 0 then
+  begin
+    Section := Path;
+    Ident := '';
+  end
+  else
+    Ident := Ident + '.';
+  // find and delete the Idents
+  Idents := TStringList.Create;
+  try
+    FIniFile.ReadSection(Section, Idents);
+    for S in Idents do
+    begin
+      if (Length(S) >= Length(Ident)) and (Copy(S, 1, Length(Ident)) = Ident) then
+        FIniFile.DeleteKey(Section, S);
+    end;
+    RemoveSectionIfEmpty(Section);
+  finally
+    FreeAndNil(Idents);
+    inherited DeletePath(Path);
+  end;
 end;
 
 function TIniDataStorage.ReadInteger(const Path: string; Default: integer): integer;
@@ -382,7 +540,8 @@ var
   Section, Ident: string;
 begin
   SplitPath(Path, Section, Ident);
-  Result := FIniFile.ReadString(Section, Ident, Default);
+  Result := JsUnescapeString(FIniFile.ReadString(Section, Ident,
+    JsEscapeString(Default)));
 end;
 
 function TIniDataStorage.ReadBool(const Path: string; Default: boolean): boolean;
@@ -424,7 +583,7 @@ var
   Section, Ident: string;
 begin
   SplitPath(Path, Section, Ident);
-  FIniFile.WriteString(Section, Ident, Value);
+  FIniFile.WriteString(Section, Ident, JsEscapeString(Value));
   inherited WriteString(Path, Value);
 end;
 
@@ -448,6 +607,7 @@ end;
 
 procedure TIniDataStorage.Commit;
 begin
+  RemoveEmptySections;
   FIniFile.UpdateFile;
   FStream.SaveToFile(GetFileName);
 end;
@@ -483,6 +643,11 @@ begin
   FPONotifyObservers(Self, ooDeleteItem, @Path);
 end;
 
+procedure TAbstractDataStorage.DeletePath(const Path: string);
+begin
+  FPONotifyObservers(Self, ooChange, @Path);
+end;
+
 procedure TAbstractDataStorage.WriteInteger(const Path: string; Value: integer);
 begin
   FPONotifyObservers(Self, ooChange, @Path);
@@ -516,6 +681,18 @@ end;
 constructor TAbstractDataStorage.Create(const AStoragePath: string);
 begin
   FStoragePath := AStoragePath;
+end;
+
+procedure TAbstractDataStorage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Reload;
+end;
+
+procedure TAbstractDataStorage.BeforeDestruction;
+begin
+  Commit;
+  inherited BeforeDestruction;
 end;
 
 {$Hints On}
