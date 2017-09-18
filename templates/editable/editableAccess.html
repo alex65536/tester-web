@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en_UK">
+	<head>
+		<meta charset="utf-8">
+		<meta name="author" content="Alexander Kernozhitsky">
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+		<link rel="stylesheet" href="~dataRoot;/tester.css" type="text/css">
+		<title>Manage Access</title>
+	</head>
+	<body>
+		<table class="container">
+			<tr>
+				<td rowspan="2" class="box logo-box">
+					<a href="/">
+						<img src="~dataRoot;/logoWithText.png" alt="Tester Web logo" class="logo">
+					</a>
+				</td>
+				<td class="box header">
+					Manage Access
+				</td>
+			</tr>
+			<tr>
+				<td class="box userbar">
+					You are logged in as <span class="role-label-owner">admin</span>.
+					<a href="/profile">View profile</a>
+					<a href="/logout">Log out</a>
+				</td>
+			</tr>
+		</table>
+		<table class="container"><tr>
+			<td class="box nav">
+				<ul>
+					<li><a href="/index" class="active">Main Page</a></li>
+					<li><a href="/page1">Page 1</a></li>
+					<li><a href="/page2">Page 2</a></li>
+				</ul>
+			</td>
+			<td class="box content">
+				<table class="box access-table">
+					<tr>
+						<th class="id">#</th>
+						<th>Username</th>
+						<th>Access type</th>
+						<th class="del">Delete</th>
+					</tr>
+					<tr>
+						<td>1</td>
+						<td class="role-label-owner">admin</td>
+						<td>Owner</td>
+						<td>
+							<button class="styled-btn grayed-btn small-btn img-styled-btn">
+								<img src="~dataRoot;/crossMarkGray.png" alt="Delete">
+								Delete
+							</button>
+						</td>
+					</tr>
+					<tr>
+						<td>2</td>
+						<td class="role-label-admin">alex256</td>
+						<td>
+							<form action="" method="get">
+								<select name="access-type">
+									<option value="eaRead">Read</option>
+									<option value="eaWrite" selected>Write</option>
+								</select>
+								<input name="user" value="alex256" type="hidden">
+								<input name="query" value="change-role" type="hidden">
+								<button type="submit" class="img-btn">
+									<img src="~dataRoot;/tickMark.png" alt="Change">
+								</button>
+							</form>
+						</td>
+						<td>
+							<form action="" method="get">
+								<input name="user" value="programmer228" type="hidden">
+								<input name="query" value="delete-user" type="hidden">
+								<button type="submit" class="styled-btn small-btn img-styled-btn">
+									<img src="~dataRoot;/crossMark.png" alt="Delete">
+									Delete
+								</button>
+							</form>
+						</td>
+					</tr>
+					<tr>
+						<td>3</td>
+						<td class="role-label-editor">kefaa</td>
+						<td>Write</td>
+						<td>
+							<button class="styled-btn grayed-btn small-btn img-styled-btn">
+								<img src="~dataRoot;/crossMarkGray.png" alt="Delete">
+								Delete
+							</button>
+						</td>
+					</tr>
+				</table>
+				<p>
+					<a class="styled-btn">
+						Back
+					</a>
+				</p>
+			</td>
+		</tr></table>
+		<div class="box footer">
+			Copyright &copy; 2017 Alexander Kernozhitsky
+			<br>
+			Tester Web is licensed under the terms of <a href="https://github.com/alex65536/tester-web/blob/master/LICENSE">GNU GPL</a> version 2 or any later version.
+			<br>
+			Sources are available on <a href="https://github.com/alex65536/tester-web">Github</a>.
+		</div>
+	</body>
+</html>
