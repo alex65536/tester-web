@@ -39,6 +39,8 @@ type
     FStorage: TAbstractDataStorage;
     FTerminated: boolean;
     FSessionID: string;
+    function GetTimeOutMinutes: integer;
+    procedure SetTimeOutMinutes(AValue: integer);
   protected
     procedure CheckSession;
     procedure RemoveSession;
@@ -50,6 +52,7 @@ type
     function GetSessionVariable(VarName: string): string; override;
     procedure SetSessionVariable(VarName: string; const AValue: string); override;
   public
+    property TimeOutMinutes: integer read GetTimeOutMinutes write SetTimeOutMinutes;
     property Storage: TAbstractDataStorage read FStorage;
     procedure Terminate; override;
     procedure UpdateResponse({%H-}AResponse: TResponse); override;
@@ -57,7 +60,6 @@ type
       override;
     procedure InitResponse(AResponse: TResponse); override;
     procedure RemoveVariable(VariableName: string); override;
-    constructor Create(AOwner: TComponent); override;
     constructor Create(AOwner: TComponent; AStorage: TAbstractDataStorage); virtual;
   end;
 
@@ -144,7 +146,7 @@ begin
     Exit;
   end;
   StartTime := FStorage.ReadFloat(ASessionID + '.' + SessionTimeKey, 0.0);
-  Period := FStorage.ReadInteger(ASessionID + '.' + SessionTimeKey,
+  Period := FStorage.ReadInteger(ASessionID + '.' + SessionPeriodKey,
     Config.Session_AliveTimeMinutes);
   ExpireTime := IncMinute(StartTime, Period);
   Result := CompareDateTime(Now, ExpireTime) > 0;
@@ -165,6 +167,17 @@ begin
 end;
 
 { TTesterWebSession }
+
+function TTesterWebSession.GetTimeOutMinutes: integer;
+begin
+  Result := FStorage.ReadInteger(GetSessionID + '.' + SessionPeriodKey,
+    Config.Session_AliveTimeMinutes);
+end;
+
+procedure TTesterWebSession.SetTimeOutMinutes(AValue: integer);
+begin
+  FStorage.WriteInteger(GetSessionID + '.' + SessionPeriodKey, AValue);
+end;
 
 procedure TTesterWebSession.CheckSession;
 begin
@@ -298,17 +311,11 @@ begin
   FStorage.DeleteVariable(VarNameToStoragePath(VariableName));
 end;
 
-constructor TTesterWebSession.Create(AOwner: TComponent);
-begin
-  inherited Create(AOwner);
-  TimeOutMinutes := Config.Session_AliveTimeMinutes;
-end;
-
 constructor TTesterWebSession.Create(AOwner: TComponent;
   AStorage: TAbstractDataStorage);
 begin
   FStorage := AStorage;
-  Create(AOwner);
+  inherited Create(AOwner);
 end;
 
 initialization
