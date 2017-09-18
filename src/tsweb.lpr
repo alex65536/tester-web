@@ -24,6 +24,7 @@ program tsweb;
 
 uses
   heaptrc,
+  commitscheduler,
   Classes,
   serverevents,
   tswebsessions,
@@ -52,8 +53,7 @@ uses
   tswebpages,
   tswebmodules,
   authwebmodules,
-  tswebprofilefeatures,
-  commitscheduler;
+  tswebprofilefeatures;
 
 type
   TOpenHandlerApplication = class(THTTPApplication)

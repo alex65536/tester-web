@@ -39,7 +39,7 @@ type
     FLastCommitTime: TDateTime;
   protected
     procedure FPOObservedChanged(ASender: TObject; Operation: TFPObservedOperation;
-      Data: Pointer);
+      {%H-}Data: Pointer);
     procedure CommitAll;
     function CanCommit: boolean; virtual;
   public
@@ -80,6 +80,7 @@ var
 begin
   for I := 0 to FStorages.Count - 1 do
     FStorages[I].Commit;
+  FLastCommitTime := Now;
 end;
 
 function TCommitScheduler.CanCommit: boolean;
