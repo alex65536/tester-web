@@ -24,10 +24,12 @@ program tsweb;
 
 uses
   heaptrc,
+  Classes,
   serverevents,
   tswebsessions,
   hash_3rdparty,
   fphttpapp,
+  custhttpapp,
   htmlpreprocess,
   escaping,
   webstrconsts,
@@ -50,7 +52,24 @@ uses
   tswebpages,
   tswebmodules,
   authwebmodules,
-  tswebprofilefeatures;
+  tswebprofilefeatures,
+  commitscheduler;
+
+type
+  TOpenHandlerApplication = class(THTTPApplication)
+  public
+    property Handler: TFPHTTPServerHandler read HTTPHandler;
+  end;
+
+// TODO : This OnIdle works only when request appears.
+// TODO : Invent a better way that ALWAYS synchronizes.
+procedure SetIdleEvent(AEvent: TNotifyEvent);
+var
+  Handler: TFPHTTPServerHandler;
+begin
+  Handler := TOpenHandlerApplication(Application).Handler;
+  Handler.OnIdle := AEvent;
+end;
 
 {$ifdef Windows}
 var
@@ -76,6 +95,7 @@ begin
   Application.DefaultModuleName := 'index';
   Application.PreferModuleName := True;
   Application.Initialize;
+  SetIdleEvent(@Scheduler.IdleEventHandler);
   OnServerTerminate := @Application.Terminate;
   Application.Run;
 end.

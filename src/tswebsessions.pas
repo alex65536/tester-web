@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, datastorages, serverconfig, fphttp, HTTPDefs, webstrconsts,
-  DateUtils;
+  DateUtils, commitscheduler;
 
 type
 
@@ -72,7 +72,7 @@ type
     function DoCreateSession({%H-}ARequest: TRequest): TCustomSession; override;
     procedure DoCleanupSessions; override;
     procedure DoDoneSession(var ASession: TCustomSession); override;
-    procedure CreateDataStorage; virtual;
+    function CreateDataStorage: TAbstractDataStorage; virtual;
   public
     function SessionExpired(const ASessionID: string): boolean;
     constructor Create(AOwner: TComponent); override;
@@ -127,9 +127,9 @@ begin
   FreeAndNil(ASession);
 end;
 
-procedure TTesterWebSessionFactory.CreateDataStorage;
+function TTesterWebSessionFactory.CreateDataStorage: TAbstractDataStorage;
 begin
-  FStorage := TIniDataStorage.Create(StoragePath);
+  Result := TIniDataStorage.Create(StoragePath);
 end;
 
 function TTesterWebSessionFactory.SessionExpired(const ASessionID: string): boolean;
@@ -145,7 +145,7 @@ begin
   end;
   StartTime := FStorage.ReadFloat(ASessionID + '.' + SessionTimeKey, 0.0);
   Period := FStorage.ReadInteger(ASessionID + '.' + SessionTimeKey,
-    Config.Session_AliveTime);
+    Config.Session_AliveTimeMinutes);
   ExpireTime := IncMinute(StartTime, Period);
   Result := CompareDateTime(Now, ExpireTime) > 0;
 end;
@@ -153,7 +153,8 @@ end;
 constructor TTesterWebSessionFactory.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  CreateDataStorage;
+  FStorage := CreateDataStorage;
+  Scheduler.AttachStorage(FStorage);
 end;
 
 destructor TTesterWebSessionFactory.Destroy;
@@ -300,7 +301,7 @@ end;
 constructor TTesterWebSession.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  TimeOutMinutes := Config.Session_AliveTime;
+  TimeOutMinutes := Config.Session_AliveTimeMinutes;
 end;
 
 constructor TTesterWebSession.Create(AOwner: TComponent;

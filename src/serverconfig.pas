@@ -48,12 +48,13 @@ type
     function GetOwner_DefaultLastName: string;
     function GetOwner_DefaultPassword: string;
     function GetOwner_DefaultUsername: string;
-    function GetSession_AliveTime: integer;
+    function GetSession_AliveTimeMinutes: integer;
     function GetSession_IDLength: integer;
+    function GetStorages_CommitIntervalSeconds: integer;
     function GetUsers_TokenLength: integer;
   protected
-    procedure FPOObservedChanged(ASender: TObject;
-      Operation: TFPObservedOperation; Data: Pointer);
+    procedure FPOObservedChanged(ASender: TObject; Operation: TFPObservedOperation;
+      Data: Pointer);
     procedure DefaultSettings; virtual;
     function CreateStorageConfig: TAbstractDataStorage; virtual;
   public
@@ -72,7 +73,11 @@ type
 
     // session parameters
     property Session_IDLength: integer read GetSession_IDLength;
-    property Session_AliveTime: integer read GetSession_AliveTime;
+    property Session_AliveTimeMinutes: integer read GetSession_AliveTimeMinutes;
+
+    // storage parameters
+    property Storages_CommitIntervalSeconds: integer
+      read GetStorages_CommitIntervalSeconds;
 
     // owner default settings
     // WARNING: don't store your actual password here, use "Change password"
@@ -166,14 +171,19 @@ begin
   Result := FStorage.ReadString('owner.defaults.userName', 'admin');
 end;
 
-function TTesterServerConfig.GetSession_AliveTime: integer;
+function TTesterServerConfig.GetSession_AliveTimeMinutes: integer;
 begin
-  Result := FStorage.ReadInteger('session.aliveTime', 60);
+  Result := FStorage.ReadInteger('session.aliveTimeMinutes', 60);
 end;
 
 function TTesterServerConfig.GetSession_IDLength: integer;
 begin
   Result := FStorage.ReadInteger('session.idLength', 32);
+end;
+
+function TTesterServerConfig.GetStorages_CommitIntervalSeconds: integer;
+begin
+  Result := FStorage.ReadInteger('storages.commitIntervalSeconds', 30);
 end;
 
 function TTesterServerConfig.GetUsers_TokenLength: integer;
@@ -203,8 +213,10 @@ begin
     WriteInteger('crypto.scrypt.r', GetCrypto_SCrypt_R);
     WriteInteger('crypto.scrypt.p', GetCrypto_SCrypt_P);
 
-    WriteInteger('session.aliveTime', Session_AliveTime);
+    WriteInteger('session.aliveTimeMinutes', Session_AliveTimeMinutes);
     WriteInteger('session.idLength', Session_IDLength);
+
+    WriteInteger('storages.commitIntervalSeconds', Storages_CommitIntervalSeconds);
 
     WriteString('location.dataDir', Location_DataDir);
     WriteString('location.templatesDir', Location_TemplatesDir);
@@ -252,4 +264,3 @@ finalization
   FreeAndNil(FConfig);
 
 end.
-

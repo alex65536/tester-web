@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, HTTPDefs, datastorages, tswebcrypto, typinfo, webstrconsts,
-  serverevents, serverconfig;
+  serverevents, serverconfig, commitscheduler;
 
 type
   EUserAction = class(Exception);
@@ -156,6 +156,9 @@ type
   { TUserManager }
 
   TUserManager = class
+  protected
+  const
+    StoragePath = 'users';
   private
     FStorage: TAbstractDataStorage;
     function GetUserCount: integer;
@@ -163,6 +166,7 @@ type
   protected
     function CreateUserClass(AClass: TUserClass; const Username: string): TUser;
     function CreateUser(ARole: TUserRole; const Username: string): TUser; virtual;
+    function CreateDataStorage: TAbstractDataStorage; virtual;
   public
     property Storage: TAbstractDataStorage read FStorage;
     function UserExists(const Username: string): boolean;
@@ -342,6 +346,11 @@ begin
   Result := CreateUserClass(UserClassesByRole[ARole], Username);
 end;
 
+function TUserManager.CreateDataStorage: TAbstractDataStorage;
+begin
+  Result := TIniDataStorage.Create(StoragePath);
+end;
+
 function TUserManager.UserExists(const Username: string): boolean;
 begin
   try
@@ -484,7 +493,8 @@ end;
 
 constructor TUserManager.Create;
 begin
-  FStorage := TIniDataStorage.Create('users');
+  FStorage := CreateDataStorage;
+  Scheduler.AttachStorage(FStorage);
   if GetUserCount = 0 then
   begin
     // if there is nobody, create an owner.
