@@ -10,3 +10,4 @@ build_one "userAdmin"   64
 build_one "userOwner"   64
 build_one "userSimple"  64
 build_one "userBlocked" 64
+build_one "userEditor"  64

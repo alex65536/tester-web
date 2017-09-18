@@ -227,6 +227,11 @@ img.profile-role {
 	text-decoration-color: #DB5303;
 	text-decoration-line: underline;
 }
+.role-label-editor {
+	color: #0413BC;
+	font-weight: bold;
+	font-style: italic;
+}
 .role-label-simple {
 	color: #006524;
 	font-weight: bold;
