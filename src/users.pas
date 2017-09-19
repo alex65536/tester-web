@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, HTTPDefs, datastorages, tswebcrypto, typinfo, webstrconsts,
-  serverevents, serverconfig, commitscheduler;
+  serverconfig, commitscheduler;
 
 type
   EUserAction = class(Exception);
@@ -54,9 +54,11 @@ type
     function GetLastName: string;
     function GetLastVisit: TDateTime;
     function GetRegisteredAt: TDateTime;
+    function GetStorage: TAbstractDataStorage;
     function GetToken: string;
     function GetUserRole: TUserRole;
   protected
+    property Storage: TAbstractDataStorage read GetStorage;
     function FullKeyName(const Key: string): string;
     // creating users should only be done via TUserManager or TUser!
     {%H-}constructor Create(AManager: TUserManager; const AUsername: string);
@@ -97,11 +99,13 @@ type
     function GetLastName: string;
     function GetLastVisit: TDateTime;
     function GetRegisteredAt: TDateTime;
+    function GetStorage: TAbstractDataStorage;
     function GetToken: string;
     procedure RequireUpdating;
     procedure SetFirstName(AValue: string);
     procedure SetLastName(AValue: string);
   protected
+    property Storage: TAbstractDataStorage read GetStorage;
     procedure GenerateToken;
     procedure GeneratePassword(const Password: string);
     function CheckPassword(const Password: string): boolean;
@@ -133,34 +137,6 @@ type
 
   TUserClass = class of TUser;
 
-  TEditorUser = class(TUser)
-  end;
-
-  { TAdminUser }
-
-  TAdminUser = class(TEditorUser)
-  protected
-    function DoGetRole: TUserRole; override;
-    function DoCanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean; virtual;
-    function DoCanDeleteUser({%H-}Target: TUserInfo): boolean; virtual;
-  public
-    function CanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean;
-    function CanDeleteUser(Target: TUserInfo): boolean;
-    procedure GrantRole(Target: TUserInfo; ARole: TUserRole);
-    procedure DeleteUser(Target: TUserInfo);
-  end;
-
-  { TOwnerUser }
-
-  TOwnerUser = class(TAdminUser)
-  protected
-    function DoGetRole: TUserRole; override;
-    function DoCanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean; override;
-    function DoCanDeleteUser({%H-}Target: TUserInfo): boolean; override;
-  public
-    procedure TerminateServer;
-  end;
-
   { TUserManager }
 
   TUserManager = class
@@ -170,7 +146,7 @@ type
   private
     FStorage: TAbstractDataStorage;
     function GetUserCount: integer;
-    procedure IncUserCount;
+    procedure IncUserCount(Delta: integer);
   protected
     function CreateUserClass(AClass: TUserClass; const Username: string): TUser;
     function CreateUser(ARole: TUserRole; const Username: string): TUser; virtual;
@@ -193,14 +169,6 @@ type
   end;
 
 const
-  UserClassesByRole: array [TUserRole] of TUserClass = (
-    nil,         // urBlocked : we don't create blocked users!
-    TUser,       // urSimple
-    TEditorUser, // urEditor
-    TAdminUser,  // urAdmin
-    TOwnerUser   // urOwner
-    );
-
   UserRoleNames: array [TUserRole] of string = (
     SBlockedUserRole, // urBlocked
     SSimpleUserRole,  // urSimple
@@ -208,6 +176,10 @@ const
     SAdminUserRole,   // urAdmin
     SOwnerUserRole    // urOwner
     );
+
+function GetUserClass(ARole: TUserRole): TUserClass;
+procedure SetUserClass(ARole: TUserRole; AClass: TUserClass);
+property UserClass[ARole: TUserRole]: TUserClass read GetUserClass write SetUserClass;
 
 function UserRoleToStr(ARole: TUserRole): string;
 function StrToUserRole(const S: string): TUserRole;
@@ -221,7 +193,27 @@ function UserManager: TUserManager; inline;
 implementation
 
 var
-  FManager: TUserManager;
+  FManager: TUserManager = nil;
+
+  FUserClasses: array [TUserRole] of TUserClass = (
+    nil,
+    nil,
+    nil,
+    nil,
+    nil
+    );
+
+function GetUserClass(ARole: TUserRole): TUserClass;
+begin
+  Result := FUserClasses[ARole];
+end;
+
+procedure SetUserClass(ARole: TUserRole; AClass: TUserClass);
+begin
+  if FManager <> nil then
+    raise EInvalidOperation.Create(SCannotChangeRoleClass);
+  FUserClasses[ARole] := AClass;
+end;
 
 function UserRoleToStr(ARole: TUserRole): string;
 begin
@@ -279,39 +271,51 @@ end;
 
 function UserManager: TUserManager;
 begin
-  Result := FManager;
+  try
+    if FManager = nil then
+      FManager := TUserManager.Create;
+    Result := FManager;
+  except
+    Result := nil;
+    raise;
+  end;
 end;
 
 { TUserInfo }
 
 function TUserInfo.GetFirstName: string;
 begin
-  Result := Manager.Storage.ReadString(FullKeyName('firstName'), '');
+  Result := Storage.ReadString(FullKeyName('firstName'), '');
 end;
 
 function TUserInfo.GetLastName: string;
 begin
-  Result := Manager.Storage.ReadString(FullKeyName('lastName'), '');
+  Result := Storage.ReadString(FullKeyName('lastName'), '');
 end;
 
 function TUserInfo.GetLastVisit: TDateTime;
 begin
-  Result := Manager.Storage.ReadFloat(FullKeyName('lastVisit'), 0);
+  Result := Storage.ReadFloat(FullKeyName('lastVisit'), 0);
 end;
 
 function TUserInfo.GetRegisteredAt: TDateTime;
 begin
-  Result := Manager.Storage.ReadFloat(FullKeyName('registerTime'), 0);
+  Result := Storage.ReadFloat(FullKeyName('registerTime'), 0);
+end;
+
+function TUserInfo.GetStorage: TAbstractDataStorage;
+begin
+  Result := Manager.Storage;
 end;
 
 function TUserInfo.GetToken: string;
 begin
-  Result := Manager.Storage.ReadString(FullKeyName('token'), '');
+  Result := Storage.ReadString(FullKeyName('token'), '');
 end;
 
 function TUserInfo.GetUserRole: TUserRole;
 begin
-  Result := StrToUserRole(Manager.Storage.ReadString(FullKeyName('role'), ''));
+  Result := StrToUserRole(Storage.ReadString(FullKeyName('role'), ''));
 end;
 
 constructor TUserInfo.Create(AManager: TUserManager; const AUsername: string);
@@ -338,9 +342,9 @@ begin
   Result := FStorage.ReadInteger('userCount', 0);
 end;
 
-procedure TUserManager.IncUserCount;
+procedure TUserManager.IncUserCount(Delta: integer);
 begin
-  FStorage.WriteInteger('userCount', GetUserCount + 1);
+  FStorage.WriteInteger('userCount', GetUserCount + Delta);
 end;
 
 function TUserManager.CreateUserClass(AClass: TUserClass; const Username: string): TUser;
@@ -353,7 +357,7 @@ end;
 
 function TUserManager.CreateUser(ARole: TUserRole; const Username: string): TUser;
 begin
-  Result := CreateUserClass(UserClassesByRole[ARole], Username);
+  Result := CreateUserClass(UserClass[ARole], Username);
 end;
 
 function TUserManager.CreateDataStorage: TAbstractDataStorage;
@@ -460,7 +464,7 @@ begin
   // create user
   with CreateUser(ARole, AUsername) do
     try
-      IncUserCount;
+      IncUserCount(+1);
       WriteRole;
       GenerateToken;
       GeneratePassword(APassword);
@@ -499,6 +503,7 @@ begin
   if not UserExists(AUsername) then
     raise EUserNotExist.Create(SUserDoesNotExist);
   FStorage.DeletePath(AUsername);
+  IncUserCount(-1);
 end;
 
 constructor TUserManager.Create;
@@ -519,81 +524,6 @@ destructor TUserManager.Destroy;
 begin
   FreeAndNil(FStorage);
   inherited Destroy;
-end;
-
-{ TOwnerUser }
-
-function TOwnerUser.DoGetRole: TUserRole;
-begin
-  Result := urOwner;
-end;
-
-function TOwnerUser.DoCanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean;
-begin
-  Result := (Target.Role <> urOwner) and (ARole <> urOwner);
-end;
-
-function TOwnerUser.DoCanDeleteUser(Target: TUserInfo): boolean;
-begin
-  Result := True;
-end;
-
-procedure TOwnerUser.TerminateServer;
-begin
-  if Assigned(OnServerTerminate) then
-    OnServerTerminate()
-  else
-    raise EUserAction.Create(SCannotTerminateServer);
-end;
-
-{ TAdminUser }
-
-function TAdminUser.DoCanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean;
-begin
-  Result := (Target.Role <> urOwner) and (Target.Role <> urAdmin) and
-    (ARole <> urOwner) and (ARole <> urAdmin);
-end;
-
-function TAdminUser.DoCanDeleteUser(Target: TUserInfo): boolean;
-begin
-  Result := False;
-end;
-
-function TAdminUser.DoGetRole: TUserRole;
-begin
-  Result := urAdmin;
-end;
-
-function TAdminUser.CanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean;
-begin
-  if Target.Username = Username then
-    Result := False
-  else
-    Result := DoCanGrantRole(Target, ARole);
-end;
-
-function TAdminUser.CanDeleteUser(Target: TUserInfo): boolean;
-begin
-  if Target.Username = Username then
-    Result := False
-  else
-    Result := DoCanDeleteUser(Target);
-end;
-
-procedure TAdminUser.GrantRole(Target: TUserInfo; ARole: TUserRole);
-begin
-  NeedsAuthentification;
-  if not CanGrantRole(Target, ARole) then
-    raise EUserAccessDenied.Create(SAccessDenied);
-  Manager.GrantRole(Target.Username, ARole);
-end;
-
-procedure TAdminUser.DeleteUser(Target: TUserInfo);
-begin
-  NeedsAuthentification;
-  if not CanDeleteUser(Target) then
-    raise EUserAccessDenied.Create(SAccessDenied);
-  Manager.DeleteUser(Target.Username);
 end;
 
 { TUser }
@@ -618,6 +548,11 @@ begin
   Result := FInfo.RegisteredAt;
 end;
 
+function TUser.GetStorage: TAbstractDataStorage;
+begin
+  Result := FInfo.Storage;
+end;
+
 function TUser.GetToken: string;
 begin
   Result := Info.Token;
@@ -635,7 +570,7 @@ var
 begin
   Salt := GenSalt;
   Hash := HashPassword(Password, Salt);
-  with Manager.Storage do
+  with Storage do
   begin
     WriteString(FullKeyName('password.hash'), Hash);
     WriteString(FullKeyName('password.salt'), Salt);
@@ -648,7 +583,7 @@ var
   FoundHash: string;
 begin
   // read hash & salt
-  with Manager.Storage do
+  with Storage do
   begin
     Hash := ReadString(FullKeyName('password.hash'), '');
     Salt := ReadString(FullKeyName('password.salt'), '');
@@ -677,7 +612,7 @@ end;
 
 procedure TUser.GenerateToken;
 begin
-  Manager.Storage.WriteString(FullKeyName('token'),
+  Storage.WriteString(FullKeyName('token'),
     RandomSequenceBase64(Config.Users_TokenLength));
 end;
 
@@ -705,7 +640,7 @@ begin
   RequireUpdating;
   if Apply then
   begin
-    with Manager.Storage do
+    with Storage do
     begin
       WriteString(FullKeyName('firstName'), FFirstName);
       WriteString(FullKeyName('lastName'), FLastName);
@@ -754,12 +689,12 @@ end;
 
 procedure TUser.UpdateLastVisit;
 begin
-  Manager.Storage.WriteFloat(FullKeyName('lastVisit'), Now);
+  Storage.WriteFloat(FullKeyName('lastVisit'), Now);
 end;
 
 procedure TUser.WriteRole;
 begin
-  Manager.Storage.WriteString(FullKeyName('role'), UserRoleToStr(Role));
+  Storage.WriteString(FullKeyName('role'), UserRoleToStr(Role));
 end;
 
 constructor TUser.Create;
@@ -775,7 +710,7 @@ begin
 end;
 
 initialization
-  FManager := TUserManager.Create;
+  UserClass[urSimple] := TUser;
 
 finalization
   FreeAndNil(FManager);

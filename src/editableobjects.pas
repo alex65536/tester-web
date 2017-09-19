@@ -25,7 +25,7 @@ unit editableobjects;
 interface
 
 uses
-  Classes, SysUtils, TypInfo;
+  Classes, SysUtils, TypInfo, webstrconsts, users;
 
 type
   TEditableAccessRights = (erNone, erRead, erWrite, erOwner);
@@ -36,6 +36,15 @@ const
   AccessCanWriteSet = [erWrite, erOwner];
 
 type
+  TEditableObject = class;
+
+  { TEditorUser }
+
+  TEditorUser = class(TUser)
+  protected
+    function DoGetRole: TUserRole; override;
+  end;
+
   TEditableObject = class
     // TODO : Write it !!!!!!
   end;
@@ -59,6 +68,16 @@ begin
       Exit(R);
   raise EConvertError.Create(SNoSuchAccessRights);
 end;
+
+{ TEditorUser }
+
+function TEditorUser.DoGetRole: TUserRole;
+begin
+  Result := urEditor;
+end;
+
+initialization
+  UserClass[urEditor] := TEditorUser;
 
 end.
 

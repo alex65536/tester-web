@@ -31,6 +31,7 @@ uses
   hash_3rdparty,
   fphttpapp,
   custhttpapp,
+  allusers,
   htmlpreprocess,
   escaping,
   webstrconsts,
@@ -55,7 +56,8 @@ uses
   authwebmodules,
   tswebprofilefeatures,
   tsmiscwebmodules,
-  editableobjects;
+  editableobjects,
+  adminusers;
 
 type
   TOpenHandlerApplication = class(THTTPApplication)
