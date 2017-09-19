@@ -132,6 +132,8 @@ resourcestring
   SSettingsNothingToUpdate = 'Nothing to update!';
   SDeleteUserTitle = 'Delete user';
   SNoSuchAccessRights = 'No such access rights!';
+  SCannotChangeRoleClass = 'Cannot change role classes; the UserManager was ' +
+    'created already!';
 
 implementation
 

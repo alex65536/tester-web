@@ -201,14 +201,6 @@ type
   end;
 
 const
-  UserClassesByRole: array [TUserRole] of TUserClass = (
-    nil,         // urBlocked : we don't create blocked users!
-    TUser,       // urSimple
-    TEditorUser, // urEditor
-    TAdminUser,  // urAdmin
-    TOwnerUser   // urOwner
-    );
-
   UserRoleNames: array [TUserRole] of string = (
     SBlockedUserRole, // urBlocked
     SSimpleUserRole,  // urSimple
@@ -216,6 +208,10 @@ const
     SAdminUserRole,   // urAdmin
     SOwnerUserRole    // urOwner
     );
+
+function GetUserClass(ARole: TUserRole): TUserClass;
+procedure SetUserClass(ARole: TUserRole; AClass: TUserClass);
+property UserClass[ARole: TUserRole]: TUserClass read GetUserClass write SetUserClass;
 
 function UserRoleToStr(ARole: TUserRole): string;
 function StrToUserRole(const S: string): TUserRole;
@@ -229,7 +225,27 @@ function UserManager: TUserManager; inline;
 implementation
 
 var
-  FManager: TUserManager;
+  FManager: TUserManager = nil;
+
+  FUserClasses: array [TUserRole] of TUserClass = (
+    nil,
+    nil,
+    nil,
+    nil,
+    nil
+    );
+
+function GetUserClass(ARole: TUserRole): TUserClass;
+begin
+  Result := FUserClasses[ARole];
+end;
+
+procedure SetUserClass(ARole: TUserRole; AClass: TUserClass);
+begin
+  if FManager <> nil then
+    raise EInvalidOperation.Create(SCannotChangeRoleClass);
+  FUserClasses[ARole] := AClass;
+end;
 
 function UserRoleToStr(ARole: TUserRole): string;
 begin
@@ -287,7 +303,14 @@ end;
 
 function UserManager: TUserManager;
 begin
-  Result := FManager;
+  try
+    if FManager = nil then
+      FManager := TUserManager.Create;
+    Result := FManager;
+  except
+    Result := nil;
+    raise;
+  end;
 end;
 
 { TEditorUser }
@@ -373,7 +396,7 @@ end;
 
 function TUserManager.CreateUser(ARole: TUserRole; const Username: string): TUser;
 begin
-  Result := CreateUserClass(UserClassesByRole[ARole], Username);
+  Result := CreateUserClass(UserClass[ARole], Username);
 end;
 
 function TUserManager.CreateDataStorage: TAbstractDataStorage;
@@ -800,7 +823,10 @@ begin
 end;
 
 initialization
-  FManager := TUserManager.Create;
+  UserClass[urSimple] := TUser;
+  UserClass[urEditor] := TEditorUser;
+  UserClass[urAdmin] := TAdminUser;
+  UserClass[urOwner] := TOwnerUser;
 
 finalization
   FreeAndNil(FManager);
