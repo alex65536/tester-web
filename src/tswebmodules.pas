@@ -116,7 +116,7 @@ type
 
   { TLoginWebModule }
 
-  TLoginWebModule = class(TAuthCreateUserWebModule)
+  TLoginWebModule = class(TAuthWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
     procedure DoHandleAuth(ARequest: TRequest); override;
@@ -124,7 +124,7 @@ type
 
   { TRegisterWebModule }
 
-  TRegisterWebModule = class(TAuthCreateUserWebModule)
+  TRegisterWebModule = class(TAuthWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
     procedure DoHandleAuth(ARequest: TRequest); override;

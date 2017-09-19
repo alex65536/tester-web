@@ -55,7 +55,7 @@ type
 
   { TAuthHtmlPage }
 
-  TAuthHtmlPage = class(TDefaultHtmlPageBase, IAuthHtmlPage)
+  TAuthHtmlPage = class(TDefaultHtmlPageBase, IPostHtmlPage)
   private
     FError: string;
     FSuccess: string;

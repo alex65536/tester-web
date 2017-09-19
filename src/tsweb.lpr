@@ -53,7 +53,8 @@ uses
   tswebpages,
   tswebmodules,
   authwebmodules,
-  tswebprofilefeatures;
+  tswebprofilefeatures,
+  tsmiscwebmodules;
 
 type
   TOpenHandlerApplication = class(THTTPApplication)

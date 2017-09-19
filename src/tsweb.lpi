@@ -45,7 +45,7 @@
         <PackageName Value="FCL"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="23">
+    <Units Count="24">
       <Unit0>
         <Filename Value="tsweb.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -138,6 +138,10 @@
         <Filename Value="commitscheduler.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit22>
+      <Unit23>
+        <Filename Value="tsmiscwebmodules.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit23>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

@@ -46,7 +46,7 @@ type
   { IAuthHtmlPage }
 
   {$interfaces CORBA}
-  IAuthHtmlPage = interface
+  IPostHtmlPage = interface
     ['{48726FDF-4025-4D9C-A462-1D88AEE0DF89}']
     function GetError: string;
     function GetSuccess: string;

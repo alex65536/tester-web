@@ -25,7 +25,7 @@ unit authwebmodules;
 interface
 
 uses
-  SysUtils, webmodules, users, HTTPDefs, webstrconsts, htmlpages, tswebpagesbase;
+  SysUtils, webmodules, users, HTTPDefs, webstrconsts, tswebpagesbase, tsmiscwebmodules;
 
 type
 
@@ -50,47 +50,14 @@ type
 
   { TAuthWebModule }
 
-  TAuthWebModule = class(THtmlPageWebModule)
-  private
-    FError: string;
-    FSuccess: string;
-    procedure PostHandleRequest(Sender: TObject; ARequest: TRequest;
-      AResponse: TResponse; var Handled: boolean);
-  protected
-    property Error: string read FError write FError;
-    property Success: string read FSuccess write FSuccess;
-    function CanRedirect: boolean; virtual;
-    function RedirectLocation: string; virtual;
-    procedure DoHandleAuth(ARequest: TRequest); virtual; abstract;
-    procedure DoPageAfterConstruction(APage: THtmlPage); override;
-    procedure DoBeforeRequest; override;
-    procedure DoAfterRequest; override;
+  TAuthWebModule = class(TPostWebModule)
   public
     procedure AfterConstruction; override;
-  end;
-
-  { TAuthCreateUserWebModule }
-
-  TAuthCreateUserWebModule = class(TAuthWebModule)
-  public
-    procedure AfterConstruction; override;
-  end;
-
-  { TAuthUserWebModule }
-
-  TAuthUserWebModule = class(TAuthWebModule)
-  private
-    FUser: TUser;
-  protected
-    property User: TUser read FUser;
-    procedure DoSessionCreated; override;
-    procedure DoAfterRequest; override;
-    function CanRedirect: boolean; override;
   end;
 
   { TConfirmPasswordWebModule }
 
-  TConfirmPasswordWebModule = class(TAuthUserWebModule)
+  TConfirmPasswordWebModule = class(TPostUserWebModule)
   private
     FConfirmed: boolean;
     procedure ConfirmedHandleRequest(Sender: TObject; {%H-}ARequest: TRequest;
@@ -108,7 +75,7 @@ type
 
   { TSettingsWebModule }
 
-  TSettingsWebModule = class(TAuthUserWebModule)
+  TSettingsWebModule = class(TPostUserWebModule)
   protected
     procedure DoHandleAuth(ARequest: TRequest); override;
   end;
@@ -158,28 +125,9 @@ begin
   Success := SSettingsUpdateSuccessful;
 end;
 
-{ TAuthUserWebModule }
+{ TAuthWebModule }
 
-procedure TAuthUserWebModule.DoSessionCreated;
-begin
-  inherited DoSessionCreated;
-  FUser := UserManager.LoadUserFromSession(Session);
-end;
-
-procedure TAuthUserWebModule.DoAfterRequest;
-begin
-  inherited DoAfterRequest;
-  FreeAndNil(FUser);
-end;
-
-function TAuthUserWebModule.CanRedirect: boolean;
-begin
-  Result := False;
-end;
-
-{ TAuthCreateUserWebModule }
-
-procedure TAuthCreateUserWebModule.AfterConstruction;
+procedure TAuthWebModule.AfterConstruction;
 begin
   inherited AfterConstruction;
   Handlers.Insert(0, TRedirectLoggedWebModuleHandler.Create);
@@ -249,68 +197,6 @@ procedure TLogoutWebModule.AfterConstruction;
 begin
   inherited AfterConstruction;
   Handlers.Add(TDeclineNotLoggedWebModuleHandler.Create);
-end;
-
-{ TAuthWebModule }
-
-procedure TAuthWebModule.PostHandleRequest(Sender: TObject; ARequest: TRequest;
-  AResponse: TResponse; var Handled: boolean);
-begin
-  if ARequest.Method.ToUpper = 'POST' then
-  begin
-    try
-      DoHandleAuth(ARequest);
-      // if no exception, we send redirect and don't render that page
-      if CanRedirect then
-      begin
-        AResponse.Location := RedirectLocation;
-        AResponse.Code := 303;
-        Handled := True;
-      end;
-    except
-      on E: EUserAction do
-        FError := E.Message
-      else
-        raise;
-    end;
-  end;
-end;
-
-function TAuthWebModule.CanRedirect: boolean;
-begin
-  Result := True;
-end;
-
-function TAuthWebModule.RedirectLocation: string;
-begin
-  Result := DocumentRoot + '/';
-end;
-
-procedure TAuthWebModule.DoPageAfterConstruction(APage: THtmlPage);
-begin
-  inherited DoPageAfterConstruction(APage);
-  (APage as IAuthHtmlPage).Error := FError;
-  (APage as IAuthHtmlPage).Success := FSuccess;
-end;
-
-procedure TAuthWebModule.DoBeforeRequest;
-begin
-  inherited DoBeforeRequest;
-  FError := '';
-  FSuccess := '';
-end;
-
-procedure TAuthWebModule.DoAfterRequest;
-begin
-  inherited DoAfterRequest;
-  FError := '';
-  FSuccess := '';
-end;
-
-procedure TAuthWebModule.AfterConstruction;
-begin
-  inherited AfterConstruction;
-  AddEventHandler(@PostHandleRequest);
 end;
 
 { TDeclineNotLoggedWebModuleHandler }

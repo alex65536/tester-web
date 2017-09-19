@@ -90,7 +90,24 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TPostDataFeature }
+
+  TPostDataFeature = class(TTesterPageFeature)
+    procedure Satisfy; override;
+  end;
+
 implementation
+
+{ TPostDataFeature }
+
+procedure TPostDataFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['authError'] := (Parent as IPostHtmlPage).Error;
+    ItemsAsText['authSuccess'] := (Parent as IPostHtmlPage).Success;
+  end;
+end;
 
 { TUserInfoFeature }
 

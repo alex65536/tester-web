@@ -60,6 +60,7 @@ type
       override;
     procedure InitResponse(AResponse: TResponse); override;
     procedure RemoveVariable(VariableName: string); override;
+    constructor Create(AOwner: TComponent); override;
     constructor Create(AOwner: TComponent; AStorage: TAbstractDataStorage); virtual;
   end;
 
@@ -311,11 +312,16 @@ begin
   FStorage.DeleteVariable(VarNameToStoragePath(VariableName));
 end;
 
+constructor TTesterWebSession.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+end;
+
 constructor TTesterWebSession.Create(AOwner: TComponent;
   AStorage: TAbstractDataStorage);
 begin
   FStorage := AStorage;
-  inherited Create(AOwner);
+  Create(AOwner);
 end;
 
 initialization
