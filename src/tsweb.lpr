@@ -55,7 +55,8 @@ uses
   authwebmodules,
   tswebprofilefeatures,
   tsmiscwebmodules,
-  editableobjects;
+  editableobjects,
+  adminusers;
 
 type
   TOpenHandlerApplication = class(THTTPApplication)

@@ -25,8 +25,8 @@ unit tswebprofilefeatures;
 interface
 
 uses
-  Classes, SysUtils, tswebpagesbase, tswebfeatures, users, htmlpages,
-  webstrconsts, userpages, htmlpreprocess;
+  SysUtils, tswebpagesbase, tswebfeatures, users, htmlpages, webstrconsts,
+  userpages, htmlpreprocess, adminusers;
 
 type
 
