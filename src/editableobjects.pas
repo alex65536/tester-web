@@ -25,13 +25,40 @@ unit editableobjects;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, TypInfo;
 
 type
-  TEditableObjectAccessRights = (erNone, erRead, erWrite, erOwner);
+  TEditableAccessRights = (erNone, erRead, erWrite, erOwner);
+  TEditableAccessRightsSet = set of TEditableAccessRights;
 
+const
+  AccessCanReadSet = [erRead, erWrite, erOwner];
+  AccessCanWriteSet = [erWrite, erOwner];
+
+type
+  TEditableObject = class
+    // TODO : Write it !!!!!!
+  end;
+
+function AccessRightsToStr(ARights: TEditableAccessRights): string;
+function StrToAccessRights(const S: string): TEditableAccessRights;
 
 implementation
+
+function AccessRightsToStr(ARights: TEditableAccessRights): string;
+begin
+  Result := GetEnumName(TypeInfo(TEditableAccessRights), Ord(ARights));
+end;
+
+function StrToAccessRights(const S: string): TEditableAccessRights;
+var
+  R: TEditableAccessRights;
+begin
+  for R in TEditableAccessRights do
+    if AccessRightsToStr(R) = S then
+      Exit(R);
+  raise EConvertError.Create(SNoSuchAccessRights);
+end;
 
 end.
 

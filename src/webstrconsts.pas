@@ -131,6 +131,7 @@ resourcestring
   SBackToProfile = 'Back to profile';
   SSettingsNothingToUpdate = 'Nothing to update!';
   SDeleteUserTitle = 'Delete user';
+  SNoSuchAccessRights = 'No such access rights!';
 
 implementation
 
