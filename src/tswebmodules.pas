@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess, fphttp,
   htmlpages, tswebpages, HTTPDefs, users, webstrconsts, authwebmodules,
-  tswebprofilefeatures, tswebpagesbase, tsmiscwebmodules, adminusers;
+  tswebprofilefeatures, tswebpagesbase, tsmiscwebmodules, allusers;
 
 type
 

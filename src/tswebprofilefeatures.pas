@@ -26,7 +26,7 @@ interface
 
 uses
   SysUtils, tswebpagesbase, tswebfeatures, users, htmlpages, webstrconsts,
-  userpages, htmlpreprocess, adminusers;
+  userpages, htmlpreprocess, allusers;
 
 type
 

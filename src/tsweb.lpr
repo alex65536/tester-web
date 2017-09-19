@@ -31,6 +31,7 @@ uses
   hash_3rdparty,
   fphttpapp,
   custhttpapp,
+  allusers,
   htmlpreprocess,
   escaping,
   webstrconsts,
