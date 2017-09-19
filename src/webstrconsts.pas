@@ -98,10 +98,11 @@ resourcestring
   SRegisterSubmit = 'Register';
   SConfirmPasswordRequest = 'Please confirm your password to continue.';
   SConfirmPasswordSubmit = 'Confirm';
-  SBlockedUserRole = 'Blocked User';
+  SBlockedUserRole = 'Banned';
   SSimpleUserRole = 'User';
+  SEditorUserRole = 'Contest Setter';
   SAdminUserRole = 'Administrator';
-  SOwnerUserRole = 'Server Owner';
+  SOwnerUserRole = 'The Server Keeper';
   SMustNonNil = '%s expected to be non-nil :(';
   SProfileUserNameKey = 'Username:';
   SProfileRealNameKey = 'Real name:';

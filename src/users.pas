@@ -36,7 +36,7 @@ type
   EUserNotExist = class(EUserAction);
 
   TUserManager = class;
-  TUserRole = (urBlocked, urSimple, urAdmin, urOwner);
+  TUserRole = (urBlocked, urSimple, urEditor, urAdmin, urOwner);
   TUserRoleSet = set of TUserRole;
 
 const
@@ -133,9 +133,12 @@ type
 
   TUserClass = class of TUser;
 
+  TEditorUser = class(TUser)
+  end;
+
   { TAdminUser }
 
-  TAdminUser = class(TUser)
+  TAdminUser = class(TEditorUser)
   protected
     function DoGetRole: TUserRole; override;
     function DoCanGrantRole(Target: TUserInfo; ARole: TUserRole): boolean; virtual;
@@ -191,15 +194,17 @@ type
 
 const
   UserClassesByRole: array [TUserRole] of TUserClass = (
-    nil,        // urBlocked : we don't create blocked users!
-    TUser,      // urSimple
-    TAdminUser, // urAdmin
-    TOwnerUser  // urOwner
+    nil,         // urBlocked : we don't create blocked users!
+    TUser,       // urSimple
+    TEditorUser, // urEditor
+    TAdminUser,  // urAdmin
+    TOwnerUser   // urOwner
     );
 
   UserRoleNames: array [TUserRole] of string = (
     SBlockedUserRole, // urBlocked
     SSimpleUserRole,  // urSimple
+    SEditorUserRole,  // urEditor
     SAdminUserRole,   // urAdmin
     SOwnerUserRole    // urOwner
     );
