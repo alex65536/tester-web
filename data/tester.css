@@ -48,7 +48,7 @@ table.container {
 	text-align: right;
 	width: 100%;
 }
-.userbar a {
+.userbar a.action {
 	background-color: #075E2D;
 	border-style: ridge;
 	border-width: 2pt;
@@ -60,7 +60,7 @@ table.container {
 	padding: 2pt 10pt;
 	white-space: nowrap;
 }
-.userbar a:hover {
+.userbar a.action:hover {
 	background-color: #187842;
 	border-style: groove;
 }
@@ -240,9 +240,6 @@ img.profile-role {
 }
 
 
-a.role {
-	text-decoration: none;
-}
 .role-owner {
 	color: #B00000;
 	font-weight: bold;
@@ -260,10 +257,12 @@ a.role {
 	color: #0413BC;
 	font-weight: bold;
 	font-style: italic;
+	text-decoration: none;
 }
 .role-simple {
 	color: #006524;
 	font-weight: bold;
+	text-decoration: none;
 }
 .role-blocked {
 	color: black;

@@ -139,6 +139,8 @@ begin
     with Parent.Variables do
     begin
       ItemsAsText['loggedAsUser'] := SLoggedAsUser;
+      ItemsAsText['loggedUserLink'] :=
+        (Parent as TTesterHtmlPage).GenerateUserLink(User.Info);
       ItemsAsText['doViewProfile'] := SUserDoViewProfile;
       ItemsAsText['doLogout'] := SUserDoLogOut;
     end;

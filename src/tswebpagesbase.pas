@@ -25,7 +25,8 @@ unit tswebpagesbase;
 interface
 
 uses
-  Classes, SysUtils, userpages, htmlpreprocess, LazFileUtils, serverconfig;
+  Classes, SysUtils, userpages, htmlpreprocess, LazFileUtils, serverconfig,
+  users;
 
 type
 
@@ -38,6 +39,8 @@ type
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
     property Title: string read FTitle write FTitle;
+    function GenerateUserLink(AInfo: TUserInfo): string;
+    function GenerateUserLink(const Username: string): string;
   end;
 
   { IAuthHtmlPage }
@@ -91,6 +94,36 @@ end;
 procedure TTesterHtmlPage.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
   Strings.LoadFromFile(TemplateLocation('', 'skeleton'));
+end;
+
+function TTesterHtmlPage.GenerateUserLink(AInfo: TUserInfo): string;
+var
+  Storage: TTreeVariableStorage;
+begin
+  Storage := TTreeVariableStorage.Create(Preprocessor.Storages);
+  try
+    Preprocessor.Storages.Add(Storage);
+    with Storage do
+    begin
+      ItemsAsText['linkUserName'] := AInfo.Username;
+      ItemsAsText['linkUserRoleLower'] := UserRoleToStr(AInfo.Role).Substring(2).ToLower;
+    end;
+    Result := Preprocessor.PreprocessFile(TemplateLocation('', 'userNameLink'));
+  finally
+    FreeAndNil(Storage);
+  end;
+end;
+
+function TTesterHtmlPage.GenerateUserLink(const Username: string): string;
+var
+  Info: TUserInfo;
+begin
+  Info := UserManager.GetUserInfo(Username);
+  try
+    Result := GenerateUserLink(Info);
+  finally
+    FreeAndNil(Info);
+  end;
 end;
 
 end.

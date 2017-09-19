@@ -211,8 +211,7 @@ var
 begin
   with Parent.Variables, Info do
   begin
-    RoleStr := UserRoleToStr(Role);
-    Delete(RoleStr, 1, 2);
+    RoleStr := UserRoleToStr(Role).Substring(2);
 
     ItemsAsText['profileUserNameKey'] := SProfileUserNameKey;
     ItemsAsText['profileUserName'] := Username;
