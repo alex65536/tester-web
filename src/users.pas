@@ -54,9 +54,11 @@ type
     function GetLastName: string;
     function GetLastVisit: TDateTime;
     function GetRegisteredAt: TDateTime;
+    function GetStorage: TAbstractDataStorage;
     function GetToken: string;
     function GetUserRole: TUserRole;
   protected
+    property Storage: TAbstractDataStorage read GetStorage;
     function FullKeyName(const Key: string): string;
     // creating users should only be done via TUserManager or TUser!
     {%H-}constructor Create(AManager: TUserManager; const AUsername: string);
@@ -97,11 +99,13 @@ type
     function GetLastName: string;
     function GetLastVisit: TDateTime;
     function GetRegisteredAt: TDateTime;
+    function GetStorage: TAbstractDataStorage;
     function GetToken: string;
     procedure RequireUpdating;
     procedure SetFirstName(AValue: string);
     procedure SetLastName(AValue: string);
   protected
+    property Storage: TAbstractDataStorage read GetStorage;
     procedure GenerateToken;
     procedure GeneratePassword(const Password: string);
     function CheckPassword(const Password: string): boolean;
@@ -133,7 +137,11 @@ type
 
   TUserClass = class of TUser;
 
+  { TEditorUser }
+
   TEditorUser = class(TUser)
+  protected
+    function DoGetRole: TUserRole; override;
   end;
 
   { TAdminUser }
@@ -282,36 +290,48 @@ begin
   Result := FManager;
 end;
 
+{ TEditorUser }
+
+function TEditorUser.DoGetRole: TUserRole;
+begin
+  Result := urEditor;
+end;
+
 { TUserInfo }
 
 function TUserInfo.GetFirstName: string;
 begin
-  Result := Manager.Storage.ReadString(FullKeyName('firstName'), '');
+  Result := Storage.ReadString(FullKeyName('firstName'), '');
 end;
 
 function TUserInfo.GetLastName: string;
 begin
-  Result := Manager.Storage.ReadString(FullKeyName('lastName'), '');
+  Result := Storage.ReadString(FullKeyName('lastName'), '');
 end;
 
 function TUserInfo.GetLastVisit: TDateTime;
 begin
-  Result := Manager.Storage.ReadFloat(FullKeyName('lastVisit'), 0);
+  Result := Storage.ReadFloat(FullKeyName('lastVisit'), 0);
 end;
 
 function TUserInfo.GetRegisteredAt: TDateTime;
 begin
-  Result := Manager.Storage.ReadFloat(FullKeyName('registerTime'), 0);
+  Result := Storage.ReadFloat(FullKeyName('registerTime'), 0);
+end;
+
+function TUserInfo.GetStorage: TAbstractDataStorage;
+begin
+  Result := Manager.Storage;
 end;
 
 function TUserInfo.GetToken: string;
 begin
-  Result := Manager.Storage.ReadString(FullKeyName('token'), '');
+  Result := Storage.ReadString(FullKeyName('token'), '');
 end;
 
 function TUserInfo.GetUserRole: TUserRole;
 begin
-  Result := StrToUserRole(Manager.Storage.ReadString(FullKeyName('role'), ''));
+  Result := StrToUserRole(Storage.ReadString(FullKeyName('role'), ''));
 end;
 
 constructor TUserInfo.Create(AManager: TUserManager; const AUsername: string);
@@ -618,6 +638,11 @@ begin
   Result := FInfo.RegisteredAt;
 end;
 
+function TUser.GetStorage: TAbstractDataStorage;
+begin
+  Result := FInfo.Storage;
+end;
+
 function TUser.GetToken: string;
 begin
   Result := Info.Token;
@@ -635,7 +660,7 @@ var
 begin
   Salt := GenSalt;
   Hash := HashPassword(Password, Salt);
-  with Manager.Storage do
+  with Storage do
   begin
     WriteString(FullKeyName('password.hash'), Hash);
     WriteString(FullKeyName('password.salt'), Salt);
@@ -648,7 +673,7 @@ var
   FoundHash: string;
 begin
   // read hash & salt
-  with Manager.Storage do
+  with Storage do
   begin
     Hash := ReadString(FullKeyName('password.hash'), '');
     Salt := ReadString(FullKeyName('password.salt'), '');
@@ -677,7 +702,7 @@ end;
 
 procedure TUser.GenerateToken;
 begin
-  Manager.Storage.WriteString(FullKeyName('token'),
+  Storage.WriteString(FullKeyName('token'),
     RandomSequenceBase64(Config.Users_TokenLength));
 end;
 
@@ -705,7 +730,7 @@ begin
   RequireUpdating;
   if Apply then
   begin
-    with Manager.Storage do
+    with Storage do
     begin
       WriteString(FullKeyName('firstName'), FFirstName);
       WriteString(FullKeyName('lastName'), FLastName);
@@ -754,12 +779,12 @@ end;
 
 procedure TUser.UpdateLastVisit;
 begin
-  Manager.Storage.WriteFloat(FullKeyName('lastVisit'), Now);
+  Storage.WriteFloat(FullKeyName('lastVisit'), Now);
 end;
 
 procedure TUser.WriteRole;
 begin
-  Manager.Storage.WriteString(FullKeyName('role'), UserRoleToStr(Role));
+  Storage.WriteString(FullKeyName('role'), UserRoleToStr(Role));
 end;
 
 constructor TUser.Create;

@@ -25,7 +25,7 @@ unit editableobjects;
 interface
 
 uses
-  Classes, SysUtils, TypInfo;
+  Classes, SysUtils, TypInfo, webstrconsts;
 
 type
   TEditableAccessRights = (erNone, erRead, erWrite, erOwner);
