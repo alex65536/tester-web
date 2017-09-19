@@ -240,29 +240,32 @@ img.profile-role {
 }
 
 
-.role-label-owner {
+a.role {
+	text-decoration: none;
+}
+.role-owner {
 	color: #B00000;
 	font-weight: bold;
 	text-decoration-color: #B00000;
 	text-decoration-line: underline;
 	text-decoration-style: double;
 }
-.role-label-admin {
+.role-admin {
 	color: #DB5303;
 	font-weight: bold;
 	text-decoration-color: #DB5303;
 	text-decoration-line: underline;
 }
-.role-label-editor {
+.role-editor {
 	color: #0413BC;
 	font-weight: bold;
 	font-style: italic;
 }
-.role-label-simple {
+.role-simple {
 	color: #006524;
 	font-weight: bold;
 }
-.role-label-blocked {
+.role-blocked {
 	color: black;
 	font-weight: bold;
 	text-decoration-color: black;
@@ -270,41 +273,43 @@ img.profile-role {
 }
 
 
-table.access-table {
+table.styled {
 	border-spacing: 0;
 	border-radius: 5pt;
 	padding: 0;
 	width: 100%;
 }
-table.access-table tr {
+table.styled tr {
 	background-color: #C1EBD4;
 }
-table.access-table tr:nth-child(even) {
+table.styled tr:nth-child(even) {
 	background-color: #FFFFFF;
 }
-table.access-table td, table.access-table th {
+table.styled td, table.styled th {
 	border-left-style: solid;
-	border-width: 1px;
+	border-width: 1pt;
 	padding: 3pt 5pt;
 	text-align: center;
 }
-table.access-table td:nth-child(1), table.access-table th:nth-child(1) {
+table.styled td:nth-child(1), table.styled th:nth-child(1) {
 	border-left-style: none;
 }
-table.access-table td {
+table.styled td {
 	border-color: #1CA757;
 }
-table.access-table th {
+table.styled th {
 	background-color: #47BD7B;
 	border-color: white;
 	color: white;
 	font-weight: bold;
 }
+
+
 table.access-table th.id {
-	width: 1px;
+	width: 1pt;
 	padding-left: 1em;
 	padding-right: 1em;
 }
 table.access-table th.del {
-	width: 1px;
+	width: 1pt;
 }
