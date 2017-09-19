@@ -146,7 +146,7 @@ type
   private
     FStorage: TAbstractDataStorage;
     function GetUserCount: integer;
-    procedure IncUserCount;
+    procedure IncUserCount(Delta: integer);
   protected
     function CreateUserClass(AClass: TUserClass; const Username: string): TUser;
     function CreateUser(ARole: TUserRole; const Username: string): TUser; virtual;
@@ -342,9 +342,9 @@ begin
   Result := FStorage.ReadInteger('userCount', 0);
 end;
 
-procedure TUserManager.IncUserCount;
+procedure TUserManager.IncUserCount(Delta: integer);
 begin
-  FStorage.WriteInteger('userCount', GetUserCount + 1);
+  FStorage.WriteInteger('userCount', GetUserCount + Delta);
 end;
 
 function TUserManager.CreateUserClass(AClass: TUserClass; const Username: string): TUser;
@@ -464,7 +464,7 @@ begin
   // create user
   with CreateUser(ARole, AUsername) do
     try
-      IncUserCount;
+      IncUserCount(+1);
       WriteRole;
       GenerateToken;
       GeneratePassword(APassword);
@@ -503,6 +503,7 @@ begin
   if not UserExists(AUsername) then
     raise EUserNotExist.Create(SUserDoesNotExist);
   FStorage.DeletePath(AUsername);
+  IncUserCount(-1);
 end;
 
 constructor TUserManager.Create;
