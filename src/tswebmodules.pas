@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess, fphttp,
   htmlpages, tswebpages, HTTPDefs, users, webstrconsts, authwebmodules,
-  tswebprofilefeatures, tswebpagesbase;
+  tswebprofilefeatures, tswebpagesbase, tsmiscwebmodules;
 
 type
 
@@ -181,6 +181,8 @@ type
   TProfileWebModule = class(THtmlPageWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
+  public
+    procedure AfterConstruction; override;
   end;
 
   { TKillServerWebModule }
@@ -273,6 +275,12 @@ end;
 function TProfileWebModule.DoCreatePage: THtmlPage;
 begin
   Result := TProfileHtmlPage.Create(Request.QueryFields.Values['user']);
+end;
+
+procedure TProfileWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create(AllUserRoles, True));
 end;
 
 { TProfileHtmlPage }

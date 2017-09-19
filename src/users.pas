@@ -39,6 +39,11 @@ type
   TUserRole = (urBlocked, urSimple, urAdmin, urOwner);
   TUserRoleSet = set of TUserRole;
 
+const
+  AllUserRoles = [Low(TUserRole) .. High(TUserRole)];
+
+type
+
   { TUserInfo }
 
   TUserInfo = class

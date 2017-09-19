@@ -25,9 +25,30 @@ unit tsmiscwebmodules;
 interface
 
 uses
-  SysUtils, webmodules, users, HTTPDefs, htmlpages, tswebpagesbase;
+  SysUtils, webmodules, users, HTTPDefs, htmlpages, tswebpagesbase, webstrconsts;
 
 type
+
+  { TRedirectLoggedWebModuleHandler }
+
+  TRedirectLoggedWebModuleHandler = class(TWebModuleHandler)
+  public
+    procedure HandleRequest({%H-}ARequest: TRequest; AResponse: TResponse;
+      var Handled: boolean); override;
+  end;
+
+  { TDeclineNotLoggedWebModuleHandler }
+
+  TDeclineNotLoggedWebModuleHandler = class(TWebModuleHandler)
+  private
+    FAllowUsers: TUserRoleSet;
+    FRedirectIfFail: boolean;
+  public
+    procedure HandleRequest({%H-}ARequest: TRequest; {%H-}AResponse: TResponse;
+      var {%H-}Handled: boolean); override;
+    constructor Create(AAllowUsers: TUserRoleSet = AllUserRoles;
+      ARedirectIfFail: boolean = False);
+  end;
 
   { TPostWebModule }
 
@@ -60,9 +81,60 @@ type
     procedure DoSessionCreated; override;
     procedure DoAfterRequest; override;
     function CanRedirect: boolean; override;
+  public
+    procedure AfterConstruction; override;
   end;
 
 implementation
+
+{ TDeclineNotLoggedWebModuleHandler }
+
+procedure TDeclineNotLoggedWebModuleHandler.HandleRequest(ARequest: TRequest;
+  AResponse: TResponse; var Handled: boolean);
+var
+  AUser: TUser;
+begin
+  AUser := UserManager.LoadUserFromSession(Parent.Session);
+  try
+    if (AUser = nil) or not (AUser.Role in FAllowUsers) then
+    begin
+      if FRedirectIfFail then
+      begin
+        AResponse.Location := DocumentRoot + '/';
+        AResponse.Code := 303;
+        Handled := True;
+      end
+      else
+        raise EUserAccessDenied.Create(SAccessDenied);
+    end;
+  finally
+    FreeAndNil(AUser);
+  end;
+end;
+
+constructor TDeclineNotLoggedWebModuleHandler.Create(AAllowUsers: TUserRoleSet;
+  ARedirectIfFail: boolean);
+begin
+  FAllowUsers := AAllowUsers;
+  FRedirectIfFail := ARedirectIfFail;
+end;
+
+{ TRedirectLoggedWebModuleHandler }
+
+procedure TRedirectLoggedWebModuleHandler.HandleRequest(ARequest: TRequest;
+  AResponse: TResponse; var Handled: boolean);
+var
+  AUser: TUser;
+begin
+  AUser := UserManager.LoadUserFromSession(Parent.Session);
+  if AUser <> nil then
+  begin
+    FreeAndNil(AUser);
+    AResponse.Location := DocumentRoot + '/';
+    AResponse.Code := 303;
+    Handled := True;
+  end;
+end;
 
 { TPostUserWebModule }
 
@@ -81,6 +153,12 @@ end;
 function TPostUserWebModule.CanRedirect: boolean;
 begin
   Result := False;
+end;
+
+procedure TPostUserWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create(AllUserRoles, True));
 end;
 
 { TPostWebModule }

@@ -29,25 +29,6 @@ uses
 
 type
 
-  { TRedirectLoggedWebModuleHandler }
-
-  TRedirectLoggedWebModuleHandler = class(TWebModuleHandler)
-  public
-    procedure HandleRequest({%H-}ARequest: TRequest; AResponse: TResponse;
-      var Handled: boolean); override;
-  end;
-
-  { TDeclineNotLoggedWebModuleHandler }
-
-  TDeclineNotLoggedWebModuleHandler = class(TWebModuleHandler)
-  private
-    FAllowUsers: TUserRoleSet;
-  public
-    procedure HandleRequest({%H-}ARequest: TRequest; {%H-}AResponse: TResponse;
-      var {%H-}Handled: boolean); override;
-    constructor Create(AAllowUsers: TUserRoleSet = [Low(TUserRoleSet) .. High(TUserRoleSet)]);
-  end;
-
   { TAuthWebModule }
 
   TAuthWebModule = class(TPostWebModule)
@@ -196,45 +177,7 @@ end;
 procedure TLogoutWebModule.AfterConstruction;
 begin
   inherited AfterConstruction;
-  Handlers.Add(TDeclineNotLoggedWebModuleHandler.Create);
-end;
-
-{ TDeclineNotLoggedWebModuleHandler }
-
-procedure TDeclineNotLoggedWebModuleHandler.HandleRequest(ARequest: TRequest;
-  AResponse: TResponse; var Handled: boolean);
-var
-  AUser: TUser;
-begin
-  AUser := UserManager.LoadUserFromSession(Parent.Session);
-  try
-    if (AUser = nil) or not (AUser.Role in FAllowUsers) then
-      raise EUserAccessDenied.Create(SAccessDenied);
-  finally
-    FreeAndNil(AUser);
-  end;
-end;
-
-constructor TDeclineNotLoggedWebModuleHandler.Create(AAllowUsers: TUserRoleSet);
-begin
-  FAllowUsers := AAllowUsers;
-end;
-
-{ TRedirectLoggedWebModuleHandler }
-
-procedure TRedirectLoggedWebModuleHandler.HandleRequest(ARequest: TRequest;
-  AResponse: TResponse; var Handled: boolean);
-var
-  AUser: TUser;
-begin
-  AUser := UserManager.LoadUserFromSession(Parent.Session);
-  if AUser <> nil then
-  begin
-    FreeAndNil(AUser);
-    AResponse.Location := DocumentRoot + '/';
-    AResponse.Code := 303;
-    Handled := True;
-  end;
+  Handlers.Add(TDeclineNotLoggedWebModuleHandler.Create(AllUserRoles, True));
 end;
 
 end.
