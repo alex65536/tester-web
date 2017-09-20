@@ -134,7 +134,7 @@ end;
 
 function TTesterWebSessionFactory.CreateDataStorage: TAbstractDataStorage;
 begin
-  Result := TIniDataStorage.Create(StoragePath);
+  Result := TXmlDataStorage.Create(StoragePath);
 end;
 
 function TTesterWebSessionFactory.SessionExpired(const ASessionID: string): boolean;
@@ -308,6 +308,7 @@ begin
   begin
     C := AResponse.Cookies.Add;
     C.Name := SessionCookie;
+    C.HttpOnly := True;
   end;
   if FTerminated then
     C.Value := ''
