@@ -50,6 +50,7 @@ type
     function GetOwner_DefaultUsername: string;
     function GetSession_AliveTimeMinutes: integer;
     function GetSession_IDLength: integer;
+    function GetSession_TokenLength: integer;
     function GetStorages_CommitIntervalSeconds: integer;
     function GetUsers_TokenLength: integer;
   protected
@@ -73,6 +74,7 @@ type
 
     // session parameters
     property Session_IDLength: integer read GetSession_IDLength;
+    property Session_TokenLength: integer read GetSession_TokenLength;
     property Session_AliveTimeMinutes: integer read GetSession_AliveTimeMinutes;
 
     // storage parameters
@@ -181,6 +183,11 @@ begin
   Result := FStorage.ReadInteger('session.idLength', 32);
 end;
 
+function TTesterServerConfig.GetSession_TokenLength: integer;
+begin
+  Result := FStorage.ReadInteger('session.tokenLength', 32);
+end;
+
 function TTesterServerConfig.GetStorages_CommitIntervalSeconds: integer;
 begin
   Result := FStorage.ReadInteger('storages.commitIntervalSeconds', 30);
@@ -215,6 +222,7 @@ begin
 
     WriteInteger('session.aliveTimeMinutes', Session_AliveTimeMinutes);
     WriteInteger('session.idLength', Session_IDLength);
+    WriteInteger('session.tokenLength', Session_TokenLength);
 
     WriteInteger('storages.commitIntervalSeconds', Storages_CommitIntervalSeconds);
 

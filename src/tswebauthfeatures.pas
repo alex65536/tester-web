@@ -186,6 +186,7 @@ procedure TAuthFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TPostDataFeature);
+  ADependencies.Add(TSessionTokenFeature);
 end;
 
 end.

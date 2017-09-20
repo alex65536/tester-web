@@ -26,7 +26,7 @@ interface
 
 uses
   SysUtils, htmlpages, htmlpreprocess, webstrconsts, tswebpagesbase,
-  navbars, users, userpages;
+  navbars, users, userpages, tswebsessions;
 
 type
 
@@ -96,7 +96,22 @@ type
     procedure Satisfy; override;
   end;
 
+  { TSessionTokenFeature }
+
+  TSessionTokenFeature = class(TTesterPageFeature)
+    procedure Satisfy; override;
+  end;
+
 implementation
+
+{ TSessionTokenFeature }
+
+procedure TSessionTokenFeature.Satisfy;
+begin
+  with Parent.Variables do
+    ItemsAsText['sessionToken'] := (Parent.Session as TTesterWebSession).Token;
+  LoadPagePart('', 'formToken');
+end;
 
 { TPostDataFeature }
 

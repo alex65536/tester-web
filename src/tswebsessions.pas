@@ -40,6 +40,7 @@ type
     FTerminated: boolean;
     FSessionID: string;
     function GetTimeOutMinutes: integer;
+    function GetToken: string;
     procedure SetTimeOutMinutes(AValue: integer);
   protected
     procedure CheckSession;
@@ -52,6 +53,7 @@ type
     function GetSessionVariable(VarName: string): string; override;
     procedure SetSessionVariable(VarName: string; const AValue: string); override;
   public
+    property Token: string read GetToken;
     property TimeOutMinutes: integer read GetTimeOutMinutes write SetTimeOutMinutes;
     property Storage: TAbstractDataStorage read FStorage;
     procedure Terminate; override;
@@ -173,6 +175,16 @@ function TTesterWebSession.GetTimeOutMinutes: integer;
 begin
   Result := FStorage.ReadInteger(GetSessionID + '.' + SessionPeriodKey,
     Config.Session_AliveTimeMinutes);
+end;
+
+function TTesterWebSession.GetToken: string;
+var
+  TokenKey: string;
+begin
+  TokenKey := GetSessionID + '.token';
+  if not FStorage.VariableExists(TokenKey) then
+    FStorage.WriteString(TokenKey, RandomSequenceBase64(Config.Session_TokenLength));
+  Result := FStorage.ReadString(TokenKey, '');
 end;
 
 procedure TTesterWebSession.SetTimeOutMinutes(AValue: integer);

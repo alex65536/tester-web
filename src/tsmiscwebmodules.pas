@@ -25,7 +25,8 @@ unit tsmiscwebmodules;
 interface
 
 uses
-  SysUtils, webmodules, users, HTTPDefs, htmlpages, tswebpagesbase, webstrconsts;
+  SysUtils, webmodules, users, HTTPDefs, htmlpages, tswebpagesbase, webstrconsts,
+  tswebcrypto, tswebsessions;
 
 type
 
@@ -67,6 +68,7 @@ type
     procedure DoPageAfterConstruction(APage: THtmlPage); override;
     procedure DoBeforeRequest; override;
     procedure DoAfterRequest; override;
+    function CompareTokens: boolean;
   public
     procedure AfterConstruction; override;
   end;
@@ -163,11 +165,25 @@ end;
 
 { TPostWebModule }
 
+function TPostWebModule.CompareTokens: boolean;
+var
+  GotToken, ExpectedToken: string;
+begin
+  GotToken := Request.ContentFields.Values['token'];
+  ExpectedToken := (Session as TTesterWebSession).Token;
+  Result := SlowCompareStrings(GotToken, ExpectedToken);
+end;
+
 procedure TPostWebModule.PostHandleRequest(Sender: TObject; ARequest: TRequest;
   AResponse: TResponse; var Handled: boolean);
 begin
   if ARequest.Method.ToUpper = 'POST' then
   begin
+    if not CompareTokens then
+    begin
+      FError := SInvalidSessionToken;
+      Exit;
+    end;
     try
       DoHandleAuth(ARequest);
       // if no exception, we send redirect and don't render that page

@@ -134,6 +134,7 @@ resourcestring
   SNoSuchAccessRights = 'No such access rights!';
   SCannotChangeRoleClass = 'Cannot change role classes; the UserManager was ' +
     'created already!';
+  SInvalidSessionToken = 'Invalid session token. Please try again.';
 
 implementation
 
