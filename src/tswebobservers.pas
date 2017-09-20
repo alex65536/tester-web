@@ -25,7 +25,7 @@ unit tswebobservers;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, webstrconsts;
 
 type
 
@@ -34,9 +34,13 @@ type
   TAuthorMessage = class
   private
     FSender: TObject;
+    FLocked: boolean;
+  protected
+    procedure NeedsUnlocked;
   public
     property Sender: TObject read FSender;
-    constructor Create(ASender: TObject);
+    function AddSender(ASender: TObject): TAuthorMessage;
+    function Lock: TAuthorMessage;
   end;
 
   TDestroyAuthorMessage = class(TAuthorMessage);
@@ -107,15 +111,31 @@ end;
 
 destructor TMessageAuthor.Destroy;
 begin
-  Broadcast(TDestroyAuthorMessage.Create(Self));
+  Broadcast(TDestroyAuthorMessage.Create.AddSender(Self).Lock);
+  FreeAndNil(FSubscribers);
   inherited;
 end;
 
 { TAuthorMessage }
 
-constructor TAuthorMessage.Create(ASender: TObject);
+procedure TAuthorMessage.NeedsUnlocked;
 begin
+  if FLocked then
+    raise EInvalidOperation.Create(SMessageLocked);
+end;
+
+function TAuthorMessage.AddSender(ASender: TObject): TAuthorMessage;
+begin
+  NeedsUnlocked;
   FSender := ASender;
+  Result := Self;
+end;
+
+function TAuthorMessage.Lock: TAuthorMessage;
+begin
+  NeedsUnlocked;
+  FLocked := True;
+  Result := Self;
 end;
 
 end.

@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, HTTPDefs, datastorages, tswebcrypto, typinfo, webstrconsts,
-  serverconfig, commitscheduler;
+  serverconfig, commitscheduler, tswebobservers;
 
 type
   EUserAction = class(Exception);
@@ -75,6 +75,21 @@ type
     property RegisteredAt: TDateTime read GetRegisteredAt;
     constructor Create;
   end;
+
+  { TUserInfoMessage }
+
+  TUserInfoMessage = class(TAuthorMessage)
+  private
+    FInfo: TUserInfo;
+  public
+    property Info: TUserInfo read FInfo;
+    function AddInfo(AInfo: TUserInfo): TUserInfoMessage;
+    destructor Destroy; override;
+  end;
+
+  TUserChangedRoleMessage = class(TUserInfoMessage);
+  TUserCreatedMessage = class(TUserInfoMessage);
+  TUserDeletingMessage = class(TUserInfoMessage);
 
   { IUserInfo }
 
@@ -140,7 +155,7 @@ type
 
   { TUserManager }
 
-  TUserManager = class
+  TUserManager = class(TMessageAuthor)
   protected const
     StoragePath = 'users';
   private
@@ -286,6 +301,22 @@ begin
     Result := nil;
     raise;
   end;
+end;
+
+{ TUserInfoMessage }
+
+function TUserInfoMessage.AddInfo(AInfo: TUserInfo): TUserInfoMessage;
+begin
+  NeedsUnlocked;
+  FreeAndNil(FInfo);
+  FInfo := AInfo;
+  Result := Self;
+end;
+
+destructor TUserInfoMessage.Destroy;
+begin
+  FreeAndNil(FInfo);
+  inherited Destroy;
 end;
 
 { TUserInfo }
@@ -520,6 +551,8 @@ begin
       EndUpdate(True);
       Storage.WriteFloat(FullKeyName('registerTime'), Now);
       UpdateLastVisit;
+      Broadcast(TUserCreatedMessage.Create.AddInfo(GetUserInfo(AUsername))
+        .AddSender(Self).Lock);
     finally
       Free;
     end;
@@ -537,12 +570,16 @@ begin
   if not UserExists(AUsername) then
     raise EUserNotExist.Create(SUserDoesNotExist);
   FStorage.WriteString(FullKeyName(AUsername, 'role'), UserRoleToStr(ARole));
+  Broadcast(TUserChangedRoleMessage.Create.AddInfo(GetUserInfo(AUsername))
+    .AddSender(Self).Lock);
 end;
 
 procedure TUserManager.DeleteUser(const AUsername: string);
 begin
   if not UserExists(AUsername) then
     raise EUserNotExist.Create(SUserDoesNotExist);
+  Broadcast(TUserDeletingMessage.Create.AddInfo(GetUserInfo(AUsername))
+    .AddSender(Self).Lock);
   FStorage.DeleteVariable(GetIdKey(UsernameToId(AUsername)));
   FStorage.DeletePath(UserSection(AUsername));
   IncUserCount(-1);
@@ -550,6 +587,7 @@ end;
 
 constructor TUserManager.Create;
 begin
+  inherited Create;
   FStorage := CreateDataStorage;
   Scheduler.AttachStorage(FStorage);
   if GetUserCount = 0 then

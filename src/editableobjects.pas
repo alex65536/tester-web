@@ -92,7 +92,7 @@ type
   //  function ListAvailableObjects: TStringList;
   //end;
   //
-  //TEditableObject = class
+  //TEditableObject = class(TMessageAuthor)
   //protected
   //  property Manager: TEditableManager read FManager;
   //  property Storage: TAbstractDataStorage read FStorage;

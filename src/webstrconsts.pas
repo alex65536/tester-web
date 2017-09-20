@@ -135,6 +135,7 @@ resourcestring
   SCannotChangeRoleClass = 'Cannot change role classes; the UserManager was ' +
     'created already!';
   SInvalidSessionToken = 'Invalid session token. Please try again.';
+  SMessageLocked = 'Message is locked!';
 
 implementation
 
