@@ -53,11 +53,11 @@ type
     FManager: TUserManager;
     FUsername: string;
     function GetFirstName: string;
+    function GetID: integer;
     function GetLastName: string;
     function GetLastVisit: TDateTime;
     function GetRegisteredAt: TDateTime;
     function GetStorage: TAbstractDataStorage;
-    function GetToken: string;
     function GetUserRole: TUserRole;
   protected
     property Storage: TAbstractDataStorage read GetStorage;
@@ -67,12 +67,12 @@ type
   public
     property Manager: TUserManager read FManager;
     property Username: string read FUsername;
+    property ID: integer read GetID;
     property Role: TUserRole read GetUserRole;
     property FirstName: string read GetFirstName;
     property LastName: string read GetLastName;
     property LastVisit: TDateTime read GetLastVisit;
     property RegisteredAt: TDateTime read GetRegisteredAt;
-    property Token: string read GetToken;
     constructor Create;
   end;
 
@@ -98,17 +98,16 @@ type
     FLastName: string;
     FUpdating: boolean;
     function GetFirstName: string;
+    function GetID: integer;
     function GetLastName: string;
     function GetLastVisit: TDateTime;
     function GetRegisteredAt: TDateTime;
     function GetStorage: TAbstractDataStorage;
-    function GetToken: string;
     procedure RequireUpdating;
     procedure SetFirstName(AValue: string);
     procedure SetLastName(AValue: string);
   protected
     property Storage: TAbstractDataStorage read GetStorage;
-    procedure GenerateToken;
     procedure GeneratePassword(const Password: string);
     function CheckPassword(const Password: string): boolean;
     function FullKeyName(const Key: string): string;
@@ -120,11 +119,11 @@ type
     property Info: TUserInfo read FInfo;
     property Role: TUserRole read FRole;
     property Username: string read FUsername;
+    property ID: integer read GetID;
     property FirstName: string read GetFirstName write SetFirstName;
     property LastName: string read GetLastName write SetLastName;
     property LastVisit: TDateTime read GetLastVisit;
     property RegisteredAt: TDateTime read GetRegisteredAt;
-    property Token: string read GetToken;
     procedure BeginUpdate; virtual;
     procedure EndUpdate(Apply: boolean); virtual;
     procedure ChangePassword(const OldPassword, NewPassword,
@@ -142,8 +141,7 @@ type
   { TUserManager }
 
   TUserManager = class
-  protected
-  const
+  protected const
     StoragePath = 'users';
   private
     FStorage: TAbstractDataStorage;
@@ -151,14 +149,19 @@ type
     procedure IncUserCount(Delta: integer);
   protected
     property Storage: TAbstractDataStorage read FStorage;
+    function NextID: integer;
     function UserSection(const Username: string): string;
+    function GetIdKey(AID: integer): string;
     function FullKeyName(const Username, Key: string): string;
     function CreateUserClass(AClass: TUserClass; const Username: string): TUser;
     function CreateUser(ARole: TUserRole; const Username: string): TUser; virtual;
     function CreateDataStorage: TAbstractDataStorage; virtual;
   public
+    function IdToUsername(AID: integer): string;
+    function UsernameToId(const AUsername: string): integer;
     function UserExists(const Username: string): boolean;
     function LoadUserFromUsername(const Username: string): TUser;
+    function LoadUserFromID(AID: integer): TUser;
     function LoadUserFromSession(ASession: TCustomSession): TUser;
     function GetUserInfo(const Username: string): TUserInfo;
     procedure AuthentificateSession(ASession: TCustomSession;
@@ -292,6 +295,11 @@ begin
   Result := Storage.ReadString(FullKeyName('firstName'), '');
 end;
 
+function TUserInfo.GetID: integer;
+begin
+  Result := Storage.ReadInteger(FullKeyName('id'), -1);
+end;
+
 function TUserInfo.GetLastName: string;
 begin
   Result := Storage.ReadString(FullKeyName('lastName'), '');
@@ -310,11 +318,6 @@ end;
 function TUserInfo.GetStorage: TAbstractDataStorage;
 begin
   Result := Manager.Storage;
-end;
-
-function TUserInfo.GetToken: string;
-begin
-  Result := Storage.ReadString(FullKeyName('token'), '');
 end;
 
 function TUserInfo.GetUserRole: TUserRole;
@@ -351,9 +354,34 @@ begin
   FStorage.WriteInteger('userCount', GetUserCount + Delta);
 end;
 
+function TUserManager.NextID: integer;
+begin
+  Result := FStorage.ReadInteger('lastId', 0);
+  Inc(Result);
+  FStorage.WriteInteger('lastId', Result);
+end;
+
 function TUserManager.UserSection(const Username: string): string;
 begin
   Result := 'user-' + Username;
+end;
+
+function TUserManager.GetIdKey(AID: integer): string;
+begin
+  Result := Format('ids.id%d', [AID]);
+end;
+
+function TUserManager.IdToUsername(AID: integer): string;
+begin
+  Result := FStorage.ReadString(GetIdKey(AID), '');
+end;
+
+function TUserManager.UsernameToId(const AUsername: string): integer;
+begin
+  if not UserExists(AUsername) then
+    Result := -1
+  else
+    Result := FStorage.ReadInteger(FullKeyName(AUsername, 'id'), -1);
 end;
 
 function TUserManager.FullKeyName(const Username, Key: string): string;
@@ -400,24 +428,20 @@ begin
   Result := CreateUser(Role, Username);
 end;
 
-function TUserManager.LoadUserFromSession(ASession: TCustomSession): TUser;
+function TUserManager.LoadUserFromID(AID: integer): TUser;
 begin
-  // load user
-  Result := LoadUserFromUsername(ASession.Variables['userName']);
-  if Result = nil then
-    Exit;
-  try
-    // verify token
-    if Result.Token <> ASession.Variables['token'] then
-    begin
-      FreeAndNil(Result);
-      Exit;
-    end;
-    Result.UpdateLastVisit;
-  except
-    FreeAndNil(Result);
-    raise;
-  end;
+  Result := LoadUserFromUsername(IdToUsername(AID));
+end;
+
+function TUserManager.LoadUserFromSession(ASession: TCustomSession): TUser;
+var
+  ID, Code: integer;
+begin
+  Val(ASession.Variables['id'], ID, Code);
+  if Code = 0 then
+    Result := LoadUserFromID(ID)
+  else
+    Result := nil;
 end;
 
 function TUserManager.GetUserInfo(const Username: string): TUserInfo;
@@ -456,8 +480,7 @@ begin
     end;
     AUser.NeedsAuthentification;
     AUser.UpdateLastVisit;
-    ASession.Variables['userName'] := Username;
-    ASession.Variables['token'] := AUser.Token;
+    ASession.Variables['id'] := IntToStr(AUser.ID);
   finally
     FreeAndNil(AUser);
   end;
@@ -465,6 +488,8 @@ end;
 
 procedure TUserManager.AddNewUser(const AUsername, APassword, APasswordConfirm: string;
   const AFirstName, ALastName: string; ARole: TUserRole);
+var
+  UserID: integer;
 begin
   // check pre-requisites
   ValidateUsername(AUsername);
@@ -479,8 +504,10 @@ begin
   with CreateUser(ARole, AUsername) do
     try
       IncUserCount(+1);
+      UserID := NextID;
+      FStorage.WriteString(GetIdKey(UserID), AUsername);
+      FStorage.WriteInteger(FullKeyName('id'), UserID);
       WriteRole;
-      GenerateToken;
       GeneratePassword(APassword);
       BeginUpdate;
       try
@@ -516,6 +543,7 @@ procedure TUserManager.DeleteUser(const AUsername: string);
 begin
   if not UserExists(AUsername) then
     raise EUserNotExist.Create(SUserDoesNotExist);
+  FStorage.DeleteVariable(GetIdKey(UsernameToId(AUsername)));
   FStorage.DeletePath(UserSection(AUsername));
   IncUserCount(-1);
 end;
@@ -547,6 +575,11 @@ begin
   Result := FInfo.FirstName;
 end;
 
+function TUser.GetID: integer;
+begin
+  Result := FInfo.ID;
+end;
+
 function TUser.GetLastName: string;
 begin
   Result := FInfo.LastName;
@@ -565,11 +598,6 @@ end;
 function TUser.GetStorage: TAbstractDataStorage;
 begin
   Result := FInfo.Storage;
-end;
-
-function TUser.GetToken: string;
-begin
-  Result := Info.Token;
 end;
 
 procedure TUser.RequireUpdating;
@@ -622,12 +650,6 @@ begin
   RequireUpdating;
   ValidateFirstLastName(AValue);
   FLastName := AValue;
-end;
-
-procedure TUser.GenerateToken;
-begin
-  Storage.WriteString(FullKeyName('token'),
-    RandomSequenceBase64(Config.Users_TokenLength));
 end;
 
 function TUser.FullKeyName(const Key: string): string;
