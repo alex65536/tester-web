@@ -142,8 +142,7 @@ type
     procedure DeleteUser(Target: TUserInfo);
     procedure DoDeleteUser(Target: TUserInfo); virtual;
     procedure SafeDeleteUser(Target: TUserInfo);
-    procedure GrantAccessRights(Target: TUserInfo;
-      AAccess: TEditableAccessRights);
+    procedure GrantAccessRights(Target: TUserInfo; AAccess: TEditableAccessRights);
     procedure DoGrantAccessRights(Target: TUserInfo;
       AAccess: TEditableAccessRights); virtual;
     procedure HandleUserDeleting(AInfo: TUserInfo); virtual;
@@ -201,7 +200,8 @@ type
     function GetObject(const AName: string): TEditableObject;
     function ListAllAvailableObjects: TStringList;
     function ListAvailableObjects(AUser: TEditorUser): TStringList;
-    function GetAccessRights(const AObject: string; Target: TUserInfo): TEditableAccessRights;
+    function GetAccessRights(const AObject: string;
+      Target: TUserInfo): TEditableAccessRights;
     constructor Create;
     destructor Destroy; override;
   end;
@@ -243,7 +243,8 @@ var
   C: char;
 begin
   if (Length(ObjName) < MinObjNameLen) or (Length(ObjName) > MaxObjNameLen) then
-    raise EUserValidate.CreateFmt(SUsernameLength, [ObjType, MinObjNameLen, MaxObjNameLen]);
+    raise EUserValidate.CreateFmt(SUsernameLength,
+      [ObjType, MinObjNameLen, MaxObjNameLen]);
   for C in ObjName do
     if not (C in ObjAvailableChars) then
       raise EUserValidate.CreateFmt(SUsernameChars, [ObjType, AvailableCharsStr]);
@@ -480,17 +481,19 @@ end;
 procedure TEditableObject.CheckHasAccess(Target: TUserInfo);
 begin
   if GetAccessRights(Target) = erNone then
-    raise EEditableAccess.Create(FormatExceptionMessage(SObjectUserNoAccess, Target.Username));
+    raise EEditableAccess.Create(FormatExceptionMessage(SObjectUserNoAccess,
+      Target.Username));
 end;
 
 procedure TEditableObject.CheckNoAccess(Target: TUserInfo);
 begin
   if GetAccessRights(Target) <> erNone then
-    raise EEditableAccess.Create(FormatExceptionMessage(SObjectUserHasAccess, Target.Username));
+    raise EEditableAccess.Create(FormatExceptionMessage(SObjectUserHasAccess,
+      Target.Username));
 end;
 
-function TEditableObject.FormatExceptionMessage(const AMessage,
-  AUsername: string): string;
+function TEditableObject.FormatExceptionMessage(
+  const AMessage, AUsername: string): string;
 begin
   Result := Format(AMessage, [ObjectTypeName, FName, AUsername]);
 end;
@@ -559,7 +562,8 @@ begin
       Free;
 end;
 
-procedure TEditableObject.GrantAccessRights(Target: TUserInfo; AAccess: TEditableAccessRights);
+procedure TEditableObject.GrantAccessRights(Target: TUserInfo;
+  AAccess: TEditableAccessRights);
 begin
   CheckHasAccess(Target);
   if AAccess = erNone then
