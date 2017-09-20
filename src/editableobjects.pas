@@ -25,7 +25,7 @@ unit editableobjects;
 interface
 
 uses
-  Classes, SysUtils, TypInfo, webstrconsts, users;
+  Classes, SysUtils, TypInfo, webstrconsts, users, datastorages;
 
 type
   TEditableAccessRights = (erNone, erRead, erWrite, erOwner);
@@ -36,7 +36,6 @@ const
   AccessCanWriteSet = [erWrite, erOwner];
 
 type
-  TEditableObject = class;
 
   { TEditorUser }
 
@@ -45,9 +44,95 @@ type
     function DoGetRole: TUserRole; override;
   end;
 
-  TEditableObject = class
-    // TODO : Write it !!!!!!
-  end;
+  //TEditableObject = class;
+  //TEditableManager = class;
+  //
+  //TEditableCustomSession = class
+  //protected
+  //  property Storage: TAbstractDataStorage read FStorage;
+  //  {%H-}constructor Create(AManager: TEditableObjectManager; AUser: TEditorUser);
+  //public
+  //  property Manager: TEditableManager read FManager;
+  //  property User: TEditorUser read FUser;
+  //  constructor Create;
+  //end;
+  //
+  //TEditableObjectSession = class(TEditableCustomSession)
+  //protected
+  //  {%H-}constructor Create(AManager: TEditableObjectManager; AObject: TEditableObject;
+  //    AUser: TEditorUser);
+  //public
+  //  property EditableObject: TEditableObject read FEditableObject;
+  //  function AccessLevel: TEditableAccessRights;
+  //end;
+  //
+  //TEditableObjectAccessSession = class(TEditableObjectSession)
+  //public
+  //  function CanAddUser(Target: TUserInfo): boolean; virtual;
+  //  function CanDeleteUser(Target: TUserInfo): boolean; virtual;
+  //  function CanGrantUserAccess(Target: TUserInfo; AAccess: TEditableAccessRights): boolean; virtual;
+  //  procedure AddUser(Target: TUserInfo);
+  //  procedure DeleteUser(Target: TUserInfo);
+  //  procedure GrantUserAccess(Target: TUserInfo; AAccess: TEditableAccessRights);
+  //end;
+  //
+  //TEditableTransaction = class(TEditableObjectSession)
+  //public
+  //  function CanReadData: boolean; virtual;
+  //  function CanWriteData: boolean; virtual;
+  //  procedure Commit; virtual; abstract;
+  //end;
+  //
+  //TEditableManagerSession = class(TEditableCustomSession)
+  //public
+  //  function CanCreateNewObject: boolean; virtual;
+  //  function CanDeleteObject(const AName: string): boolean; virtual;
+  //  function CreateNewObject(const AName: string): TEditableObject;
+  //  procedure DeleteObject(const AName: string);
+  //  function ListAvailableObjects: TStringList;
+  //end;
+  //
+  //TEditableObject = class
+  //protected
+  //  property Manager: TEditableManager read FManager;
+  //  property Storage: TAbstractDataStorage read FStorage;
+  //  procedure AddUser(Target: TUserInfo); virtual;
+  //  procedure DeleteUser(Target: TUserInfo); virtual;
+  //  procedure GrantUserAccess(Target: TUserInfo; AAccess: TEditableAccessRights); virtual;
+  //  procedure ValidateUser(AUserID: integer);
+  //  procedure ValidateAllUsers;
+  //  {%H-}constructor Create(const AName: string; AManager: TEditableManager);
+  //public
+  //  property Name: string read FName;
+  //  property ID: integer read GetID;
+  //  function ObjectAuthor: TEditorUser;
+  //  function ObjectAuthorName: string;
+  //  function GetAccessRights(const AUser: TEditorUser): TEditableAccessRights;
+  //  function CreateAccessSession(AUser: TEditorUser): TEditableObjectAccessSession; virtual; abstract;
+  //  function CreateTransaction(AUser: TEditorUser): TEditableTransaction; virtual; abstract;
+  //  function ListUsers: TStringList; virtual;
+  //  constructor Create;
+  //end;
+  //
+  //TEditableManager = class
+  //protected
+  //  property Storage: TAbstractDataStorage read FStorage;
+  //  function FullKeyName(const AName: string): string;
+  //  function FullUserKeyName(const AName: string; AUserID: integer): string;
+  //  function GetID: integer;
+  //  procedure IncID;
+  //  function CreateStorage: TAbstractDataStorage; virtual; abstract;
+  //  function CreateObject(const AName: string): TEditableObject; virtual; abstract;
+  //  function GetObjectAuthor(const AObjectName: string): TUserInfo;
+  //  function CreateNewObject(AOwner: TEditorUser; const AName: string): TEditableObject; virtual;
+  //  procedure DeleteObject(const AName: string); virtual;
+  //public
+  //  function ObjectExists(const AName: string): boolean;
+  //  function GetObject(const AName: string): TEditableObject;
+  //  function ListAvailableObjects(AUser: TEditorUser): TStringList; virtual;
+  //  constructor Create;
+  //  destructor Destroy; override;
+  //end;
 
 function AccessRightsToStr(ARights: TEditableAccessRights): string;
 function StrToAccessRights(const S: string): TEditableAccessRights;

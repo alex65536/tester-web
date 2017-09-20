@@ -42,6 +42,8 @@ type
 const
   AllUserRoles = [Low(TUserRole) .. High(TUserRole)];
 
+// TODO : Internally keep users by unique ID!
+
 type
 
   { TUserInfo }
@@ -332,7 +334,7 @@ end;
 constructor TUserInfo.Create;
 begin
   // we don't want the users to be created publicly!
-  raise EInvalidOperation.CreateFmt(SCreationPublic, ['TUserInfo']);
+  raise EInvalidOperation.CreateFmt(SCreationPublic, [ClassName]);
 end;
 
 { TUserManager }
@@ -700,7 +702,7 @@ end;
 constructor TUser.Create;
 begin
   // we don't want the users to be created publicly!
-  raise EInvalidOperation.CreateFmt(SCreationPublic, ['TUser']);
+  raise EInvalidOperation.CreateFmt(SCreationPublic, [ClassName]);
 end;
 
 destructor TUser.Destroy;
