@@ -150,11 +150,13 @@ type
     function GetUserCount: integer;
     procedure IncUserCount(Delta: integer);
   protected
+    property Storage: TAbstractDataStorage read FStorage;
+    function UserSection(const Username: string): string;
+    function FullKeyName(const Username, Key: string): string;
     function CreateUserClass(AClass: TUserClass; const Username: string): TUser;
     function CreateUser(ARole: TUserRole; const Username: string): TUser; virtual;
     function CreateDataStorage: TAbstractDataStorage; virtual;
   public
-    property Storage: TAbstractDataStorage read FStorage;
     function UserExists(const Username: string): boolean;
     function LoadUserFromUsername(const Username: string): TUser;
     function LoadUserFromSession(ASession: TCustomSession): TUser;
@@ -328,7 +330,7 @@ end;
 
 function TUserInfo.FullKeyName(const Key: string): string;
 begin
-  Result := FUsername + '.' + Key;
+  Result := Manager.FullKeyName(FUsername, Key);
 end;
 
 constructor TUserInfo.Create;
@@ -347,6 +349,16 @@ end;
 procedure TUserManager.IncUserCount(Delta: integer);
 begin
   FStorage.WriteInteger('userCount', GetUserCount + Delta);
+end;
+
+function TUserManager.UserSection(const Username: string): string;
+begin
+  Result := 'user-' + Username;
+end;
+
+function TUserManager.FullKeyName(const Username, Key: string): string;
+begin
+  Result := UserSection(Username) + '.' + Key;
 end;
 
 function TUserManager.CreateUserClass(AClass: TUserClass; const Username: string): TUser;
@@ -371,7 +383,7 @@ function TUserManager.UserExists(const Username: string): boolean;
 begin
   try
     ValidateUsername(Username);
-    Result := FStorage.VariableExists(Username + '.role');
+    Result := FStorage.VariableExists(FullKeyName(Username, 'role'));
   except
     Result := False;
   end;
@@ -479,7 +491,7 @@ begin
         raise;
       end;
       EndUpdate(True);
-      Storage.WriteFloat(AUsername + '.registerTime', Now);
+      Storage.WriteFloat(FullKeyName('registerTime'), Now);
       UpdateLastVisit;
     finally
       Free;
@@ -490,21 +502,21 @@ function TUserManager.GetRole(const AUsername: string): TUserRole;
 begin
   if not UserExists(AUsername) then
     raise EUserNotExist.Create(SUserDoesNotExist);
-  Result := StrToUserRole(FStorage.ReadString(AUsername + '.role', ''));
+  Result := StrToUserRole(FStorage.ReadString(FullKeyName(AUsername, 'role'), ''));
 end;
 
 procedure TUserManager.GrantRole(const AUsername: string; ARole: TUserRole);
 begin
   if not UserExists(AUsername) then
     raise EUserNotExist.Create(SUserDoesNotExist);
-  FStorage.WriteString(AUsername + '.role', UserRoleToStr(ARole));
+  FStorage.WriteString(FullKeyName(AUsername, 'role'), UserRoleToStr(ARole));
 end;
 
 procedure TUserManager.DeleteUser(const AUsername: string);
 begin
   if not UserExists(AUsername) then
     raise EUserNotExist.Create(SUserDoesNotExist);
-  FStorage.DeletePath(AUsername);
+  FStorage.DeletePath(UserSection(AUsername));
   IncUserCount(-1);
 end;
 
