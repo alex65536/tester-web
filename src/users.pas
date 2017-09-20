@@ -179,6 +179,7 @@ type
     function LoadUserFromID(AID: integer): TUser;
     function LoadUserFromSession(ASession: TCustomSession): TUser;
     function GetUserInfo(const Username: string): TUserInfo;
+    function GetUserInfo(AID: integer): TUserInfo;
     procedure AuthentificateSession(ASession: TCustomSession;
       const Username, Password: string);
     procedure AddNewUser(const AUsername, APassword, APasswordConfirm: string;
@@ -186,6 +187,8 @@ type
     function GetRole(const AUsername: string): TUserRole;
     procedure GrantRole(const AUsername: string; ARole: TUserRole);
     procedure DeleteUser(const AUsername: string);
+    function ServerOwnerName: string;
+    function ServerOwnerInfo: TUserInfo;
     constructor Create;
     destructor Destroy; override;
   end;
@@ -394,7 +397,7 @@ end;
 
 function TUserManager.UserSection(const Username: string): string;
 begin
-  Result := 'user-' + Username;
+  Result := 'users.' + Username;
 end;
 
 function TUserManager.GetIdKey(AID: integer): string;
@@ -435,7 +438,7 @@ end;
 
 function TUserManager.CreateDataStorage: TAbstractDataStorage;
 begin
-  Result := TIniDataStorage.Create(StoragePath);
+  Result := TXmlDataStorage.Create(StoragePath);
 end;
 
 function TUserManager.UserExists(const Username: string): boolean;
@@ -480,6 +483,17 @@ begin
   if not UserExists(Username) then
     raise EUserNotExist.CreateFmt(SUserDoesNotExist, [Username]);
   Result := TUserInfo.Create(Self, Username);
+end;
+
+function TUserManager.GetUserInfo(AID: integer): TUserInfo;
+var
+  Username: string;
+begin
+  Username := IdToUsername(AID);
+  if Username = '' then
+    Result := nil
+  else
+    Result := TUserInfo.Create(Self, Username);
 end;
 
 procedure TUserManager.AuthentificateSession(ASession: TCustomSession;
@@ -531,6 +545,8 @@ begin
     raise EUserValidate.CreateFmt(SUserExists, [AUsername]);
   if APassword <> APasswordConfirm then
     raise EUserValidate.Create(SPasswordsNotEqual);
+  if (ARole = urOwner) and (ServerOwnerName <> '') then
+    raise EUserValidate.Create(SOwnerAlreadyExists);
   // create user
   with CreateUser(ARole, AUsername) do
     try
@@ -551,6 +567,8 @@ begin
       EndUpdate(True);
       Storage.WriteFloat(FullKeyName('registerTime'), Now);
       UpdateLastVisit;
+      if ARole = urOwner then
+        Storage.WriteString('ownerName', AUsername);
       Broadcast(TUserCreatedMessage.Create.AddInfo(GetUserInfo(AUsername))
         .AddSender(Self).Lock);
     finally
@@ -583,6 +601,16 @@ begin
   FStorage.DeleteVariable(GetIdKey(UsernameToId(AUsername)));
   FStorage.DeletePath(UserSection(AUsername));
   IncUserCount(-1);
+end;
+
+function TUserManager.ServerOwnerName: string;
+begin
+  Result := FStorage.ReadString('ownerName', '');
+end;
+
+function TUserManager.ServerOwnerInfo: TUserInfo;
+begin
+  Result := GetUserInfo(ServerOwnerName);
 end;
 
 constructor TUserManager.Create;
