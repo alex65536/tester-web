@@ -112,6 +112,12 @@ table.center-wrapper {
 	border-style: inset;
 	border-color: #1CA757;
 }
+.right-align {
+	text-align: right;
+}
+.center-align {
+	text-align: center;
+}
 
 
 .styled-btn {
@@ -302,6 +308,9 @@ table.styled th {
 	color: white;
 	font-weight: bold;
 }
+table.styled th.narrow {
+	width: 1pt;
+}
 
 
 table.access-table th.id {
@@ -309,6 +318,8 @@ table.access-table th.id {
 	padding-left: 1em;
 	padding-right: 1em;
 }
-table.access-table th.del {
-	width: 1pt;
+
+
+td.a-delete-wrapper {
+	padding: 6pt 6pt !important;
 }
