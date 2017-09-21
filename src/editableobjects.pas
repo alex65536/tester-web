@@ -101,6 +101,9 @@ type
   TEditableTransaction = class(TEditableObjectSession)
   protected
     procedure DoCommit; virtual; abstract;
+    procedure DoReload; virtual; abstract;
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser;
+      AObject: TEditableObject);
   public
     function CanReadData: boolean; virtual;
     function CanWriteData: boolean; virtual;
@@ -146,7 +149,7 @@ type
     procedure DoGrantAccessRights(Target: TUserInfo;
       AAccess: TEditableAccessRights); virtual;
     procedure HandleUserDeleting(AInfo: TUserInfo); virtual;
-    procedure HandleUserChangedRole(AInfo: TUserInfo); virtual;
+    procedure HandleUserChangedRole({%H-}AInfo: TUserInfo); virtual;
     procedure MessageReceived(AMessage: TAuthorMessage);
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
   public
@@ -172,20 +175,20 @@ type
   protected
     property Storage: TAbstractDataStorage read FStorage;
 
-    function ObjectSection(const AObject: string): string;
-    function FullObjectKeyName(const AObject, AKey: string): string;
-    function UserSection(const AObject: string; UserID: integer): string;
-    function UsersSection(const AObject: string): string;
+    function ObjectsSection: string; inline;
+    function ObjectSection(const AObject: string): string; inline;
+    function FullObjectKeyName(const AObject, AKey: string): string; inline;
+    function UserSection(const AObject: string; UserID: integer): string; inline;
+    function UsersSection(const AObject: string): string; inline;
     function FullUserKeyName(const AObject: string; UserID: integer;
-      const Key: string): string;
-    function GetIdKey(AID: integer): string;
+      const Key: string): string; inline;
+    function GetIdKey(AID: integer): string; inline;
 
     function NextID: integer;
     procedure DoCreateNewObject({%H-}AObject: TEditableObject); virtual;
     function ObjectTypeName: string; virtual; abstract;
     function CreateStorage: TAbstractDataStorage; virtual; abstract;
     function CreateObject(const AName: string): TEditableObject; virtual; abstract;
-    function GetObjectAuthor(const AObjectName: string): TUserInfo;
     function CreateNewObject(AOwner: TEditorUser;
       const AName: string): TEditableObject; virtual;
     procedure DeleteObject(const AName: string); virtual;
@@ -202,6 +205,7 @@ type
     function ListAvailableObjects(AUser: TEditorUser): TStringList;
     function GetAccessRights(const AObject: string;
       Target: TUserInfo): TEditableAccessRights;
+    function GetObjectAuthor(const AObjectName: string): TUserInfo;
     constructor Create;
     destructor Destroy; override;
   end;
@@ -247,14 +251,19 @@ begin
       [ObjType, MinObjNameLen, MaxObjNameLen]);
   for C in ObjName do
     if not (C in ObjAvailableChars) then
-      raise EUserValidate.CreateFmt(SUsernameChars, [ObjType, AvailableCharsStr]);
+      raise EEditableValidate.CreateFmt(SUsernameChars, [ObjType, AvailableCharsStr]);
 end;
 
 { TEditableManager }
 
+function TEditableManager.ObjectsSection: string;
+begin
+  Result := 'objects';
+end;
+
 function TEditableManager.ObjectSection(const AObject: string): string;
 begin
-  Result := 'objects.' + AObject;
+  Result := ObjectsSection + '.' + AObject;
 end;
 
 function TEditableManager.FullObjectKeyName(const AObject, AKey: string): string;
@@ -299,12 +308,18 @@ function TEditableManager.GetObjectAuthor(const AObjectName: string): TUserInfo;
 var
   AuthorID: integer;
 begin
-  AuthorID := FStorage.ReadInteger(FullObjectKeyName(AObjectName, 'authorId'), -1);
-  Result := UserManager.GetUserInfo(AuthorID);
-  if Result = nil then
-  begin
-    Result := UserManager.ServerOwnerInfo;
-    FStorage.WriteInteger(FullObjectKeyName(AObjectName, 'authorId'), Result.ID);
+  Result := nil;
+  try
+    AuthorID := FStorage.ReadInteger(FullObjectKeyName(AObjectName, 'authorId'), -1);
+    Result := UserManager.GetUserInfo(AuthorID);
+    if Result = nil then
+    begin
+      Result := UserManager.ServerOwnerInfo;
+      FStorage.WriteInteger(FullObjectKeyName(AObjectName, 'authorId'), Result.ID);
+    end;
+  except
+    FreeAndNil(Result);
+    raise;
   end;
 end;
 
@@ -332,8 +347,11 @@ begin
     Result.GrantAccessRights(AOwner.Info, erOwner);
     OwnerInfo := UserManager.ServerOwnerInfo;
     try
-      Result.AddUser(OwnerInfo);
-      Result.GrantAccessRights(OwnerInfo, erOwner);
+      if OwnerInfo.ID <> AOwner.ID then
+      begin
+        Result.AddUser(OwnerInfo);
+        Result.GrantAccessRights(OwnerInfo, erOwner);
+      end;
     finally
       FreeAndNil(OwnerInfo);
     end;
@@ -389,7 +407,7 @@ begin
   if AMessage is TUserDeletingMessage then
     HandleUserDeleting((AMessage as TUserDeletingMessage).Info)
   else if AMessage is TUserChangedRoleMessage then
-    HandleUserDeleting((AMessage as TUserChangedRoleMessage).Info);
+    HandleUserChangedRole((AMessage as TUserChangedRoleMessage).Info);
 end;
 
 function TEditableManager.IdToObjectName(AID: integer): string;
@@ -424,7 +442,7 @@ end;
 
 function TEditableManager.ListAllAvailableObjects: TStringList;
 begin
-  Result := FStorage.GetChildElements('objects');
+  Result := FStorage.GetChildElements(ObjectsSection);
 end;
 
 function TEditableManager.ListAvailableObjects(AUser: TEditorUser): TStringList;
@@ -434,7 +452,7 @@ var
 begin
   Result := TStringList.Create;
   try
-    AllAvailable := TStringList.Create;
+    AllAvailable := ListAllAvailableObjects;
     try
       for ObjName in AllAvailable do
         if GetAccessRights(ObjName, AUser.Info) <> erNone then
@@ -492,8 +510,8 @@ begin
       Target.Username));
 end;
 
-function TEditableObject.FormatExceptionMessage(
-  const AMessage, AUsername: string): string;
+function TEditableObject.FormatExceptionMessage(const AMessage,
+  AUsername: string): string;
 begin
   Result := Format(AMessage, [ObjectTypeName, FName, AUsername]);
 end;
@@ -558,8 +576,7 @@ begin
   DoDeleteUser(Target);
   // refresh author if needed
   if Rights = erOwner then
-    with Manager.GetObjectAuthor(Name) do
-      Free;
+    Manager.GetObjectAuthor(Name).Free;
 end;
 
 procedure TEditableObject.GrantAccessRights(Target: TUserInfo;
@@ -584,8 +601,11 @@ end;
 
 procedure TEditableObject.HandleUserChangedRole(AInfo: TUserInfo);
 begin
-  if not (AInfo.Role in EditorsSet) then
-    SafeDeleteUser(AInfo);
+  // I don't know what to do and should we delete all access from a user that was
+  // banner from being an editor.
+  // TODO : Decide what to do when user is kicked from editors.
+  {if not (AInfo.Role in EditorsSet) then
+    SafeDeleteUser(AInfo);}
 end;
 
 procedure TEditableObject.MessageReceived(AMessage: TAuthorMessage);
@@ -694,6 +714,13 @@ end;
 
 { TEditableTransaction }
 
+constructor TEditableTransaction.Create(AManager: TEditableManager;
+  AUser: TEditorUser; AObject: TEditableObject);
+begin
+  inherited Create(AManager, AUser, AObject);
+  DoReload;
+end;
+
 function TEditableTransaction.CanReadData: boolean;
 begin
   Result := EditableObject.GetAccessRights(User) in AccessCanReadSet;
@@ -722,12 +749,12 @@ function TEditableObjectAccessSession.CanDeleteUser(Target: TUserInfo): boolean;
 var
   UserRights, TargetRights: TEditableAccessRights;
 begin
-  // compute rights
+  // retreive rights
   UserRights := AccessLevel;
   TargetRights := EditableObject.GetAccessRights(Target);
   // check
   Result := False;
-  if TargetRights = erNone then
+  if TargetRights in [erNone, erOwner] then
     Exit;
   if Target.Username = User.Username then
     Exit;
@@ -742,19 +769,19 @@ function TEditableObjectAccessSession.CanGrantAccessRights(Target: TUserInfo;
 var
   UserRights, TargetRights: TEditableAccessRights;
 begin
-  // compute rights
+  // retreive rights
   UserRights := AccessLevel;
   TargetRights := EditableObject.GetAccessRights(Target);
   // check
   Result := False;
-  if (TargetRights = erNone) or (AAccess = erNone) then
+  if (TargetRights in [erNone, erOwner]) or (AAccess in [erNone, erOwner]) then
     Exit;
   if Target.Username = User.Username then
     Exit;
   if UserRights = erOwner then
     Result := (TargetRights <> erOwner) and (AAccess <> erOwner)
   else if UserRights = erWrite then
-    Result := (TargetRights in [erRead, erWrite]) and (AAccess = erRead);
+    Result := (TargetRights = erRead) and (AAccess in [erRead, erWrite]);
 end;
 
 procedure TEditableObjectAccessSession.AddUser(Target: TUserInfo);
