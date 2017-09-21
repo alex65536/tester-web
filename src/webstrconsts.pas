@@ -148,6 +148,7 @@ resourcestring
   SObjectAccessOwner = 'Author';
   SObjectAccessWrite = 'Editor';
   SObjectAccessRead = 'Reviewer';
+  SProblemTypeName = 'Problem';
 
 implementation
 

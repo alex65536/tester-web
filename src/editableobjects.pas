@@ -120,6 +120,8 @@ type
   { TEditableManagerSession }
 
   TEditableManagerSession = class(TEditableCustomSession)
+  protected
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser);
   public
     function CanCreateNewObject: boolean; virtual;
     function CanDeleteObject(const AName: string): boolean; virtual;
@@ -204,6 +206,8 @@ type
     procedure SpreadMessageToObjects(AMessage: TAuthorMessage);
     procedure MessageReceived(AMessage: TAuthorMessage);
   public
+    function CreateManagerSession(AUser: TEditorUser): TEditableManagerSession;
+      virtual; abstract;
     function IdToObjectName(AID: integer): string;
     function ObjectNameToId(const AName: string): integer;
     function ObjectExists(const AName: string): boolean;
@@ -689,6 +693,12 @@ begin
 end;
 
 { TEditableManagerSession }
+
+constructor TEditableManagerSession.Create(AManager: TEditableManager;
+  AUser: TEditorUser);
+begin
+  inherited Create(AManager, AUser);
+end;
 
 function TEditableManagerSession.CanCreateNewObject: boolean;
 begin

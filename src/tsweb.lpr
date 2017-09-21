@@ -59,7 +59,8 @@ uses
   editableobjects,
   adminusers,
   tswebobservers,
-  tswebdirectories;
+  tswebdirectories,
+  problems;
 
 type
   TOpenHandlerApplication = class(THTTPApplication)

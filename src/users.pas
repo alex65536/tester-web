@@ -296,14 +296,9 @@ end;
 
 function UserManager: TUserManager;
 begin
-  try
-    if FManager = nil then
-      FManager := TUserManager.Create;
-    Result := FManager;
-  except
-    Result := nil;
-    raise;
-  end;
+  if FManager = nil then
+    FManager := TUserManager.Create;
+  Result := FManager;
 end;
 
 { TUserInfoMessage }
