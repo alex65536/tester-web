@@ -44,7 +44,7 @@ const
     );
 
 type
-  EEditableAction = class(Exception);
+  EEditableAction = class(EUserAction);
   EEditableNotExist = class(EEditableAction);
   EEditableValidate = class(EEditableAction);
   EEditableAccess = class(EEditableAction);

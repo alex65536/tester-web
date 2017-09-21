@@ -1,62 +1,16 @@
-<!DOCTYPE html>
-<html lang="en_UK">
-	<head>
-		<meta charset="utf-8">
-		<meta name="author" content="Alexander Kernozhitsky">
-		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-		<link rel="stylesheet" href="~dataRoot;/tester.css" type="text/css">
-		<title>Manage Access</title>
-	</head>
-	<body>
-		<table class="container">
+<table class="center-wrapper"><tr><td>
+	<div>~editableCreatePrompt;</div>
+	<form class="box auth-form" action="" method="post">
+		<div class="auth-error">~authError;</div>
+		<div class="auth-success">~authSuccess;</div>
+		<table class="auth-table">
 			<tr>
-				<td rowspan="2" class="box logo-box">
-					<a href="/">
-						<img src="~dataRoot;/logoWithText.png" alt="Tester Web logo" class="logo">
-					</a>
-				</td>
-				<td class="box header">
-					Manage Access
-				</td>
-			</tr>
-			<tr>
-				<td class="box userbar">
-					You are logged in as <span class="role-owner">admin</span>.
-					<a class="action" href="/profile">View profile</a>
-					<a class="action" href="/logout">Log out</a>
-				</td>
+				<td class="auth-field">~editableCreateName;:</td>
+				<td><input class="auth-edit" type="text" name="name" placeholder="~editableCreateNamePrompt;" maxlength="24"></td>
 			</tr>
 		</table>
-		<table class="container"><tr>
-			<td class="box nav">
-				<ul>
-					<li><a href="/index" class="active">Main Page</a></li>
-					<li><a href="/page1">Page 1</a></li>
-					<li><a href="/page2">Page 2</a></li>
-				</ul>
-			</td>
-			<td class="box content">
-				<table class="center-wrapper"><tr><td>
-					<div>Choose a name for your problem.</div>
-						<form class="box auth-form" action="" method="post">
-							<div class="auth-error">Error!</div>
-							<table class="auth-table">
-								<tr>
-									<td class="auth-field">Name:</td>
-									<td><input class="auth-edit" type="text" name="username" placeholder="Enter name" maxlength="24"></td>
-								</tr>
-							</table>
-							<button class="styled-btn" type="submit">Create</button>
-						</form>
-					</td></tr></table>
-			</td>
-		</tr></table>
-		<div class="box footer">
-			Copyright &copy; 2017 Alexander Kernozhitsky
-			<br>
-			Tester Web is licensed under the terms of <a href="https://github.com/alex65536/tester-web/blob/master/LICENSE">GNU GPL</a> version 2 or any later version.
-			<br>
-			Sources are available on <a href="https://github.com/alex65536/tester-web">Github</a>.
-		</div>
-	</body>
-</html>
+		~+#formToken;
+		<button class="styled-btn" type="submit">~editableCreateSubmit;</button>
+	</form>
+</td></tr></table>
+
