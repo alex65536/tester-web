@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, IniFiles, LazFileUtils, Laz2_DOM, Laz2_XMLRead,
-  Laz2_XMLWrite, AvgLvlTree, escaping;
+  Laz2_XMLWrite, AvgLvlTree, escaping, tswebdirectories;
 
 type
 
@@ -151,7 +151,7 @@ implementation
 
 function TFileDataStorage.GetFileName: string;
 begin
-  Result := AppendPathDelim(GetAppConfigDirUTF8(False, True)) + StoragePath + '.conf';
+  Result := AppendPathDelim(ExpandInternalDirLocation('data')) + StoragePath + '.conf';
 end;
 
 { TXmlDataStorage }

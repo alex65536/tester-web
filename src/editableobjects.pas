@@ -36,6 +36,13 @@ const
   AccessCanWriteSet = [erWrite, erOwner];
   EditorsSet = [urEditor, urAdmin, urOwner];
 
+  EditorNames: array [TEditableAccessRights] of string = (
+    '(none)',
+    SObjectAccessRead,
+    SObjectAccessWrite,
+    SObjectAccessOwner
+    );
+
 type
   EEditableAction = class(Exception);
   EEditableNotExist = class(EEditableAction);
@@ -755,8 +762,6 @@ begin
   // check
   Result := False;
   if TargetRights in [erNone, erOwner] then
-    Exit;
-  if Target.Username = User.Username then
     Exit;
   if UserRights = erOwner then
     Result := TargetRights <> erOwner

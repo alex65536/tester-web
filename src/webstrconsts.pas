@@ -145,6 +145,9 @@ resourcestring
   SObjectUserNoAccess = 'User %:2s already doesn''t have access to %:0s with '
     + 'name "%:1s"';
   SObjectCannotGrantNoneRole = 'Cannot grant erNone to user!';
+  SObjectAccessOwner = 'Author';
+  SObjectAccessWrite = 'Editor';
+  SObjectAccessRead = 'Reviewer';
 
 implementation
 
