@@ -47,7 +47,7 @@ type
     property Confirmed: boolean read FConfirmed;
     procedure ConfirmationSuccess(var ACanRedirect: boolean; var ARedirect: string);
       virtual; abstract;
-    procedure DoHandleAuth(ARequest: TRequest); override;
+    procedure DoHandlePost(ARequest: TRequest); override;
     procedure DoBeforeRequest; override;
     procedure DoAfterRequest; override;
   public
@@ -58,7 +58,7 @@ type
 
   TSettingsWebModule = class(TPostUserWebModule)
   protected
-    procedure DoHandleAuth(ARequest: TRequest); override;
+    procedure DoHandlePost(ARequest: TRequest); override;
   end;
 
   { TLogoutWebModule }
@@ -74,7 +74,7 @@ implementation
 
 { TSettingsWebModule }
 
-procedure TSettingsWebModule.DoHandleAuth(ARequest: TRequest);
+procedure TSettingsWebModule.DoHandlePost(ARequest: TRequest);
 var
   FirstName, LastName: string;
   OldPassword, NewPassword, ConfirmPassword: string;
@@ -136,7 +136,7 @@ begin
   end;
 end;
 
-procedure TConfirmPasswordWebModule.DoHandleAuth(ARequest: TRequest);
+procedure TConfirmPasswordWebModule.DoHandlePost(ARequest: TRequest);
 var
   Password: string;
 begin

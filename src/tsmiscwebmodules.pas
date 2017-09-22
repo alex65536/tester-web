@@ -64,7 +64,7 @@ type
     property Success: string read FSuccess write FSuccess;
     function CanRedirect: boolean; virtual;
     function RedirectLocation: string; virtual;
-    procedure DoHandleAuth(ARequest: TRequest); virtual; abstract;
+    procedure DoHandlePost(ARequest: TRequest); virtual; abstract;
     procedure DoPageAfterConstruction(APage: THtmlPage); override;
     procedure DoBeforeRequest; override;
     procedure DoAfterRequest; override;
@@ -185,7 +185,7 @@ begin
       Exit;
     end;
     try
-      DoHandleAuth(ARequest);
+      DoHandlePost(ARequest);
       // if no exception, we send redirect and don't render that page
       if CanRedirect then
       begin

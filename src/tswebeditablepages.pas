@@ -40,7 +40,38 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TEditableNewPage }
+
+  { TEditableCreateFormPage }
+
+  TEditableCreateFormPage = class(TPostHtmlPage)
+  protected
+    procedure AddFeatures; override;
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
 implementation
+
+{ TEditableCreateFormPage }
+
+procedure TEditableCreateFormPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TEditableCreateFormFeature);
+end;
+
+procedure TEditableCreateFormPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
+begin
+  Strings.Text := '~+#editableCreateForm;';
+end;
+
+procedure TEditableCreateFormPage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Title := SEditableCreateNew;
+end;
 
 { TEditableObjListPage }
 

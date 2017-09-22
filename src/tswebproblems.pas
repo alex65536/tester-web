@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, tswebmodules, tswebeditablefeatures, tswebeditablemodules,
   tswebeditablepages, webstrconsts, fphttp, htmlpages, problems, editableobjects,
-  navbars, tswebfeatures;
+  navbars, tswebfeatures, tswebpagesbase;
 
 type
 
@@ -50,6 +50,17 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TProblemCreateNewPage }
+
+  TProblemCreateNewPage = class(TEditableCreateFormPage, IEditablePage)
+  protected
+    function Manager: TEditableManager;
+    function CreateNavBar: TNavBar; override;
+    procedure AddFeatures; override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
   { TProblemListPageModule }
 
   TProblemListPageModule = class(TEditableHtmlPageWebModule)
@@ -57,7 +68,63 @@ type
     function DoCreatePage: THtmlPage; override;
   end;
 
+  { TProblemCreateNewModule }
+
+  TProblemCreateNewModule = class(TEditableCreateNewWebModule)
+  protected
+    function Manager: TEditableManager; override;
+    function DoCreatePage: THtmlPage; override;
+    function CanRedirect: boolean; override;
+    function RedirectLocation: string; override;
+  end;
+
 implementation
+
+{ TProblemCreateNewModule }
+
+function TProblemCreateNewModule.Manager: TEditableManager;
+begin
+  Result := ProblemManager;
+end;
+
+function TProblemCreateNewModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemCreateNewPage.Create;
+end;
+
+function TProblemCreateNewModule.CanRedirect: boolean;
+begin
+  Result := True;
+end;
+
+function TProblemCreateNewModule.RedirectLocation: string;
+begin
+  Result := DocumentRoot + '/problems';
+end;
+
+{ TProblemCreateNewPage }
+
+function TProblemCreateNewPage.Manager: TEditableManager;
+begin
+  Result := ProblemManager;
+end;
+
+function TProblemCreateNewPage.CreateNavBar: TNavBar;
+begin
+  Result := TDefaultNavBar.Create(Self);
+end;
+
+procedure TProblemCreateNewPage.AddFeatures;
+begin
+  AddFeature(TProblemBaseFeature);
+  inherited AddFeatures;
+end;
+
+procedure TProblemCreateNewPage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Title := SProblemCreateNew;
+end;
 
 { TProblemBaseFeature }
 
@@ -65,8 +132,9 @@ procedure TProblemBaseFeature.Satisfy;
 begin
   with Parent.Variables do
   begin
-    ItemsAsText['editableNewRef'] := 'new-problem';
-    ItemsAsText['editableDeleteRef'] := 'delete-problem';
+    ItemsAsText['editableNewRef'] := 'problem-new';
+    ItemsAsText['editableNodeDeleteRef'] := 'problem-delete';
+    ItemsAsText['editableViewRef'] := 'problem-view';
   end;
 end;
 
@@ -109,6 +177,7 @@ end;
 
 initialization
   RegisterHTTPModule('problems', TProblemListPageModule, True);
+  RegisterHTTPModule('problem-new', TProblemCreateNewModule, True);
 
 end.
 

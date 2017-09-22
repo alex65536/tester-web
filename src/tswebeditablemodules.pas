@@ -25,7 +25,7 @@ unit tswebeditablemodules;
 interface
 
 uses
-  Classes, SysUtils, webmodules, tsmiscwebmodules, editableobjects;
+  Classes, SysUtils, webmodules, tsmiscwebmodules, editableobjects, HTTPDefs;
 
 type
 
@@ -36,7 +36,32 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TEditableCreateNewWebModule }
+
+  TEditableCreateNewWebModule = class(TPostUserWebModule)
+  protected
+    function Manager: TEditableManager; virtual; abstract;
+    procedure DoHandlePost(ARequest: TRequest); override;
+  end;
+
 implementation
+
+{ TEditableCreateNewWebModule }
+
+procedure TEditableCreateNewWebModule.DoHandlePost(ARequest: TRequest);
+var
+  MgrSession: TEditableManagerSession;
+  MgrName, MgrTitle: string;
+begin
+  MgrSession := Manager.CreateManagerSession(User as TEditorUser);
+  try
+    MgrName := ARequest.ContentFields.Values['name'];
+    MgrTitle := ARequest.ContentFields.Values['title'];
+    MgrSession.CreateNewObject(MgrName, MgrTitle).Free;
+  finally
+    FreeAndNil(MgrSession);
+  end;
+end;
 
 { TEditableHtmlPageWebModule }
 

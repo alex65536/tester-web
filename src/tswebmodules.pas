@@ -119,7 +119,7 @@ type
   TLoginWebModule = class(TAuthWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
-    procedure DoHandleAuth(ARequest: TRequest); override;
+    procedure DoHandlePost(ARequest: TRequest); override;
   end;
 
   { TRegisterWebModule }
@@ -127,7 +127,7 @@ type
   TRegisterWebModule = class(TAuthWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
-    procedure DoHandleAuth(ARequest: TRequest); override;
+    procedure DoHandlePost(ARequest: TRequest); override;
   end;
 
   { TNavConfirmPasswordWebModule }
@@ -367,7 +367,7 @@ begin
   Result := TNavRegisterPage.Create;
 end;
 
-procedure TRegisterWebModule.DoHandleAuth(ARequest: TRequest);
+procedure TRegisterWebModule.DoHandlePost(ARequest: TRequest);
 var
   Username, Password, Password2, FirstName, LastName: string;
 begin
@@ -387,7 +387,7 @@ begin
   Result := TNavLoginPage.Create;
 end;
 
-procedure TLoginWebModule.DoHandleAuth(ARequest: TRequest);
+procedure TLoginWebModule.DoHandlePost(ARequest: TRequest);
 var
   Username, Password: string;
 begin

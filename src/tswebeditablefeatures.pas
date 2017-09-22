@@ -49,6 +49,7 @@ type
   private
     FEditableObject: TEditableObject;
     FManagerSession: TEditableManagerSession;
+    FTransaction: TEditableTransaction;
   protected
     procedure DoFillVariables; override;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
@@ -103,6 +104,7 @@ begin
     ItemsAsText['editableCreateSubmit'] := SEditableCreateSubmit;
     ItemsAsText['editableCreatePrompt'] := SEditableCreatePrompt;
   end;
+  LoadPagePart('editable', 'editableCreateForm');
 end;
 
 procedure TEditableCreateFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
@@ -172,6 +174,7 @@ begin
   with Storage, FEditableObject do
   begin
     ItemsAsText['objectNodeName'] := Name;
+    ItemsAsText['objectNodeTitle'] := FTransaction.Title;
     ItemsAsText['objectNodeOwner'] := Parent.GenerateUserLink(GetObjectAuthorName);
     ItemsAsText['objectNodeRights'] := SAccessRightsNames[GetAccessRights(Parent.User as TEditorUser)];
     ItemsAsText['objectNodeLastModified'] := 'TODO!'; // TODO : add objectNodeLastModified !!!
@@ -194,10 +197,12 @@ begin
   inherited Create(AParent);
   FEditableObject := AObject;
   FManagerSession := FEditableObject.Manager.CreateManagerSession(Parent.User as TEditorUser);
+  FTransaction := FEditableObject.CreateTransaction(Parent.User as TEditorUser);
 end;
 
 destructor TEditableObjListNode.Destroy;
 begin
+  FreeAndNil(FTransaction);
   FreeAndNil(FManagerSession);
   FreeAndNil(FEditableObject);
   inherited Destroy;

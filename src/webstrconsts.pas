@@ -166,6 +166,8 @@ resourcestring
   SEditableListAccess = 'Access type';
   SEditableListLastModified = 'Last modified';
   SEditableListDelete = 'Delete';
+  SEditableCreateNew = 'Create new object';
+  SProblemCreateNew = 'Create new problem';
 
 implementation
 
