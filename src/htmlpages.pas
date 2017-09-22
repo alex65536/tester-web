@@ -135,7 +135,80 @@ type
     destructor Destroy; override;
   end;
 
+  { THtmlPageElementList }
+
+  THtmlPageElementList = class(specialize TFPGObjectList<THtmlPageElement>)
+  public
+    procedure FillItems(Strings: TIndentTaggedStrings);
+    constructor Create;
+  end;
+
+  { THtmlListedPageElement }
+
+  THtmlListedPageElement = class(THtmlPageElement)
+  private
+    FList: THtmlPageElementList;
+  public
+    property List: THtmlPageElementList read FList;
+    procedure AddListToVariable(const VarName: string);
+    constructor Create(AParent: THtmlPage);
+    destructor Destroy; override;
+  end;
+
 implementation
+
+{ THtmlListedPageElement }
+
+procedure THtmlListedPageElement.AddListToVariable(const VarName: string);
+var
+  Strings: TIndentTaggedStrings;
+begin
+  Strings := TIndentTaggedStrings.Create;
+  try
+    List.FillItems(Strings);
+    Storage.SetItemAsStrings(VarName, Strings);
+  finally
+    FreeAndNil(Strings);
+  end;
+end;
+
+constructor THtmlListedPageElement.Create(AParent: THtmlPage);
+begin
+  inherited Create(AParent);
+  FList := THtmlPageElementList.Create;
+end;
+
+destructor THtmlListedPageElement.Destroy;
+begin
+  FreeAndNil(FList);
+  inherited Destroy;
+end;
+
+{ THtmlPageElementList }
+
+procedure THtmlPageElementList.FillItems(Strings: TIndentTaggedStrings);
+var
+  Element: THtmlPageElement;
+  ItemContent: TIndentTaggedStrings;
+begin
+  Strings.Clear;
+  ItemContent := TIndentTaggedStrings.Create;
+  try
+    for Element in Self do
+    begin
+      Element.GetContents(ItemContent);
+      Strings.AppendIndentedLines(ItemContent, True);
+      ItemContent.Clear;
+    end;
+  finally
+    FreeAndNil(ItemContent);
+  end;
+end;
+
+constructor THtmlPageElementList.Create;
+begin
+  inherited Create(True);
+end;
 
 { THtmlPageElement }
 
