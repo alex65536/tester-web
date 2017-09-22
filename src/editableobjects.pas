@@ -842,12 +842,15 @@ begin
   // retreive rights
   UserRights := AccessLevel;
   TargetRights := EditableObject.GetAccessRights(Target);
-  // check
+  // check (pt. 1)
+  if (TargetRights = erNone) or (AAccess = erNone) then
+    Exit(False);
+  if AAccess = TargetRights then
+    Exit(True);
+  if (TargetRights = erOwner) or (AAccess = erOwner) then
+    Exit(False);
+  // check (pt. 2)
   Result := False;
-  if (TargetRights in [erNone, erOwner]) or (AAccess in [erNone, erOwner]) then
-    Exit;
-  if Target.Username = User.Username then
-    Exit;
   if UserRights = erOwner then
     Result := (TargetRights <> erOwner) and (AAccess <> erOwner)
   else if UserRights = erWrite then

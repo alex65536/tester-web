@@ -158,17 +158,26 @@ resourcestring
   SEditableCreateTitle = 'Title:';
   SEditableCreateTitlePrompt = 'Enter object title';
   SEditableCreateSubmit = 'Create';
-  SProblemList = 'Problems list';
+  SProblemList = 'Problems List';
   SEditableListName = 'Name';
   SEditableListTitle = 'Title';
   SEditableListAuthor = 'Author';
   SEditableListAccess = 'Access type';
   SEditableListLastModified = 'Last modified';
   SEditableListDelete = 'Delete';
-  SProblemCreateNew = 'Create new problem';
+  SProblemCreateNew = 'Create New Problem';
   SProblemCreatePrompt = 'Enter name and title for your new problem.';
   SProblemCreateNamePrompt = 'Enter problem name';
   SProblemCreateTitlePrompt = 'Enter problem title';
+  SEditableAccessId = '#';
+  SEditableAccessUsername = 'User';
+  SEditableAccessRights = 'Access type';
+  SEditableAccessDelete = 'Delete';
+  SObjectNodeAccessChange = 'Change';
+  SObjectAddUser = 'Add user:';
+  SObjectAddUserPrompt = 'Enter username to add';
+  SObjectAddUserBtn = 'Add';
+  SEditableManageAccess = 'Manage Access';
 
 implementation
 

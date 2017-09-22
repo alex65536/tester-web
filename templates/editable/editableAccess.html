@@ -4,20 +4,12 @@
 	<form action="" class="right-align" method="post">
 		<label class="right-align">~objectAddUser;</label>
 		<input type="text" class="auth-edit right-align" name="" placeholder="~objectAddUserPrompt;">
-		~+#
+		~+#formToken;
 		<button type="submit" class="styled-btn small-btn right-align">~objectAddUserBtn;</button>
 	</form>
 </p>
-<table class="box styled access-table">
-	<tr>
-		<th class="narrow id">~objectAccessId;</th>
-		<th>~objectAccessUsername;</th>
-		<th>~objectAccessRights;</th>
-		<th class="narrow">~objectAccessDelete;</th>
-	</tr>
-	~+#editableAccessNodes;
-</table>
+~#+editableAccessTable;
 <p>
-	~+#editableViewBtn;
-	~+#editableEditBtn;
+	~+#?editableViewBtn;
+	~+#?editableEditBtn;
 </p>

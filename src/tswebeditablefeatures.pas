@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, tswebpagesbase, editableobjects, htmlpages, htmlpreprocess,
-  tswebfeatures, webstrconsts;
+  tswebfeatures, webstrconsts, users, userpages;
 
 type
   {$interfaces CORBA}
@@ -36,6 +36,7 @@ type
   IEditablePage = interface
     ['{DC40AF42-023F-4781-B994-71228705D8A9}']
     function Manager: TEditableManager;
+    function EditableObject: TEditableObject;
   end;
   {$interfaces COM}
 
@@ -54,6 +55,8 @@ type
     FManagerSession: TEditableManagerSession;
     FTransaction: TEditableTransaction;
   protected
+    property ManagerSession: TEditableManagerSession read FManagerSession;
+    property Transaction: TEditableTransaction read FTransaction;
     procedure DoFillVariables; override;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
@@ -64,16 +67,67 @@ type
 
   { TEditableObjList }
 
-  TEditableObjList = class(TTesterHtmlPageElement)
+  TEditableObjList = class(TTesterHtmlListedPageElement)
   private
     FManager: TEditableManager;
   protected
-    procedure FillItems(AItems: TIndentTaggedStrings);
+    procedure FillList;
     procedure DoFillVariables; override;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
     property Manager: TEditableManager read FManager;
     constructor Create(AParent: THtmlPage; AManager: TEditableManager);
+  end;
+
+  { TEditableAccessRightsOption }
+
+  TEditableAccessRightsOption = class(TTesterHtmlPageElement)
+  private
+    FRights: TEditableAccessRights;
+    FSession: TEditableObjectAccessSession;
+  protected
+    property Session: TEditableObjectAccessSession read FSession;
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Rights: TEditableAccessRights read FRights;
+    constructor Create(AParent: THtmlPage; ASession: TEditableObjectAccessSession;
+      ARights: TEditableAccessRights);
+  end;
+
+  { TEditableAccessNode }
+
+  TEditableAccessNode = class(TTesterHtmlListedPageElement)
+  private
+    FIndex: integer;
+    FSession: TEditableObjectAccessSession;
+    FTarget: TUserInfo;
+  protected
+    property Session: TEditableObjectAccessSession read FSession;
+    property Target: TUserInfo read FTarget;
+    procedure FillList;
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Index: integer read FIndex;
+    constructor Create(AParent: THtmlPage; ASession: TEditableObjectAccessSession;
+      ATarget: TUserInfo; AIndex: integer);
+    destructor Destroy; override;
+  end;
+
+  { TEditableAccessNodeList }
+
+  TEditableAccessNodeList = class(TTesterHtmlListedPageElement)
+  private
+    FSession: TEditableObjectAccessSession;
+  protected
+    property Session: TEditableObjectAccessSession read FSession;
+    procedure FillList;
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    constructor Create(AParent: THtmlPage; ASession: TEditableObjectAccessSession);
+    destructor Destroy; override;
   end;
 
   { TEditableObjListFeature }
@@ -92,7 +146,218 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TEditableUserFeature }
+
+  { TEditableObjectFeature }
+
+  TEditableObjectFeature = class(TTesterPageFeature)
+  private
+    FEditableObject: TEditableObject;
+  protected
+    function User: TEditorUser;
+    property EditableObject: TEditableObject read FEditableObject;
+    procedure InternalSatisfy; virtual; abstract;
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TEditableManageAccessFeature }
+
+  TEditableManageAccessFeature = class(TEditableObjectFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TEditableObjectFeature }
+
+function TEditableObjectFeature.User: TEditorUser;
+begin
+  Result := (Parent as TUserPage).User as TEditorUser;
+end;
+
+procedure TEditableObjectFeature.Satisfy;
+begin
+  FEditableObject := (Parent as IEditablePage).EditableObject;
+  try
+    InternalSatisfy;
+  finally
+    FreeAndNil(FEditableObject);
+  end;
+end;
+
+procedure TEditableObjectFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableBaseFeature);
+end;
+
+{ TEditableManageAccessFeature }
+
+procedure TEditableManageAccessFeature.InternalSatisfy;
+var
+  Session: TEditableObjectAccessSession;
+  List: TEditableAccessNodeList;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['objectAddUser'] := SObjectAddUser;
+    ItemsAsText['objectAddUserPrompt'] := SObjectAddUserPrompt;
+    ItemsAsText['objectAddUserBtn'] := SObjectAddUserBtn;
+  end;
+  // load list
+  Session := EditableObject.CreateAccessSession(User);
+  List := TEditableAccessNodeList.Create(Parent, Session);
+  try
+    Parent.AddElementPagePart('editableAccessTable', List)
+  finally
+    FreeAndNil(List);
+  end;
+  LoadPagePart('editable', 'editableAccess', 'content');
+end;
+
+procedure TEditableManageAccessFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TPostDataFeature);
+  ADependencies.Add(TSessionTokenFeature);
+  ADependencies.Add(TContentFeature);
+end;
+
+{ TEditableAccessNodeList }
+
+procedure TEditableAccessNodeList.FillList;
+var
+  I: integer;
+  AccessUsers: TStringList;
+begin
+  List.Clear;
+  AccessUsers := Session.EditableObject.ListUsers;
+  try
+    for I := 0 to AccessUsers.Count - 1 do
+      List.Add(TEditableAccessNode.Create(Parent, Session,
+        UserManager.GetUserInfo(AccessUsers[I]), I + 1));
+  finally
+    FreeAndNil(AccessUsers);
+  end;
+end;
+
+procedure TEditableAccessNodeList.DoFillVariables;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['editableAccessId'] := SEditableAccessId;
+	  ItemsAsText['editableAccessUsername'] := SEditableAccessUsername;
+	  ItemsAsText['editableAccessRights'] := SEditableAccessRights;
+	  ItemsAsText['editableAccessDelete'] := SEditableAccessDelete;
+  end;
+  FillList;
+  AddListToVariable('editableAccessNodes');
+  List.Clear;
+end;
+
+procedure TEditableAccessNodeList.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('editable', 'editableAccessTable'));
+end;
+
+constructor TEditableAccessNodeList.Create(AParent: THtmlPage;
+  ASession: TEditableObjectAccessSession);
+begin
+  inherited Create(AParent);
+  FSession := ASession;
+end;
+
+destructor TEditableAccessNodeList.Destroy;
+begin
+  FreeAndNil(FSession);
+  inherited Destroy;
+end;
+
+{ TEditableAccessNode }
+
+procedure TEditableAccessNode.FillList;
+var
+  R: TEditableAccessRights;
+begin
+  List.Clear;
+  for R in TEditableAccessRights do
+    if Session.CanGrantAccessRights(Target, R) then
+      List.Add(TEditableAccessRightsOption.Create(Parent, Session, R));
+end;
+
+procedure TEditableAccessNode.DoFillVariables;
+var
+  DeleteBtnLocation: string;
+begin
+  with Storage do
+  begin
+    ItemsAsText['objectNodeNum'] := IntToStr(Index);
+    ItemsAsText['objectNodeUser'] := Parent.GenerateUserLink(Target);
+    ItemsAsText['objectNodeAccessChange'] := SObjectNodeAccessChange;
+    ItemsAsText['objectNodeUsername'] := Target.Username;
+    // fill "edit rights" column
+    // TODO : Add static rights if there's only one choice!
+    FillList;
+    AddListToVariable('objectNodeEditRightsOptions');
+    SetFromFile('objectNodeRightsEdit', TemplateLocation('editable', 'editableEditRights'));
+    List.Clear;
+    // fill "delete" column
+    if Session.CanDeleteUser(Target) then
+      DeleteBtnLocation := 'editableDeleteUserEnabled'
+    else
+      DeleteBtnLocation := 'editableDeleteUserDisabled';
+    SetFromFile('objectNodeDelete', TemplateLocation('editable', DeleteBtnLocation));
+  end;
+end;
+
+procedure TEditableAccessNode.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('editable', 'editableAccessNode'));
+end;
+
+constructor TEditableAccessNode.Create(AParent: THtmlPage;
+  ASession: TEditableObjectAccessSession; ATarget: TUserInfo; AIndex: integer);
+begin
+  inherited Create(AParent);
+  FSession := ASession;
+  FTarget := ATarget;
+  FIndex := AIndex;
+end;
+
+destructor TEditableAccessNode.Destroy;
+begin
+  FreeAndNil(FTarget);
+  inherited Destroy;
+end;
+
+{ TEditableAccessRightsOption }
+
+procedure TEditableAccessRightsOption.DoFillVariables;
+begin
+  with Storage do
+  begin
+    ItemsAsText['rightsFullName'] := AccessRightsToStr(Rights);
+    ItemsAsText['rightsName'] := SAccessRightsNames[Rights];
+  end;
+end;
+
+procedure TEditableAccessRightsOption.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('editable', 'editableEditRightsOption'));
+end;
+
+constructor TEditableAccessRightsOption.Create(AParent: THtmlPage;
+  ASession: TEditableObjectAccessSession; ARights: TEditableAccessRights);
+begin
+  inherited Create(AParent);
+  FSession := ASession;
+  FRights := ARights;
+end;
 
 { TEditableCreateFormFeature }
 
@@ -124,7 +389,6 @@ end;
 procedure TEditableObjListFeature.Satisfy;
 var
   List: TEditableObjList;
-  Strings: TIndentTaggedStrings;
 begin
   // load header names
   with Parent.Variables do
@@ -139,17 +403,12 @@ begin
   // load list
   List := TEditableObjList.Create(Parent, (Parent as IEditablePage).Manager);
   try
-    Strings := TIndentTaggedStrings.Create;
-    try
-      List.GetContents(Strings);
-      Parent.PageParts.SetItemAsStrings('editableObjListTable', Strings);
-      LoadPagePart('editable', 'editableObjList', 'content');
-    finally
-      FreeAndNil(Strings);
-    end;
+    Parent.AddElementPagePart('editableObjListTable', List)
   finally
     FreeAndNil(List);
   end;
+  // load content
+  LoadPagePart('editable', 'editableObjList', 'content');
 end;
 
 procedure TEditableObjListFeature.DependsOn(ADependencies: THtmlPageFeatureList);
@@ -215,45 +474,26 @@ end;
 
 { TEditableObjList }
 
-procedure TEditableObjList.FillItems(AItems: TIndentTaggedStrings);
+procedure TEditableObjList.FillList;
 var
   ObjList: TStringList;
   ObjName: string;
-  ObjContent: TIndentTaggedStrings;
 begin
-  AItems.Clear;
+  List.Clear;
   ObjList := FManager.ListAvailableObjects(Parent.User as TEditorUser);
   try
-    ObjContent := TIndentTaggedStrings.Create;
-    try
-      for ObjName in ObjList do
-        with TEditableObjListNode.Create(Parent, FManager.GetObject(ObjName)) do
-          try
-            GetContents(ObjContent);
-            AItems.AppendIndentedLines(ObjContent, True);
-            ObjContent.Clear;
-          finally
-            Free;
-          end;
-    finally
-      FreeAndNil(ObjContent);
-    end;
+    for ObjName in ObjList do
+      List.Add(TEditableObjListNode.Create(Parent, FManager.GetObject(ObjName)))
   finally
     FreeAndNil(ObjList);
   end;
 end;
 
 procedure TEditableObjList.DoFillVariables;
-var
-  Strings: TIndentTaggedStrings;
 begin
-  Strings := TIndentTaggedStrings.Create;
-  try
-    FillItems(Strings);
-    Storage.SetItemAsStrings('editableObjListNodes', Strings);
-  finally
-    FreeAndNil(Strings);
-  end;
+  FillList;
+  AddListToVariable('editableObjListNodes');
+  List.Clear;
 end;
 
 procedure TEditableObjList.DoGetSkeleton(Strings: TIndentTaggedStrings);

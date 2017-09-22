@@ -97,6 +97,8 @@ type
     constructor Create(AParent: TFeaturedHtmlPage); virtual;
   end;
 
+  THtmlPageElement = class;
+
   { TFeaturedHtmlPage }
 
   TFeaturedHtmlPage = class(THtmlPage)
@@ -112,6 +114,7 @@ type
   public
     property Variables: TVariableStorage read FVariables;
     property PageParts: TVariableStorage read FPageParts;
+    procedure AddElementPagePart(const PartName: string; AElement: THtmlPageElement);
     procedure Clear; override;
     constructor Create; override;
     destructor Destroy; override;
@@ -268,6 +271,20 @@ end;
 procedure TFeaturedHtmlPage.StartupVariablesInitialize;
 begin
   // do nothing
+end;
+
+procedure TFeaturedHtmlPage.AddElementPagePart(const PartName: string;
+  AElement: THtmlPageElement);
+var
+  Strings: TIndentTaggedStrings;
+begin
+  Strings := TIndentTaggedStrings.Create;
+  try
+    AElement.GetContents(Strings);
+    PageParts.SetItemAsStrings(PartName, Strings);
+  finally
+    FreeAndNil(Strings);
+  end;
 end;
 
 procedure TFeaturedHtmlPage.Clear;

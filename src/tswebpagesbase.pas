@@ -52,9 +52,9 @@ type
     property Parent: TTesterHtmlPage read GetParent;
   end;
 
-  { TTesterListedHtmlPageElement }
+  { TTesterHtmlListedPageElement }
 
-  TTesterListedHtmlPageElement = class(THtmlListedPageElement)
+  TTesterHtmlListedPageElement = class(THtmlListedPageElement)
   private
     function GetParent: TTesterHtmlPage;
   public
@@ -100,9 +100,9 @@ begin
   Result := AppendPathDelim(Dir) + AName + '.html';
 end;
 
-{ TTesterListedHtmlPageElement }
+{ TTesterHtmlListedPageElement }
 
-function TTesterListedHtmlPageElement.GetParent: TTesterHtmlPage;
+function TTesterHtmlListedPageElement.GetParent: TTesterHtmlPage;
 begin
   Result := (inherited Parent) as TTesterHtmlPage;
 end;

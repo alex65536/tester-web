@@ -51,6 +51,8 @@ type
 
   TProblemHtmlPage = class(TDefaultHtmlPage, IEditablePage)
   protected
+    function HasEditableObject: boolean; virtual;
+    function EditableObject: TEditableObject;
     function Manager: TEditableManager;
     function CreateNavBar: TNavBar; override;
     procedure AddFeatures; override;
@@ -75,6 +77,7 @@ type
   TProblemListPage = class(TProblemHtmlPage)
   protected
     procedure AddFeatures; override;
+    function HasEditableObject: boolean; override;
   public
     procedure AfterConstruction; override;
   end;
@@ -82,6 +85,16 @@ type
   { TProblemCreateNewPage }
 
   TProblemCreateNewPage = class(TProblemPostHtmlPage)
+  protected
+    procedure AddFeatures; override;
+    function HasEditableObject: boolean; override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
+  { TProblemAccessPage }
+
+  TProblemAccessPage = class(TProblemPostHtmlPage)
   protected
     procedure AddFeatures; override;
   public
@@ -105,7 +118,41 @@ type
     function RedirectLocation: string; override;
   end;
 
+  { TProblemAccessModule }
+
+  TProblemAccessModule = class(TEditableAccessWebModule)
+  protected
+    function Manager: TEditableManager; override;
+    function DoCreatePage: THtmlPage; override;
+  end;
+
 implementation
+
+{ TProblemAccessPage }
+
+procedure TProblemAccessPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TEditableManageAccessFeature);
+end;
+
+procedure TProblemAccessPage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Title := SEditableManageAccess;
+end;
+
+{ TProblemAccessModule }
+
+function TProblemAccessModule.Manager: TEditableManager;
+begin
+  Result := ProblemManager;
+end;
+
+function TProblemAccessModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemAccessPage.Create;
+end;
 
 { TProblemCreateFormFeature }
 
@@ -148,6 +195,24 @@ begin
 end;
 
 { TProblemHtmlPage }
+
+function TProblemHtmlPage.HasEditableObject: boolean;
+begin
+  Result := True;
+end;
+
+function TProblemHtmlPage.EditableObject: TEditableObject;
+var
+  ObjectName: string;
+begin
+  if HasEditableObject then
+  begin
+    ObjectName := Request.QueryFields.Values['object'];
+    Result := Manager.GetObject(ObjectName);
+  end
+  else
+    Result := nil;
+end;
 
 function TProblemHtmlPage.Manager: TEditableManager;
 begin
@@ -201,6 +266,11 @@ begin
   AddFeature(TProblemCreateFormFeature);
 end;
 
+function TProblemCreateNewPage.HasEditableObject: boolean;
+begin
+  Result := False;
+end;
+
 procedure TProblemCreateNewPage.AfterConstruction;
 begin
   inherited AfterConstruction;
@@ -216,6 +286,8 @@ begin
     ItemsAsText['editableNewRef'] := 'problem-new';
     ItemsAsText['editableNodeDeleteRef'] := 'problem-delete';
     ItemsAsText['editableViewRef'] := 'problem-view';
+    ItemsAsText['editableEditRef'] := 'problem-edit';
+    ItemsAsText['editableAccessRef'] := 'problem-access';
   end;
 end;
 
@@ -240,6 +312,11 @@ begin
   AddFeature(TEditableObjListFeature);
 end;
 
+function TProblemListPage.HasEditableObject: boolean;
+begin
+  Result := False;
+end;
+
 procedure TProblemListPage.AfterConstruction;
 begin
   inherited AfterConstruction;
@@ -249,6 +326,7 @@ end;
 initialization
   RegisterHTTPModule('problems', TProblemListPageModule, True);
   RegisterHTTPModule('problem-new', TProblemCreateNewModule, True);
+  RegisterHTTPModule('problem-access', TProblemAccessModule, True);
 
 end.
 
