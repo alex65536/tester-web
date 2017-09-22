@@ -25,7 +25,8 @@ unit tswebeditablemodules;
 interface
 
 uses
-  Classes, SysUtils, webmodules, tsmiscwebmodules, editableobjects, HTTPDefs;
+  Classes, SysUtils, webmodules, tsmiscwebmodules, editableobjects, HTTPDefs,
+  authwebmodules;
 
 type
 
@@ -42,6 +43,7 @@ type
   protected
     function Manager: TEditableManager; virtual; abstract;
     procedure DoHandlePost(ARequest: TRequest); override;
+    procedure AfterConstruction; override;
   end;
 
 implementation
@@ -61,6 +63,12 @@ begin
   finally
     FreeAndNil(MgrSession);
   end;
+end;
+
+procedure TEditableCreateNewWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Handlers.Add(TDeclineNotLoggedWebModuleHandler.Create(EditorsSet));
 end;
 
 { TEditableHtmlPageWebModule }

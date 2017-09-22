@@ -40,8 +40,6 @@ type
     procedure AfterConstruction; override;
   end;
 
-  { TEditableNewPage }
-
   { TEditableCreateFormPage }
 
   TEditableCreateFormPage = class(TPostHtmlPage)
