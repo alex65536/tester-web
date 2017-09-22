@@ -424,14 +424,18 @@ var
   OneObject: TEditableObject;
 begin
   Objects := ListAllAvailableObjects;
-  for ObjName in Objects do
-  begin
-    OneObject := GetObject(ObjName);
-    try
-      OneObject.MessageReceived(AMessage);
-    finally
-      FreeAndNil(OneObject);
+  try
+    for ObjName in Objects do
+    begin
+      OneObject := GetObject(ObjName);
+      try
+        OneObject.MessageReceived(AMessage);
+      finally
+        FreeAndNil(OneObject);
+      end;
     end;
+  finally
+    FreeAndNil(Objects);
   end;
 end;
 
