@@ -39,13 +39,25 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TProblemPageHook }
+
+  TProblemPageHook = class(TEditablePageHook)
+  private type
+    TFakeTesterHtmlPage = class(TTesterHtmlPage)
+    public
+      procedure AddFeature(AClass: THtmlPageFeatureClass);
+    end;
+  public
+    procedure AddFeaturesPre; override;
+    function CreateNavBar: TNavBar; override;
+    function Manager: TEditableManager; override;
+  end;
+
   { TProblemListPage }
 
   TProblemListPage = class(TEditableObjListPage, IEditablePage)
   protected
-    function Manager: TEditableManager;
-    function CreateNavBar: TNavBar; override;
-    procedure AddFeatures; override;
+    function HookClass: TEditablePageHookClass; override;
   public
     procedure AfterConstruction; override;
   end;
@@ -54,9 +66,7 @@ type
 
   TProblemCreateNewPage = class(TEditableCreateFormPage, IEditablePage)
   protected
-    function Manager: TEditableManager;
-    function CreateNavBar: TNavBar; override;
-    procedure AddFeatures; override;
+    function HookClass: TEditablePageHookClass; override;
   public
     procedure AfterConstruction; override;
   end;
@@ -79,6 +89,30 @@ type
   end;
 
 implementation
+
+{ TProblemPageHook.TFakeTesterHtmlPage }
+
+procedure TProblemPageHook.TFakeTesterHtmlPage.AddFeature(AClass: THtmlPageFeatureClass);
+begin
+  inherited;
+end;
+
+{ TProblemPageHook }
+
+procedure TProblemPageHook.AddFeaturesPre;
+begin
+  TFakeTesterHtmlPage(Parent).AddFeature(TProblemBaseFeature);
+end;
+
+function TProblemPageHook.CreateNavBar: TNavBar;
+begin
+  Result := TDefaultNavBar.Create(Parent);
+end;
+
+function TProblemPageHook.Manager: TEditableManager;
+begin
+  Result := ProblemManager;
+end;
 
 { TProblemCreateNewModule }
 
@@ -104,20 +138,9 @@ end;
 
 { TProblemCreateNewPage }
 
-function TProblemCreateNewPage.Manager: TEditableManager;
+function TProblemCreateNewPage.HookClass: TEditablePageHookClass;
 begin
-  Result := ProblemManager;
-end;
-
-function TProblemCreateNewPage.CreateNavBar: TNavBar;
-begin
-  Result := TDefaultNavBar.Create(Self);
-end;
-
-procedure TProblemCreateNewPage.AddFeatures;
-begin
-  AddFeature(TProblemBaseFeature);
-  inherited AddFeatures;
+  Result := TProblemPageHook;
 end;
 
 procedure TProblemCreateNewPage.AfterConstruction;
@@ -153,20 +176,9 @@ end;
 
 { TProblemListPage }
 
-function TProblemListPage.Manager: TEditableManager;
+function TProblemListPage.HookClass: TEditablePageHookClass;
 begin
-  Result := ProblemManager;
-end;
-
-function TProblemListPage.CreateNavBar: TNavBar;
-begin
-  Result := TDefaultNavBar.Create(Self);
-end;
-
-procedure TProblemListPage.AddFeatures;
-begin
-  AddFeature(TProblemBaseFeature);
-  inherited AddFeatures;
+  Result := TProblemPageHook;
 end;
 
 procedure TProblemListPage.AfterConstruction;
