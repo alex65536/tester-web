@@ -26,8 +26,8 @@ interface
 
 uses
   Classes, SysUtils, tswebmodules, tswebeditablefeatures, tswebeditablemodules,
-  tswebeditablepages, webstrconsts, fphttp, htmlpages, problems, editableobjects,
-  navbars, tswebfeatures, tswebpagesbase;
+  webstrconsts, fphttp, htmlpages, problems, editableobjects, navbars,
+  tswebfeatures, tswebpagesbase, tswebpages, htmlpreprocess;
 
 type
 
@@ -39,12 +39,41 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
-  { TProblemListPage }
+  { TProblemCreateFormFeature }
 
-  TProblemListPage = class(TEditableObjListPage, IEditablePage)
+  TProblemCreateFormFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TProblemHtmlPage }
+
+  TProblemHtmlPage = class(TDefaultHtmlPage, IEditablePage)
   protected
     function Manager: TEditableManager;
     function CreateNavBar: TNavBar; override;
+    procedure AddFeatures; override;
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
+  end;
+
+  { TProblemPostHtmlPage }
+
+  TProblemPostHtmlPage = class(TProblemHtmlPage, IPostHtmlPage)
+  private
+    FError: string;
+    FSuccess: string;
+  public
+    function GetError: string;
+    function GetSuccess: string;
+    procedure SetError(AValue: string);
+    procedure SetSuccess(AValue: string);
+  end;
+
+  { TProblemListPage }
+
+  TProblemListPage = class(TProblemHtmlPage)
+  protected
     procedure AddFeatures; override;
   public
     procedure AfterConstruction; override;
@@ -52,10 +81,8 @@ type
 
   { TProblemCreateNewPage }
 
-  TProblemCreateNewPage = class(TEditableCreateFormPage, IEditablePage)
+  TProblemCreateNewPage = class(TProblemPostHtmlPage)
   protected
-    function Manager: TEditableManager;
-    function CreateNavBar: TNavBar; override;
     procedure AddFeatures; override;
   public
     procedure AfterConstruction; override;
@@ -79,6 +106,70 @@ type
   end;
 
 implementation
+
+{ TProblemCreateFormFeature }
+
+procedure TProblemCreateFormFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['editableCreateNamePrompt'] := SProblemCreateNamePrompt;
+    ItemsAsText['editableCreateTitlePrompt'] := SProblemCreateTitlePrompt;
+    ItemsAsText['editableCreatePrompt'] := SProblemCreatePrompt;
+  end;
+end;
+
+procedure TProblemCreateFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableCreateFormFeature);
+end;
+
+{ TProblemPostHtmlPage }
+
+function TProblemPostHtmlPage.GetError: string;
+begin
+  Result := FError;
+end;
+
+function TProblemPostHtmlPage.GetSuccess: string;
+begin
+  Result := FSuccess;
+end;
+
+procedure TProblemPostHtmlPage.SetError(AValue: string);
+begin
+  FError := AValue;
+end;
+
+procedure TProblemPostHtmlPage.SetSuccess(AValue: string);
+begin
+  FSuccess := AValue;
+end;
+
+{ TProblemHtmlPage }
+
+function TProblemHtmlPage.Manager: TEditableManager;
+begin
+  Result := ProblemManager;
+end;
+
+function TProblemHtmlPage.CreateNavBar: TNavBar;
+begin
+  Result := TDefaultNavBar.Create(Self);
+end;
+
+procedure TProblemHtmlPage.AddFeatures;
+begin
+  AddFeature(TProblemBaseFeature);
+  inherited AddFeatures;
+end;
+
+procedure TProblemHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
+begin
+  // do nothing, not necessary
+  Strings.Text := '';
+end;
 
 { TProblemCreateNewModule }
 
@@ -104,20 +195,10 @@ end;
 
 { TProblemCreateNewPage }
 
-function TProblemCreateNewPage.Manager: TEditableManager;
-begin
-  Result := ProblemManager;
-end;
-
-function TProblemCreateNewPage.CreateNavBar: TNavBar;
-begin
-  Result := TDefaultNavBar.Create(Self);
-end;
-
 procedure TProblemCreateNewPage.AddFeatures;
 begin
-  AddFeature(TProblemBaseFeature);
   inherited AddFeatures;
+  AddFeature(TProblemCreateFormFeature);
 end;
 
 procedure TProblemCreateNewPage.AfterConstruction;
@@ -153,20 +234,10 @@ end;
 
 { TProblemListPage }
 
-function TProblemListPage.Manager: TEditableManager;
-begin
-  Result := ProblemManager;
-end;
-
-function TProblemListPage.CreateNavBar: TNavBar;
-begin
-  Result := TDefaultNavBar.Create(Self);
-end;
-
 procedure TProblemListPage.AddFeatures;
 begin
-  AddFeature(TProblemBaseFeature);
   inherited AddFeatures;
+  AddFeature(TEditableObjListFeature);
 end;
 
 procedure TProblemListPage.AfterConstruction;

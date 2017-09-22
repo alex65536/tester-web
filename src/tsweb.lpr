@@ -62,7 +62,6 @@ uses
   tswebdirectories,
   problems,
   tswebeditablefeatures,
-  tswebeditablepages,
   tswebeditablemodules,
   tswebproblems;
 

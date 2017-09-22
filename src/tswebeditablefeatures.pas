@@ -107,7 +107,7 @@ begin
     ItemsAsText['editableCreateSubmit'] := SEditableCreateSubmit;
     ItemsAsText['editableCreatePrompt'] := SEditableCreatePrompt;
   end;
-  LoadPagePart('editable', 'editableCreateForm');
+  LoadPagePart('editable', 'editableCreateForm', 'content');
 end;
 
 procedure TEditableCreateFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
@@ -116,6 +116,7 @@ begin
   ADependencies.Add(TEditableBaseFeature);
   ADependencies.Add(TPostDataFeature);
   ADependencies.Add(TSessionTokenFeature);
+  ADependencies.Add(TContentFeature);
 end;
 
 { TEditableObjListFeature }
@@ -142,7 +143,7 @@ begin
     try
       List.GetContents(Strings);
       Parent.PageParts.SetItemAsStrings('editableObjListTable', Strings);
-      LoadPagePart('editable', 'editableObjList');
+      LoadPagePart('editable', 'editableObjList', 'content');
     finally
       FreeAndNil(Strings);
     end;
@@ -155,6 +156,7 @@ procedure TEditableObjListFeature.DependsOn(ADependencies: THtmlPageFeatureList)
 begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TEditableBaseFeature);
+  ADependencies.Add(TContentFeature);
 end;
 
 { TEditableBaseFeature }

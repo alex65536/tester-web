@@ -45,7 +45,7 @@
         <PackageName Value="FCL"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="34">
+    <Units Count="33">
       <Unit0>
         <Filename Value="tsweb.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -171,17 +171,13 @@
         <IsPartOfProject Value="True"/>
       </Unit30>
       <Unit31>
-        <Filename Value="tswebeditablepages.pas"/>
+        <Filename Value="tswebeditablemodules.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit31>
       <Unit32>
-        <Filename Value="tswebeditablemodules.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit32>
-      <Unit33>
         <Filename Value="tswebproblems.pas"/>
         <IsPartOfProject Value="True"/>
-      </Unit33>
+      </Unit32>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
