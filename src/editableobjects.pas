@@ -36,7 +36,7 @@ const
   AccessCanWriteSet = [erWrite, erOwner];
   EditorsSet = [urEditor, urAdmin, urOwner];
 
-  EditorNames: array [TEditableAccessRights] of string = (
+  SAccessRightsNames: array [TEditableAccessRights] of string = (
     '(none)',
     SObjectAccessRead,
     SObjectAccessWrite,
@@ -145,7 +145,6 @@ type
     FStorage: TAbstractDataStorage;
     function GetID: integer;
   protected
-    property Manager: TEditableManager read FManager;
     property Storage: TAbstractDataStorage read FStorage;
     procedure CheckHasAccess(Target: TUserInfo);
     procedure CheckNoAccess(Target: TUserInfo);
@@ -170,6 +169,7 @@ type
   public
     property Name: string read FName;
     property ID: integer read GetID;
+    property Manager: TEditableManager read FManager;
     function GetObjectAuthor: TUserInfo;
     function GetObjectAuthorName: string;
     function GetAccessRights(Target: TUserInfo): TEditableAccessRights;
@@ -479,6 +479,8 @@ end;
 function TEditableManager.ListAllAvailableObjects: TStringList;
 begin
   Result := FStorage.GetChildElements(ObjectsSection);
+  if Result = nil then
+    Result := TStringList.Create;
 end;
 
 function TEditableManager.ListAvailableObjects(AUser: TEditorUser): TStringList;
@@ -514,6 +516,7 @@ end;
 
 constructor TEditableManager.Create;
 begin
+  inherited Create;
   FStorage := CreateStorage;
   UserManager.Subscribe(Self);
 end;

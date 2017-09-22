@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, userpages, htmlpreprocess, LazFileUtils, serverconfig,
-  users;
+  users, htmlpages;
 
 type
 
@@ -41,6 +41,15 @@ type
     property Title: string read FTitle write FTitle;
     function GenerateUserLink(AInfo: TUserInfo): string;
     function GenerateUserLink(const Username: string): string;
+  end;
+
+  { TTesterHtmlPageElement }
+
+  TTesterHtmlPageElement = class(THtmlPageElement)
+  private
+    function GetParent: TTesterHtmlPage;
+  public
+    property Parent: TTesterHtmlPage read GetParent;
   end;
 
   { IAuthHtmlPage }
@@ -80,6 +89,13 @@ var
 begin
   Dir := AppendPathDelim(Config.Location_TemplatesDir) + ALocation;
   Result := AppendPathDelim(Dir) + AName + '.html';
+end;
+
+{ TTesterHtmlPageElement }
+
+function TTesterHtmlPageElement.GetParent: TTesterHtmlPage;
+begin
+  Result := (inherited Parent) as TTesterHtmlPage;
 end;
 
 { TContentHtmlPage }

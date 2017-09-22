@@ -60,7 +60,11 @@ uses
   adminusers,
   tswebobservers,
   tswebdirectories,
-  problems;
+  problems,
+  tswebeditablefeatures,
+  tswebeditablepages,
+  tswebeditablemodules,
+  tswebproblems;
 
 type
   TOpenHandlerApplication = class(THTTPApplication)

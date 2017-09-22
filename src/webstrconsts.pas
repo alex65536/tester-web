@@ -150,6 +150,22 @@ resourcestring
   SObjectAccessWrite = 'Editor';
   SObjectAccessRead = 'Reviewer';
   SProblemTypeName = 'Problem';
+  SEditableDelete = 'Delete';
+  SEditableNewText = 'New...';
+  SEditableCreatePrompt = 'Enter name and title for your new object.';
+  SEditableCreateName = 'Name:';
+  SEditableCreateNamePrompt = 'Enter object name';
+  SEditableCreateTitle = 'Title:';
+  SEditableCreateTitlePrompt = 'Enter object title';
+  SEditableCreateSubmit = 'Create';
+  SEditableList = 'Objects list';
+  SProblemList = 'Problems list';
+  SEditableListName = 'Name';
+  SEditableListTitle = 'Title';
+  SEditableListAuthor = 'Author';
+  SEditableListAccess = 'Access type';
+  SEditableListLastModified = 'Last modified';
+  SEditableListDelete = 'Delete';
 
 implementation
 

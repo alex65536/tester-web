@@ -111,8 +111,7 @@ begin
   Result := TProblem.Create(AName, Self);
 end;
 
-function TProblemManager.CreateManagerSession(AUser: TEditorUser):
-TEditableManagerSession;
+function TProblemManager.CreateManagerSession(AUser: TEditorUser): TEditableManagerSession;
 begin
   Result := TProblemManagerSession.Create(Self, AUser);
 end;
