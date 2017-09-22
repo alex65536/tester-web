@@ -154,11 +154,13 @@ end;
 
 procedure TProblemTransaction.DoCommit;
 begin
+  inherited DoCommit;
   // not implemented!
 end;
 
 procedure TProblemTransaction.DoReload;
 begin
+  inherited DoReload;
   // not implemented!
 end;
 

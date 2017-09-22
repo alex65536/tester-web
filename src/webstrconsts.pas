@@ -139,8 +139,9 @@ resourcestring
   SOwnerAlreadyExists = 'User with role urOwner already exists!';
   SObjectDoesNotExist = '%s with name "%s" doesn''t exist!';
   SObjectExists = '%s with name "%s" already exists!';
-  SObjectNameLength = '%s length must be from %d to %d characters.';
-  SObjectNameChars = '%s must contain only the following characters: %s';
+  SObjectNameLength = 'Name length must be from %d to %d characters.';
+  SObjectNameChars = 'Name must contain only the following characters: %s';
+  SObjectTitleLength = 'Title length must be from %d to %d characters.';
   SObjectUserHasAccess = 'User %:2s already has access to %:0s with name "%:1s"';
   SObjectUserNoAccess = 'User %:2s already doesn''t have access to %:0s with '
     + 'name "%:1s"';

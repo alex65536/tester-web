@@ -83,6 +83,7 @@ type
     FEditableObject: TEditableObject;
   protected
     function FullUserKeyName(const Key: string): string;
+    function FullKeyName(const Key: string): string;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser;
       AObject: TEditableObject);
   public
@@ -106,15 +107,20 @@ type
   { TEditableTransaction }
 
   TEditableTransaction = class(TEditableObjectSession)
+  private
+    FTitle: string;
   protected
-    procedure DoCommit; virtual; abstract;
-    procedure DoReload; virtual; abstract;
+    procedure DoCommit; virtual;
+    procedure DoReload; virtual;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser;
       AObject: TEditableObject);
   public
+    property Title: string read FTitle write FTitle;
     function CanReadData: boolean; virtual;
     function CanWriteData: boolean; virtual;
     procedure Commit;
+    procedure Reload;
+    procedure AfterConstruction; override;
   end;
 
   { TEditableManagerSession }
@@ -125,7 +131,7 @@ type
   public
     function CanCreateNewObject: boolean; virtual;
     function CanDeleteObject(const AName: string): boolean; virtual;
-    function CreateNewObject(const AName: string): TEditableObject;
+    function CreateNewObject(const AName, ATitle: string): TEditableObject;
     procedure DeleteObject(const AName: string);
     function ListAvailableObjects: TStringList;
   end;
@@ -199,7 +205,7 @@ type
     function CreateStorage: TAbstractDataStorage; virtual; abstract;
     function CreateObject(const AName: string): TEditableObject; virtual; abstract;
     function CreateNewObject(AOwner: TEditorUser;
-      const AName: string): TEditableObject; virtual;
+      const AName, ATitle: string): TEditableObject; virtual;
     procedure DeleteObject(const AName: string); virtual;
     procedure HandleUserDeleting({%H-}AInfo: TUserInfo); virtual;
     procedure HandleUserChangedRole({%H-}AInfo: TUserInfo); virtual;
@@ -224,7 +230,8 @@ type
 function AccessRightsToStr(ARights: TEditableAccessRights): string;
 function StrToAccessRights(const S: string): TEditableAccessRights;
 
-procedure ValidateObjectName(const ObjType, ObjName: string);
+procedure ValidateObjectName(const ObjName: string);
+procedure ValidateObjectTitle(const ObjTitle: string);
 
 implementation
 
@@ -243,7 +250,7 @@ begin
   raise EConvertError.Create(SNoSuchAccessRights);
 end;
 
-procedure ValidateObjectName(const ObjType, ObjName: string);
+procedure ValidateObjectName(const ObjName: string);
 const
   MinObjNameLen = 3;
   MaxObjNameLen = 24;
@@ -258,11 +265,19 @@ var
   C: char;
 begin
   if (Length(ObjName) < MinObjNameLen) or (Length(ObjName) > MaxObjNameLen) then
-    raise EUserValidate.CreateFmt(SUsernameLength,
-      [ObjType, MinObjNameLen, MaxObjNameLen]);
+    raise EUserValidate.CreateFmt(SObjectNameLength, [MinObjNameLen, MaxObjNameLen]);
   for C in ObjName do
     if not (C in ObjAvailableChars) then
-      raise EEditableValidate.CreateFmt(SUsernameChars, [ObjType, AvailableCharsStr]);
+      raise EEditableValidate.CreateFmt(SObjectNameChars, [AvailableCharsStr]);
+end;
+
+procedure ValidateObjectTitle(const ObjTitle: string);
+const
+  MinTitleLen = 2;
+  MaxTitleLen = 42;
+begin
+  if (Length(ObjTitle) < MinTitleLen) or (Length(ObjTitle) > MaxTitleLen) then
+    raise EEditableValidate.CreateFmt(SObjectTitleLength, [MinTitleLen, MaxTitleLen]);
 end;
 
 { TEditableManager }
@@ -334,14 +349,16 @@ begin
   end;
 end;
 
-function TEditableManager.CreateNewObject(AOwner: TEditorUser;
-  const AName: string): TEditableObject;
+function TEditableManager.CreateNewObject(AOwner: TEditorUser; const AName,
+  ATitle: string): TEditableObject;
 var
   ObjectID: integer;
   OwnerInfo: TUserInfo;
+  Transaction: TEditableTransaction;
 begin
   // validate object
-  ValidateObjectName(ObjectTypeName, AName);
+  ValidateObjectName(AName);
+  ValidateObjectTitle(ATitle);
   if ObjectExists(AName) then
     raise EEditableValidate.CreateFmt(SObjectExists, [ObjectTypeName, AName]);
   // create object
@@ -365,6 +382,14 @@ begin
       end;
     finally
       FreeAndNil(OwnerInfo);
+    end;
+    // assign title
+    Transaction := Result.CreateTransaction(AOwner);
+    try
+      Transaction.Title := ATitle;
+      Transaction.Commit;
+    finally
+      FreeAndNil(Transaction);
     end;
     // do the rest
     DoCreateNewObject(Result);
@@ -437,7 +462,7 @@ end;
 function TEditableManager.ObjectExists(const AName: string): boolean;
 begin
   try
-    ValidateObjectName(ObjectTypeName, AName);
+    ValidateObjectName(AName);
     Result := FStorage.VariableExists(FullObjectKeyName(AName, 'id'));
   except
     Result := False;
@@ -710,11 +735,11 @@ begin
   Result := Manager.GetAccessRights(AName, User.Info) = erOwner;
 end;
 
-function TEditableManagerSession.CreateNewObject(const AName: string): TEditableObject;
+function TEditableManagerSession.CreateNewObject(const AName, ATitle: string): TEditableObject;
 begin
   if not CanCreateNewObject then
     raise EEditableAccessDenied.Create(SAccessDenied);
-  Result := Manager.CreateNewObject(User, AName);
+  Result := Manager.CreateNewObject(User, AName, ATitle);
 end;
 
 procedure TEditableManagerSession.DeleteObject(const AName: string);
@@ -731,11 +756,21 @@ end;
 
 { TEditableTransaction }
 
+procedure TEditableTransaction.DoCommit;
+begin
+  ValidateObjectTitle(FTitle);
+  Storage.WriteString(FullKeyName('title'), FTitle);
+end;
+
+procedure TEditableTransaction.DoReload;
+begin
+  FTitle := Storage.ReadString(FullKeyName('title'), '');
+end;
+
 constructor TEditableTransaction.Create(AManager: TEditableManager;
   AUser: TEditorUser; AObject: TEditableObject);
 begin
   inherited Create(AManager, AUser, AObject);
-  DoReload;
 end;
 
 function TEditableTransaction.CanReadData: boolean;
@@ -753,6 +788,19 @@ begin
   if not CanWriteData then
     raise EEditableAccessDenied.Create(SAccessDenied);
   DoCommit;
+end;
+
+procedure TEditableTransaction.Reload;
+begin
+  if not CanReadData then
+    raise EEditableAccessDenied.Create(SAccessDenied);
+  DoReload;
+end;
+
+procedure TEditableTransaction.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Reload;
 end;
 
 { TEditableObjectAccessSession }
@@ -826,6 +874,11 @@ end;
 function TEditableObjectSession.FullUserKeyName(const Key: string): string;
 begin
   Result := EditableObject.FullUserKeyName(User.ID, Key);
+end;
+
+function TEditableObjectSession.FullKeyName(const Key: string): string;
+begin
+  Result := EditableObject.FullKeyName(Key);
 end;
 
 constructor TEditableObjectSession.Create(AManager: TEditableManager;
