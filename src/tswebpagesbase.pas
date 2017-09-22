@@ -52,6 +52,15 @@ type
     property Parent: TTesterHtmlPage read GetParent;
   end;
 
+  { TTesterListedHtmlPageElement }
+
+  TTesterListedHtmlPageElement = class(THtmlListedPageElement)
+  private
+    function GetParent: TTesterHtmlPage;
+  public
+    property Parent: TTesterHtmlPage read GetParent;
+  end;
+
   { IAuthHtmlPage }
 
   {$interfaces CORBA}
@@ -89,6 +98,13 @@ var
 begin
   Dir := AppendPathDelim(Config.Location_TemplatesDir) + ALocation;
   Result := AppendPathDelim(Dir) + AName + '.html';
+end;
+
+{ TTesterListedHtmlPageElement }
+
+function TTesterListedHtmlPageElement.GetParent: TTesterHtmlPage;
+begin
+  Result := (inherited Parent) as TTesterHtmlPage;
 end;
 
 { TTesterHtmlPageElement }

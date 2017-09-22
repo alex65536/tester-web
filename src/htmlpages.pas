@@ -221,24 +221,25 @@ procedure THtmlPageElement.GetContents(Strings: TIndentTaggedStrings);
 var
   Source: TIndentTaggedStrings;
 begin
-  Source := TIndentTaggedStrings.Create;
+  Parent.Preprocessor.Storages.Add(Storage);
   try
-    DoFillVariables;
-    DoGetSkeleton(Source);
-    Parent.Preprocessor.Preprocess(Source, Strings);
+    Source := TIndentTaggedStrings.Create;
+    try
+      DoFillVariables;
+      DoGetSkeleton(Source);
+      Parent.Preprocessor.Preprocess(Source, Strings);
+    finally
+      FreeAndNil(Source);
+    end;
   finally
-    FreeAndNil(Source);
+    Parent.Preprocessor.Storages.Remove(Storage);
   end;
 end;
 
 constructor THtmlPageElement.Create(AParent: THtmlPage);
 begin
   FParent := AParent;
-  with Parent.Preprocessor do
-  begin
-    FStorage := TTreeVariableStorage.Create(Storages);
-    Storages.Add(FStorage);
-  end;
+  FStorage := TTreeVariableStorage.Create(Parent.Preprocessor.Storages);
 end;
 
 destructor THtmlPageElement.Destroy;
