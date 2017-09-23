@@ -736,7 +736,8 @@ begin
     ItemsAsText['objectNodeTitle'] := FTransaction.Title;
     ItemsAsText['objectNodeOwner'] := Parent.GenerateUserLink(GetObjectAuthorName);
     ItemsAsText['objectNodeRights'] := SAccessRightsNames[GetAccessRights(Parent.User as TEditorUser)];
-    ItemsAsText['objectNodeLastModified'] := 'TODO!'; // TODO : add objectNodeLastModified !!!
+    ItemsAsText['objectNodeLastModified'] := FormatDateTime(SPreferredDateTimeFormat,
+      FTransaction.LastModifyTime);
     if FManagerSession.CanDeleteObject(Name) then
       DeleteNodeName := 'editableADeleteEnabled'
     else

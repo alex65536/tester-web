@@ -109,6 +109,7 @@ type
 
   TEditableTransaction = class(TEditableObjectSession)
   private
+    FLastModifyTime: TDateTime;
     FTitle: string;
   protected
     procedure DoCommit; virtual;
@@ -117,6 +118,7 @@ type
       AObject: TEditableObject);
   public
     property Title: string read FTitle write FTitle;
+    property LastModifyTime: TDateTime read FLastModifyTime;
     function CanReadData: boolean; virtual;
     function CanWriteData: boolean; virtual;
     procedure Commit;
@@ -166,6 +168,7 @@ type
     procedure HandleUserDeleting(AInfo: TUserInfo); virtual;
     procedure HandleUserChangedRole({%H-}AInfo: TUserInfo); virtual;
     procedure MessageReceived(AMessage: TAuthorMessage);
+    procedure UpdateModifyTime;
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
   public
     property Name: string read FName;
@@ -394,6 +397,8 @@ begin
     end;
     // do the rest
     DoCreateNewObject(Result);
+    // update modification time
+    Result.UpdateModifyTime;
   except
     FreeAndNil(Result);
     raise;
@@ -591,6 +596,7 @@ begin
   if not (Target.Role in EditorsSet) then
     raise EEditableAccess.CreateFmt(SUserNoEditorAccess, [Target.Username]);
   DoAddUser(Target);
+  UpdateModifyTime;
 end;
 
 procedure TEditableObject.DoAddUser(Target: TUserInfo);
@@ -604,6 +610,7 @@ begin
   if GetAccessRights(Target) = erOwner then
     raise EEditableAccessDenied.Create(SAccessDenied);
   DoDeleteUser(Target);
+  UpdateModifyTime;
 end;
 
 procedure TEditableObject.DoDeleteUser(Target: TUserInfo);
@@ -632,6 +639,7 @@ begin
   if AAccess = erNone then
     raise EEditableAccess.Create(SObjectCannotGrantNoneRole);
   DoGrantAccessRights(Target, AAccess);
+  UpdateModifyTime;
 end;
 
 procedure TEditableObject.DoGrantAccessRights(Target: TUserInfo;
@@ -656,6 +664,11 @@ begin
     HandleUserDeleting((AMessage as TUserDeletingMessage).Info)
   else if AMessage is TUserChangedRoleMessage then
     HandleUserChangedRole((AMessage as TUserChangedRoleMessage).Info);
+end;
+
+procedure TEditableObject.UpdateModifyTime;
+begin
+  FStorage.WriteFloat(FullKeyName('lastModified'), Now);
 end;
 
 constructor TEditableObject.Create(const AName: string; AManager: TEditableManager);
@@ -766,11 +779,13 @@ procedure TEditableTransaction.DoCommit;
 begin
   ValidateObjectTitle(FTitle);
   Storage.WriteString(FullKeyName('title'), FTitle);
+  EditableObject.UpdateModifyTime;
 end;
 
 procedure TEditableTransaction.DoReload;
 begin
   FTitle := Storage.ReadString(FullKeyName('title'), '');
+  FLastModifyTime := Storage.ReadFloat(FullKeyName('lastModified'), 0.0);
 end;
 
 constructor TEditableTransaction.Create(AManager: TEditableManager;
