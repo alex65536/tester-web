@@ -1,5 +1,6 @@
 body {
 	background-color: #B6F3D1;
+	height: 100%;
 }
 
 
@@ -18,6 +19,7 @@ body {
 table.container {
 	border-spacing: 5pt 3pt;
 	width: 100%;
+	height: 100%;
 }
 
 
