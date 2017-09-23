@@ -38,6 +38,7 @@ type
     function Manager: TEditableManager;
     function EditableObject: TEditableObject;
   end;
+
   {$interfaces COM}
 
   { TEditableObjListNode }
@@ -78,16 +79,14 @@ type
   private
     FRights: TEditableAccessRights;
     FSelected: boolean;
-    FSession: TEditableObjectAccessSession;
   protected
-    property Session: TEditableObjectAccessSession read FSession;
     procedure DoFillVariables; override;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
     property Rights: TEditableAccessRights read FRights;
     property Selected: boolean read FSelected;
-    constructor Create(AParent: THtmlPage; ASession: TEditableObjectAccessSession;
-      ARights: TEditableAccessRights; ASelected: boolean);
+    constructor Create(AParent: THtmlPage; ARights: TEditableAccessRights;
+      ASelected: boolean);
   end;
 
   { TEditableAccessNode }
@@ -149,9 +148,9 @@ begin
   with Parent.Variables do
   begin
     ItemsAsText['editableAccessId'] := SEditableAccessId;
-	  ItemsAsText['editableAccessUsername'] := SEditableAccessUsername;
-	  ItemsAsText['editableAccessRights'] := SEditableAccessRights;
-	  ItemsAsText['editableAccessDelete'] := SEditableAccessDelete;
+    ItemsAsText['editableAccessUsername'] := SEditableAccessUsername;
+    ItemsAsText['editableAccessRights'] := SEditableAccessRights;
+    ItemsAsText['editableAccessDelete'] := SEditableAccessDelete;
   end;
   FillList;
   AddListToVariable('editableAccessNodes');
@@ -181,7 +180,7 @@ begin
   TargetRights := Session.EditableObject.GetAccessRights(Target);
   for R in TEditableAccessRights do
     if Session.CanGrantAccessRights(Target, R) then
-      List.Add(TEditableAccessRightsOption.Create(Parent, Session, R, R = TargetRights));
+      List.Add(TEditableAccessRightsOption.Create(Parent, R, R = TargetRights));
 end;
 
 procedure TEditableAccessNode.DoFillVariables;
@@ -200,13 +199,15 @@ begin
     if List.Count > 1 then
     begin
       AddListToVariable('objectNodeEditRightsOptions');
-      SetFromFile('objectNodeRightsEdit', TemplateLocation('editable', 'editableEditRights'));
+      SetFromFile('objectNodeRightsEdit', TemplateLocation('editable',
+        'editableEditRights'));
     end
     else
     begin
       TargetRights := Session.EditableObject.GetAccessRights(Target);
       ItemsAsText['objectUserRights'] := SAccessRightsNames[TargetRights];
-      SetFromFile('objectNodeRightsEdit', TemplateLocation('editable', 'editableViewRights'));
+      SetFromFile('objectNodeRightsEdit', TemplateLocation('editable',
+        'editableViewRights'));
     end;
     List.Clear;
     // fill "delete" column
@@ -259,11 +260,9 @@ begin
 end;
 
 constructor TEditableAccessRightsOption.Create(AParent: THtmlPage;
-  ASession: TEditableObjectAccessSession; ARights: TEditableAccessRights;
-  ASelected: boolean);
+  ARights: TEditableAccessRights; ASelected: boolean);
 begin
   inherited Create(AParent);
-  FSession := ASession;
   FRights := ARights;
   FSelected := ASelected;
 end;
@@ -297,8 +296,7 @@ begin
   Strings.LoadFromFile(TemplateLocation('editable', 'editableObjListTable'));
 end;
 
-constructor TEditableObjList.Create(AParent: THtmlPage;
-  AManager: TEditableManager);
+constructor TEditableObjList.Create(AParent: THtmlPage; AManager: TEditableManager);
 begin
   inherited Create(AParent);
   FManager := AManager;
@@ -313,12 +311,13 @@ begin
   with Storage, FEditableObject do
   begin
     ItemsAsText['objectNodeName'] := Name;
-    ItemsAsText['objectNodeTitle'] := FTransaction.Title;
+    ItemsAsText['objectNodeTitle'] := Transaction.Title;
     ItemsAsText['objectNodeOwner'] := Parent.GenerateUserLink(GetObjectAuthorName);
-    ItemsAsText['objectNodeRights'] := SAccessRightsNames[GetAccessRights(Parent.User as TEditorUser)];
-    ItemsAsText['objectNodeLastModified'] := FormatDateTime(SPreferredDateTimeFormat,
-      FTransaction.LastModifyTime);
-    if FManagerSession.CanDeleteObject(Name) then
+    ItemsAsText['objectNodeRights'] :=
+      SAccessRightsNames[GetAccessRights(Parent.User as TEditorUser)];
+    ItemsAsText['objectNodeLastModified'] :=
+      FormatDateTime(SPreferredDateTimeFormat, Transaction.LastModifyTime);
+    if ManagerSession.CanDeleteObject(Name) then
       DeleteNodeName := 'editableADeleteEnabled'
     else
       DeleteNodeName := 'editableADeleteDisabled';
@@ -331,12 +330,12 @@ begin
   Strings.LoadFromFile(TemplateLocation('editable', 'editableObjListNode'));
 end;
 
-constructor TEditableObjListNode.Create(AParent: THtmlPage;
-  AObject: TEditableObject);
+constructor TEditableObjListNode.Create(AParent: THtmlPage; AObject: TEditableObject);
 begin
   inherited Create(AParent);
   FEditableObject := AObject;
-  FManagerSession := FEditableObject.Manager.CreateManagerSession(Parent.User as TEditorUser);
+  FManagerSession := FEditableObject.Manager.CreateManagerSession(
+    Parent.User as TEditorUser);
   FTransaction := FEditableObject.CreateTransaction(Parent.User as TEditorUser);
 end;
 
@@ -349,4 +348,3 @@ begin
 end;
 
 end.
-
