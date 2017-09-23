@@ -178,7 +178,7 @@ procedure TEditableObjectPostWebModule.DoHandlePost(ARequest: TRequest);
 begin
   FEditableObject := Hook.EditableObject;
   try
-    DoHandlePost(ARequest);
+    DoInsideHandlePost(ARequest);
   finally
     FreeAndNil(FEditableObject);
   end;
