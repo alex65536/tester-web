@@ -587,6 +587,8 @@ end;
 procedure TEditableObject.AddUser(Target: TUserInfo);
 begin
   CheckNoAccess(Target);
+  if not (Target.Role in EditorsSet) then
+    raise EEditableAccess.CreateFmt(SUserNoEditorAccess, [Target.Username]);
   DoAddUser(Target);
 end;
 

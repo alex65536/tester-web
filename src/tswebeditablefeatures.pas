@@ -84,6 +84,7 @@ type
   TEditableAccessRightsOption = class(TTesterHtmlPageElement)
   private
     FRights: TEditableAccessRights;
+    FSelected: boolean;
     FSession: TEditableObjectAccessSession;
   protected
     property Session: TEditableObjectAccessSession read FSession;
@@ -91,8 +92,9 @@ type
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
     property Rights: TEditableAccessRights read FRights;
+    property Selected: boolean read FSelected;
     constructor Create(AParent: THtmlPage; ASession: TEditableObjectAccessSession;
-      ARights: TEditableAccessRights);
+      ARights: TEditableAccessRights; ASelected: boolean);
   end;
 
   { TEditableAccessNode }
@@ -145,8 +147,6 @@ type
     procedure Satisfy; override;
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
-
-  { TEditableUserFeature }
 
   { TEditableObjectFeature }
 
@@ -283,11 +283,13 @@ end;
 procedure TEditableAccessNode.FillList;
 var
   R: TEditableAccessRights;
+  TargetRights: TEditableAccessRights;
 begin
   List.Clear;
+  TargetRights := Session.EditableObject.GetAccessRights(Target);
   for R in TEditableAccessRights do
     if Session.CanGrantAccessRights(Target, R) then
-      List.Add(TEditableAccessRightsOption.Create(Parent, Session, R));
+      List.Add(TEditableAccessRightsOption.Create(Parent, Session, R, R = TargetRights));
 end;
 
 procedure TEditableAccessNode.DoFillVariables;
@@ -343,6 +345,8 @@ begin
   begin
     ItemsAsText['rightsFullName'] := AccessRightsToStr(Rights);
     ItemsAsText['rightsName'] := SAccessRightsNames[Rights];
+    if Selected then
+      ItemsAsText['rightsSelected'] := ' selected';
   end;
 end;
 
@@ -352,11 +356,13 @@ begin
 end;
 
 constructor TEditableAccessRightsOption.Create(AParent: THtmlPage;
-  ASession: TEditableObjectAccessSession; ARights: TEditableAccessRights);
+  ASession: TEditableObjectAccessSession; ARights: TEditableAccessRights;
+  ASelected: boolean);
 begin
   inherited Create(AParent);
   FSession := ASession;
   FRights := ARights;
+  FSelected := ASelected;
 end;
 
 { TEditableCreateFormFeature }

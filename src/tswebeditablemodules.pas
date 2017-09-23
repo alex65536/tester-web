@@ -25,9 +25,19 @@ unit tswebeditablemodules;
 interface
 
 uses
-  Classes, SysUtils, webmodules, tsmiscwebmodules, editableobjects, HTTPDefs;
+  Classes, SysUtils, webmodules, tsmiscwebmodules, editableobjects, HTTPDefs,
+  users;
 
 type
+  {$interfaces CORBA}
+
+  { IEditableWebModule }
+
+  IEditableWebModule = interface
+    ['{3930B3B7-0A9F-41AF-929A-D416E801EE75}']
+    function Manager: TEditableManager;
+  end;
+  {$interfaces COM}
 
   { TEditableHtmlPageWebModule }
 
@@ -36,39 +46,97 @@ type
     procedure AfterConstruction; override;
   end;
 
-  { TEditableCreateNewWebModule }
+  { TEditablePostWebModule }
 
-  TEditableCreateNewWebModule = class(TPostUserWebModule)
+  TEditablePostWebModule = class(TPostUserWebModule, IEditableWebModule)
   protected
     function Manager: TEditableManager; virtual; abstract;
-    procedure DoHandlePost(ARequest: TRequest); override;
   public
     procedure AfterConstruction; override;
+  end;
+
+  { TEditableCreateNewWebModule }
+
+  TEditableCreateNewWebModule = class(TEditablePostWebModule)
+  protected
+    procedure DoHandlePost(ARequest: TRequest); override;
   end;
 
   { TEditableAccessWebModule }
 
-  TEditableAccessWebModule = class(TPostUserWebModule)
-  protected
-    function Manager: TEditableManager; virtual; abstract;
+  TEditableAccessWebModule = class(TEditablePostWebModule)
     procedure DoHandlePost(ARequest: TRequest); override;
-  public
-    procedure AfterConstruction; override;
   end;
 
+function EditableObjectFromRequest(ARequest: TRequest; AManager: TEditableManager): TEditableObject;
+function EditableObjectFromRequest(AModule: THtmlPageWebModule): TEditableObject;
+
 implementation
+
+function EditableObjectFromRequest(ARequest: TRequest; AManager: TEditableManager): TEditableObject;
+var
+  ObjectName: string;
+begin
+  ObjectName := ARequest.QueryFields.Values['object'];
+  Result := AManager.GetObject(ObjectName);
+end;
+
+function EditableObjectFromRequest(AModule: THtmlPageWebModule): TEditableObject;
+begin
+  Result := EditableObjectFromRequest(AModule.Request, (AModule as IEditableWebModule).Manager);
+end;
 
 { TEditableAccessWebModule }
 
 procedure TEditableAccessWebModule.DoHandlePost(ARequest: TRequest);
-begin
-  // TODO : Write it !!!
-end;
+var
+  AccessSession: TEditableObjectAccessSession;
+  Target: TUserInfo;
 
-procedure TEditableAccessWebModule.AfterConstruction;
+  procedure HandleAddUser;
+  begin
+    AccessSession.AddUser(Target);
+  end;
+
+  procedure HandleDeleteUser;
+  begin
+    AccessSession.DeleteUser(Target);
+  end;
+
+  procedure HandleAccessChangeUser;
+  var
+    NewAccess: TEditableAccessRights;
+  begin
+    NewAccess := StrToAccessRights(ARequest.ContentFields.Values['access-type']);
+    AccessSession.GrantAccessRights(Target, NewAccess);
+  end;
+
+var
+  EditableObject: TEditableObject;
+  QueryType: string;
 begin
-  inherited AfterConstruction;
-  Handlers.Add(TDeclineNotLoggedWebModuleHandler.Create(EditorsSet));
+  EditableObject := EditableObjectFromRequest(Self);
+  try
+    AccessSession := EditableObject.CreateAccessSession(User as TEditorUser);
+    try
+      Target := UserManager.GetUserInfo(ARequest.ContentFields.Values['user']);
+      try
+        QueryType := ARequest.ContentFields.Values['query'];
+        if QueryType = 'add-user' then
+          HandleAddUser
+        else if QueryType = 'delete-user' then
+          HandleDeleteUser
+        else if QueryType = 'access-change-user' then
+          HandleAccessChangeUser;
+      finally
+        FreeAndNil(Target);
+      end;
+    finally
+      FreeAndNil(AccessSession);
+    end;
+  finally
+    FreeAndNil(EditableObject);
+  end;
 end;
 
 { TEditableCreateNewWebModule }
@@ -88,7 +156,9 @@ begin
   end;
 end;
 
-procedure TEditableCreateNewWebModule.AfterConstruction;
+{ TEditablePostWebModule }
+
+procedure TEditablePostWebModule.AfterConstruction;
 begin
   inherited AfterConstruction;
   Handlers.Add(TDeclineNotLoggedWebModuleHandler.Create(EditorsSet));

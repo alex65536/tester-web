@@ -202,14 +202,9 @@ begin
 end;
 
 function TProblemHtmlPage.EditableObject: TEditableObject;
-var
-  ObjectName: string;
 begin
   if HasEditableObject then
-  begin
-    ObjectName := Request.QueryFields.Values['object'];
-    Result := Manager.GetObject(ObjectName);
-  end
+    Result := EditableObjectFromRequest(Request, Manager)
   else
     Result := nil;
 end;

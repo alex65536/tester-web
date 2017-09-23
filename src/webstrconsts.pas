@@ -178,6 +178,7 @@ resourcestring
   SObjectAddUserPrompt = 'Enter username to add';
   SObjectAddUserBtn = 'Add';
   SEditableManageAccess = 'Manage Access';
+  SUserNoEditorAccess = 'User with name "%s" doesn''t have editor rights!';
 
 implementation
 
