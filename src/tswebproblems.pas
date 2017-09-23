@@ -29,7 +29,8 @@ interface
 uses
   Classes, SysUtils, tswebmodules, tswebeditablefeatures, tswebeditablemodules,
   webstrconsts, fphttp, htmlpages, problems, editableobjects, navbars,
-  tswebfeatures, tswebpagesbase, tswebpages, htmlpreprocess, HTTPDefs;
+  tswebfeatures, tswebpagesbase, tswebpages, htmlpreprocess, HTTPDefs,
+  tswebeditableelements;
 
 type
 
