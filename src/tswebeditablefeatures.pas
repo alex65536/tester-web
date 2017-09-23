@@ -161,6 +161,65 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TEditableObjectBaseFeature }
+
+  TEditableObjectBaseFeature = class(TEditableObjectFeature)
+  public
+    procedure InternalSatisfy; override;
+  end;
+
+  { TEditableNavButtonBaseFeature }
+
+  TEditableNavButtonBaseFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TEditableNavButtonFeature }
+
+  TEditableNavButtonFeature = class(TEditableObjectFeature)
+  protected
+    function Enabled: boolean; virtual; abstract;
+    function PagePartName: string; virtual; abstract;
+    function BtnInnerName: string; virtual;
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TEditableViewButtonFeature }
+
+  TEditableViewButtonFeature = class(TEditableNavButtonFeature)
+  protected
+    function Enabled: boolean; override;
+    function PagePartName: string; override;
+  end;
+
+  { TEditableEditButtonFeature }
+
+  TEditableEditButtonFeature = class(TEditableNavButtonFeature)
+  protected
+    function Enabled: boolean; override;
+    function PagePartName: string; override;
+  end;
+
+  { TEditableAccessButtonFeature }
+
+  TEditableAccessButtonFeature = class(TEditableNavButtonFeature)
+  protected
+    function Enabled: boolean; override;
+    function PagePartName: string; override;
+  end;
+
+  { TEditableButtonsFeature }
+
+  TEditableButtonsFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
   { TEditableManageAccessFeature }
 
   TEditableManageAccessFeature = class(TEditableObjectFeature)
@@ -171,6 +230,109 @@ type
   end;
 
 implementation
+
+{ TEditableAccessButtonFeature }
+
+function TEditableAccessButtonFeature.Enabled: boolean;
+begin
+  Result := EditableObject.GetAccessRights(User) in AccessCanReadSet;
+end;
+
+function TEditableAccessButtonFeature.PagePartName: string;
+begin
+  Result := 'editableAccessBtn';
+end;
+
+{ TEditableEditButtonFeature }
+
+function TEditableEditButtonFeature.Enabled: boolean;
+begin
+  Result := EditableObject.GetAccessRights(User) in AccessCanWriteSet;
+end;
+
+function TEditableEditButtonFeature.PagePartName: string;
+begin
+  Result := 'editableEditBtn';
+end;
+
+{ TEditableViewButtonFeature }
+
+function TEditableViewButtonFeature.Enabled: boolean;
+begin
+  Result := EditableObject.GetAccessRights(User) in AccessCanReadSet;
+end;
+
+function TEditableViewButtonFeature.PagePartName: string;
+begin
+  Result := 'editableViewBtn';
+end;
+
+{ TEditableButtonsFeature }
+
+procedure TEditableButtonsFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['editableViewText'] := SEditableViewText;
+    ItemsAsText['editableEditText'] := SEditableEditText;
+    ItemsAsText['editableAccessText'] := SEditableAccessText;
+  end;
+end;
+
+procedure TEditableButtonsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableViewButtonFeature);
+  ADependencies.Add(TEditableEditButtonFeature);
+  ADependencies.Add(TEditableAccessButtonFeature);
+end;
+
+{ TEditableNavButtonFeature }
+
+function TEditableNavButtonFeature.BtnInnerName: string;
+begin
+  Result := PagePartName + 'Inner';
+end;
+
+procedure TEditableNavButtonFeature.InternalSatisfy;
+var
+  BtnInnerVar: string;
+begin
+  if Enabled then
+    BtnInnerVar := '~+#editableLinkEnabled;'
+  else
+    BtnInnerVar := '~+#editableLinkDisabled;';
+  Parent.Variables.ItemsAsText[BtnInnerName] := BtnInnerVar;
+  LoadPagePart('editable', PagePartName);
+end;
+
+procedure TEditableNavButtonFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableNavButtonBaseFeature);
+end;
+
+{ TEditableNavButtonBaseFeature }
+
+procedure TEditableNavButtonBaseFeature.Satisfy;
+begin
+  LoadPagePart('editable', 'editableLinkEnabled');
+  LoadPagePart('editable', 'editableLinkDisabled');
+end;
+
+procedure TEditableNavButtonBaseFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableObjectBaseFeature);
+end;
+
+{ TEditableObjectBaseFeature }
+
+procedure TEditableObjectBaseFeature.InternalSatisfy;
+begin
+  with Parent.Variables do
+    ItemsAsText['objectName'] := EditableObject.Name;
+end;
 
 { TEditableObjectFeature }
 
@@ -235,6 +397,7 @@ begin
   ADependencies.Add(TPostDataFeature);
   ADependencies.Add(TSessionTokenFeature);
   ADependencies.Add(TContentFeature);
+  ADependencies.Add(TEditableButtonsFeature);
 end;
 
 { TEditableAccessNodeList }

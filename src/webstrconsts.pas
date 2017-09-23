@@ -178,6 +178,9 @@ resourcestring
   SObjectAddUserBtn = 'Add';
   SEditableManageAccess = 'Manage Access';
   SUserNoEditorAccess = 'User with name "%s" doesn''t have editor rights!';
+  SEditableViewText = 'View';
+  SEditableEditText = 'Edit';
+  SEditableAccessText = 'Manage access';
 
 implementation
 
