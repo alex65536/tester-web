@@ -36,12 +36,12 @@ type
   private
     FEditableObject: TEditableObject;
   protected
-    function User: TEditorUser;
-    property EditableObject: TEditableObject read FEditableObject;
     procedure InternalSatisfy; virtual; abstract;
     procedure BeforeSatisfy; virtual;
     procedure AfterSatisfy; virtual;
   public
+    function User: TEditorUser;
+    property EditableObject: TEditableObject read FEditableObject;
     procedure Satisfy; override;
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
@@ -202,8 +202,6 @@ begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TEditableEditViewBaseFeature);
   ADependencies.Add(TPostDataFeature);
-  ADependencies.Add(TContentFeature);
-  ADependencies.Add(TEditablePageTitleFeature);
 end;
 
 { TEditableViewFeature }
@@ -218,8 +216,6 @@ procedure TEditableViewFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TEditableEditViewBaseFeature);
-  ADependencies.Add(TContentFeature);
-  ADependencies.Add(TEditablePageTitleFeature);
 end;
 
 { TEditableEditViewBaseFeature }
@@ -237,8 +233,10 @@ end;
 procedure TEditableEditViewBaseFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableBaseFeature);
   ADependencies.Add(TEditableButtonsFeature);
   ADependencies.Add(TContentFeature);
+  ADependencies.Add(TEditablePageTitleFeature);
 end;
 
 { TEditableManageAccessFeature }
@@ -280,8 +278,9 @@ end;
 procedure TEditableManageAccessFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
-  ADependencies.Add(TPostDataFeature);
+  ADependencies.Add(TEditableBaseFeature);
   ADependencies.Add(TContentFeature);
+  ADependencies.Add(TPostDataFeature);
   ADependencies.Add(TEditableButtonsFeature);
   ADependencies.Add(TEditablePageTitleFeature);
 end;
@@ -401,9 +400,8 @@ procedure TEditableCreateFormFeature.DependsOn(ADependencies: THtmlPageFeatureLi
 begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TEditableBaseFeature);
-  ADependencies.Add(TPostDataFeature);
-  ADependencies.Add(TSessionTokenFeature);
   ADependencies.Add(TContentFeature);
+  ADependencies.Add(TPostDataFeature);
 end;
 
 { TEditableObjListFeature }
