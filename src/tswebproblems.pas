@@ -99,8 +99,6 @@ type
   TProblemAccessPage = class(TProblemPostHtmlPage)
   protected
     procedure AddFeatures; override;
-  public
-    procedure AfterConstruction; override;
   end;
 
   { TProblemViewPage }
@@ -108,8 +106,6 @@ type
   TProblemViewPage = class(TProblemHtmlPage)
   protected
     procedure AddFeatures; override;
-  public
-    procedure AfterConstruction; override;
   end;
 
   { TProblemEditPage }
@@ -117,8 +113,6 @@ type
   TProblemEditPage = class(TProblemPostHtmlPage)
   protected
     procedure AddFeatures; override;
-  public
-    procedure AfterConstruction; override;
   end;
 
   { TProblemModuleHook }
@@ -206,12 +200,6 @@ begin
   AddFeature(TEditableEditFeature);
 end;
 
-procedure TProblemEditPage.AfterConstruction;
-begin
-  inherited AfterConstruction;
-  Title := SProblemEdit;
-end;
-
 { TProblemEditModule }
 
 function TProblemEditModule.CreateHook: TEditableModuleHook;
@@ -239,12 +227,6 @@ begin
   AddFeature(TEditableViewFeature);
 end;
 
-procedure TProblemViewPage.AfterConstruction;
-begin
-  inherited AfterConstruction;
-  Title := SProblemView;
-end;
-
 { TProblemHtmlPageModule }
 
 function TProblemHtmlPageModule.Manager: TEditableManager;
@@ -270,12 +252,6 @@ procedure TProblemAccessPage.AddFeatures;
 begin
   inherited AddFeatures;
   AddFeature(TEditableManageAccessFeature);
-end;
-
-procedure TProblemAccessPage.AfterConstruction;
-begin
-  inherited AfterConstruction;
-  Title := SEditableManageAccess;
 end;
 
 { TProblemAccessModule }

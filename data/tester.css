@@ -92,19 +92,44 @@ table.container {
 }
 
 
-.content {
-	padding: 10pt 10pt;
-	background-color: #E3FFF0;
-	vertical-align: top;
+td.content-cell {
 	height: 100%;
+	margin: 0;
+	padding: 0;
 }
+table.content-table {
+	background-color: #E3FFF0;
+	border-spacing: 0;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+}
+.content {
+	height: 100%;
+	padding: 10pt 10pt;
+	vertical-align: top;
+}
+.content-header {
+	background-color: #47BD7B;
+	border-bottom-color: #1CA757;
+	border-bottom-style: ridge;
+	border-bottom-width: 2pt;
+	color: white;
+	font-size: 18pt;
+	font-weight: bold;
+	padding: 5pt 1pt;
+	text-align: center;
+}
+
+
 table.center-wrapper {
 	height: 100%;
 	margin: auto;
 	text-align: center;
 }
 .text-header {
-	text-height: 16pt;
+	font-size: 14pt;
 	font-weight: bold;
 	padding: 3pt 0;
 }
@@ -314,9 +339,9 @@ table.styled th.narrow {
 
 
 table.access-table th.id {
-	width: 1pt;
 	padding-left: 1em;
 	padding-right: 1em;
+	width: 1pt;
 }
 
 

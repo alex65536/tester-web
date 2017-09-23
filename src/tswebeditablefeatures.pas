@@ -166,7 +166,7 @@ type
   { TEditableObjectBaseFeature }
 
   TEditableObjectBaseFeature = class(TEditableObjectFeature)
-  public
+  protected
     procedure InternalSatisfy; override;
   end;
 
@@ -243,6 +243,15 @@ type
     property Transaction: TEditableTransaction read FTransaction;
   end;
 
+  { TEditablePageTitleFeature }
+
+  TEditablePageTitleFeature = class(TEditableTransactionPageFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
   { TEditableEditViewBaseFeature }
 
   TEditableEditViewBaseFeature = class(TEditableTransactionPageFeature)
@@ -270,12 +279,31 @@ type
 
 implementation
 
+{ TEditablePageTitleFeature }
+
+procedure TEditablePageTitleFeature.InternalSatisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['pageHeader'] := Transaction.Title;
+    ItemsAsText['title'] := '~pageHeader;: ~contentHeaderText;';
+  end;
+end;
+
+procedure TEditablePageTitleFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(THeaderFeature);
+  ADependencies.Add(TContentHeaderFeature);
+end;
+
 { TEditableEditFeature }
 
 procedure TEditableEditFeature.Satisfy;
 begin
   with Parent.Variables do
   begin
+    ItemsAsText['contentHeaderText'] := SEditableEditText;
     ItemsAsText['objectEditSubmit'] := SObjectEditSubmit;
   end;
   LoadPagePart('editable', 'editableEdit', 'content');
@@ -286,12 +314,15 @@ begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TEditableEditViewBaseFeature);
   ADependencies.Add(TPostDataFeature);
+  ADependencies.Add(TContentFeature);
+  ADependencies.Add(TEditablePageTitleFeature);
 end;
 
 { TEditableViewFeature }
 
 procedure TEditableViewFeature.Satisfy;
 begin
+  Parent.Variables.ItemsAsText['contentHeaderText'] := SEditableViewText;
   LoadPagePart('editable', 'editableView', 'content');
 end;
 
@@ -299,6 +330,8 @@ procedure TEditableViewFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TEditableEditViewBaseFeature);
+  ADependencies.Add(TContentFeature);
+  ADependencies.Add(TEditablePageTitleFeature);
 end;
 
 { TEditableEditViewBaseFeature }
@@ -479,6 +512,8 @@ var
 begin
   Session := EditableObject.CreateAccessSession(User);
   try
+    // title
+    Parent.Variables.ItemsAsText['contentHeaderText'] := SEditableAccessText;
     // "add user" panel
     if Session.CanAddUser then
     begin
@@ -510,6 +545,7 @@ begin
   ADependencies.Add(TPostDataFeature);
   ADependencies.Add(TContentFeature);
   ADependencies.Add(TEditableButtonsFeature);
+  ADependencies.Add(TEditablePageTitleFeature);
 end;
 
 { TEditableAccessNodeList }
