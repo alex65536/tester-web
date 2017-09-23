@@ -146,7 +146,8 @@ type
 
   TEditableEditWebModule = class(TEditableObjectPostWebModule)
   protected
-    procedure DoInsideHandlePost(ARequest: TRequest); override;
+    procedure DoInsideEdit(ATransaction: TEditableTransaction); virtual;
+    procedure DoInsideHandlePost({%H-}ARequest: TRequest); override;
   end;
 
 function EditableObjectNameFromRequest(ARequest: TRequest): string;
@@ -185,16 +186,21 @@ end;
 
 { TEditableEditWebModule }
 
+procedure TEditableEditWebModule.DoInsideEdit(ATransaction: TEditableTransaction);
+begin
+  ATransaction.Title := Request.ContentFields.Values['title'];
+end;
+
 procedure TEditableEditWebModule.DoInsideHandlePost(ARequest: TRequest);
 var
-  Transation: TEditableTransaction;
+  Transaction: TEditableTransaction;
 begin
-  Transation := EditableObject.CreateTransaction(User as TEditorUser);
+  Transaction := EditableObject.CreateTransaction(User as TEditorUser);
   try
-    Transation.Title := ARequest.ContentFields.Values['title'];
-    Transation.Commit;
+    DoInsideEdit(Transaction);
+    Transaction.Commit;
   finally
-    FreeAndNil(Transation);
+    FreeAndNil(Transaction);
   end;
 end;
 
@@ -283,16 +289,16 @@ end;
 
 procedure TEditableCreateNewWebModule.DoHandlePost(ARequest: TRequest);
 var
-  MgrSession: TEditableManagerSession;
-  MgrName, MgrTitle: string;
+  ManagerSession: TEditableManagerSession;
+  ObjName, ObjTitle: string;
 begin
-  MgrSession := Manager.CreateManagerSession(User as TEditorUser);
+  ManagerSession := Manager.CreateManagerSession(User as TEditorUser);
   try
-    MgrName := ARequest.ContentFields.Values['name'];
-    MgrTitle := ARequest.ContentFields.Values['title'];
-    MgrSession.CreateNewObject(MgrName, MgrTitle).Free;
+    ObjName := ARequest.ContentFields.Values['name'];
+    ObjTitle := ARequest.ContentFields.Values['title'];
+    ManagerSession.CreateNewObject(ObjName, ObjTitle).Free;
   finally
-    FreeAndNil(MgrSession);
+    FreeAndNil(ManagerSession);
   end;
 end;
 
