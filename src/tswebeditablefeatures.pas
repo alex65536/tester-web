@@ -298,6 +298,7 @@ end;
 procedure TEditableAccessNode.DoFillVariables;
 var
   DeleteBtnLocation: string;
+  TargetRights: TEditableAccessRights;
 begin
   with Storage do
   begin
@@ -306,10 +307,18 @@ begin
     ItemsAsText['objectNodeAccessChange'] := SObjectNodeAccessChange;
     ItemsAsText['objectNodeUsername'] := Target.Username;
     // fill "edit rights" column
-    // TODO : Add static rights if there's only one choice!
     FillList;
-    AddListToVariable('objectNodeEditRightsOptions');
-    SetFromFile('objectNodeRightsEdit', TemplateLocation('editable', 'editableEditRights'));
+    if List.Count > 1 then
+    begin
+      AddListToVariable('objectNodeEditRightsOptions');
+      SetFromFile('objectNodeRightsEdit', TemplateLocation('editable', 'editableEditRights'));
+    end
+    else
+    begin
+      TargetRights := Session.EditableObject.GetAccessRights(Target);
+      ItemsAsText['objectUserRights'] := SAccessRightsNames[TargetRights];
+      SetFromFile('objectNodeRightsEdit', TemplateLocation('editable', 'editableViewRights'));
+    end;
     List.Clear;
     // fill "delete" column
     if Session.CanDeleteUser(Target) then
