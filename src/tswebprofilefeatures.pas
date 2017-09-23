@@ -164,6 +164,10 @@ begin
         begin
           ItemsAsText['profileNewUserRole'] := UserRoleToStr(Role);
           ItemsAsText['profileNewUserRoleName'] := UserRoleNames[Role];
+          if Role = Info.Role then
+            ItemsAsText['profileNewUserRoleSelected'] := ' selected'
+          else
+            ItemsAsText['profileNewUserRoleSelected'] := '';
         end;
         Options.Add(Parent.Preprocessor.PreprocessFile(TemplateLocation('profile', 'profileChangeRoleOption')));
       end;

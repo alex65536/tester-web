@@ -349,7 +349,9 @@ begin
     ItemsAsText['rightsFullName'] := AccessRightsToStr(Rights);
     ItemsAsText['rightsName'] := SAccessRightsNames[Rights];
     if Selected then
-      ItemsAsText['rightsSelected'] := ' selected';
+      ItemsAsText['rightsSelected'] := ' selected'
+    else
+      ItemsAsText['rightsSelected'] := '';
   end;
 end;
 
