@@ -29,6 +29,19 @@ uses
   users;
 
 type
+
+  { TEditableModuleHook }
+
+  TEditableModuleHook = class
+  private
+    FParent: THtmlPageWebModule;
+  public
+    property Parent: THtmlPageWebModule read FParent;
+    function Manager: TEditableManager; virtual; abstract;
+    function RedirectIfNoAccess: string; virtual; abstract;
+    constructor Create(AParent: THtmlPageWebModule);
+  end;
+
   {$interfaces CORBA}
 
   { IEditableWebModule }
@@ -36,6 +49,13 @@ type
   IEditableWebModule = interface
     ['{3930B3B7-0A9F-41AF-929A-D416E801EE75}']
     function Manager: TEditableManager;
+  end;
+
+  { IEditableWebModuleHook }
+
+  IEditableWebModuleHook = interface
+    ['{244D54B6-6985-4FF3-BADB-F580B4FBE004}']
+    function Hook: TEditableModuleHook;
   end;
   {$interfaces COM}
 
@@ -46,13 +66,27 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TEditableRedirectIfNoAccessHandler }
+
+  TEditableRedirectIfNoAccessHandler = class(TWebModuleHandler)
+  public
+    procedure HandleRequest(ARequest: TRequest; AResponse: TResponse;
+      var Handled: boolean); override;
+  end;
+
   { TEditablePostWebModule }
 
-  TEditablePostWebModule = class(TPostUserWebModule, IEditableWebModule)
+  TEditablePostWebModule = class(TPostUserWebModule, IEditableWebModule, IEditableWebModuleHook)
+  private
+    FHook: TEditableModuleHook;
   protected
-    function Manager: TEditableManager; virtual; abstract;
+    function Hook: TEditableModuleHook;
+    function Manager: TEditableManager;
+    function CreateHook: TEditableModuleHook; virtual; abstract;
   public
+    constructor CreateNew(AOwner: TComponent; CreateMode: integer); override;
     procedure AfterConstruction; override;
+    destructor Destroy; override;
   end;
 
   { TEditableCreateNewWebModule }
@@ -65,7 +99,10 @@ type
   { TEditableAccessWebModule }
 
   TEditableAccessWebModule = class(TEditablePostWebModule)
+  protected
     procedure DoHandlePost(ARequest: TRequest); override;
+  public
+    procedure AfterConstruction; override;
   end;
 
 function EditableObjectFromRequest(ARequest: TRequest; AManager: TEditableManager): TEditableObject;
@@ -84,6 +121,45 @@ end;
 function EditableObjectFromRequest(AModule: THtmlPageWebModule): TEditableObject;
 begin
   Result := EditableObjectFromRequest(AModule.Request, (AModule as IEditableWebModule).Manager);
+end;
+
+{ TEditableRedirectIfNoAccessHandler }
+
+procedure TEditableRedirectIfNoAccessHandler.HandleRequest(ARequest: TRequest;
+  AResponse: TResponse; var Handled: boolean);
+var
+  EditableObject: TEditableObject;
+  User: TEditorUser;
+  Redirect: boolean;
+begin
+  Redirect := False;
+  try
+    EditableObject := EditableObjectFromRequest(Parent as THtmlPageWebModule);
+    try
+      User := (Parent as TPostUserWebModule).User as TEditorUser;
+      Redirect := EditableObject.GetAccessRights(User) = erNone;
+    finally
+      FreeAndNil(EditableObject);
+    end;
+  except
+    on E: EEditableAction do
+      Redirect := True
+    else
+      raise;
+  end;
+  if Redirect then
+  begin
+    AResponse.Location := (Parent as IEditableWebModuleHook).Hook.RedirectIfNoAccess;
+    AResponse.Code := 303;
+    Handled := True;
+  end;
+end;
+
+{ TEditableModuleHook }
+
+constructor TEditableModuleHook.Create(AParent: THtmlPageWebModule);
+begin
+  FParent := AParent;
 end;
 
 { TEditableAccessWebModule }
@@ -139,6 +215,16 @@ begin
   end;
 end;
 
+procedure TEditableAccessWebModule.AfterConstruction;
+begin
+  // we need two redirectors
+  // first to redirect back users that have no access
+  // second to redirect self-deleted ones
+  Handlers.Add(TEditableRedirectIfNoAccessHandler.Create);
+  inherited AfterConstruction;
+  Handlers.Add(TEditableRedirectIfNoAccessHandler.Create);
+end;
+
 { TEditableCreateNewWebModule }
 
 procedure TEditableCreateNewWebModule.DoHandlePost(ARequest: TRequest);
@@ -158,10 +244,33 @@ end;
 
 { TEditablePostWebModule }
 
+function TEditablePostWebModule.Hook: TEditableModuleHook;
+begin
+  Result := FHook;
+end;
+
+function TEditablePostWebModule.Manager: TEditableManager;
+begin
+  Result := Hook.Manager;
+end;
+
+constructor TEditablePostWebModule.CreateNew(AOwner: TComponent;
+  CreateMode: integer);
+begin
+  inherited CreateNew(AOwner, CreateMode);
+  FHook := CreateHook;
+end;
+
 procedure TEditablePostWebModule.AfterConstruction;
 begin
   inherited AfterConstruction;
-  Handlers.Add(TDeclineNotLoggedWebModuleHandler.Create(EditorsSet));
+  Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create(EditorsSet));
+end;
+
+destructor TEditablePostWebModule.Destroy;
+begin
+  FreeAndNil(FHook);
+  inherited Destroy;
 end;
 
 { TEditableHtmlPageWebModule }
@@ -169,7 +278,7 @@ end;
 procedure TEditableHtmlPageWebModule.AfterConstruction;
 begin
   inherited AfterConstruction;
-  Handlers.Add(TDeclineNotLoggedWebModuleHandler.Create(EditorsSet));
+  Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create(EditorsSet));
 end;
 
 end.

@@ -44,11 +44,12 @@ type
   private
     FAllowUsers: TUserRoleSet;
     FRedirectIfFail: boolean;
+    FRedirectLocation: string;
   public
     procedure HandleRequest({%H-}ARequest: TRequest; {%H-}AResponse: TResponse;
       var {%H-}Handled: boolean); override;
     constructor Create(AAllowUsers: TUserRoleSet = AllUserRoles;
-      ARedirectIfFail: boolean = False);
+      ARedirectIfFail: boolean = False; ARedirectLocation: string = '');
   end;
 
   { TPostWebModule }
@@ -79,11 +80,11 @@ type
   private
     FUser: TUser;
   protected
-    property User: TUser read FUser;
     procedure DoSessionCreated; override;
     procedure DoAfterRequest; override;
     function CanRedirect: boolean; override;
   public
+    property User: TUser read FUser;
     procedure AfterConstruction; override;
   end;
 
@@ -102,7 +103,7 @@ begin
     begin
       if FRedirectIfFail then
       begin
-        AResponse.Location := DocumentRoot + '/';
+        AResponse.Location := FRedirectLocation;
         AResponse.Code := 303;
         Handled := True;
       end
@@ -115,10 +116,14 @@ begin
 end;
 
 constructor TDeclineNotLoggedWebModuleHandler.Create(AAllowUsers: TUserRoleSet;
-  ARedirectIfFail: boolean);
+  ARedirectIfFail: boolean; ARedirectLocation: string);
 begin
   FAllowUsers := AAllowUsers;
   FRedirectIfFail := ARedirectIfFail;
+  if ARedirectLocation = '' then
+    FRedirectLocation := DocumentRoot + '/'
+  else
+    FRedirectLocation := ARedirectLocation;
 end;
 
 { TRedirectLoggedWebModuleHandler }

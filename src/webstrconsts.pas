@@ -142,9 +142,8 @@ resourcestring
   SObjectNameLength = 'Name length must be from %d to %d characters.';
   SObjectNameChars = 'Name must contain only the following characters: %s';
   SObjectTitleLength = 'Title length must be from %d to %d characters.';
-  SObjectUserHasAccess = 'User %:2s already has access to %:0s with name "%:1s"';
-  SObjectUserNoAccess = 'User %:2s already doesn''t have access to %:0s with '
-    + 'name "%:1s"';
+  SObjectUserHasAccess = 'User with name "%2:s" already has access!';
+  SObjectUserNoAccess = 'User with name "%2:s" doesn''t have access!';
   SObjectCannotGrantNoneRole = 'Cannot grant erNone to user!';
   SObjectAccessOwner = 'Author';
   SObjectAccessWrite = 'Editor';

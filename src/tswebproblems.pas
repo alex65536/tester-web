@@ -101,6 +101,14 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TProblemModuleHook }
+
+  TProblemModuleHook = class(TEditableModuleHook)
+  public
+    function Manager: TEditableManager; override;
+    function RedirectIfNoAccess: string; override;
+  end;
+
   { TProblemListPageModule }
 
   TProblemListPageModule = class(TEditableHtmlPageWebModule)
@@ -112,7 +120,7 @@ type
 
   TProblemCreateNewModule = class(TEditableCreateNewWebModule)
   protected
-    function Manager: TEditableManager; override;
+    function CreateHook: TEditableModuleHook; override;
     function DoCreatePage: THtmlPage; override;
     function CanRedirect: boolean; override;
     function RedirectLocation: string; override;
@@ -122,11 +130,23 @@ type
 
   TProblemAccessModule = class(TEditableAccessWebModule)
   protected
-    function Manager: TEditableManager; override;
+    function CreateHook: TEditableModuleHook; override;
     function DoCreatePage: THtmlPage; override;
   end;
 
 implementation
+
+{ TProblemModuleHook }
+
+function TProblemModuleHook.Manager: TEditableManager;
+begin
+  Result := ProblemManager;
+end;
+
+function TProblemModuleHook.RedirectIfNoAccess: string;
+begin
+  Result := DocumentRoot + '/problems';
+end;
 
 { TProblemAccessPage }
 
@@ -144,9 +164,9 @@ end;
 
 { TProblemAccessModule }
 
-function TProblemAccessModule.Manager: TEditableManager;
+function TProblemAccessModule.CreateHook: TEditableModuleHook;
 begin
-  Result := ProblemManager;
+  Result := TProblemModuleHook.Create(Self);
 end;
 
 function TProblemAccessModule.DoCreatePage: THtmlPage;
@@ -233,9 +253,9 @@ end;
 
 { TProblemCreateNewModule }
 
-function TProblemCreateNewModule.Manager: TEditableManager;
+function TProblemCreateNewModule.CreateHook: TEditableModuleHook;
 begin
-  Result := ProblemManager;
+  Result := TProblemModuleHook.Create(Self);
 end;
 
 function TProblemCreateNewModule.DoCreatePage: THtmlPage;

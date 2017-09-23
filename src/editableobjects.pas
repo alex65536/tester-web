@@ -95,6 +95,7 @@ type
 
   TEditableObjectAccessSession = class(TEditableObjectSession)
   public
+    procedure AfterConstruction; override;
     function CanAddUser({%H-}Target: TUserInfo): boolean; virtual;
     function CanDeleteUser(Target: TUserInfo): boolean; virtual;
     function CanGrantAccessRights(Target: TUserInfo;
@@ -148,7 +149,7 @@ type
     property Storage: TAbstractDataStorage read FStorage;
     procedure CheckHasAccess(Target: TUserInfo);
     procedure CheckNoAccess(Target: TUserInfo);
-    function FormatExceptionMessage(const AMessage, AUsername: string): string;
+    function FormatExceptionMessage(const AMessage, AUsername: string): string; virtual;
     function FullKeyName(const Key: string): string;
     function UserSection(UserID: integer): string;
     function UsersSection: string;
@@ -814,6 +815,13 @@ end;
 
 { TEditableObjectAccessSession }
 
+procedure TEditableObjectAccessSession.AfterConstruction;
+begin
+  if not (AccessLevel in AccessCanReadSet) then
+    raise EEditableAccessDenied.Create(SAccessDenied);
+  inherited AfterConstruction;
+end;
+
 function TEditableObjectAccessSession.CanAddUser(Target: TUserInfo): boolean;
 begin
   Result := EditableObject.GetAccessRights(User) in AccessCanWriteSet;
@@ -826,10 +834,13 @@ begin
   // retreive rights
   UserRights := AccessLevel;
   TargetRights := EditableObject.GetAccessRights(Target);
-  // check
-  Result := False;
+  // check (pt. 1)
   if TargetRights in [erNone, erOwner] then
-    Exit;
+    Exit(False);
+  if Target.Username = User.Username then
+    Exit(True);
+  // check (pt. 2)
+  Result := False;
   if UserRights = erOwner then
     Result := TargetRights <> erOwner
   else if UserRights = erWrite then
@@ -854,9 +865,7 @@ begin
   // check (pt. 2)
   Result := False;
   if UserRights = erOwner then
-    Result := (TargetRights <> erOwner) and (AAccess <> erOwner)
-  else if UserRights = erWrite then
-    Result := (TargetRights = erRead) and (AAccess in [erRead, erWrite]);
+    Result := (TargetRights <> erOwner) and (AAccess <> erOwner);
 end;
 
 procedure TEditableObjectAccessSession.AddUser(Target: TUserInfo);
