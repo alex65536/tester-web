@@ -129,7 +129,6 @@ type
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
     constructor Create(AParent: THtmlPage; ASession: TEditableObjectAccessSession);
-    destructor Destroy; override;
   end;
 
   { TEditableObjListFeature }
@@ -203,21 +202,31 @@ var
   Session: TEditableObjectAccessSession;
   List: TEditableAccessNodeList;
 begin
-  with Parent.Variables do
-  begin
-    ItemsAsText['objectAddUser'] := SObjectAddUser;
-    ItemsAsText['objectAddUserPrompt'] := SObjectAddUserPrompt;
-    ItemsAsText['objectAddUserBtn'] := SObjectAddUserBtn;
-  end;
-  // load list
   Session := EditableObject.CreateAccessSession(User);
-  List := TEditableAccessNodeList.Create(Parent, Session);
   try
-    Parent.AddElementPagePart('editableAccessTable', List)
+    // "add user" panel
+    if Session.CanAddUser then
+    begin
+      with Parent.Variables do
+      begin
+        ItemsAsText['objectAddUser'] := SObjectAddUser;
+        ItemsAsText['objectAddUserPrompt'] := SObjectAddUserPrompt;
+        ItemsAsText['objectAddUserBtn'] := SObjectAddUserBtn;
+      end;
+      LoadPagePart('editable', 'editableAccessAdd');
+    end;
+    // access table
+    List := TEditableAccessNodeList.Create(Parent, Session);
+    try
+      Parent.AddElementPagePart('editableAccessTable', List)
+    finally
+      FreeAndNil(List);
+    end;
+    // load page content
+    LoadPagePart('editable', 'editableAccess', 'content');
   finally
-    FreeAndNil(List);
+    FreeAndNil(Session);
   end;
-  LoadPagePart('editable', 'editableAccess', 'content');
 end;
 
 procedure TEditableManageAccessFeature.DependsOn(ADependencies: THtmlPageFeatureList);
@@ -270,12 +279,6 @@ constructor TEditableAccessNodeList.Create(AParent: THtmlPage;
 begin
   inherited Create(AParent);
   FSession := ASession;
-end;
-
-destructor TEditableAccessNodeList.Destroy;
-begin
-  FreeAndNil(FSession);
-  inherited Destroy;
 end;
 
 { TEditableAccessNode }

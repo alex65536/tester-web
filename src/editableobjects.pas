@@ -96,7 +96,7 @@ type
   TEditableObjectAccessSession = class(TEditableObjectSession)
   public
     procedure AfterConstruction; override;
-    function CanAddUser({%H-}Target: TUserInfo): boolean; virtual;
+    function CanAddUser: boolean; virtual;
     function CanDeleteUser(Target: TUserInfo): boolean; virtual;
     function CanGrantAccessRights(Target: TUserInfo;
       AAccess: TEditableAccessRights): boolean; virtual;
@@ -822,7 +822,7 @@ begin
   inherited AfterConstruction;
 end;
 
-function TEditableObjectAccessSession.CanAddUser(Target: TUserInfo): boolean;
+function TEditableObjectAccessSession.CanAddUser: boolean;
 begin
   Result := EditableObject.GetAccessRights(User) in AccessCanWriteSet;
 end;
@@ -870,7 +870,7 @@ end;
 
 procedure TEditableObjectAccessSession.AddUser(Target: TUserInfo);
 begin
-  if not CanAddUser(Target) then
+  if not CanAddUser then
     raise EEditableAccessDenied.Create(SAccessDenied);
   EditableObject.AddUser(Target);
 end;
