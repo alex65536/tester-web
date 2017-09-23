@@ -26,7 +26,7 @@ interface
 
 uses
   SysUtils, htmlpages, htmlpreprocess, webstrconsts, tswebpagesbase,
-  navbars, users, userpages;
+  navbars, users, userpages, tswebsessions;
 
 type
 
@@ -82,6 +82,13 @@ type
     procedure Satisfy; override;
   end;
 
+  { TContentHeaderFeature }
+
+  TContentHeaderFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+  end;
+
   { TUserBarFeature }
 
   TUserBarFeature = class(TTesterPageFeature)
@@ -90,7 +97,53 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TPostDataFeature }
+
+  TPostDataFeature = class(TTesterPageFeature)
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TSessionTokenFeature }
+
+  TSessionTokenFeature = class(TTesterPageFeature)
+    procedure Satisfy; override;
+  end;
+
 implementation
+
+{ TContentHeaderFeature }
+
+procedure TContentHeaderFeature.Satisfy;
+begin
+  LoadPagePart('', 'contentHeader');
+end;
+
+{ TSessionTokenFeature }
+
+procedure TSessionTokenFeature.Satisfy;
+begin
+  with Parent.Variables do
+    ItemsAsText['sessionToken'] := (Parent.Session as TTesterWebSession).Token;
+  LoadPagePart('', 'formToken');
+end;
+
+{ TPostDataFeature }
+
+procedure TPostDataFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['authError'] := (Parent as IPostHtmlPage).Error;
+    ItemsAsText['authSuccess'] := (Parent as IPostHtmlPage).Success;
+  end;
+end;
+
+procedure TPostDataFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TSessionTokenFeature);
+end;
 
 { TUserInfoFeature }
 
@@ -139,6 +192,8 @@ begin
     with Parent.Variables do
     begin
       ItemsAsText['loggedAsUser'] := SLoggedAsUser;
+      ItemsAsText['loggedUserLink'] :=
+        (Parent as TTesterHtmlPage).GenerateUserLink(User.Info);
       ItemsAsText['doViewProfile'] := SUserDoViewProfile;
       ItemsAsText['doLogout'] := SUserDoLogOut;
     end;

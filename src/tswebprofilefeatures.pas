@@ -25,8 +25,8 @@ unit tswebprofilefeatures;
 interface
 
 uses
-  Classes, SysUtils, tswebpagesbase, tswebfeatures, users, htmlpages,
-  webstrconsts, userpages, htmlpreprocess;
+  SysUtils, tswebpagesbase, tswebfeatures, users, htmlpages, webstrconsts,
+  userpages, htmlpreprocess, allusers;
 
 type
 
@@ -164,6 +164,10 @@ begin
         begin
           ItemsAsText['profileNewUserRole'] := UserRoleToStr(Role);
           ItemsAsText['profileNewUserRoleName'] := UserRoleNames[Role];
+          if Role = Info.Role then
+            ItemsAsText['profileNewUserRoleSelected'] := ' selected'
+          else
+            ItemsAsText['profileNewUserRoleSelected'] := '';
         end;
         Options.Add(Parent.Preprocessor.PreprocessFile(TemplateLocation('profile', 'profileChangeRoleOption')));
       end;
@@ -211,8 +215,7 @@ var
 begin
   with Parent.Variables, Info do
   begin
-    RoleStr := UserRoleToStr(Role);
-    Delete(RoleStr, 1, 2);
+    RoleStr := UserRoleToStr(Role).Substring(2);
 
     ItemsAsText['profileUserNameKey'] := SProfileUserNameKey;
     ItemsAsText['profileUserName'] := Username;

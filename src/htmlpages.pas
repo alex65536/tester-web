@@ -97,6 +97,8 @@ type
     constructor Create(AParent: TFeaturedHtmlPage); virtual;
   end;
 
+  THtmlPageElement = class;
+
   { TFeaturedHtmlPage }
 
   TFeaturedHtmlPage = class(THtmlPage)
@@ -112,6 +114,7 @@ type
   public
     property Variables: TVariableStorage read FVariables;
     property PageParts: TVariableStorage read FPageParts;
+    procedure AddElementPagePart(const PartName: string; AElement: THtmlPageElement);
     procedure Clear; override;
     constructor Create; override;
     destructor Destroy; override;
@@ -135,7 +138,80 @@ type
     destructor Destroy; override;
   end;
 
+  { THtmlPageElementList }
+
+  THtmlPageElementList = class(specialize TFPGObjectList<THtmlPageElement>)
+  public
+    procedure FillItems(Strings: TIndentTaggedStrings);
+    constructor Create;
+  end;
+
+  { THtmlListedPageElement }
+
+  THtmlListedPageElement = class(THtmlPageElement)
+  private
+    FList: THtmlPageElementList;
+  public
+    property List: THtmlPageElementList read FList;
+    procedure AddListToVariable(const VarName: string);
+    constructor Create(AParent: THtmlPage);
+    destructor Destroy; override;
+  end;
+
 implementation
+
+{ THtmlListedPageElement }
+
+procedure THtmlListedPageElement.AddListToVariable(const VarName: string);
+var
+  Strings: TIndentTaggedStrings;
+begin
+  Strings := TIndentTaggedStrings.Create;
+  try
+    List.FillItems(Strings);
+    Storage.SetItemAsStrings(VarName, Strings);
+  finally
+    FreeAndNil(Strings);
+  end;
+end;
+
+constructor THtmlListedPageElement.Create(AParent: THtmlPage);
+begin
+  inherited Create(AParent);
+  FList := THtmlPageElementList.Create;
+end;
+
+destructor THtmlListedPageElement.Destroy;
+begin
+  FreeAndNil(FList);
+  inherited Destroy;
+end;
+
+{ THtmlPageElementList }
+
+procedure THtmlPageElementList.FillItems(Strings: TIndentTaggedStrings);
+var
+  Element: THtmlPageElement;
+  ItemContent: TIndentTaggedStrings;
+begin
+  Strings.Clear;
+  ItemContent := TIndentTaggedStrings.Create;
+  try
+    for Element in Self do
+    begin
+      Element.GetContents(ItemContent);
+      Strings.AppendIndentedLines(ItemContent, True);
+      ItemContent.Clear;
+    end;
+  finally
+    FreeAndNil(ItemContent);
+  end;
+end;
+
+constructor THtmlPageElementList.Create;
+begin
+  inherited Create(True);
+end;
 
 { THtmlPageElement }
 
@@ -148,24 +224,25 @@ procedure THtmlPageElement.GetContents(Strings: TIndentTaggedStrings);
 var
   Source: TIndentTaggedStrings;
 begin
-  Source := TIndentTaggedStrings.Create;
+  Parent.Preprocessor.Storages.Add(Storage);
   try
-    DoFillVariables;
-    DoGetSkeleton(Source);
-    Parent.Preprocessor.Preprocess(Source, Strings);
+    Source := TIndentTaggedStrings.Create;
+    try
+      DoFillVariables;
+      DoGetSkeleton(Source);
+      Parent.Preprocessor.Preprocess(Source, Strings);
+    finally
+      FreeAndNil(Source);
+    end;
   finally
-    FreeAndNil(Source);
+    Parent.Preprocessor.Storages.Remove(Storage);
   end;
 end;
 
 constructor THtmlPageElement.Create(AParent: THtmlPage);
 begin
   FParent := AParent;
-  with Parent.Preprocessor do
-  begin
-    FStorage := TTreeVariableStorage.Create(Storages);
-    Storages.Add(FStorage);
-  end;
+  FStorage := TTreeVariableStorage.Create(Parent.Preprocessor.Storages);
 end;
 
 destructor THtmlPageElement.Destroy;
@@ -194,6 +271,20 @@ end;
 procedure TFeaturedHtmlPage.StartupVariablesInitialize;
 begin
   // do nothing
+end;
+
+procedure TFeaturedHtmlPage.AddElementPagePart(const PartName: string;
+  AElement: THtmlPageElement);
+var
+  Strings: TIndentTaggedStrings;
+begin
+  Strings := TIndentTaggedStrings.Create;
+  try
+    AElement.GetContents(Strings);
+    PageParts.SetItemAsStrings(PartName, Strings);
+  finally
+    FreeAndNil(Strings);
+  end;
 end;
 
 procedure TFeaturedHtmlPage.Clear;

@@ -25,7 +25,8 @@ unit tswebpagesbase;
 interface
 
 uses
-  Classes, SysUtils, userpages, htmlpreprocess, LazFileUtils, serverconfig;
+  Classes, SysUtils, userpages, htmlpreprocess, LazFileUtils, serverconfig,
+  users, htmlpages;
 
 type
 
@@ -38,12 +39,30 @@ type
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
     property Title: string read FTitle write FTitle;
+    function GenerateUserLink(AInfo: TUserInfo): string;
+    function GenerateUserLink(const Username: string): string;
   end;
 
-  { IAuthHtmlPage }
+  { TTesterHtmlPageElement }
+
+  TTesterHtmlPageElement = class(THtmlPageElement)
+  private
+    function GetParent: TTesterHtmlPage;
+  public
+    property Parent: TTesterHtmlPage read GetParent;
+  end;
+
+  { TTesterHtmlListedPageElement }
+
+  TTesterHtmlListedPageElement = class(THtmlListedPageElement)
+  private
+    function GetParent: TTesterHtmlPage;
+  public
+    property Parent: TTesterHtmlPage read GetParent;
+  end;
 
   {$interfaces CORBA}
-  IAuthHtmlPage = interface
+  IPostHtmlPage = interface
     ['{48726FDF-4025-4D9C-A462-1D88AEE0DF89}']
     function GetError: string;
     function GetSuccess: string;
@@ -79,6 +98,20 @@ begin
   Result := AppendPathDelim(Dir) + AName + '.html';
 end;
 
+{ TTesterHtmlListedPageElement }
+
+function TTesterHtmlListedPageElement.GetParent: TTesterHtmlPage;
+begin
+  Result := (inherited Parent) as TTesterHtmlPage;
+end;
+
+{ TTesterHtmlPageElement }
+
+function TTesterHtmlPageElement.GetParent: TTesterHtmlPage;
+begin
+  Result := (inherited Parent) as TTesterHtmlPage;
+end;
+
 { TContentHtmlPage }
 
 procedure TContentHtmlPage.GetInnerContents(Strings: TIndentTaggedStrings);
@@ -91,6 +124,36 @@ end;
 procedure TTesterHtmlPage.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
   Strings.LoadFromFile(TemplateLocation('', 'skeleton'));
+end;
+
+function TTesterHtmlPage.GenerateUserLink(AInfo: TUserInfo): string;
+var
+  Storage: TTreeVariableStorage;
+begin
+  Storage := TTreeVariableStorage.Create(Preprocessor.Storages);
+  try
+    Preprocessor.Storages.Add(Storage);
+    with Storage do
+    begin
+      ItemsAsText['linkUserName'] := AInfo.Username;
+      ItemsAsText['linkUserRoleLower'] := UserRoleToStr(AInfo.Role).Substring(2).ToLower;
+    end;
+    Result := Preprocessor.PreprocessFile(TemplateLocation('', 'userNameLink'));
+  finally
+    FreeAndNil(Storage);
+  end;
+end;
+
+function TTesterHtmlPage.GenerateUserLink(const Username: string): string;
+var
+  Info: TUserInfo;
+begin
+  Info := UserManager.GetUserInfo(Username);
+  try
+    Result := GenerateUserLink(Info);
+  finally
+    FreeAndNil(Info);
+  end;
 end;
 
 end.

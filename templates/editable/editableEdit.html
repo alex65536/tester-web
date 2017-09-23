@@ -1,0 +1,25 @@
+<div class="box auth-form">
+	<div class="center-align auth-error">~authError;</div>
+	<div class="center-align auth-success">~authSuccess;</div>
+	<form action="" method="post">
+		<table>
+			<tr>
+				<td class="edit-table-key">~objectTitleKey;</td>
+				<td class="edit-table-value">
+					<input type="text" name="title" value="~objectTitleValue;" placeholder="~objectTitlePrompt;" maxlength="42">
+				</td>
+			</tr>
+~C!		~+#?objectEditContent;
+			<tr>
+				<td colspan="2">
+					~+#formToken;
+					<button type="submit" class="styled-btn">~objectEditSubmit;</button>
+				</td>
+			</tr>
+		</table>
+	</form>
+</div>
+<p>
+	~+#editableViewBtn;
+	~+#editableAccessBtn;
+</p>

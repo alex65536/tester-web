@@ -35,6 +35,7 @@ type
   TAuthFormFeature = class(TTesterPageFeature)
   public
     procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
   { TAuthLoginFormFeature }
@@ -168,8 +169,6 @@ begin
   LoadPagePart('auth', 'authEnterPasswordItem');
   with Parent.Variables do
   begin
-    ItemsAsText['authError'] := (Parent as IAuthHtmlPage).Error;
-    ItemsAsText['authSuccess'] := (Parent as IAuthHtmlPage).Success;
     ItemsAsText['authUsername'] := SAuthUsername;
     ItemsAsText['authUsernamePrompt'] := SAuthUsernamePrompt;
     ItemsAsText['authFirstName'] := SAuthFirstName;
@@ -181,6 +180,13 @@ begin
     ItemsAsText['authRetypePassword'] := SAuthRetypePassword;
     ItemsAsText['authRetypePasswordPrompt'] := SAuthRetypePasswordPrompt;
   end;
+end;
+
+procedure TAuthFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TPostDataFeature);
+  ADependencies.Add(TSessionTokenFeature);
 end;
 
 end.

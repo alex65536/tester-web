@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess, fphttp,
   htmlpages, tswebpages, HTTPDefs, users, webstrconsts, authwebmodules,
-  tswebprofilefeatures, tswebpagesbase;
+  tswebprofilefeatures, tswebpagesbase, tsmiscwebmodules, allusers;
 
 type
 
@@ -116,18 +116,18 @@ type
 
   { TLoginWebModule }
 
-  TLoginWebModule = class(TAuthCreateUserWebModule)
+  TLoginWebModule = class(TAuthWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
-    procedure DoHandleAuth(ARequest: TRequest); override;
+    procedure DoHandlePost(ARequest: TRequest); override;
   end;
 
   { TRegisterWebModule }
 
-  TRegisterWebModule = class(TAuthCreateUserWebModule)
+  TRegisterWebModule = class(TAuthWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
-    procedure DoHandleAuth(ARequest: TRequest); override;
+    procedure DoHandlePost(ARequest: TRequest); override;
   end;
 
   { TNavConfirmPasswordWebModule }
@@ -181,6 +181,8 @@ type
   TProfileWebModule = class(THtmlPageWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
+  public
+    procedure AfterConstruction; override;
   end;
 
   { TKillServerWebModule }
@@ -275,6 +277,12 @@ begin
   Result := TProfileHtmlPage.Create(Request.QueryFields.Values['user']);
 end;
 
+procedure TProfileWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create(AllUserRoles, True));
+end;
+
 { TProfileHtmlPage }
 
 function TProfileHtmlPage.CreateNavBar: TNavBar;
@@ -359,7 +367,7 @@ begin
   Result := TNavRegisterPage.Create;
 end;
 
-procedure TRegisterWebModule.DoHandleAuth(ARequest: TRequest);
+procedure TRegisterWebModule.DoHandlePost(ARequest: TRequest);
 var
   Username, Password, Password2, FirstName, LastName: string;
 begin
@@ -379,7 +387,7 @@ begin
   Result := TNavLoginPage.Create;
 end;
 
-procedure TLoginWebModule.DoHandleAuth(ARequest: TRequest);
+procedure TLoginWebModule.DoHandlePost(ARequest: TRequest);
 var
   Username, Password: string;
 begin
@@ -446,6 +454,7 @@ begin
   AddElement('Main Page', '~documentRoot;/index');
   AddElement('Page 1', '~documentRoot;/page1');
   AddElement('Page 2', '~documentRoot;/page2');
+  AddElement(SProblemList, '~documentRoot;/problems');
 end;
 
 { TSimpleHtmlPage }

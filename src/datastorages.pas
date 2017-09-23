@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, IniFiles, LazFileUtils, Laz2_DOM, Laz2_XMLRead,
-  Laz2_XMLWrite, AvgLvlTree, escaping;
+  Laz2_XMLWrite, AvgLvlTree, escaping, tswebdirectories;
 
 type
 
@@ -40,6 +40,7 @@ type
   public
     property StoragePath: string read FStoragePath;
     function GetRootElements: TStringList; virtual; abstract;
+    function GetChildElements(const Path: string): TStringList; virtual; abstract;
     function VariableExists(const Path: string): boolean; virtual; abstract;
     procedure DeleteVariable(const Path: string); virtual;
     procedure DeletePath(const Path: string); virtual;
@@ -84,8 +85,10 @@ type
     procedure RemoveEmptySections;
   protected
     function GetFileName: string; override;
+    function GetAllChildren(const Path: string): TStringList;
   public
     function GetRootElements: TStringList; override;
+    function GetChildElements(const Path: string): TStringList; override;
     function VariableExists(const Path: string): boolean; override;
     procedure DeleteVariable(const Path: string); override;
     procedure DeletePath(const Path: string); override;
@@ -119,8 +122,10 @@ type
     procedure LoadDocument;
   protected
     function GetFileName: string; override;
+    function GetChildElements(ARoot: TDOMElement): TStringList;
   public
     function GetRootElements: TStringList; override;
+    function GetChildElements(const Path: string): TStringList; override;
     function VariableExists(const Path: string): boolean; override;
     procedure DeleteVariable(const Path: string); override;
     procedure DeletePath(const Path: string); override;
@@ -146,7 +151,7 @@ implementation
 
 function TFileDataStorage.GetFileName: string;
 begin
-  Result := AppendPathDelim(GetAppConfigDirUTF8(False, True)) + StoragePath + '.conf';
+  Result := AppendPathDelim(ExpandInternalDirLocation('data')) + StoragePath + '.conf';
 end;
 
 { TXmlDataStorage }
@@ -156,13 +161,13 @@ begin
   Result := ChangeFileExt(inherited GetFileName, '.xml');
 end;
 
-function TXmlDataStorage.GetRootElements: TStringList;
+function TXmlDataStorage.GetChildElements(ARoot: TDOMElement): TStringList;
 var
   Elem: TDOMNode;
 begin
   Result := TStringList.Create;
   try
-    Elem := RootElement.FirstChild;
+    Elem := ARoot.FirstChild;
     while Elem <> nil do
     begin
       Result.Add(Elem.NodeName);
@@ -172,6 +177,21 @@ begin
     FreeAndNil(Result);
     raise;
   end;
+end;
+
+function TXmlDataStorage.GetRootElements: TStringList;
+begin
+  Result := GetChildElements(RootElement);
+end;
+
+function TXmlDataStorage.GetChildElements(const Path: string): TStringList;
+var
+  Root: TDOMElement;
+begin
+  Result := nil;
+  Root := FindNode(Path);
+  if Root <> nil then
+    Result := GetChildElements(Root);
 end;
 
 function TXmlDataStorage.FindNode(const Path: string): TDOMElement;
@@ -425,6 +445,44 @@ begin
   Result := ChangeFileExt(inherited GetFileName, '.ini');
 end;
 
+function TIniDataStorage.GetAllChildren(const Path: string): TStringList;
+var
+  Section, Ident: string;
+  P: integer;
+  Idents: TStringList;
+  S: string;
+begin
+  Result := TStringList.Create;
+  try
+    // find the key
+    SplitPath(Path, Section, Ident);
+    if FIniFile.ValueExists(Section, Ident) then
+      Result.Add(Path);
+    // retreive the subsection and ident beginning
+    P := Pos('.', Path);
+    if P = 0 then
+    begin
+      Section := Path;
+      Ident := '';
+    end
+    else
+      Ident := Ident + '.';
+    // scan the Idents
+    Idents := TStringList.Create;
+    try
+      FIniFile.ReadSection(Section, Idents);
+      for S in Idents do
+        if (Length(S) >= Length(Ident)) and (Copy(S, 1, Length(Ident)) = Ident) then
+          Result.Add(Section + '.' + S);
+    finally
+      FreeAndNil(Idents);
+    end;
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
+end;
+
 function TIniDataStorage.GetRootElements: TStringList;
 var
   TempList: TStringList;
@@ -466,6 +524,54 @@ begin
   end;
 end;
 
+function TIniDataStorage.GetChildElements(const Path: string): TStringList;
+var
+  Map: TStringToPointerTree;
+  Items: TStringList;
+  S: string;
+  Tail: string;
+  It: PStringToPointerItem;
+begin
+  // scan path to root, if necessary
+  if Path = '' then
+  begin
+    Result := GetRootElements;
+    Exit;
+  end;
+  // else, scan all occurences & push into map
+  RemoveEmptySections;
+  Result := nil;
+  try
+    Items := GetAllChildren(Path);
+    try
+      if Items.Count <> 0 then
+      begin
+        Result := TStringList.Create;
+        // collect map of children
+        Map := TStringToPointerTree.Create(True);
+        try
+          for S in Items do
+          begin
+            Tail := S.Substring(Length(Path) + 1);
+            if Tail <> '' then
+              Map.Values[Tail.Split(['.'])[0]] := Pointer(42);
+          end;
+          // push them into result
+          for It in Map do
+            Result.Add(It^.Name);
+        finally
+          FreeAndNil(Map);
+        end;
+      end;
+    finally
+      FreeAndNil(Items);
+    end;
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
+end;
+
 function TIniDataStorage.VariableExists(const Path: string): boolean;
 var
   Section, Ident: string;
@@ -485,36 +591,22 @@ end;
 
 procedure TIniDataStorage.DeletePath(const Path: string);
 var
-  Section, Ident: string;
-  P: integer;
-  Idents: TStringList;
+  ToDelete: TStringList;
   S: string;
+  Section, Ident: string;
 begin
-  // delete the key
   SplitPath(Path, Section, Ident);
-  if FIniFile.ValueExists(Section, Ident) then
-    FIniFile.DeleteKey(Section, Ident);
-  // retreive the subsection and ident beginning
-  P := Pos('.', Path);
-  if P = 0 then
-  begin
-    Section := Path;
-    Ident := '';
-  end
-  else
-    Ident := Ident + '.';
-  // find and delete the Idents
-  Idents := TStringList.Create;
+  ToDelete := GetAllChildren(Path);
   try
-    FIniFile.ReadSection(Section, Idents);
-    for S in Idents do
-    begin
-      if (Length(S) >= Length(Ident)) and (Copy(S, 1, Length(Ident)) = Ident) then
-        FIniFile.DeleteKey(Section, S);
-    end;
+    // delete variables
+    for S in ToDelete do
+      DeleteVariable(S);
+    // remove sections that might become empty
     RemoveSectionIfEmpty(Section);
+    if not Path.Contains('.') then
+      RemoveSectionIfEmpty(Path);
   finally
-    FreeAndNil(Idents);
+    FreeAndNil(ToDelete);
     inherited DeletePath(Path);
   end;
 end;

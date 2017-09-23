@@ -5,14 +5,19 @@
 		<meta name="author" content="Alexander Kernozhitsky">
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 		<link rel="stylesheet" href="~dataRoot;/tester.css" type="text/css">
-		<title>~title;</title>
+		<title>~+title;</title>
 	</head>
 	<body>
 ~C!		~?#+header;
 		<table class="container"><tr>
 ~C!			~?#+nav;
-			<td class="box content">
-				~#+content;
+			<td class="content-cell">
+				<table class="box content-table">
+					~?#+contentHeader;
+					<tr><td class="content">
+						~#+content;
+					</td></tr>
+				</table>
 			</td>
 		</tr></table>
 ~C!		~?#+footer;

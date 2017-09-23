@@ -53,18 +53,24 @@ type
     procedure AddFeatures; override;
   end;
 
-  { TAuthHtmlPage }
+  { TPostHtmlPage }
 
-  TAuthHtmlPage = class(TDefaultHtmlPageBase, IAuthHtmlPage)
+  TPostHtmlPage = class(TDefaultHtmlPageBase, IPostHtmlPage)
   private
     FError: string;
     FSuccess: string;
   protected
-    procedure AddFeatures; override;
     procedure SetError(AValue: string);
     function GetError: string;
     procedure SetSuccess(AValue: string);
     function GetSuccess: string;
+  end;
+
+  { TAuthHtmlPage }
+
+  TAuthHtmlPage = class(TPostHtmlPage)
+  protected
+    procedure AddFeatures; override;
     procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
   end;
 
@@ -106,6 +112,28 @@ type
   end;
 
 implementation
+
+{ TPostHtmlPage }
+
+procedure TPostHtmlPage.SetError(AValue: string);
+begin
+  FError := AValue;
+end;
+
+function TPostHtmlPage.GetError: string;
+begin
+  Result := FError;
+end;
+
+procedure TPostHtmlPage.SetSuccess(AValue: string);
+begin
+  FSuccess := AValue;
+end;
+
+function TPostHtmlPage.GetSuccess: string;
+begin
+  Result := FSuccess;
+end;
 
 { TSettingsHtmlPage }
 
@@ -184,26 +212,6 @@ procedure TAuthHtmlPage.AddFeatures;
 begin
   inherited AddFeatures;
   AddFeature(TAuthFormFeature);
-end;
-
-procedure TAuthHtmlPage.SetError(AValue: string);
-begin
-  FError := AValue;
-end;
-
-function TAuthHtmlPage.GetError: string;
-begin
-  Result := FError;
-end;
-
-procedure TAuthHtmlPage.SetSuccess(AValue: string);
-begin
-  FSuccess := AValue;
-end;
-
-function TAuthHtmlPage.GetSuccess: string;
-begin
-  Result := FSuccess;
 end;
 
 procedure TAuthHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);

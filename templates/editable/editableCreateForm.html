@@ -1,0 +1,19 @@
+<table class="center-wrapper"><tr><td>
+	<div>~editableCreatePrompt;</div>
+	<form class="box auth-form" action="" method="post">
+		<div class="auth-error">~authError;</div>
+		<div class="auth-success">~authSuccess;</div>
+		<table class="auth-table">
+			<tr>
+				<td class="auth-field">~editableCreateName;</td>
+				<td><input class="auth-edit" type="text" name="name" placeholder="~editableCreateNamePrompt;" maxlength="24"></td>
+			</tr>
+			<tr>
+				<td class="auth-field">~editableCreateTitle;</td>
+				<td><input class="auth-edit" type="text" name="title" placeholder="~editableCreateTitlePrompt;" maxlength="42"></td>
+			</tr>
+		</table>
+		~+#formToken;
+		<button class="styled-btn" type="submit">~editableCreateSubmit;</button>
+	</form>
+</td></tr></table>

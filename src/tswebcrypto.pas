@@ -25,7 +25,7 @@ unit tswebcrypto;
 interface
 
 uses
-  Classes, SysUtils, Types, base64, math;
+  Classes, SysUtils, Types, base64, Math;
 
 procedure TrulyRandomSequence(Len: integer; out Bytes: TByteDynArray);
 function RandomSequenceBase64(Len: integer): string;
@@ -112,7 +112,8 @@ begin
   R := Config.Crypto_SCrypt_R;
   P := Config.Crypto_SCrypt_P;
   SetLength(Hash, HashLen);
-  scrypt_kdf(@Password[1], Length(Password), @Salt[1], Length(Salt), N, R, P, Hash[0], HashLen);
+  scrypt_kdf(@Password[1], Length(Password), @Salt[1], Length(Salt),
+    N, R, P, Hash[0], HashLen);
   Result := Copy(BytesToBase64(Hash, HashLen), 1, NeedLen);
 end;
 
