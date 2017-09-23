@@ -46,15 +46,10 @@ type
   TDestroyAuthorMessage = class(TAuthorMessage);
 
   {$interfaces CORBA}
-
-  { IMessageSubscriber }
-
   IMessageSubscriber = interface
     ['{650BC690-067F-4865-9F38-8487AF01BFFA}']
     procedure MessageReceived(AMessage: TAuthorMessage);
   end;
-
-  { IMessageAuthor }
 
   IMessageAuthor = interface
     ['{9C9F3115-F5D1-444F-B29A-75D8408A116F}']

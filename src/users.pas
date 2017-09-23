@@ -89,8 +89,6 @@ type
   TUserCreatedMessage = class(TUserInfoMessage);
   TUserDeletingMessage = class(TUserInfoMessage);
 
-  { IUserInfo }
-
   {$interfaces CORBA}
   IUserInfo = interface
     ['{A6032A55-52B8-4715-890C-E436A25951EE}']

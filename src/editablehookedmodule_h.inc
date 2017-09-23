@@ -25,7 +25,8 @@ type
     FHook: TEditableModuleHook;
   protected
     function Inside: boolean; virtual; abstract;
-    function CreateHook: TEditableModuleHook; virtual; abstract;
+    function HookClass: TEditableModuleHookClass; virtual; abstract;
+    function CreateHook: TEditableModuleHook; virtual;
   public
     function Hook: TEditableModuleHook;
     function Manager: TEditableManager;

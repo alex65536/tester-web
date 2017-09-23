@@ -19,6 +19,11 @@
   MA 02111-1307, USA.
 }
 
+function HOOKABLE_MODULE_CLASS.CreateHook: TEditableModuleHook;
+begin
+  Result := HookClass.Create(Self, Inside);
+end;
+
 function HOOKABLE_MODULE_CLASS.Hook: TEditableModuleHook;
 begin
   Result := FHook;

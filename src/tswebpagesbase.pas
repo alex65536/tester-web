@@ -61,8 +61,6 @@ type
     property Parent: TTesterHtmlPage read GetParent;
   end;
 
-  { IAuthHtmlPage }
-
   {$interfaces CORBA}
   IPostHtmlPage = interface
     ['{48726FDF-4025-4D9C-A462-1D88AEE0DF89}']
