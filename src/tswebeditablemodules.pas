@@ -20,44 +20,28 @@
 }
 unit tswebeditablemodules;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}{$H+}{$macro on}
 
 interface
 
 uses
   Classes, SysUtils, webmodules, tsmiscwebmodules, editableobjects, HTTPDefs,
-  users, authwebmodules, tswebpagesbase;
+  users, authwebmodules, tswebpagesbase, webstrconsts;
 
 type
-
-  { TEditableModuleHook }
-
-  TEditableModuleHook = class
-  private
-    FParent: THtmlPageWebModule;
-  public
-    property Parent: THtmlPageWebModule read FParent;
-    function Manager: TEditableManager; virtual; abstract;
-    function RedirectIfNoAccess: string; virtual; abstract;
-    constructor Create(AParent: THtmlPageWebModule);
-  end;
+  TEditableModuleHook = class;
 
   {$interfaces CORBA}
-
-  { IEditableWebModule }
-
   IEditableWebModule = interface
     ['{3930B3B7-0A9F-41AF-929A-D416E801EE75}']
     function Manager: TEditableManager;
   end;
-  {$interfaces COM}
 
-  { TEditableHtmlPageWebModule }
-
-  TEditableHtmlPageWebModule = class(THtmlPageWebModule)
-  public
-    procedure AfterConstruction; override;
+  IEditableModuleHook = interface
+    ['{B788C26E-E9B2-4C14-B162-9E833D90295F}']
+    function Hook: TEditableModuleHook;
   end;
+  {$interfaces COM}
 
   { TEditableRedirectIfNoAccessHandler }
 
@@ -67,169 +51,163 @@ type
       var Handled: boolean); override;
   end;
 
-  { TEditableWebModule }
+  { TEditableModuleHook }
 
-  TEditableWebModule = class(TPostUserWebModule, IEditableWebModule)
+  TEditableModuleHook = class
   private
-    FHook: TEditableModuleHook;
-  protected
-    property Hook: TEditableModuleHook read FHook;
-    function Manager: TEditableManager;
-    function CreateHook: TEditableModuleHook; virtual; abstract;
+    FParent: THtmlPageWebModule;
+    FInside: boolean;
   public
-    constructor CreateNew(AOwner: TComponent; CreateMode: integer); override;
-    procedure AfterConstruction; override;
-    destructor Destroy; override;
+    property Parent: THtmlPageWebModule read FParent;
+    property Inside: boolean read FInside;
+    function Manager: TEditableManager; virtual; abstract;
+    function EditableObject: TEditableObject;
+    function EditableObjectName: string;
+    function ObjectsRoot: string; virtual; abstract;
+    procedure BeginAddHandlers; virtual;
+    procedure EndAddHandlers; virtual;
+    constructor Create(AParent: THtmlPageWebModule; AInside: boolean); virtual;
+  end;
+
+  TEditableModuleHookClass = class of TEditableModuleHook;
+
+  // Here you can find modules implementing hooks for different module types.
+  // We will use macros to do that.
+  // Interface part
+
+  {$define HOOKABLE_MODULE_CLASS := TEditablePageWebModule}
+  {$define HOOKABLE_MODULE_BASE  := TUserWebModule}
+  {$I editablehookedmodule_h.inc}
+
+  {$define HOOKABLE_MODULE_CLASS := TEditablePostWebModule}
+  {$define HOOKABLE_MODULE_BASE  := TPostUserWebModule}
+  {$I editablehookedmodule_h.inc}
+
+  {$define HOOKABLE_MODULE_CLASS := TEditableConfirmPasswordWebModule}
+  {$define HOOKABLE_MODULE_BASE  := TConfirmPasswordWebModule}
+  {$I editablehookedmodule_h.inc}
+
+  {$undef HOOKABLE_MODULE_CLASS}
+  {$undef HOOKABLE_MODULE_BASE}
+
+  { TEditableObjectPostWebModule }
+
+  TEditableObjectPostWebModule = class(TEditablePostWebModule)
+  private
+    FEditableObject: TEditableObject;
+  protected
+    property EditableObject: TEditableObject read FEditableObject;
+    function Inside: boolean; override;
+    procedure DoInsideHandlePost(ARequest: TRequest); virtual; abstract;
+    procedure DoHandlePost(ARequest: TRequest); override;
+  end;
+
+  { TEditableObjListWebModule }
+
+  TEditableObjListWebModule = class(TEditablePageWebModule)
+  protected
+    function Inside: boolean; override;
   end;
 
   { TEditableCreateNewWebModule }
 
-  TEditableCreateNewWebModule = class(TEditableWebModule)
+  TEditableCreateNewWebModule = class(TEditablePostWebModule)
   protected
+    function Inside: boolean; override;
     procedure DoHandlePost(ARequest: TRequest); override;
-  end;
-
-  { TEditableInsideWebModule }
-
-  TEditableInsideWebModule = class(TEditableWebModule)
-  public
-    procedure AfterConstruction; override;
-  end;
-
-  { TEditableAccessWebModule }
-
-  TEditableAccessWebModule = class(TEditableInsideWebModule)
-  protected
-    procedure DoHandlePost(ARequest: TRequest); override;
-  end;
-
-  { TEditableEditWebModule }
-
-  TEditableEditWebModule = class(TEditableInsideWebModule)
-  protected
-    procedure DoHandlePost(ARequest: TRequest); override;
+    function CanRedirect: boolean; override;
+    function RedirectLocation: string; override;
   end;
 
   { TEditableDeleteWebModule }
 
-  TEditableDeleteWebModule = class(TConfirmPasswordWebModule, IEditableWebModule)
+  TEditableDeleteWebModule = class(TEditableConfirmPasswordWebModule)
   protected
-    function Manager: TEditableManager; virtual; abstract;
+    function Inside: boolean; override;
     procedure ConfirmationSuccess(var ACanRedirect: boolean;
-      var {%H-}ARedirect: string); override;
+      var ARedirect: string); override;
   end;
 
-function EditableObjectFromRequest(ARequest: TRequest; AManager: TEditableManager): TEditableObject;
-function EditableObjectFromRequest(AModule: THtmlPageWebModule): TEditableObject;
+  { TEditableAccessWebModule }
+
+  TEditableAccessWebModule = class(TEditableObjectPostWebModule)
+  protected
+    procedure DoInsideHandlePost(ARequest: TRequest); override;
+  end;
+
+  { TEditableViewWebModule }
+
+  TEditableViewWebModule = class(TEditablePageWebModule)
+  protected
+    function Inside: boolean; override;
+  end;
+
+  { TEditableEditWebModule }
+
+  TEditableEditWebModule = class(TEditableObjectPostWebModule)
+  protected
+    procedure DoInsideHandlePost(ARequest: TRequest); override;
+  end;
+
+function EditableObjectNameFromRequest(ARequest: TRequest): string;
+function EditableObjectFromRequest(ARequest: TRequest;
+  AManager: TEditableManager): TEditableObject;
 
 implementation
 
-function EditableObjectFromRequest(ARequest: TRequest; AManager: TEditableManager): TEditableObject;
-var
-  ObjectName: string;
+function EditableObjectNameFromRequest(ARequest: TRequest): string;
 begin
-  ObjectName := ARequest.QueryFields.Values['object'];
-  Result := AManager.GetObject(ObjectName);
+  Result := ARequest.QueryFields.Values['object'];
 end;
 
-function EditableObjectFromRequest(AModule: THtmlPageWebModule): TEditableObject;
+function EditableObjectFromRequest(ARequest: TRequest;
+  AManager: TEditableManager): TEditableObject;
 begin
-  Result := EditableObjectFromRequest(AModule.Request, (AModule as IEditableWebModule).Manager);
+  Result := AManager.GetObject(EditableObjectNameFromRequest(ARequest));
 end;
 
-{ TEditableDeleteWebModule }
+{ TEditableObjectPostWebModule }
 
-procedure TEditableDeleteWebModule.ConfirmationSuccess(var ACanRedirect: boolean;
-  var ARedirect: string);
-var
-  ManagerSession: TEditableManagerSession;
+function TEditableObjectPostWebModule.Inside: boolean;
 begin
-  ManagerSession := Manager.CreateManagerSession(User as TEditorUser);
+  Result := True;
+end;
+
+procedure TEditableObjectPostWebModule.DoHandlePost(ARequest: TRequest);
+begin
+  FEditableObject := Hook.EditableObject;
   try
-    ManagerSession.DeleteObject(Request.QueryFields.Values['object']);
-    ACanRedirect := True;
-    ARedirect := DocumentRoot + '/';
-    // TODO : redirect to object home page (/problems or /contests, ...)
+    DoHandlePost(ARequest);
   finally
-    FreeAndNil(ManagerSession);
+    FreeAndNil(FEditableObject);
   end;
 end;
 
 { TEditableEditWebModule }
 
-procedure TEditableEditWebModule.DoHandlePost(ARequest: TRequest);
+procedure TEditableEditWebModule.DoInsideHandlePost(ARequest: TRequest);
 var
   Transation: TEditableTransaction;
-  EditableObject: TEditableObject;
 begin
-  EditableObject := EditableObjectFromRequest(Self);
+  Transation := EditableObject.CreateTransaction(User as TEditorUser);
   try
-    Transation := EditableObject.CreateTransaction(User as TEditorUser);
-    try
-      Transation.Title := ARequest.ContentFields.Values['title'];
-      Transation.Commit;
-    finally
-      FreeAndNil(Transation);
-    end;
+    Transation.Title := ARequest.ContentFields.Values['title'];
+    Transation.Commit;
   finally
-    FreeAndNil(EditableObject);
+    FreeAndNil(Transation);
   end;
 end;
 
-{ TEditableInsideWebModule }
+{ TEditableViewWebModule }
 
-procedure TEditableInsideWebModule.AfterConstruction;
+function TEditableViewWebModule.Inside: boolean;
 begin
-  // we need two redirectors
-  // first to redirect back users that have no access
-  // second to redirect self-deleted ones
-  Handlers.Add(TEditableRedirectIfNoAccessHandler.Create);
-  inherited AfterConstruction;
-  Handlers.Add(TEditableRedirectIfNoAccessHandler.Create);
-end;
-
-{ TEditableRedirectIfNoAccessHandler }
-
-procedure TEditableRedirectIfNoAccessHandler.HandleRequest(ARequest: TRequest;
-  AResponse: TResponse; var Handled: boolean);
-var
-  EditableObject: TEditableObject;
-  User: TEditorUser;
-  Redirect: boolean;
-begin
-  Redirect := False;
-  try
-    EditableObject := EditableObjectFromRequest(Parent as THtmlPageWebModule);
-    try
-      User := (Parent as TPostUserWebModule).User as TEditorUser;
-      Redirect := EditableObject.GetAccessRights(User) = erNone;
-    finally
-      FreeAndNil(EditableObject);
-    end;
-  except
-    on E: EEditableAction do
-      Redirect := True
-    else
-      raise;
-  end;
-  if Redirect then
-  begin
-    AResponse.Location := (Parent as TEditableWebModule).Hook.RedirectIfNoAccess;
-    AResponse.Code := 303;
-    Handled := True;
-  end;
-end;
-
-{ TEditableModuleHook }
-
-constructor TEditableModuleHook.Create(AParent: THtmlPageWebModule);
-begin
-  FParent := AParent;
+  Result := True;
 end;
 
 { TEditableAccessWebModule }
 
-procedure TEditableAccessWebModule.DoHandlePost(ARequest: TRequest);
+procedure TEditableAccessWebModule.DoInsideHandlePost(ARequest: TRequest);
 var
   AccessSession: TEditableObjectAccessSession;
   Target: TUserInfo;
@@ -253,34 +231,55 @@ var
   end;
 
 var
-  EditableObject: TEditableObject;
   QueryType: string;
 begin
-  EditableObject := EditableObjectFromRequest(Self);
+  AccessSession := EditableObject.CreateAccessSession(User as TEditorUser);
   try
-    AccessSession := EditableObject.CreateAccessSession(User as TEditorUser);
+    Target := UserManager.GetUserInfo(ARequest.ContentFields.Values['user']);
     try
-      Target := UserManager.GetUserInfo(ARequest.ContentFields.Values['user']);
-      try
-        QueryType := ARequest.ContentFields.Values['query'];
-        if QueryType = 'add-user' then
-          HandleAddUser
-        else if QueryType = 'delete-user' then
-          HandleDeleteUser
-        else if QueryType = 'access-change-user' then
-          HandleAccessChangeUser;
-      finally
-        FreeAndNil(Target);
-      end;
+      QueryType := ARequest.ContentFields.Values['query'];
+      if QueryType = 'add-user' then
+        HandleAddUser
+      else if QueryType = 'delete-user' then
+        HandleDeleteUser
+      else if QueryType = 'access-change-user' then
+        HandleAccessChangeUser;
     finally
-      FreeAndNil(AccessSession);
+      FreeAndNil(Target);
     end;
   finally
-    FreeAndNil(EditableObject);
+    FreeAndNil(AccessSession);
+  end;
+end;
+
+{ TEditableDeleteWebModule }
+
+function TEditableDeleteWebModule.Inside: boolean;
+begin
+  Result := True;
+end;
+
+procedure TEditableDeleteWebModule.ConfirmationSuccess(var ACanRedirect: boolean;
+  var ARedirect: string);
+var
+  ManagerSession: TEditableManagerSession;
+begin
+  ManagerSession := Manager.CreateManagerSession(User as TEditorUser);
+  try
+    ManagerSession.DeleteObject(Hook.EditableObjectName);
+    ACanRedirect := True;
+    ARedirect := Hook.ObjectsRoot;
+  finally
+    FreeAndNil(ManagerSession);
   end;
 end;
 
 { TEditableCreateNewWebModule }
+
+function TEditableCreateNewWebModule.Inside: boolean;
+begin
+  Result := False;
+end;
 
 procedure TEditableCreateNewWebModule.DoHandlePost(ARequest: TRequest);
 var
@@ -297,39 +296,108 @@ begin
   end;
 end;
 
-{ TEditableWebModule }
-
-function TEditableWebModule.Manager: TEditableManager;
+function TEditableCreateNewWebModule.CanRedirect: boolean;
 begin
-  Result := Hook.Manager;
+  Result := True;
 end;
 
-constructor TEditableWebModule.CreateNew(AOwner: TComponent;
-  CreateMode: integer);
+function TEditableCreateNewWebModule.RedirectLocation: string;
 begin
-  inherited CreateNew(AOwner, CreateMode);
-  FHook := CreateHook;
+  Result := Hook.ObjectsRoot;
 end;
 
-procedure TEditableWebModule.AfterConstruction;
+{ TEditableObjListWebModule }
+
+function TEditableObjListWebModule.Inside: boolean;
 begin
-  inherited AfterConstruction;
-  Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create(EditorsSet));
+  Result := False;
 end;
 
-destructor TEditableWebModule.Destroy;
+// Here you can find modules implementing hooks for different module types.
+// We will use macros to do that.
+// Implementation part
+
+{$define HOOKABLE_MODULE_CLASS := TEditablePageWebModule}
+{$I editablehookedmodule.inc}
+
+{$define HOOKABLE_MODULE_CLASS := TEditablePostWebModule}
+{$I editablehookedmodule.inc}
+
+{$define HOOKABLE_MODULE_CLASS := TEditableConfirmPasswordWebModule}
+{$I editablehookedmodule.inc}
+
+{$undef HOOKABLE_MODULE_CLASS}
+
+{ TEditableModuleHook }
+
+function TEditableModuleHook.EditableObject: TEditableObject;
 begin
-  FreeAndNil(FHook);
-  inherited Destroy;
+  if not Inside then
+    raise EInvalidOperation.Create(SCannotAccessThroughOutside);
+  Result := EditableObjectFromRequest(Parent.Request, Manager);
 end;
 
-{ TEditableHtmlPageWebModule }
-
-procedure TEditableHtmlPageWebModule.AfterConstruction;
+function TEditableModuleHook.EditableObjectName: string;
 begin
-  inherited AfterConstruction;
-  Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create(EditorsSet));
+  if not Inside then
+    raise EInvalidOperation.Create(SCannotAccessThroughOutside);
+  Result := EditableObjectNameFromRequest(Parent.Request);
+end;
+
+procedure TEditableModuleHook.BeginAddHandlers;
+begin
+  if Inside then
+    Parent.Handlers.Add(TEditableRedirectIfNoAccessHandler.Create);
+end;
+
+procedure TEditableModuleHook.EndAddHandlers;
+begin
+  // we need two redirectors
+  // first to redirect back users that have no access
+  // second to redirect self-deleted ones
+  if Inside then
+    Parent.Handlers.Add(TEditableRedirectIfNoAccessHandler.Create);
+  Parent.Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create(EditorsSet));
+end;
+
+constructor TEditableModuleHook.Create(AParent: THtmlPageWebModule; AInside: boolean);
+begin
+  FParent := AParent;
+  FInside := AInside;
+end;
+
+{ TEditableRedirectIfNoAccessHandler }
+
+procedure TEditableRedirectIfNoAccessHandler.HandleRequest(ARequest: TRequest;
+  AResponse: TResponse; var Handled: boolean);
+var
+  Hook: TEditableModuleHook;
+  EditableObject: TEditableObject;
+  User: TEditorUser;
+  Redirect: boolean;
+begin
+  Hook := (Parent as IEditableModuleHook).Hook;
+  Redirect := False;
+  try
+    EditableObject := Hook.EditableObject;
+    try
+      User := (Parent as IUserWebModule).User as TEditorUser;
+      Redirect := EditableObject.GetAccessRights(User) = erNone;
+    finally
+      FreeAndNil(EditableObject);
+    end;
+  except
+    on E: EEditableAction do
+      Redirect := True
+    else
+      raise;
+  end;
+  if Redirect then
+  begin
+    AResponse.Location := Hook.ObjectsRoot;
+    AResponse.Code := 303;
+    Handled := True;
+  end;
 end;
 
 end.
-

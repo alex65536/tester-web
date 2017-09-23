@@ -186,6 +186,7 @@ resourcestring
   SObjectEditSubmit = 'Edit problem';
   SEditableView = 'View';
   SEditableEdit = 'Edit';
+  SCannotAccessThroughOutside = 'Cannot access EditableObject through outside hook!';
 
 implementation
 

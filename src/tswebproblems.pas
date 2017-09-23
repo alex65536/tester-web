@@ -22,14 +22,12 @@ unit tswebproblems;
 
 {$mode objfpc}{$H+}
 
-// TODO : Refactor EditableModules and this unit!!!
-
 interface
 
 uses
   Classes, SysUtils, tswebmodules, tswebeditablefeatures, tswebeditablemodules,
   webstrconsts, fphttp, htmlpages, problems, editableobjects, navbars,
-  tswebfeatures, tswebpagesbase, tswebpages, htmlpreprocess, HTTPDefs;
+  tswebfeatures, tswebpagesbase, tswebpages, htmlpreprocess, tswebeditableelements;
 
 type
 
@@ -120,76 +118,141 @@ type
   TProblemModuleHook = class(TEditableModuleHook)
   public
     function Manager: TEditableManager; override;
-    function RedirectIfNoAccess: string; override;
+    function ObjectsRoot: string; override;
   end;
 
-  { TProblemHtmlPageModule }
+  { TProblemObjListWebModule }
 
-  TProblemHtmlPageModule = class(TEditableHtmlPageWebModule, IEditableWebModule)
-  protected
-    function Manager: TEditableManager;
-  end;
-
-  { TProblemListPageModule }
-
-  TProblemListPageModule = class(TProblemHtmlPageModule)
+  TProblemObjListWebModule = class(TEditableObjListWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
+    function HookClass: TEditableModuleHookClass; override;
   end;
 
-  { TProblemCreateNewModule }
+  { TProblemCreateNewWebModule }
 
-  TProblemCreateNewModule = class(TEditableCreateNewWebModule)
+  TProblemCreateNewWebModule = class(TEditableCreateNewWebModule)
   protected
-    function CreateHook: TEditableModuleHook; override;
     function DoCreatePage: THtmlPage; override;
-    function CanRedirect: boolean; override;
-    function RedirectLocation: string; override;
+    function HookClass: TEditableModuleHookClass; override;
   end;
 
-  { TProblemAccessModule }
+  { TProblemDeleteWebModule }
 
-  TProblemAccessModule = class(TEditableAccessWebModule)
+  TProblemDeleteWebModule = class(TEditableDeleteWebModule)
   protected
-    function CreateHook: TEditableModuleHook; override;
     function DoCreatePage: THtmlPage; override;
+    function HookClass: TEditableModuleHookClass; override;
   end;
 
-  { TProblemViewModule }
+  { TProblemAccessWebModule }
 
-  TProblemViewModule = class(TProblemHtmlPageModule)
+  TProblemAccessWebModule = class(TEditableAccessWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
+    function HookClass: TEditableModuleHookClass; override;
   end;
 
-  { TProblemEditModule }
+  { TProblemViewWebModule }
 
-  TProblemEditModule = class(TEditableEditWebModule)
+  TProblemViewWebModule = class(TEditableViewWebModule)
   protected
-    function CreateHook: TEditableModuleHook; override;
     function DoCreatePage: THtmlPage; override;
+    function HookClass: TEditableModuleHookClass; override;
   end;
 
-  { TProblemDeleteModule }
+  { TProblemEditWebModule }
 
-  TProblemDeleteModule = class(TEditableDeleteWebModule)
+  TProblemEditWebModule = class(TEditableEditWebModule)
   protected
-    function Manager: TEditableManager; override;
     function DoCreatePage: THtmlPage; override;
+    function HookClass: TEditableModuleHookClass; override;
   end;
 
 implementation
 
-{ TProblemDeleteModule }
+{ TProblemEditWebModule }
 
-function TProblemDeleteModule.Manager: TEditableManager;
+function TProblemEditWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemEditPage.Create;
+end;
+
+function TProblemEditWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TProblemModuleHook;
+end;
+
+{ TProblemViewWebModule }
+
+function TProblemViewWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemViewPage.Create;
+end;
+
+function TProblemViewWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TProblemModuleHook;
+end;
+
+{ TProblemAccessWebModule }
+
+function TProblemAccessWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemAccessPage.Create;
+end;
+
+function TProblemAccessWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TProblemModuleHook;
+end;
+
+{ TProblemDeleteWebModule }
+
+function TProblemDeleteWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TNavConfirmPasswordPage.Create;
+end;
+
+function TProblemDeleteWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TProblemModuleHook;
+end;
+
+{ TProblemCreateNewWebModule }
+
+function TProblemCreateNewWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemCreateNewPage.Create;
+end;
+
+function TProblemCreateNewWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TProblemModuleHook;
+end;
+
+{ TProblemObjListWebModule }
+
+function TProblemObjListWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemListPage.Create;
+end;
+
+function TProblemObjListWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TProblemModuleHook;
+end;
+
+{ TProblemModuleHook }
+
+function TProblemModuleHook.Manager: TEditableManager;
 begin
   Result := ProblemManager;
 end;
 
-function TProblemDeleteModule.DoCreatePage: THtmlPage;
+function TProblemModuleHook.ObjectsRoot: string;
 begin
-  Result := TNavConfirmPasswordPage.Create;
+  Result := DocumentRoot + '/problems';
 end;
 
 { TProblemEditPage }
@@ -200,50 +263,12 @@ begin
   AddFeature(TEditableEditFeature);
 end;
 
-{ TProblemEditModule }
-
-function TProblemEditModule.CreateHook: TEditableModuleHook;
-begin
-  Result := TProblemModuleHook.Create(Self);
-end;
-
-function TProblemEditModule.DoCreatePage: THtmlPage;
-begin
-  Result := TProblemEditPage.Create;
-end;
-
-{ TProblemViewModule }
-
-function TProblemViewModule.DoCreatePage: THtmlPage;
-begin
-  Result := TProblemViewPage.Create;
-end;
-
 { TProblemViewPage }
 
 procedure TProblemViewPage.AddFeatures;
 begin
   inherited AddFeatures;
   AddFeature(TEditableViewFeature);
-end;
-
-{ TProblemHtmlPageModule }
-
-function TProblemHtmlPageModule.Manager: TEditableManager;
-begin
-  Result := ProblemManager;
-end;
-
-{ TProblemModuleHook }
-
-function TProblemModuleHook.Manager: TEditableManager;
-begin
-  Result := ProblemManager;
-end;
-
-function TProblemModuleHook.RedirectIfNoAccess: string;
-begin
-  Result := DocumentRoot + '/problems';
 end;
 
 { TProblemAccessPage }
@@ -254,34 +279,42 @@ begin
   AddFeature(TEditableManageAccessFeature);
 end;
 
-{ TProblemAccessModule }
+{ TProblemCreateNewPage }
 
-function TProblemAccessModule.CreateHook: TEditableModuleHook;
+procedure TProblemCreateNewPage.AddFeatures;
 begin
-  Result := TProblemModuleHook.Create(Self);
+  inherited AddFeatures;
+  AddFeature(TProblemCreateFormFeature);
 end;
 
-function TProblemAccessModule.DoCreatePage: THtmlPage;
+function TProblemCreateNewPage.HasEditableObject: boolean;
 begin
-  Result := TProblemAccessPage.Create;
+  Result := False;
 end;
 
-{ TProblemCreateFormFeature }
-
-procedure TProblemCreateFormFeature.Satisfy;
+procedure TProblemCreateNewPage.AfterConstruction;
 begin
-  with Parent.Variables do
-  begin
-    ItemsAsText['editableCreateNamePrompt'] := SProblemCreateNamePrompt;
-    ItemsAsText['editableCreateTitlePrompt'] := SProblemCreateTitlePrompt;
-    ItemsAsText['editableCreatePrompt'] := SProblemCreatePrompt;
-  end;
+  inherited AfterConstruction;
+  Title := SProblemCreateNew;
 end;
 
-procedure TProblemCreateFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+{ TProblemListPage }
+
+procedure TProblemListPage.AddFeatures;
 begin
-  inherited DependsOn(ADependencies);
-  ADependencies.Add(TEditableCreateFormFeature);
+  inherited AddFeatures;
+  AddFeature(TEditableObjListFeature);
+end;
+
+function TProblemListPage.HasEditableObject: boolean;
+begin
+  Result := False;
+end;
+
+procedure TProblemListPage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Title := SProblemList;
 end;
 
 { TProblemPostHtmlPage }
@@ -343,45 +376,22 @@ begin
   Strings.Text := '';
 end;
 
-{ TProblemCreateNewModule }
+{ TProblemCreateFormFeature }
 
-function TProblemCreateNewModule.CreateHook: TEditableModuleHook;
+procedure TProblemCreateFormFeature.Satisfy;
 begin
-  Result := TProblemModuleHook.Create(Self);
+  with Parent.Variables do
+  begin
+    ItemsAsText['editableCreateNamePrompt'] := SProblemCreateNamePrompt;
+    ItemsAsText['editableCreateTitlePrompt'] := SProblemCreateTitlePrompt;
+    ItemsAsText['editableCreatePrompt'] := SProblemCreatePrompt;
+  end;
 end;
 
-function TProblemCreateNewModule.DoCreatePage: THtmlPage;
+procedure TProblemCreateFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
-  Result := TProblemCreateNewPage.Create;
-end;
-
-function TProblemCreateNewModule.CanRedirect: boolean;
-begin
-  Result := True;
-end;
-
-function TProblemCreateNewModule.RedirectLocation: string;
-begin
-  Result := DocumentRoot + '/problems';
-end;
-
-{ TProblemCreateNewPage }
-
-procedure TProblemCreateNewPage.AddFeatures;
-begin
-  inherited AddFeatures;
-  AddFeature(TProblemCreateFormFeature);
-end;
-
-function TProblemCreateNewPage.HasEditableObject: boolean;
-begin
-  Result := False;
-end;
-
-procedure TProblemCreateNewPage.AfterConstruction;
-begin
-  inherited AfterConstruction;
-  Title := SProblemCreateNew;
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableCreateFormFeature);
 end;
 
 { TProblemBaseFeature }
@@ -404,39 +414,13 @@ begin
   ADependencies.Add(TEditableBaseFeature);
 end;
 
-{ TProblemListPageModule }
-
-function TProblemListPageModule.DoCreatePage: THtmlPage;
-begin
-  Result := TProblemListPage.Create;
-end;
-
-{ TProblemListPage }
-
-procedure TProblemListPage.AddFeatures;
-begin
-  inherited AddFeatures;
-  AddFeature(TEditableObjListFeature);
-end;
-
-function TProblemListPage.HasEditableObject: boolean;
-begin
-  Result := False;
-end;
-
-procedure TProblemListPage.AfterConstruction;
-begin
-  inherited AfterConstruction;
-  Title := SProblemList;
-end;
-
 initialization
-  RegisterHTTPModule('problems', TProblemListPageModule, True);
-  RegisterHTTPModule('problem-new', TProblemCreateNewModule, True);
-  RegisterHTTPModule('problem-access', TProblemAccessModule, True);
-  RegisterHTTPModule('problem-view', TProblemViewModule, True);
-  RegisterHTTPModule('problem-edit', TProblemEditModule, True);
-  RegisterHTTPModule('problem-delete', TProblemDeleteModule, True);
+  RegisterHTTPModule('problems', TProblemObjListWebModule, True);
+  RegisterHTTPModule('problem-new', TProblemCreateNewWebModule, True);
+  RegisterHTTPModule('problem-delete', TProblemDeleteWebModule, True);
+  RegisterHTTPModule('problem-access', TProblemAccessWebModule, True);
+  RegisterHTTPModule('problem-view', TProblemViewWebModule, True);
+  RegisterHTTPModule('problem-edit', TProblemEditWebModule, True);
 
 end.
 

@@ -29,6 +29,12 @@ uses
   tswebcrypto, tswebsessions;
 
 type
+  {$interfaces CORBA}
+  IUserWebModule = interface
+    ['{BAE94321-0879-495F-AB73-21BA75F8FF42}']
+    function User: TUser;
+  end;
+  {$interfaces COM}
 
   { TRedirectLoggedWebModuleHandler }
 
@@ -50,6 +56,18 @@ type
       var {%H-}Handled: boolean); override;
     constructor Create(AAllowUsers: TUserRoleSet = AllUserRoles;
       ARedirectIfFail: boolean = False; ARedirectLocation: string = '');
+  end;
+
+  { TUserWebModule }
+
+  TUserWebModule = class(THtmlPageWebModule, IUserWebModule)
+  private
+    FUser: TUser;
+  protected
+    procedure DoSessionCreated; override;
+    procedure DoAfterRequest; override;
+  public
+    function User: TUser;
   end;
 
   { TPostWebModule }
@@ -76,7 +94,7 @@ type
 
   { TPostUserWebModule }
 
-  TPostUserWebModule = class(TPostWebModule)
+  TPostUserWebModule = class(TPostWebModule, IUserWebModule)
   private
     FUser: TUser;
   protected
@@ -84,11 +102,30 @@ type
     procedure DoAfterRequest; override;
     function CanRedirect: boolean; override;
   public
-    property User: TUser read FUser;
+    function User: TUser;
     procedure AfterConstruction; override;
   end;
 
 implementation
+
+{ TUserWebModule }
+
+procedure TUserWebModule.DoSessionCreated;
+begin
+  inherited DoSessionCreated;
+  FUser := UserManager.LoadUserFromSession(Session);
+end;
+
+procedure TUserWebModule.DoAfterRequest;
+begin
+  FreeAndNil(FUser);
+  inherited DoAfterRequest;
+end;
+
+function TUserWebModule.User: TUser;
+begin
+  Result := FUser;
+end;
 
 { TDeclineNotLoggedWebModuleHandler }
 
@@ -160,6 +197,11 @@ end;
 function TPostUserWebModule.CanRedirect: boolean;
 begin
   Result := False;
+end;
+
+function TPostUserWebModule.User: TUser;
+begin
+  Result := FUser;
 end;
 
 procedure TPostUserWebModule.AfterConstruction;
