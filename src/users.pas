@@ -42,8 +42,6 @@ type
 const
   AllUserRoles = [Low(TUserRole) .. High(TUserRole)];
 
-// TODO : Internally keep users by unique ID!
-
 type
 
   { TUserInfo }

@@ -156,6 +156,8 @@ type
     function User: TEditorUser;
     property EditableObject: TEditableObject read FEditableObject;
     procedure InternalSatisfy; virtual; abstract;
+    procedure BeforeSatisfy; virtual;
+    procedure AfterSatisfy; virtual;
   public
     procedure Satisfy; override;
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
@@ -229,7 +231,108 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TEditableTransactionPageFeature }
+
+  TEditableTransactionPageFeature = class(TEditableObjectFeature)
+  private
+    FTransaction: TEditableTransaction;
+  protected
+    procedure BeforeSatisfy; override;
+    procedure AfterSatisfy; override;
+  public
+    property Transaction: TEditableTransaction read FTransaction;
+  end;
+
+  { TEditableEditViewBaseFeature }
+
+  TEditableEditViewBaseFeature = class(TEditableTransactionPageFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TEditableViewFeature }
+
+  TEditableViewFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TEditableEditFeature }
+
+  TEditableEditFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TEditableEditFeature }
+
+procedure TEditableEditFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['objectEditSubmit'] := SObjectEditSubmit;
+  end;
+  LoadPagePart('editable', 'editableEdit', 'content');
+end;
+
+procedure TEditableEditFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableEditViewBaseFeature);
+  ADependencies.Add(TPostDataFeature);
+end;
+
+{ TEditableViewFeature }
+
+procedure TEditableViewFeature.Satisfy;
+begin
+  LoadPagePart('editable', 'editableView', 'content');
+end;
+
+procedure TEditableViewFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableEditViewBaseFeature);
+end;
+
+{ TEditableEditViewBaseFeature }
+
+procedure TEditableEditViewBaseFeature.InternalSatisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['objectTitleKey'] := SObjectTitleKey;
+    ItemsAsText['objectTitleValue'] := Transaction.Title;
+    ItemsAsText['objectTitlePrompt'] := SObjectTitlePrompt;
+  end;
+end;
+
+procedure TEditableEditViewBaseFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableButtonsFeature);
+  ADependencies.Add(TContentFeature);
+end;
+
+{ TEditableTransactionPageFeature }
+
+procedure TEditableTransactionPageFeature.BeforeSatisfy;
+begin
+  inherited BeforeSatisfy;
+  FTransaction := EditableObject.CreateTransaction(User);
+end;
+
+procedure TEditableTransactionPageFeature.AfterSatisfy;
+begin
+  FreeAndNil(FTransaction);
+  inherited AfterSatisfy;
+end;
 
 { TEditableAccessButtonFeature }
 
@@ -341,13 +444,23 @@ begin
   Result := (Parent as TUserPage).User as TEditorUser;
 end;
 
-procedure TEditableObjectFeature.Satisfy;
+procedure TEditableObjectFeature.BeforeSatisfy;
 begin
   FEditableObject := (Parent as IEditablePage).EditableObject;
+end;
+
+procedure TEditableObjectFeature.AfterSatisfy;
+begin
+  FreeAndNil(FEditableObject);
+end;
+
+procedure TEditableObjectFeature.Satisfy;
+begin
+  BeforeSatisfy;
   try
     InternalSatisfy;
   finally
-    FreeAndNil(FEditableObject);
+    AfterSatisfy;
   end;
 end;
 
@@ -395,7 +508,6 @@ procedure TEditableManageAccessFeature.DependsOn(ADependencies: THtmlPageFeature
 begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TPostDataFeature);
-  ADependencies.Add(TSessionTokenFeature);
   ADependencies.Add(TContentFeature);
   ADependencies.Add(TEditableButtonsFeature);
 end;

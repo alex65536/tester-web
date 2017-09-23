@@ -647,11 +647,7 @@ end;
 
 procedure TEditableObject.HandleUserChangedRole(AInfo: TUserInfo);
 begin
-  // I don't know what to do and should we delete all access from a user that was
-  // banner from being an editor.
-  // TODO : Decide what to do when user is kicked from editors.
-  {if not (AInfo.Role in EditorsSet) then
-    SafeDeleteUser(AInfo);}
+  // do nothing
 end;
 
 procedure TEditableObject.MessageReceived(AMessage: TAuthorMessage);

@@ -181,6 +181,11 @@ resourcestring
   SEditableViewText = 'View';
   SEditableEditText = 'Edit';
   SEditableAccessText = 'Manage access';
+  SObjectTitleKey = 'Title:';
+  SObjectTitlePrompt = 'Enter title';
+  SObjectEditSubmit = 'Edit problem';
+  SProblemView = 'View Problem';
+  SProblemEdit = 'Edit Problem';
 
 implementation
 

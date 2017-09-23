@@ -94,6 +94,7 @@ type
 
   TPostDataFeature = class(TTesterPageFeature)
     procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
   { TSessionTokenFeature }
@@ -122,6 +123,12 @@ begin
     ItemsAsText['authError'] := (Parent as IPostHtmlPage).Error;
     ItemsAsText['authSuccess'] := (Parent as IPostHtmlPage).Success;
   end;
+end;
+
+procedure TPostDataFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TSessionTokenFeature);
 end;
 
 { TUserInfoFeature }

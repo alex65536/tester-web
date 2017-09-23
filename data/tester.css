@@ -323,3 +323,14 @@ table.access-table th.id {
 td.a-delete-wrapper {
 	padding: 6pt 6pt !important;
 }
+
+
+.view-table-key, .edit-table-key {
+	vertical-align: middle;
+	text-align: right;
+}
+.view-table-value, .edit-table-value {
+	padding-left: 10pt;
+	text-align: left;
+	vertical-align: middle;
+}

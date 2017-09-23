@@ -22,12 +22,14 @@ unit tswebproblems;
 
 {$mode objfpc}{$H+}
 
+// TODO : Refactor EditableModules and this unit!!!
+
 interface
 
 uses
   Classes, SysUtils, tswebmodules, tswebeditablefeatures, tswebeditablemodules,
   webstrconsts, fphttp, htmlpages, problems, editableobjects, navbars,
-  tswebfeatures, tswebpagesbase, tswebpages, htmlpreprocess;
+  tswebfeatures, tswebpagesbase, tswebpages, htmlpreprocess, HTTPDefs;
 
 type
 
@@ -101,6 +103,24 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TProblemViewPage }
+
+  TProblemViewPage = class(TProblemHtmlPage)
+  protected
+    procedure AddFeatures; override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
+  { TProblemEditPage }
+
+  TProblemEditPage = class(TProblemPostHtmlPage)
+  protected
+    procedure AddFeatures; override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
   { TProblemModuleHook }
 
   TProblemModuleHook = class(TEditableModuleHook)
@@ -109,9 +129,16 @@ type
     function RedirectIfNoAccess: string; override;
   end;
 
+  { TProblemHtmlPageModule }
+
+  TProblemHtmlPageModule = class(TEditableHtmlPageWebModule, IEditableWebModule)
+  protected
+    function Manager: TEditableManager;
+  end;
+
   { TProblemListPageModule }
 
-  TProblemListPageModule = class(TEditableHtmlPageWebModule)
+  TProblemListPageModule = class(TProblemHtmlPageModule)
   protected
     function DoCreatePage: THtmlPage; override;
   end;
@@ -134,7 +161,96 @@ type
     function DoCreatePage: THtmlPage; override;
   end;
 
+  { TProblemViewModule }
+
+  TProblemViewModule = class(TProblemHtmlPageModule)
+  protected
+    function DoCreatePage: THtmlPage; override;
+  end;
+
+  { TProblemEditModule }
+
+  TProblemEditModule = class(TEditableEditWebModule)
+  protected
+    function CreateHook: TEditableModuleHook; override;
+    function DoCreatePage: THtmlPage; override;
+  end;
+
+  { TProblemDeleteModule }
+
+  TProblemDeleteModule = class(TEditableDeleteWebModule)
+  protected
+    function Manager: TEditableManager; override;
+    function DoCreatePage: THtmlPage; override;
+  end;
+
 implementation
+
+{ TProblemDeleteModule }
+
+function TProblemDeleteModule.Manager: TEditableManager;
+begin
+  Result := ProblemManager;
+end;
+
+function TProblemDeleteModule.DoCreatePage: THtmlPage;
+begin
+  Result := TNavConfirmPasswordPage.Create;
+end;
+
+{ TProblemEditPage }
+
+procedure TProblemEditPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TEditableEditFeature);
+end;
+
+procedure TProblemEditPage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Title := SProblemEdit;
+end;
+
+{ TProblemEditModule }
+
+function TProblemEditModule.CreateHook: TEditableModuleHook;
+begin
+  Result := TProblemModuleHook.Create(Self);
+end;
+
+function TProblemEditModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemEditPage.Create;
+end;
+
+{ TProblemViewModule }
+
+function TProblemViewModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemViewPage.Create;
+end;
+
+{ TProblemViewPage }
+
+procedure TProblemViewPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TEditableViewFeature);
+end;
+
+procedure TProblemViewPage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Title := SProblemView;
+end;
+
+{ TProblemHtmlPageModule }
+
+function TProblemHtmlPageModule.Manager: TEditableManager;
+begin
+  Result := ProblemManager;
+end;
 
 { TProblemModuleHook }
 
@@ -342,6 +458,9 @@ initialization
   RegisterHTTPModule('problems', TProblemListPageModule, True);
   RegisterHTTPModule('problem-new', TProblemCreateNewModule, True);
   RegisterHTTPModule('problem-access', TProblemAccessModule, True);
+  RegisterHTTPModule('problem-view', TProblemViewModule, True);
+  RegisterHTTPModule('problem-edit', TProblemEditModule, True);
+  RegisterHTTPModule('problem-delete', TProblemDeleteModule, True);
 
 end.
 
