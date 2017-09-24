@@ -169,6 +169,7 @@ type
     procedure HandleUserChangedRole({%H-}AInfo: TUserInfo); virtual;
     procedure MessageReceived(AMessage: TAuthorMessage);
     procedure UpdateModifyTime;
+    procedure HandleSelfDeletion; virtual;
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
   public
     property Name: string read FName;
@@ -406,9 +407,17 @@ begin
 end;
 
 procedure TEditableManager.DeleteObject(const AName: string);
+var
+  EditableObject: TEditableObject;
 begin
   if not ObjectExists(AName) then
     raise EEditableNotExist.CreateFmt(SObjectDoesNotExist, [ObjectTypeName, AName]);
+  EditableObject := GetObject(AName);
+  try
+    EditableObject.HandleSelfDeletion;
+  finally
+    FreeAndNil(EditableObject);
+  end;
   FStorage.DeleteVariable(GetIdKey(ObjectNameToId(AName)));
   FStorage.DeletePath(ObjectSection(AName));
 end;
@@ -669,6 +678,11 @@ end;
 procedure TEditableObject.UpdateModifyTime;
 begin
   FStorage.WriteFloat(FullKeyName('lastModified'), Now);
+end;
+
+procedure TEditableObject.HandleSelfDeletion;
+begin
+  // do nothing
 end;
 
 constructor TEditableObject.Create(const AName: string; AManager: TEditableManager);

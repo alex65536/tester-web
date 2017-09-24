@@ -29,7 +29,8 @@ unit problems;
 interface
 
 uses
-  Classes, SysUtils, editableobjects, datastorages, webstrconsts, TypInfo;
+  Classes, SysUtils, editableobjects, datastorages, webstrconsts, TypInfo,
+  tswebdirectories;
 
 type
   TProblemStatementsType = (stHtml, stPdf);
@@ -76,6 +77,8 @@ type
   TProblem = class(TEditableObject)
   protected
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
+    procedure WaitForFiles;
+    procedure HandleSelfDeletion; override;
   public
     function CreateAccessSession(AUser: TEditorUser): TEditableObjectAccessSession;
       override;
@@ -152,6 +155,18 @@ end;
 constructor TProblem.Create(const AName: string; AManager: TEditableManager);
 begin
   inherited Create(AName, AManager);
+end;
+
+procedure TProblem.WaitForFiles;
+begin
+  // This will be used later, when the problem testing will be added
+end;
+
+procedure TProblem.HandleSelfDeletion;
+begin
+  inherited HandleSelfDeletion;
+  WaitForFiles;
+  // TODO : Write it!!!
 end;
 
 function TProblem.CreateAccessSession(AUser: TEditorUser): TEditableObjectAccessSession;

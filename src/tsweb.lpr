@@ -64,7 +64,9 @@ uses
   tswebeditablefeatures,
   tswebeditablemodules,
   tswebproblems,
-  tswebeditableelements;
+  tswebeditableelements,
+  archivemanager,
+  filemanager;
 
 type
   TOpenHandlerApplication = class(THTTPApplication)

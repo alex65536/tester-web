@@ -192,6 +192,12 @@ resourcestring
   SFileTooBigAlertTail = ' KBytes.';
   SNoSuchStatementsType = 'No such Statements type!';
   SFilesNotice = 'NOTE: All sizes are listed in KBytes!';
+  SFileTooBig = 'File size must not exceed %d KBytes.';
+  SArchiveTooBig = 'Archive size must not exceed %d KBytes.';
+  SBadArchive = 'Bad archive "%s"!';
+  SCouldNotCopyFile = 'Could not copy file "%s" to "%s"!';
+  SCouldNotMoveFile = 'Could not move file "%s" to "%s"!';
+  SCouldNotUnpack = 'Could not unpack archive "%s"!';
 
 implementation
 
