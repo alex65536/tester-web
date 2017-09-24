@@ -151,7 +151,7 @@ implementation
 
 function TFileDataStorage.GetFileName: string;
 begin
-  Result := AppendPathDelim(ExpandInternalDirLocation('data')) + StoragePath + '.conf';
+  Result := AppendPathDelim(ExpandInternalDirLocation('data')) + StoragePath + '.db';
 end;
 
 { TXmlDataStorage }

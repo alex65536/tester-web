@@ -24,14 +24,15 @@ unit problems;
 // This is done to test front-end EditableObjects part
 // TODO : Write problems part!!!
 
-{$mode objfpc}{$H+}
+{$mode objfpc}{$H+}{$M+}
 
 interface
 
 uses
-  Classes, SysUtils, editableobjects, datastorages, webstrconsts;
+  Classes, SysUtils, editableobjects, datastorages, webstrconsts, TypInfo;
 
 type
+  TProblemStatementsType = (stHtml, stPdf);
 
   { TProblemAccessSession }
 
@@ -44,11 +45,23 @@ type
   { TProblemTransaction }
 
   TProblemTransaction = class(TEditableTransaction)
+  private
+    FArchiveFileName: string;
+    FMaxSrcLimit: integer;
+    FStatementsFileName: string;
+    FStatementsType: TProblemStatementsType;
   protected
     procedure DoCommit; override;
     procedure DoReload; override;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser;
       AObject: TEditableObject);
+  public
+    property StatementsType: TProblemStatementsType read FStatementsType write
+      FStatementsType;
+    property StatementsFileName: string read FStatementsFileName write
+      FStatementsFileName;
+    property ArchiveFileName: string read FArchiveFileName write FArchiveFileName;
+    property MaxSrcLimit: integer read FMaxSrcLimit write FMaxSrcLimit;
   end;
 
   { TProblemManagerSession }
@@ -82,6 +95,9 @@ type
 
 function ProblemManager: TProblemManager;
 
+function StatementsTypeToStr(AType: TProblemStatementsType): string;
+function StrToStatementsType(const S: string): TProblemStatementsType;
+
 implementation
 
 var
@@ -92,6 +108,21 @@ begin
   if FManager = nil then
     FManager := TProblemManager.Create;
   Result := FManager;
+end;
+
+function StatementsTypeToStr(AType: TProblemStatementsType): string;
+begin
+  Result := GetEnumName(TypeInfo(TEditableAccessRights), Ord(AType));
+end;
+
+function StrToStatementsType(const S: string): TProblemStatementsType;
+var
+  T: TProblemStatementsType;
+begin
+  for T in TProblemStatementsType do
+    if StatementsTypeToStr(T) = S then
+      Exit(T);
+  raise EConvertError.Create(SNoSuchStatementsType);
 end;
 
 { TProblemManager }
@@ -154,13 +185,13 @@ end;
 procedure TProblemTransaction.DoCommit;
 begin
   inherited DoCommit;
-  // not implemented!
+  // TODO : implement DoCommit!
 end;
 
 procedure TProblemTransaction.DoReload;
 begin
   inherited DoReload;
-  // not implemented!
+  // TODO : implement DoReload!
 end;
 
 constructor TProblemTransaction.Create(AManager: TEditableManager;

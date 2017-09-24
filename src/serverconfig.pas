@@ -42,6 +42,11 @@ type
     function GetCrypto_SCrypt_LogN: integer;
     function GetCrypto_SCrypt_R: integer;
     function GetCrypto_SCrypt_P: integer;
+    function GetFiles_DefaultSrcSize: integer;
+    function GetFiles_MaxArchiveSize: integer;
+    function GetFiles_MaxSrcSize: integer;
+    function GetFiles_MaxStatementsSize: integer;
+    function GetFiles_MaxUnpackedArchiveSize: integer;
     function GetLocation_DataDir: string;
     function GetLocation_TemplatesDir: string;
     function GetOwner_DefaultFirstName: string;
@@ -90,6 +95,13 @@ type
     property Owner_DefaultFirstName: string read GetOwner_DefaultFirstName;
     property Owner_DefaultLastName: string read GetOwner_DefaultLastName;
 
+    // files default settings (all sizes are in KBytes!)
+    property Files_MaxArchiveSize: integer read GetFiles_MaxArchiveSize;
+    property Files_MaxUnpackedArchiveSize: integer read GetFiles_MaxUnpackedArchiveSize;
+    property Files_MaxStatementsSize: integer read GetFiles_MaxStatementsSize;
+    property Files_MaxSrcSize: integer read GetFiles_MaxSrcSize;
+    property Files_DefaultSrcSize: integer read GetFiles_DefaultSrcSize;
+
     constructor Create;
     procedure Reload;
     destructor Destroy; override;
@@ -135,6 +147,31 @@ end;
 function TTesterServerConfig.GetCrypto_SCrypt_P: integer;
 begin
   Result := FStorage.ReadInteger('crypto.scrypt.p', 1);
+end;
+
+function TTesterServerConfig.GetFiles_DefaultSrcSize: integer;
+begin
+  Result := FStorage.ReadInteger('files.defaultSrcSize', 64);
+end;
+
+function TTesterServerConfig.GetFiles_MaxArchiveSize: integer;
+begin
+  Result := FStorage.ReadInteger('files.maxArchiveSize', 16384);
+end;
+
+function TTesterServerConfig.GetFiles_MaxSrcSize: integer;
+begin
+  Result := FStorage.ReadInteger('files.maxSrcSize', 2048);
+end;
+
+function TTesterServerConfig.GetFiles_MaxStatementsSize: integer;
+begin
+  Result := FStorage.ReadInteger('files.maxStatementsSize', 2048);
+end;
+
+function TTesterServerConfig.GetFiles_MaxUnpackedArchiveSize: integer;
+begin
+  Result := FStorage.ReadInteger('files.maxUnpackedArchiveSize', 65536);
 end;
 
 function TTesterServerConfig.GetLocation_DataDir: string;
@@ -225,6 +262,13 @@ begin
     WriteString('owner.defaults.lastName', Owner_DefaultLastName);
     WriteString('owner.defaults.password', Owner_DefaultPassword);
     WriteString('owner.defaults.userName', Owner_DefaultUsername);
+
+    WriteString('files.notice', SFilesNotice);
+    WriteInteger('files.maxArchiveSize', Files_MaxArchiveSize);
+    WriteInteger('files.maxSrcSize', Files_MaxSrcSize);
+    WriteInteger('files.defaultSrcSize', Files_DefaultSrcSize);
+    WriteInteger('files.maxStatementsSize', Files_MaxStatementsSize);
+    WriteInteger('files.maxUnpackedArchiveSize', Files_MaxUnpackedArchiveSize);
   end;
 end;
 

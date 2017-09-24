@@ -190,6 +190,8 @@ resourcestring
   SCannotAccessThroughOutside = 'Cannot access EditableObject through outside hook!';
   SFileTooBigAlertHead = 'File size must not exceed ';
   SFileTooBigAlertTail = ' KBytes.';
+  SNoSuchStatementsType = 'No such Statements type!';
+  SFilesNotice = 'NOTE: All sizes are listed in KBytes!';
 
 implementation
 
