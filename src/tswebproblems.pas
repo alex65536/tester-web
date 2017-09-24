@@ -47,6 +47,14 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TProblemEditFeature }
+
+  TProblemEditFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
   { TProblemHtmlPage }
 
   TProblemHtmlPage = class(TDefaultHtmlPage, IEditablePage)
@@ -260,7 +268,7 @@ end;
 procedure TProblemEditPage.AddFeatures;
 begin
   inherited AddFeatures;
-  AddFeature(TEditableEditFeature);
+  AddFeature(TProblemEditFeature);
 end;
 
 { TProblemViewPage }
@@ -374,6 +382,19 @@ procedure TProblemHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
 begin
   // do nothing, not necessary
   Strings.Text := '';
+end;
+
+{ TProblemEditFeature }
+
+procedure TProblemEditFeature.Satisfy;
+begin
+  Parent.Variables.ItemsAsText['objectEditSubmit'] := SProblemEditSubmit;
+end;
+
+procedure TProblemEditFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableEditFeature);
 end;
 
 { TProblemCreateFormFeature }

@@ -183,7 +183,8 @@ resourcestring
   SEditableAccessText = 'Manage access';
   SObjectTitleKey = 'Title:';
   SObjectTitlePrompt = 'Enter title';
-  SObjectEditSubmit = 'Edit problem';
+  SObjectEditSubmit = 'Edit object';
+  SProblemEditSubmit = 'Edit problem';
   SEditableView = 'View';
   SEditableEdit = 'Edit';
   SCannotAccessThroughOutside = 'Cannot access EditableObject through outside hook!';
