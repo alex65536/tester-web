@@ -43,6 +43,21 @@ const
     '.pdf'
     );
 
+  SFileTypesByName: array [TProblemStatementsType] of string = (
+    '',
+    SProblemStatementsHtml,
+    SProblemStatementsPdf
+    );
+
+  SFileTypesByMime: array [TProblemStatementsType] of string = (
+    '',
+    'text/html',
+    'application/pdf'
+    );
+
+  SArchiveMime = 'application/zip';
+  SArchiveExt = '.zip';
+
 type
   TProblem = class;
 
@@ -189,7 +204,7 @@ end;
 
 function TProblem.ArchiveFileName(MustExist: boolean): string;
 begin
-  Result := GetFileName('archives', '.zip', MustExist);
+  Result := GetFileName('archives', SArchiveExt, MustExist);
 end;
 
 function TProblem.UnpackedFileName(MustExist: boolean): string;
