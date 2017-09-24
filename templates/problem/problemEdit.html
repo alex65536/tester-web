@@ -1,0 +1,25 @@
+~X! <!-- Archive -->
+<tr>
+	<td class="view-table-key">~problemArchiveKey;</td>
+	<td class="view-table-value">
+		<input type="file" name="archive" id="archive" onchange="checkFileSize('archive', ~archiveMaxSize;);">
+	</td>
+</tr>
+~X! <!-- Statements -->
+<tr>
+	<td class="view-table-key">~problemStatementsKey;</td>
+	<td class="view-table-value">
+		<select>
+			<option value="stHtml">~problemStatementsHTML;</option>
+			<option value="stPdf">~problemStatementsPDF;</option>
+		</select>
+		<input type="file" name="statements" id="statements" onchange="checkFileSize('statements', ~statementsMaxSize;);">
+	</td>
+</tr>
+~X! <!-- Max source limit -->
+<tr>
+	<td class="view-table-key">~problemMaxSrcKey;</td>
+	<td class="view-table-value">
+		<input type="number" name="file-limit" min="1" max="~srcMaxSize;" value="~srcDefaultSize;">
+	</td>
+</tr>

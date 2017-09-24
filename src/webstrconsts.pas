@@ -188,6 +188,8 @@ resourcestring
   SEditableView = 'View';
   SEditableEdit = 'Edit';
   SCannotAccessThroughOutside = 'Cannot access EditableObject through outside hook!';
+  SFileTooBigAlertHead = 'File size must not exceed ';
+  SFileTooBigAlertTail = ' KBytes.';
 
 implementation
 
