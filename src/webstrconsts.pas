@@ -192,12 +192,17 @@ resourcestring
   SFileTooBigAlertTail = ' KBytes.';
   SNoSuchStatementsType = 'No such Statements type!';
   SFilesNotice = 'NOTE: All sizes are listed in KBytes!';
-  SFileTooBig = 'File size must not exceed %d KBytes.';
   SArchiveTooBig = 'Archive size must not exceed %d KBytes.';
+  SStatementsTooBig = 'Statements size must not exceed %d KBytes.';
+  SUnpackedTooBig = 'Unpacked archive size must not exceed %d KBytes.';
   SBadArchive = 'Bad archive "%s"!';
   SCouldNotCopyFile = 'Could not copy file "%s" to "%s"!';
   SCouldNotMoveFile = 'Could not move file "%s" to "%s"!';
+  SCouldNotDeleteFile = 'Could not delete file "%s"!';
+  SCouldNotDeleteDir = 'Could not delete directory "%s"!';
   SCouldNotUnpack = 'Could not unpack archive "%s"!';
+  SErrorsWhileDeleting = 'Errors while deleting problem "%s".';
+  SMaxSrcSize = 'Max submission file size must be between %d and %d KBytes!';
 
 implementation
 

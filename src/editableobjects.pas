@@ -121,6 +121,7 @@ type
     property LastModifyTime: TDateTime read FLastModifyTime;
     function CanReadData: boolean; virtual;
     function CanWriteData: boolean; virtual;
+    procedure Validate; virtual;
     procedure Commit;
     procedure Reload;
     procedure AfterConstruction; override;
@@ -818,10 +819,16 @@ begin
   Result := EditableObject.GetAccessRights(User) in AccessCanWriteSet;
 end;
 
+procedure TEditableTransaction.Validate;
+begin
+  // do nothing
+end;
+
 procedure TEditableTransaction.Commit;
 begin
   if not CanWriteData then
     raise EEditableAccessDenied.Create(SAccessDenied);
+  Validate;
   DoCommit;
 end;
 

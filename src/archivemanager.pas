@@ -42,7 +42,7 @@ var
   I: integer;
 begin
   // validate archive size
-  ValidateFileSize(Unzipper.FileName, Config.Files_MaxArchiveSize);
+  ValidateFileSize(Unzipper.FileName, Config.Files_MaxArchiveSize, SArchiveTooBig);
   // calculate sum files size
   Unzipper.Examine;
   SumSize := 0;
@@ -53,7 +53,7 @@ begin
   end;
   // if the size is to big - raise an error
   if SumSize > Config.Files_MaxUnpackedArchiveSize then
-    raise EArchiveManager.CreateFmt(SArchiveTooBig, [Config.Files_MaxUnpackedArchiveSize]);
+    raise EArchiveManager.CreateFmt(SUnpackedTooBig, [Config.Files_MaxUnpackedArchiveSize]);
 end;
 
 function UnpackArchive(const DirName: string; Unzipper: TUnZipper; DeleteDir: boolean): boolean;

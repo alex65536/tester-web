@@ -30,10 +30,21 @@ interface
 
 uses
   Classes, SysUtils, editableobjects, datastorages, webstrconsts, TypInfo,
-  tswebdirectories;
+  tswebdirectories, filemanager, archivemanager, FileUtil, LazFileUtils,
+  serverconfig;
 
 type
-  TProblemStatementsType = (stHtml, stPdf);
+  TProblemStatementsType = (stNone, stHtml, stPdf);
+
+const
+  SFileTypesByExt: array [TProblemStatementsType] of string = (
+    '',
+    '.html',
+    '.pdf'
+    );
+
+type
+  TProblem = class;
 
   { TProblemAccessSession }
 
@@ -51,18 +62,21 @@ type
     FMaxSrcLimit: integer;
     FStatementsFileName: string;
     FStatementsType: TProblemStatementsType;
+    function GetProblem: TProblem;
   protected
     procedure DoCommit; override;
     procedure DoReload; override;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser;
       AObject: TEditableObject);
   public
+    property Problem: TProblem read GetProblem;
     property StatementsType: TProblemStatementsType read FStatementsType write
       FStatementsType;
     property StatementsFileName: string read FStatementsFileName write
       FStatementsFileName;
     property ArchiveFileName: string read FArchiveFileName write FArchiveFileName;
     property MaxSrcLimit: integer read FMaxSrcLimit write FMaxSrcLimit;
+    procedure Validate; override;
   end;
 
   { TProblemManagerSession }
@@ -75,8 +89,14 @@ type
   { TProblem }
 
   TProblem = class(TEditableObject)
+  private
+    function GetFileName(const Dir, Ext: string; MustExist: boolean): string;
   protected
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
+    function ArchiveFileName(MustExist: boolean): string;
+    function UnpackedFileName(MustExist: boolean): string;
+    function StatementsFileName(MustExist: boolean): string;
+    function StatementsFileType: TProblemStatementsType;
     procedure WaitForFiles;
     procedure HandleSelfDeletion; override;
   public
@@ -157,16 +177,63 @@ begin
   inherited Create(AName, AManager);
 end;
 
+function TProblem.GetFileName(const Dir, Ext: string; MustExist: boolean): string;
+var
+  Path: string;
+begin
+  Path := AppendPathDelim(ExpandInternalDirLocation(Dir));
+  Result := Path + Format('problem%d%s', [PathDelim, ID, Ext]);
+  if MustExist and (not FileExistsUTF8(Result)) then
+    Result := '';
+end;
+
+function TProblem.ArchiveFileName(MustExist: boolean): string;
+begin
+  Result := GetFileName('archives', '.zip', MustExist);
+end;
+
+function TProblem.UnpackedFileName(MustExist: boolean): string;
+begin
+  Result := GetFileName('problems', '', MustExist);
+end;
+
+function TProblem.StatementsFileName(MustExist: boolean): string;
+var
+  FileType: TProblemStatementsType;
+begin
+  FileType := StatementsFileType;
+  if FileType = stNone then
+    Result := ''
+  else
+    Result := GetFileName('statements', SFileTypesByExt[FileType], MustExist);
+end;
+
+function TProblem.StatementsFileType: TProblemStatementsType;
+var
+  DefaultValue: string;
+begin
+  DefaultValue := StatementsTypeToStr(stNone);
+  Result := StrToStatementsType(Storage.ReadString(FullKeyName('statementType'),
+    DefaultValue));
+end;
+
 procedure TProblem.WaitForFiles;
 begin
   // This will be used later, when the problem testing will be added
 end;
 
 procedure TProblem.HandleSelfDeletion;
+var
+  Success: boolean;
 begin
   inherited HandleSelfDeletion;
   WaitForFiles;
-  // TODO : Write it!!!
+  Success := True;
+  Success := Success and TryDeleteFile(StatementsFileName(True));
+  Success := Success and TryDeleteFile(ArchiveFileName(True));
+  Success := Success and TryDeleteDir(UnpackedFileName(True));
+  if not Success then
+    raise EEditableAction.CreateFmt(SErrorsWhileDeleting, [Name]);
 end;
 
 function TProblem.CreateAccessSession(AUser: TEditorUser): TEditableObjectAccessSession;
@@ -197,22 +264,74 @@ end;
 
 { TProblemTransaction }
 
+function TProblemTransaction.GetProblem: TProblem;
+begin
+  Result := EditableObject as TProblem;
+end;
+
 procedure TProblemTransaction.DoCommit;
 begin
   inherited DoCommit;
-  // TODO : implement DoCommit!
+  try
+    // archive
+    if FArchiveFileName <> Problem.ArchiveFileName(True) then
+    begin
+      TryDeleteFile(Problem.ArchiveFileName(True), True);
+      UnpackArchive(FArchiveFileName, Problem.UnpackedFileName(False), True);
+      MoveReplaceFile(FArchiveFileName, Problem.ArchiveFileName(False));
+    end;
+    // statements
+    if FStatementsFileName <> Problem.StatementsFileName(True) then
+    begin
+      TryDeleteFile(Problem.StatementsFileName(True), True);
+      Storage.WriteString(FullKeyName('statementType'), StatementsTypeToStr(FStatementsType));
+      MoveReplaceFile(FStatementsFileName, Problem.StatementsFileName(False));
+    end;
+    // max submission limit
+    Storage.WriteInteger(FullKeyName('maxSrc'), FMaxSrcLimit);
+  except
+    on E: EFileManager do
+      raise EEditableAction.Create(E.Message)
+    else
+      raise;
+  end;
 end;
 
 procedure TProblemTransaction.DoReload;
 begin
   inherited DoReload;
-  // TODO : implement DoReload!
+  FArchiveFileName := Problem.ArchiveFileName(True);
+  FStatementsFileName := Problem.StatementsFileName(True);
+  FStatementsType := Problem.StatementsFileType;
+  FMaxSrcLimit := Storage.ReadInteger(FullKeyName('maxSrc'), Config.Files_DefaultSrcSize);
 end;
 
 constructor TProblemTransaction.Create(AManager: TEditableManager;
   AUser: TEditorUser; AObject: TEditableObject);
 begin
   inherited Create(AManager, AUser, AObject);
+end;
+
+procedure TProblemTransaction.Validate;
+begin
+  inherited Validate;
+  try
+    // archive
+    if FArchiveFileName <> Problem.ArchiveFileName(True) then
+      ValidateArchive(FArchiveFileName);
+    // statements file
+    if FStatementsFileName <> Problem.StatementsFileName(True) then
+      ValidateFileSize(FStatementsFileName, Config.Files_MaxStatementsSize,
+        SStatementsTooBig);
+    // max submisson limit
+    if (FMaxSrcLimit < 1) or (FMaxSrcLimit > Config.Files_MaxSrcSize) then
+      raise EEditableValidate.CreateFmt(SMaxSrcSize, [1, Config.Files_MaxSrcSize]);
+  except
+    on E: EFileManager do
+      raise EEditableValidate.Create(E.Message)
+    else
+      raise;
+  end;
 end;
 
 finalization

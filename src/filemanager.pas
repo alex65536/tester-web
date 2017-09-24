@@ -30,19 +30,23 @@ uses
 type
   EFileManager = class(Exception);
 
-procedure ValidateFileSize(const FileName: string; MaxFileSize: integer);
+procedure ValidateFileSize(const FileName: string; MaxFileSize: integer;
+  const ErrMsg: string);
 procedure CopyReplaceFile(const SrcFile, DstFile: string);
 procedure MoveReplaceFile(const SrcFile, DstFile: string);
+function TryDeleteFile(const FileName: string; RaiseException: boolean = False): boolean;
+function TryDeleteDir(const DirName: string; RaiseException: boolean = False): boolean;
 
 implementation
 
-procedure ValidateFileSize(const FileName: string; MaxFileSize: integer);
+procedure ValidateFileSize(const FileName: string; MaxFileSize: integer;
+  const ErrMsg: string);
 var
   Size: int64;
 begin
   Size := FileSizeUTF8(FileName);
   if Size > MaxFileSize * 1024 then
-    raise EFileManager.CreateFmt(SFileTooBig, [MaxFileSize]);
+    raise EFileManager.CreateFmt(ErrMsg, [MaxFileSize]);
 end;
 
 procedure CopyReplaceFile(const SrcFile, DstFile: string);
@@ -68,6 +72,26 @@ begin
   end;
   if not Success then
     raise EFileManager.CreateFmt(SCouldNotMoveFile, [SrcFile, DstFile]);
+end;
+
+function TryDeleteFile(const FileName: string; RaiseException: boolean): boolean;
+begin
+  if (FileName <> '') and FileExistsUTF8(FileName) then
+    Result := DeleteFileUTF8(FileName)
+  else
+    Result := True;
+  if RaiseException and (not Result) then
+    raise EFileManager.CreateFmt(SCouldNotDeleteFile, [FileName]);
+end;
+
+function TryDeleteDir(const DirName: string; RaiseException: boolean): boolean;
+begin
+  if (DirName <> '') and DirectoryExistsUTF8(DirName) then
+    Result := DeleteDirectory(DirName, False)
+  else
+    Result := True;
+  if RaiseException and (not Result) then
+    raise EFileManager.CreateFmt(SCouldNotDeleteDir, [DirName]);
 end;
 
 end.
