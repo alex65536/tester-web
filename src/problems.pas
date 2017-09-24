@@ -135,7 +135,7 @@ end;
 
 function StatementsTypeToStr(AType: TProblemStatementsType): string;
 begin
-  Result := GetEnumName(TypeInfo(TEditableAccessRights), Ord(AType));
+  Result := GetEnumName(TypeInfo(TProblemStatementsType), Ord(AType));
 end;
 
 function StrToStatementsType(const S: string): TProblemStatementsType;

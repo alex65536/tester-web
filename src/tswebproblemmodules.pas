@@ -82,6 +82,7 @@ type
 
   TProblemEditWebModule = class(TEditableEditWebModule)
   protected
+    procedure DoInsideEdit(ATransaction: TEditableTransaction); override;
     function DoCreatePage: THtmlPage; override;
     function HookClass: TEditableModuleHookClass; override;
   end;
@@ -89,6 +90,29 @@ type
 implementation
 
 { TProblemEditWebModule }
+
+procedure TProblemEditWebModule.DoInsideEdit(ATransaction: TEditableTransaction);
+var
+  ProblemTransaction: TProblemTransaction;
+  I: integer;
+begin
+  inherited DoInsideEdit(ATransaction);
+  ProblemTransaction := ATransaction as TProblemTransaction;
+  with Request.ContentFields do
+  begin
+    ProblemTransaction.MaxSrcLimit := StrToInt(Values['max-src-limit']);
+    ProblemTransaction.StatementsType := StrToStatementsType(Values['statements-type']);
+  end;
+  with Request.Files do
+    for I := 0 to Count - 1 do
+    begin
+      if Files[I].FieldName = 'archive' then
+        ProblemTransaction.ArchiveFileName := Files[I].LocalFileName
+      else if Files[I].FieldName = 'statements' then
+        ProblemTransaction.StatementsFileName := Files[I].LocalFileName;
+    end;
+  // TODO : Delete temp files (in Transaction's Commit (?)) !!!
+end;
 
 function TProblemEditWebModule.DoCreatePage: THtmlPage;
 begin

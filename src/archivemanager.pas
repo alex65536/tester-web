@@ -52,7 +52,7 @@ begin
       SumSize := SumSize + Entries[I].Size;
   end;
   // if the size is to big - raise an error
-  if SumSize > Config.Files_MaxUnpackedArchiveSize then
+  if SumSize > Config.Files_MaxUnpackedArchiveSize * 1024 then
     raise EArchiveManager.CreateFmt(SUnpackedTooBig, [Config.Files_MaxUnpackedArchiveSize]);
 end;
 
@@ -96,7 +96,7 @@ begin
       if Unpack then
       begin
         if not UnpackArchive(DirName, Unzipper, DeleteDir) then
-          raise EArchiveManager.CreateFmt(SCouldNotUnpack, [ArchiveFileName]);
+          raise EArchiveManager.Create(SCouldNotUnpack);
       end;
     finally
       FreeAndNil(Unzipper);
@@ -105,7 +105,7 @@ begin
     on E: EFileManager do
       raise EArchiveManager.Create(E.Message)
     else
-      raise EArchiveManager.CreateFmt(SBadArchive, [ArchiveFileName]);
+      raise EArchiveManager.Create(SBadArchive);
   end;
 end;
 

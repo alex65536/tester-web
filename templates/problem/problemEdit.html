@@ -9,7 +9,7 @@
 <tr>
 	<td class="view-table-key">~problemStatementsTypeKey;</td>
 	<td class="view-table-value">
-		<select>
+		<select name="statements-type">
 			<option value="stHtml"~?stHtmlSelected;>~problemStatementsHtml;</option>
 			<option value="stPdf"~?stPdfSelected;>~problemStatementsPdf;</option>
 		</select>
@@ -25,6 +25,6 @@
 <tr>
 	<td class="view-table-key">~problemMaxSrcKey;</td>
 	<td class="view-table-value">
-		<input type="number" name="file-limit" min="1" max="~srcMaxSize;" value="~srcDefaultSize;">
+		<input type="number" name="max-src-limit" min="1" max="~srcMaxSize;" value="~srcDefaultSize;">
 	</td>
 </tr>

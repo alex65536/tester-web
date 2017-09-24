@@ -100,7 +100,7 @@ begin
     end;
     ItemsAsText['statementsMaxSize'] := IntToStr(Config.Files_MaxStatementsSize);
     ItemsAsText['srcMaxSize'] := IntToStr(Config.Files_MaxSrcSize);
-    ItemsAsText['srcDefaultSize'] := IntToStr(Config.Files_DefaultSrcSize);
+    ItemsAsText['srcDefaultSize'] := IntToStr(MaxSrcLimit);
   end;
   LoadPagePart('problem', 'problemEdit', 'objectEditContent');
 end;
