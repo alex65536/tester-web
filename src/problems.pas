@@ -182,7 +182,7 @@ var
   Path: string;
 begin
   Path := AppendPathDelim(ExpandInternalDirLocation(Dir));
-  Result := Path + Format('problem%d%s', [PathDelim, ID, Ext]);
+  Result := Path + Format('problem%d%s', [ID, Ext]);
   if MustExist and (not FileExistsUTF8(Result)) then
     Result := '';
 end;

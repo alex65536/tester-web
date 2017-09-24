@@ -203,6 +203,12 @@ resourcestring
   SCouldNotUnpack = 'Could not unpack archive "%s"!';
   SErrorsWhileDeleting = 'Errors while deleting problem "%s".';
   SMaxSrcSize = 'Max submission file size must be between %d and %d KBytes!';
+  SProblemArchiveKey = 'Archive:';
+  SProblemStatementsKey = 'Statements:';
+  SProblemMaxSrcKey = 'Submission limit (in KBytes):';
+  SProblemStatementsHtml = 'HTML code snippet';
+  SProblemStatementsPdf = 'PDF document';
+  SProblemStatementsTypeKey = 'Statements type:';
 
 implementation
 

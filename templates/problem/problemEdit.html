@@ -7,12 +7,17 @@
 </tr>
 ~X! <!-- Statements -->
 <tr>
-	<td class="view-table-key">~problemStatementsKey;</td>
+	<td class="view-table-key">~problemStatementsTypeKey;</td>
 	<td class="view-table-value">
 		<select>
-			<option value="stHtml">~problemStatementsHTML;</option>
-			<option value="stPdf">~problemStatementsPDF;</option>
+			<option value="stHtml"~?stHtmlSelected;>~problemStatementsHtml;</option>
+			<option value="stPdf"~?stPdfSelected;>~problemStatementsPdf;</option>
 		</select>
+	</td>
+</tr>
+<tr>
+	<td class="view-table-key">~problemStatementsKey;</td>
+	<td class="view-table-value">
 		<input type="file" name="statements" id="statements" onchange="checkFileSize('statements', ~statementsMaxSize;);">
 	</td>
 </tr>

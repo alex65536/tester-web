@@ -25,7 +25,8 @@ unit tswebproblemfeatures;
 interface
 
 uses
-  Classes, tswebeditablefeatures, webstrconsts, htmlpages, tswebfeatures;
+  SysUtils, Classes, tswebeditablefeatures, webstrconsts, htmlpages,
+  tswebfeatures, serverconfig, problems;
 
 type
 
@@ -45,26 +46,69 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
-  { TProblemEditFeature }
+  { TProblemEditViewBaseFeature }
 
-  TProblemEditFeature = class(TTesterPageFeature)
+  TProblemEditViewBaseFeature = class(TTesterPageFeature)
   public
     procedure Satisfy; override;
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TProblemEditFeature }
+
+  TProblemEditFeature = class(TEditableTransactionPageFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TProblemEditViewBaseFeature }
+
+procedure TProblemEditViewBaseFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['problemArchiveKey'] := SProblemArchiveKey;
+    ItemsAsText['problemStatementsKey'] := SProblemStatementsKey;
+    ItemsAsText['problemStatementsTypeKey'] := SProblemStatementsTypeKey;
+    ItemsAsText['problemMaxSrcKey'] := SProblemMaxSrcKey;
+  end;
+end;
+
+procedure TProblemEditViewBaseFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableEditViewBaseFeature);
+end;
 
 { TProblemEditFeature }
 
-procedure TProblemEditFeature.Satisfy;
+procedure TProblemEditFeature.InternalSatisfy;
 begin
-  Parent.Variables.ItemsAsText['objectEditSubmit'] := SProblemEditSubmit;
+  with Parent.Variables, Transaction as TProblemTransaction do
+  begin
+    ItemsAsText['objectEditSubmit'] := SProblemEditSubmit;
+    ItemsAsText['archiveMaxSize'] := IntToStr(Config.Files_MaxArchiveSize);
+    ItemsAsText['problemStatementsHtml'] := SProblemStatementsHtml;
+    ItemsAsText['problemStatementsPdf'] := SProblemStatementsPdf;
+    case StatementsType of
+      stHtml: ItemsAsText['stHtmlSelected'] := ' selected';
+      stPdf: ItemsAsText['stPdfSelected'] := ' selected';
+    end;
+    ItemsAsText['statementsMaxSize'] := IntToStr(Config.Files_MaxStatementsSize);
+    ItemsAsText['srcMaxSize'] := IntToStr(Config.Files_MaxSrcSize);
+    ItemsAsText['srcDefaultSize'] := IntToStr(Config.Files_DefaultSrcSize);
+  end;
+  LoadPagePart('problem', 'problemEdit', 'objectEditContent');
 end;
 
 procedure TProblemEditFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
+  ADependencies.Add(TProblemEditViewBaseFeature);
   ADependencies.Add(TEditableEditFeature);
 end;
 
