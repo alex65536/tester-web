@@ -26,7 +26,7 @@ interface
 
 uses
   SysUtils, tswebmodules, tswebeditablemodules, fphttp, htmlpages, problems,
-  editableobjects, tswebpagesbase, tswebproblempages;
+  editableobjects, tswebpagesbase, tswebproblempages, webstrconsts, HTTPDefs;
 
 type
 
@@ -95,6 +95,16 @@ procedure TProblemEditWebModule.DoInsideEdit(ATransaction: TEditableTransaction)
 var
   ProblemTransaction: TProblemTransaction;
   I: integer;
+
+  procedure ControlExtension(AFile: TUploadedFile; const MustExt, ErrMsg: string);
+  var
+    HaveExt: string;
+  begin
+    HaveExt := LowerCase(ExtractFileExt(AFile.FileName));
+    if MustExt <> HaveExt then
+      raise EEditableValidate.CreateFmt(ErrMsg, [MustExt]);
+  end;
+
 begin
   inherited DoInsideEdit(ATransaction);
   ProblemTransaction := ATransaction as TProblemTransaction;
@@ -107,9 +117,16 @@ begin
     for I := 0 to Count - 1 do
     begin
       if Files[I].FieldName = 'archive' then
+      begin
+        ControlExtension(Files[I], '.zip', SArchiveExtensionExpected);
         ProblemTransaction.ArchiveFileName := Files[I].LocalFileName
+      end
       else if Files[I].FieldName = 'statements' then
+      begin
+        ControlExtension(Files[I], SFileTypesByExt[ProblemTransaction.StatementsType],
+          SStatementsExtensionExpected);
         ProblemTransaction.StatementsFileName := Files[I].LocalFileName;
+      end;
     end;
 end;
 

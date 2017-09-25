@@ -212,6 +212,8 @@ resourcestring
   SProblemStatementsDocx = 'MS Word DOCX document';
   SProblemStatementsTypeKey = 'Statements type:';
   SFileNotFoundInArchive = 'File "%s" not found in the archive!';
+  SArchiveExtensionExpected = 'Archive file expected to have extension "%s"';
+  SStatementsExtensionExpected = 'Statements file expected to have extension "%s"';
 
 implementation
 
