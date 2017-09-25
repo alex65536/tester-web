@@ -20,10 +20,6 @@
 }
 unit problems;
 
-// This is a sketch of problems unit, actually nothing is implemented.
-// This is done to test front-end EditableObjects part
-// TODO : Write problems part!!!
-
 {$mode objfpc}{$H+}{$M+}
 
 interface

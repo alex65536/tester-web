@@ -111,7 +111,6 @@ begin
       else if Files[I].FieldName = 'statements' then
         ProblemTransaction.StatementsFileName := Files[I].LocalFileName;
     end;
-  // TODO : Delete temp files (in Transaction's Commit (?)) !!!
 end;
 
 function TProblemEditWebModule.DoCreatePage: THtmlPage;
