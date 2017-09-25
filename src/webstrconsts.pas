@@ -209,6 +209,7 @@ resourcestring
   SProblemStatementsHtml = 'HTML code snippet';
   SProblemStatementsPdf = 'PDF document';
   SProblemStatementsTypeKey = 'Statements type:';
+  SFileNotFoundInArchive = 'File "%s" not found in the archive!';
 
 implementation
 

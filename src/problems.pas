@@ -329,7 +329,7 @@ begin
   try
     // archive
     if FArchiveFileName <> Problem.ArchiveFileName(True) then
-      ValidateArchive(FArchiveFileName);
+      ValidateArchive(FArchiveFileName, Config.Problem_DefaultPropsFile);
     // statements file
     if FStatementsFileName <> Problem.StatementsFileName(True) then
       ValidateFileSize(FStatementsFileName, Config.Files_MaxStatementsSize,

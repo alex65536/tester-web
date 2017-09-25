@@ -53,6 +53,7 @@ type
     function GetOwner_DefaultLastName: string;
     function GetOwner_DefaultPassword: string;
     function GetOwner_DefaultUsername: string;
+    function GetProblem_DefaultPropsFile: string;
     function GetSession_AliveTimeMinutes: integer;
     function GetSession_IDLength: integer;
     function GetSession_TokenLength: integer;
@@ -101,6 +102,9 @@ type
     property Files_MaxStatementsSize: integer read GetFiles_MaxStatementsSize;
     property Files_MaxSrcSize: integer read GetFiles_MaxSrcSize;
     property Files_DefaultSrcSize: integer read GetFiles_DefaultSrcSize;
+
+    // problem default settings
+    property Problem_DefaultPropsFile: string read GetProblem_DefaultPropsFile;
 
     constructor Create;
     procedure Reload;
@@ -206,6 +210,11 @@ begin
   Result := FStorage.ReadString('owner.defaults.userName', 'admin');
 end;
 
+function TTesterServerConfig.GetProblem_DefaultPropsFile: string;
+begin
+  Result := FStorage.ReadString('problem.defaultPropsFile', 'props.json');
+end;
+
 function TTesterServerConfig.GetSession_AliveTimeMinutes: integer;
 begin
   Result := FStorage.ReadInteger('session.aliveTimeMinutes', 60);
@@ -269,6 +278,8 @@ begin
     WriteInteger('files.defaultSrcSize', Files_DefaultSrcSize);
     WriteInteger('files.maxStatementsSize', Files_MaxStatementsSize);
     WriteInteger('files.maxUnpackedArchiveSize', Files_MaxUnpackedArchiveSize);
+
+    WriteString('problem.defaultPropsFile', Problem_DefaultPropsFile);
   end;
 end;
 

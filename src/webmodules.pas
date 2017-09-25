@@ -188,7 +188,10 @@ begin
   with ARequest.Files do
   begin
     for I := 0 to Count - 1 do
-      DeleteFileUTF8(Files[I].LocalFileName);
+    begin
+      if FileExistsUTF8(Files[I].LocalFileName) then
+        DeleteFileUTF8(Files[I].LocalFileName);
+    end;
   end;
 end;
 

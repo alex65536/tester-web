@@ -31,12 +31,13 @@ uses
 type
   EArchiveManager = class(EFileManager);
 
-procedure ValidateArchive(const ArchiveFileName: string);
+procedure ValidateArchive(const ArchiveFileName: string;
+  const MustFindFile: string);
 procedure UnpackArchive(const ArchiveFileName, DirName: string; DeleteDir: boolean);
 
 implementation
 
-procedure ValidateArchive(Unzipper: TUnZipper);
+procedure ValidateArchive(Unzipper: TUnZipper; MustFindFile: string);
 var
   SumSize: int64;
   I: integer;
@@ -49,14 +50,23 @@ begin
   with Unzipper.Entries do
   begin
     for I := 0 to Count - 1 do
+    begin
       SumSize := SumSize + Entries[I].Size;
+      if Entries[I].ArchiveFileName = MustFindFile then
+        MustFindFile := '';
+    end;
   end;
+  // if not found the expected file - raise an error
+  if MustFindFile <> '' then
+    raise EArchiveManager.CreateFmt(SFileNotFoundInArchive, [MustFindFile]);
   // if the size is to big - raise an error
   if SumSize > Config.Files_MaxUnpackedArchiveSize * 1024 then
-    raise EArchiveManager.CreateFmt(SUnpackedTooBig, [Config.Files_MaxUnpackedArchiveSize]);
+    raise EArchiveManager.CreateFmt(SUnpackedTooBig,
+      [Config.Files_MaxUnpackedArchiveSize]);
 end;
 
-function UnpackArchive(const DirName: string; Unzipper: TUnZipper; DeleteDir: boolean): boolean;
+function UnpackArchive(const DirName: string; Unzipper: TUnZipper;
+  DeleteDir: boolean): boolean;
 begin
   Result := False;
   // try to delete directory
@@ -83,8 +93,8 @@ begin
   Result := True;
 end;
 
-procedure InternalProcessArchive(const ArchiveFileName, DirName: string; Unpack,
-  DeleteDir: boolean);
+procedure InternalProcessArchive(const ArchiveFileName, DirName, MustFindFile: string;
+  Unpack, DeleteDir: boolean);
 var
   Unzipper: TUnZipper;
 begin
@@ -92,7 +102,7 @@ begin
     Unzipper := TUnZipper.Create;
     try
       Unzipper.FileName := ArchiveFileName;
-      ValidateArchive(Unzipper);
+      ValidateArchive(Unzipper, MustFindFile);
       if Unpack then
       begin
         if not UnpackArchive(DirName, Unzipper, DeleteDir) then
@@ -109,15 +119,14 @@ begin
   end;
 end;
 
-procedure ValidateArchive(const ArchiveFileName: string);
+procedure ValidateArchive(const ArchiveFileName: string; const MustFindFile: string);
 begin
-  InternalProcessArchive(ArchiveFileName, '', False, False);
+  InternalProcessArchive(ArchiveFileName, '', MustFindFile, False, False);
 end;
 
 procedure UnpackArchive(const ArchiveFileName, DirName: string; DeleteDir: boolean);
 begin
-  InternalProcessArchive(ArchiveFileName, DirName, True, DeleteDir);
+  InternalProcessArchive(ArchiveFileName, DirName, '', True, DeleteDir);
 end;
 
 end.
-
