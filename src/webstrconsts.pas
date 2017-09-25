@@ -208,6 +208,8 @@ resourcestring
   SProblemMaxSrcKey = 'Submission limit (in KBytes):';
   SProblemStatementsHtml = 'HTML code snippet';
   SProblemStatementsPdf = 'PDF document';
+  SProblemStatementsDoc = 'MS Word DOC document';
+  SProblemStatementsDocx = 'MS Word DOCX document';
   SProblemStatementsTypeKey = 'Statements type:';
   SFileNotFoundInArchive = 'File "%s" not found in the archive!';
 

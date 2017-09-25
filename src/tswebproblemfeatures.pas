@@ -94,10 +94,9 @@ begin
     ItemsAsText['archiveMaxSize'] := IntToStr(Config.Files_MaxArchiveSize);
     ItemsAsText['problemStatementsHtml'] := SProblemStatementsHtml;
     ItemsAsText['problemStatementsPdf'] := SProblemStatementsPdf;
-    case StatementsType of
-      stHtml: ItemsAsText['stHtmlSelected'] := ' selected';
-      stPdf: ItemsAsText['stPdfSelected'] := ' selected';
-    end;
+    ItemsAsText['problemStatementsDoc'] := SProblemStatementsDoc;
+    ItemsAsText['problemStatementsDocx'] := SProblemStatementsDocx;
+    ItemsAsText[StatementsTypeToStr(StatementsType) + 'Selected'] := ' selected';
     ItemsAsText['statementsMaxSize'] := IntToStr(Config.Files_MaxStatementsSize);
     ItemsAsText['srcMaxSize'] := IntToStr(Config.Files_MaxSrcSize);
     ItemsAsText['srcDefaultSize'] := IntToStr(MaxSrcLimit);

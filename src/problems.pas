@@ -30,25 +30,31 @@ uses
   serverconfig;
 
 type
-  TProblemStatementsType = (stNone, stHtml, stPdf);
+  TProblemStatementsType = (stNone, stHtml, stPdf, stDoc, stDocx);
 
 const
   SFileTypesByExt: array [TProblemStatementsType] of string = (
     '',
     '.html',
-    '.pdf'
+    '.pdf',
+    '.doc',
+    '.docx'
     );
 
   SFileTypesByName: array [TProblemStatementsType] of string = (
     '',
     SProblemStatementsHtml,
-    SProblemStatementsPdf
+    SProblemStatementsPdf,
+    SProblemStatementsDoc,
+    SProblemStatementsDocx
     );
 
   SFileTypesByMime: array [TProblemStatementsType] of string = (
     '',
     'text/html',
-    'application/pdf'
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     );
 
   SArchiveMime = 'application/zip';
@@ -108,6 +114,7 @@ type
     function UnpackedFileName(MustExist: boolean): string;
     function StatementsFileName(MustExist: boolean): string;
     function StatementsFileType: TProblemStatementsType;
+    function PropsFileName: string;
     procedure WaitForFiles;
     procedure HandleSelfDeletion; override;
   public
@@ -228,6 +235,17 @@ begin
     DefaultValue));
 end;
 
+function TProblem.PropsFileName: string;
+var
+  PropsFile: string;
+begin
+  Result := UnpackedFileName(True);
+  PropsFile := Storage.ReadString('propsFile', '');
+  if (Result = '') or (PropsFile = '') then
+    Exit('');
+  Result := AppendPathDelim(Result) + PropsFile;
+end;
+
 procedure TProblem.WaitForFiles;
 begin
   // This will be used later, when the problem testing will be added
@@ -290,6 +308,7 @@ begin
       TryDeleteFile(Problem.ArchiveFileName(True), True);
       UnpackArchive(FArchiveFileName, Problem.UnpackedFileName(False), True);
       MoveReplaceFile(FArchiveFileName, Problem.ArchiveFileName(False));
+      Storage.WriteString(FullKeyName('propsFile'), Config.Problem_DefaultPropsFile);
     end;
     // statements
     if FStatementsFileName <> Problem.StatementsFileName(True) then
