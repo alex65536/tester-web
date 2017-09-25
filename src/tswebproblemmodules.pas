@@ -26,7 +26,8 @@ interface
 
 uses
   SysUtils, tswebmodules, tswebeditablemodules, fphttp, htmlpages, problems,
-  editableobjects, tswebpagesbase, tswebproblempages, webstrconsts, HTTPDefs;
+  editableobjects, tswebpagesbase, tswebproblempages, webstrconsts, HTTPDefs,
+  webmodules, downloadhandlers, tsmiscwebmodules;
 
 type
 
@@ -87,7 +88,83 @@ type
     function HookClass: TEditableModuleHookClass; override;
   end;
 
+  { TProblemDownloadHandler }
+
+  TProblemDownloadHandler = class(TDownloadModuleHandler)
+  protected
+    procedure InternalHandleDownload; override;
+  end;
+
+  { TProblemDownloadWebModule }
+
+  TProblemDownloadWebModule = class(TEditablePageWebModule)
+  protected
+    function Inside: boolean; override;
+    function DoCreatePage: THtmlPage; override;
+    function HookClass: TEditableModuleHookClass; override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
 implementation
+
+{ TProblemDownloadWebModule }
+
+function TProblemDownloadWebModule.Inside: boolean;
+begin
+  Result := False;
+end;
+
+function TProblemDownloadWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := nil; // no need for page in a download module!
+end;
+
+function TProblemDownloadWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TProblemModuleHook;
+end;
+
+procedure TProblemDownloadWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Handlers.Add(TProblemDownloadHandler.Create);
+end;
+
+{ TProblemDownloadHandler }
+
+procedure TProblemDownloadHandler.InternalHandleDownload;
+var
+  ProblemName: string;
+  Problem: TProblem;
+  User: TEditorUser;
+begin
+  ProblemName := ChangeFileExt(FileName, '');
+  Problem := ProblemManager.GetObject(ProblemName) as TProblem;
+  WriteLn('!!! ', FilePath, ' ', ProblemName, ' ', FileExt);
+  try
+    User := (Parent as TUserWebModule).User as TEditorUser;
+    with Problem.CreateTransaction(User) as TProblemTransaction do
+      try
+        if (FilePath = 'statements') and (FileExt = SFileTypesByExt[StatementsType]) then
+        begin
+          DiskFileName := StatementsFileName;
+          FileMimeType := SFileTypesByMime[StatementsType];
+        end
+        else if (FilePath = 'archives') and (FileExt = SArchiveExt) then
+        begin
+          WriteLn('Here!');
+          DiskFileName := ArchiveFileName;
+          FileMimeType := SArchiveMime;
+          WriteLn(DiskFileName, ' ', FileMimeType);
+        end;
+      finally
+        Free;
+      end;
+  finally
+    FreeAndNil(Problem);
+  end;
+end;
 
 { TProblemEditWebModule }
 
@@ -219,6 +296,7 @@ initialization
   RegisterHTTPModule('problem-access', TProblemAccessWebModule, True);
   RegisterHTTPModule('problem-view', TProblemViewWebModule, True);
   RegisterHTTPModule('problem-edit', TProblemEditWebModule, True);
+  RegisterHTTPModule('problem-download', TProblemDownloadWebModule, True);
 
 end.
 
