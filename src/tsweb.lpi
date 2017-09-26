@@ -30,20 +30,32 @@
         <LaunchingApplication Use="True"/>
       </local>
     </RunParams>
-    <RequiredPackages Count="4">
+    <RequiredPackages Count="7">
       <Item1>
-        <PackageName Value="hash_3rdparty"/>
-        <DefaultFilename Value="../third-party/hash/hash_3rdparty.lpk"/>
+        <PackageName Value="ts_testerbase"/>
+        <DefaultFilename Value="../../tester/src/ts_testerbase/ts_testerbase.lpk"/>
       </Item1>
       <Item2>
-        <PackageName Value="LazUtils"/>
+        <PackageName Value="ts_timerlib"/>
+        <DefaultFilename Value="../../tester/timerlib/src/ts_timerlib.lpk"/>
       </Item2>
       <Item3>
-        <PackageName Value="WebLaz"/>
+        <PackageName Value="ts_testerutil"/>
+        <DefaultFilename Value="../../tester/src/ts_testerutil/ts_testerutil.lpk"/>
       </Item3>
       <Item4>
-        <PackageName Value="FCL"/>
+        <PackageName Value="hash_3rdparty"/>
+        <DefaultFilename Value="../third-party/hash/hash_3rdparty.lpk"/>
       </Item4>
+      <Item5>
+        <PackageName Value="LazUtils"/>
+      </Item5>
+      <Item6>
+        <PackageName Value="WebLaz"/>
+      </Item6>
+      <Item7>
+        <PackageName Value="FCL"/>
+      </Item7>
     </RequiredPackages>
     <Units Count="42">
       <Unit0>

@@ -26,6 +26,8 @@ uses
   heaptrc,
   commitscheduler,
   Classes,
+  ts_testerutil,
+  ts_testerbase,
   serverevents,
   tswebsessions,
   hash_3rdparty,
