@@ -205,7 +205,8 @@ resourcestring
   SMaxSrcSize = 'Max submission file size must be between %d and %d KBytes!';
   SProblemArchiveKey = 'Archive:';
   SProblemStatementsKey = 'Statements:';
-  SProblemMaxSrcKey = 'Submission limit (in KBytes):';
+  SProblemMaxSrcKey = 'Submission limit:';
+  SKBytes = 'KB';
   SProblemStatementsHtml = 'HTML code snippet';
   SProblemStatementsPdf = 'PDF document';
   SProblemStatementsDoc = 'MS Word DOC document';
@@ -215,6 +216,12 @@ resourcestring
   SArchiveExtensionExpected = 'Archive file expected to have extension "%s"';
   SStatementsExtensionExpected = 'Statements file expected to have extension "%s"';
   SCode404 = 'File not found :(';
+  SNone = '(none)';
+  SDownloadPrompt = 'Download (%s)';
+  SFileSizeBytes = '%d bytes';
+  SFileSizeKBytes = '%.1f KB';
+  SFileSizeMBytes = '%.1f MB';
+  SObjectEditSuccessful = 'Edited successfully.';
 
 implementation
 

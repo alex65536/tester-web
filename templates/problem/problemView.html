@@ -2,8 +2,9 @@
 <tr>
 	<td class="view-table-key">~problemArchiveKey;</td>
 	<td class="view-table-value">
-~X!		~:viewLinkRef='problem-archive/~objectName;.zip'
-		~#+problemViewLink;
+~X!		~:viewLinkRef='problem-download/archives/~objectName;.zip'
+~X!		~:downloadPrompt='~archiveDownloadPrompt;'
+		~#+archiveDownloadLink;
 	</td>
 </tr>
 <tr>
@@ -15,12 +16,13 @@
 <tr>
 	<td class="view-table-key">~problemStatementsKey;</td>
 	<td class="view-table-value">
-~X!		~:viewLinkRef='problem-statements/~objectName;.zip'
-		~#+problemViewLink;
+~X!		~:viewLinkRef='problem-download/statements/~objectName;~objectStatementsExt;'
+~X!		~:downloadPrompt='~statementsDownloadPrompt;'
+		~#+statementsDownloadLink;
 	</td>
 </tr>
 ~X! <!-- Max source limit -->
 <tr>
 	<td class="view-table-key">~problemMaxSrcKey;</td>
-	<td class="view-table-value">~problemMaxSrcValue;</td>
+	<td class="view-table-value">~problemMaxSrcValue; ~sizeKBytes;</td>
 </tr>

@@ -26,7 +26,7 @@ interface
 
 uses
   SysUtils, Classes, tswebeditablefeatures, webstrconsts, htmlpages,
-  tswebfeatures, serverconfig, problems;
+  tswebfeatures, serverconfig, problems, webstrutils;
 
 type
 
@@ -63,7 +63,56 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TProblemViewFeature }
+
+  TProblemViewFeature = class(TEditableTransactionPageFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TProblemViewFeature }
+
+procedure TProblemViewFeature.InternalSatisfy;
+begin
+  with Parent.Variables, Transaction as TProblemTransaction do
+  begin
+    // archive file name
+    if ArchiveFileName = '' then
+      ItemsAsText['archiveDownloadLink'] := SNone
+    else
+    begin
+      ItemsAsText['archiveDownloadPrompt'] := Format(SDownloadPrompt,
+        [FileSizeStr(ArchiveFileName)]);
+      LoadPagePart('problem', 'problemViewLink', 'archiveDownloadLink');
+    end;
+    // statements type
+    ItemsAsText['problemStatementsTypeValue'] := SFileTypesByName[StatementsType];
+    // statements file name
+    if StatementsFileName = '' then
+      ItemsAsText['statementsDownloadLink'] := SNone
+    else
+    begin
+      ItemsAsText['objectStatementsExt'] := SFileTypesByExt[StatementsType];
+      ItemsAsText['statementsDownloadPrompt'] := Format(SDownloadPrompt,
+        [FileSizeStr(StatementsFileName)]);
+      LoadPagePart('problem', 'problemViewLink', 'statementsDownloadLink');
+    end;
+    // max source file size
+    ItemsAsText['problemMaxSrcValue'] := IntToStr(MaxSrcLimit);
+  end;
+  LoadPagePart('problem', 'problemView', 'objectViewContent');
+end;
+
+procedure TProblemViewFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TProblemEditViewBaseFeature);
+  ADependencies.Add(TEditableViewFeature);
+end;
 
 { TProblemEditViewBaseFeature }
 
@@ -75,6 +124,7 @@ begin
     ItemsAsText['problemStatementsKey'] := SProblemStatementsKey;
     ItemsAsText['problemStatementsTypeKey'] := SProblemStatementsTypeKey;
     ItemsAsText['problemMaxSrcKey'] := SProblemMaxSrcKey;
+    ItemsAsText['sizeKBytes'] := SKBytes;
   end;
 end;
 

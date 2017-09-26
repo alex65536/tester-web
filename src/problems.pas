@@ -42,7 +42,7 @@ const
     );
 
   SFileTypesByName: array [TProblemStatementsType] of string = (
-    '',
+    SNone,
     SProblemStatementsHtml,
     SProblemStatementsPdf,
     SProblemStatementsDoc,

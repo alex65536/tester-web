@@ -69,7 +69,8 @@ uses
   filemanager,
   tswebproblemfeatures,
   tswebproblempages,
-  downloadhandlers;
+  downloadhandlers,
+  webstrutils;
 
 type
   TOpenHandlerApplication = class(THTTPApplication)

@@ -112,7 +112,7 @@ end;
 procedure TProblemViewPage.AddFeatures;
 begin
   inherited AddFeatures;
-  AddFeature(TEditableViewFeature);
+  AddFeature(TProblemViewFeature);
 end;
 
 { TProblemAccessPage }
