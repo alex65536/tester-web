@@ -63,8 +63,14 @@ uses
   problems,
   tswebeditablefeatures,
   tswebeditablemodules,
-  tswebproblems,
-  tswebeditableelements;
+  tswebproblemmodules,
+  tswebeditableelements,
+  archivemanager,
+  filemanager,
+  tswebproblemfeatures,
+  tswebproblempages,
+  downloadhandlers,
+  webstrutils;
 
 type
   TOpenHandlerApplication = class(THTTPApplication)

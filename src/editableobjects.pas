@@ -121,6 +121,7 @@ type
     property LastModifyTime: TDateTime read FLastModifyTime;
     function CanReadData: boolean; virtual;
     function CanWriteData: boolean; virtual;
+    procedure Validate; virtual;
     procedure Commit;
     procedure Reload;
     procedure AfterConstruction; override;
@@ -169,6 +170,7 @@ type
     procedure HandleUserChangedRole({%H-}AInfo: TUserInfo); virtual;
     procedure MessageReceived(AMessage: TAuthorMessage);
     procedure UpdateModifyTime;
+    procedure HandleSelfDeletion; virtual;
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
   public
     property Name: string read FName;
@@ -406,9 +408,17 @@ begin
 end;
 
 procedure TEditableManager.DeleteObject(const AName: string);
+var
+  EditableObject: TEditableObject;
 begin
   if not ObjectExists(AName) then
     raise EEditableNotExist.CreateFmt(SObjectDoesNotExist, [ObjectTypeName, AName]);
+  EditableObject := GetObject(AName);
+  try
+    EditableObject.HandleSelfDeletion;
+  finally
+    FreeAndNil(EditableObject);
+  end;
   FStorage.DeleteVariable(GetIdKey(ObjectNameToId(AName)));
   FStorage.DeletePath(ObjectSection(AName));
 end;
@@ -671,6 +681,11 @@ begin
   FStorage.WriteFloat(FullKeyName('lastModified'), Now);
 end;
 
+procedure TEditableObject.HandleSelfDeletion;
+begin
+  // do nothing
+end;
+
 constructor TEditableObject.Create(const AName: string; AManager: TEditableManager);
 begin
   FName := AName;
@@ -804,10 +819,16 @@ begin
   Result := EditableObject.GetAccessRights(User) in AccessCanWriteSet;
 end;
 
+procedure TEditableTransaction.Validate;
+begin
+  // do nothing
+end;
+
 procedure TEditableTransaction.Commit;
 begin
   if not CanWriteData then
     raise EEditableAccessDenied.Create(SAccessDenied);
+  Validate;
   DoCommit;
 end;
 

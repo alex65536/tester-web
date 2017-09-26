@@ -25,7 +25,7 @@ unit webmodules;
 interface
 
 uses
-  Classes, SysUtils, htmlpages, fphttp, HTTPDefs, fgl;
+  Classes, SysUtils, htmlpages, fphttp, HTTPDefs, fgl, LazFileUtils;
 
 type
 
@@ -36,10 +36,12 @@ type
     FRequest: TRequest;
     FResponse: TResponse;
   protected
+    function DeleteTempFiles: boolean; virtual;
     procedure DoBeforeRequest; virtual;
     procedure DoAfterRequest; virtual;
     procedure DoSessionCreated; virtual;
     procedure DoInsideRequest; virtual; abstract;
+    procedure DoHandleCleanup(ARequest: TRequest); virtual;
   public
     property Request: TRequest read FRequest;
     property Response: TResponse read FResponse;
@@ -157,6 +159,11 @@ end;
 
 { TTesterWebModule }
 
+function TTesterWebModule.DeleteTempFiles: boolean;
+begin
+  Result := True;
+end;
+
 procedure TTesterWebModule.DoBeforeRequest;
 begin
   // do nothing
@@ -170,6 +177,22 @@ end;
 procedure TTesterWebModule.DoSessionCreated;
 begin
   // do nothing
+end;
+
+procedure TTesterWebModule.DoHandleCleanup(ARequest: TRequest);
+var
+  I: integer;
+begin
+  if not DeleteTempFiles then
+    Exit;
+  with ARequest.Files do
+  begin
+    for I := 0 to Count - 1 do
+    begin
+      if FileExistsUTF8(Files[I].LocalFileName) then
+        DeleteFileUTF8(Files[I].LocalFileName);
+    end;
+  end;
 end;
 
 procedure TTesterWebModule.HandleRequest(ARequest: TRequest; AResponse: TResponse);
@@ -194,6 +217,7 @@ begin
   finally
     FRequest := nil;
     FResponse := nil;
+    DoHandleCleanup(ARequest);
   end;
 end;
 

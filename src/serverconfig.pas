@@ -42,12 +42,18 @@ type
     function GetCrypto_SCrypt_LogN: integer;
     function GetCrypto_SCrypt_R: integer;
     function GetCrypto_SCrypt_P: integer;
+    function GetFiles_DefaultSrcSize: integer;
+    function GetFiles_MaxArchiveSize: integer;
+    function GetFiles_MaxSrcSize: integer;
+    function GetFiles_MaxStatementsSize: integer;
+    function GetFiles_MaxUnpackedArchiveSize: integer;
     function GetLocation_DataDir: string;
     function GetLocation_TemplatesDir: string;
     function GetOwner_DefaultFirstName: string;
     function GetOwner_DefaultLastName: string;
     function GetOwner_DefaultPassword: string;
     function GetOwner_DefaultUsername: string;
+    function GetProblem_DefaultPropsFile: string;
     function GetSession_AliveTimeMinutes: integer;
     function GetSession_IDLength: integer;
     function GetSession_TokenLength: integer;
@@ -89,6 +95,16 @@ type
     property Owner_DefaultPassword: string read GetOwner_DefaultPassword;
     property Owner_DefaultFirstName: string read GetOwner_DefaultFirstName;
     property Owner_DefaultLastName: string read GetOwner_DefaultLastName;
+
+    // files default settings (all sizes are in KBytes!)
+    property Files_MaxArchiveSize: integer read GetFiles_MaxArchiveSize;
+    property Files_MaxUnpackedArchiveSize: integer read GetFiles_MaxUnpackedArchiveSize;
+    property Files_MaxStatementsSize: integer read GetFiles_MaxStatementsSize;
+    property Files_MaxSrcSize: integer read GetFiles_MaxSrcSize;
+    property Files_DefaultSrcSize: integer read GetFiles_DefaultSrcSize;
+
+    // problem default settings
+    property Problem_DefaultPropsFile: string read GetProblem_DefaultPropsFile;
 
     constructor Create;
     procedure Reload;
@@ -137,6 +153,31 @@ begin
   Result := FStorage.ReadInteger('crypto.scrypt.p', 1);
 end;
 
+function TTesterServerConfig.GetFiles_DefaultSrcSize: integer;
+begin
+  Result := FStorage.ReadInteger('files.defaultSrcSize', 64);
+end;
+
+function TTesterServerConfig.GetFiles_MaxArchiveSize: integer;
+begin
+  Result := FStorage.ReadInteger('files.maxArchiveSize', 16384);
+end;
+
+function TTesterServerConfig.GetFiles_MaxSrcSize: integer;
+begin
+  Result := FStorage.ReadInteger('files.maxSrcSize', 2048);
+end;
+
+function TTesterServerConfig.GetFiles_MaxStatementsSize: integer;
+begin
+  Result := FStorage.ReadInteger('files.maxStatementsSize', 2048);
+end;
+
+function TTesterServerConfig.GetFiles_MaxUnpackedArchiveSize: integer;
+begin
+  Result := FStorage.ReadInteger('files.maxUnpackedArchiveSize', 65536);
+end;
+
 function TTesterServerConfig.GetLocation_DataDir: string;
 begin
   Result := FStorage.ReadString('location.dataDir', '..' + PathDelim + 'data');
@@ -167,6 +208,11 @@ end;
 function TTesterServerConfig.GetOwner_DefaultUsername: string;
 begin
   Result := FStorage.ReadString('owner.defaults.userName', 'admin');
+end;
+
+function TTesterServerConfig.GetProblem_DefaultPropsFile: string;
+begin
+  Result := FStorage.ReadString('problem.defaultPropsFile', 'props.json');
 end;
 
 function TTesterServerConfig.GetSession_AliveTimeMinutes: integer;
@@ -225,6 +271,15 @@ begin
     WriteString('owner.defaults.lastName', Owner_DefaultLastName);
     WriteString('owner.defaults.password', Owner_DefaultPassword);
     WriteString('owner.defaults.userName', Owner_DefaultUsername);
+
+    WriteString('files.notice', SFilesNotice);
+    WriteInteger('files.maxArchiveSize', Files_MaxArchiveSize);
+    WriteInteger('files.maxSrcSize', Files_MaxSrcSize);
+    WriteInteger('files.defaultSrcSize', Files_DefaultSrcSize);
+    WriteInteger('files.maxStatementsSize', Files_MaxStatementsSize);
+    WriteInteger('files.maxUnpackedArchiveSize', Files_MaxUnpackedArchiveSize);
+
+    WriteString('problem.defaultPropsFile', Problem_DefaultPropsFile);
   end;
 end;
 

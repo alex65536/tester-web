@@ -45,7 +45,7 @@
         <PackageName Value="FCL"/>
       </Item4>
     </RequiredPackages>
-    <Units Count="36">
+    <Units Count="42">
       <Unit0>
         <Filename Value="tsweb.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -175,7 +175,7 @@
         <IsPartOfProject Value="True"/>
       </Unit31>
       <Unit32>
-        <Filename Value="tswebproblems.pas"/>
+        <Filename Value="tswebproblemmodules.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit32>
       <Unit33>
@@ -190,6 +190,30 @@
         <Filename Value="editablehookedmodule.inc"/>
         <IsPartOfProject Value="True"/>
       </Unit35>
+      <Unit36>
+        <Filename Value="archivemanager.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit36>
+      <Unit37>
+        <Filename Value="filemanager.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit37>
+      <Unit38>
+        <Filename Value="tswebproblemfeatures.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit38>
+      <Unit39>
+        <Filename Value="tswebproblempages.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit39>
+      <Unit40>
+        <Filename Value="downloadhandlers.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit40>
+      <Unit41>
+        <Filename Value="webstrutils.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit41>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

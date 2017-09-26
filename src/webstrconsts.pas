@@ -188,6 +188,40 @@ resourcestring
   SEditableView = 'View';
   SEditableEdit = 'Edit';
   SCannotAccessThroughOutside = 'Cannot access EditableObject through outside hook!';
+  SFileTooBigAlertHead = 'File size must not exceed ';
+  SFileTooBigAlertTail = ' KBytes.';
+  SNoSuchStatementsType = 'No such Statements type!';
+  SFilesNotice = 'NOTE: All sizes are listed in KBytes!';
+  SArchiveTooBig = 'Archive size must not exceed %d KBytes.';
+  SStatementsTooBig = 'Statements size must not exceed %d KBytes.';
+  SUnpackedTooBig = 'Unpacked archive size must not exceed %d KBytes.';
+  SBadArchive = 'Bad archive!';
+  SCouldNotCopyFile = 'Could not copy file "%s" to "%s"!';
+  SCouldNotMoveFile = 'Could not move file "%s" to "%s"!';
+  SCouldNotDeleteFile = 'Could not delete file "%s"!';
+  SCouldNotDeleteDir = 'Could not delete directory "%s"!';
+  SCouldNotUnpack = 'Could not unpack archive!';
+  SErrorsWhileDeleting = 'Errors while deleting problem "%s".';
+  SMaxSrcSize = 'Max submission file size must be between %d and %d KBytes!';
+  SProblemArchiveKey = 'Archive:';
+  SProblemStatementsKey = 'Statements:';
+  SProblemMaxSrcKey = 'Submission limit:';
+  SKBytes = 'KB';
+  SProblemStatementsHtml = 'HTML code snippet';
+  SProblemStatementsPdf = 'PDF document';
+  SProblemStatementsDoc = 'MS Word DOC document';
+  SProblemStatementsDocx = 'MS Word DOCX document';
+  SProblemStatementsTypeKey = 'Statements type:';
+  SFileNotFoundInArchive = 'File "%s" not found in the archive!';
+  SArchiveExtensionExpected = 'Archive file expected to have extension "%s"';
+  SStatementsExtensionExpected = 'Statements file expected to have extension "%s"';
+  SCode404 = 'File not found :(';
+  SNone = '(none)';
+  SDownloadPrompt = 'Download (%s)';
+  SFileSizeBytes = '%d bytes';
+  SFileSizeKBytes = '%.1f KB';
+  SFileSizeMBytes = '%.1f MB';
+  SObjectEditSuccessful = 'Edited successfully.';
 
 implementation
 

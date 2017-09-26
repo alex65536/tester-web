@@ -1,0 +1,28 @@
+~X! <!-- Archive -->
+<tr>
+	<td class="view-table-key">~problemArchiveKey;</td>
+	<td class="view-table-value">
+~X!		~:viewLinkRef='problem-download/archives/~objectName;.zip'
+~X!		~:downloadPrompt='~archiveDownloadPrompt;'
+		~#+archiveDownloadLink;
+	</td>
+</tr>
+<tr>
+~X! <!-- Statements -->
+<tr>
+	<td class="view-table-key">~problemStatementsTypeKey;</td>
+	<td class="view-table-value">~problemStatementsTypeValue;</td>
+</tr>
+<tr>
+	<td class="view-table-key">~problemStatementsKey;</td>
+	<td class="view-table-value">
+~X!		~:viewLinkRef='problem-download/statements/~objectName;~objectStatementsExt;'
+~X!		~:downloadPrompt='~statementsDownloadPrompt;'
+		~#+statementsDownloadLink;
+	</td>
+</tr>
+~X! <!-- Max source limit -->
+<tr>
+	<td class="view-table-key">~problemMaxSrcKey;</td>
+	<td class="view-table-value">~problemMaxSrcValue; ~sizeKBytes;</td>
+</tr>

@@ -199,6 +199,7 @@ begin
   try
     DoInsideEdit(Transaction);
     Transaction.Commit;
+    Success := SObjectEditSuccessful;
   finally
     FreeAndNil(Transaction);
   end;

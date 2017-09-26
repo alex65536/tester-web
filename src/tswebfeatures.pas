@@ -277,6 +277,8 @@ begin
       ItemsAsText['pageHeader'] := (Parent as TTesterHtmlPage).Title;
       ItemsAsText['title'] := (Parent as TTesterHtmlPage).Title;
     end;
+    ItemsAsText['fileTooBigAlertHead'] := SFileTooBigAlertHead;
+    ItemsAsText['fileTooBigAlertTail'] := SFileTooBigAlertTail;
   end;
 end;
 
