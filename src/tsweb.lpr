@@ -72,7 +72,8 @@ uses
   tswebproblemfeatures,
   tswebproblempages,
   downloadhandlers,
-  webstrutils;
+  webstrutils,
+  submissions;
 
 type
   TOpenHandlerApplication = class(THTTPApplication)
