@@ -141,7 +141,6 @@ var
 begin
   ProblemName := ChangeFileExt(FileName, '');
   Problem := ProblemManager.GetObject(ProblemName) as TProblem;
-  WriteLn('!!! ', FilePath, ' ', ProblemName, ' ', FileExt);
   try
     User := (Parent as TUserWebModule).User as TEditorUser;
     with Problem.CreateTransaction(User) as TProblemTransaction do
@@ -153,10 +152,8 @@ begin
         end
         else if (FilePath = 'archives') and (FileExt = SArchiveExt) then
         begin
-          WriteLn('Here!');
           DiskFileName := ArchiveFileName;
           FileMimeType := SArchiveMime;
-          WriteLn(DiskFileName, ' ', FileMimeType);
         end;
       finally
         Free;

@@ -75,7 +75,6 @@ var
 begin
   try
     Location := ARequest.URI;
-    WriteLn('Location = ', Location);
     // preprocess URI
     // e.g. we got URI "/download-file/file/example.html" & we are on Windows
     // after preprocessing we'll get "file\example.html".
@@ -86,7 +85,6 @@ begin
     else
       Delete(Location, 1, P);
     Location := Location.Replace('/', DirectorySeparator);
-    WriteLn('New location = ', Location);
     // fill variables
     FFullFileName := Location;
     FFileName := ExtractFileName(Location);
