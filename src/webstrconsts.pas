@@ -222,6 +222,7 @@ resourcestring
   SFileSizeKBytes = '%.1f KB';
   SFileSizeMBytes = '%.1f MB';
   SObjectEditSuccessful = 'Edited successfully.';
+  SUnknownSubmissionLanguage = 'Unknown submission language: "%s"!';
 
 implementation
 

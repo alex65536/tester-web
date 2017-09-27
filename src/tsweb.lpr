@@ -73,7 +73,7 @@ uses
   tswebproblempages,
   downloadhandlers,
   webstrutils,
-  submissions;
+  submissionlanguages;
 
 type
   TOpenHandlerApplication = class(THTTPApplication)
