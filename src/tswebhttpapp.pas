@@ -205,10 +205,10 @@ var
   Page: TErrorHtmlPage;
 begin
   try
-    Page := TErrorHtmlPage.Create;
+    Page := TDefaultErrorPage.Create;
     try
-      Page.ExceptObj := AException;
       Page.Response := AResponse;
+      Page.ExceptObj := AException;
       Page.UpdateResponse;
     finally
       FreeAndNil(Page);

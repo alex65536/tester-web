@@ -43,12 +43,15 @@ type
     FExceptObj: Exception;
   protected
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+    procedure AddFeatures; override;
   public
     property ExceptObj: Exception read FExceptObj write FExceptObj;
-    procedure AddFeatures; override;
   end;
 
   TErrorHtmlPageClass = class of TErrorHtmlPage;
+
+var
+  TDefaultErrorPage: TErrorHtmlPageClass = TErrorHtmlPage;
 
 implementation
 
