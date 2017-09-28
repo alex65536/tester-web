@@ -57,7 +57,7 @@
         <PackageName Value="FCL"/>
       </Item7>
     </RequiredPackages>
-    <Units Count="43">
+    <Units Count="44">
       <Unit0>
         <Filename Value="tsweb.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -230,6 +230,10 @@
         <Filename Value="submissionlanguages.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit42>
+      <Unit43>
+        <Filename Value="tswebhttpapp.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit43>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

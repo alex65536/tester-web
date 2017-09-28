@@ -22,7 +22,11 @@ program tsweb;
 
 {$mode objfpc}{$H+}
 
-uses
+{$Define UseCThreads}
+
+uses {$IfDef UNIX} {$IfDef UseCThreads}
+  cthreads,
+  cmem, {$EndIf} {$EndIf}
   heaptrc,
   commitscheduler,
   Classes,
@@ -31,8 +35,7 @@ uses
   serverevents,
   tswebsessions,
   hash_3rdparty,
-  fphttpapp,
-  custhttpapp,
+  tswebhttpapp,
   allusers,
   htmlpreprocess,
   escaping,
@@ -75,22 +78,6 @@ uses
   webstrutils,
   submissionlanguages;
 
-type
-  TOpenHandlerApplication = class(THTTPApplication)
-  public
-    property Handler: TFPHTTPServerHandler read HTTPHandler;
-  end;
-
-// TODO : This OnIdle works only when request appears.
-// TODO : Invent a better way that ALWAYS synchronizes.
-procedure SetIdleEvent(AEvent: TNotifyEvent);
-var
-  Handler: TFPHTTPServerHandler;
-begin
-  Handler := TOpenHandlerApplication(Application).Handler;
-  Handler.OnIdle := AEvent;
-end;
-
 {$ifdef Windows}
 var
   F: TextFile;
@@ -111,11 +98,8 @@ begin
   RegisterFileLocation('data', Config.Location_DataDir);
 
   Application.Title := 'Tester Web';
-  Application.Port := 8080;
-  Application.DefaultModuleName := 'index';
-  Application.PreferModuleName := True;
-  Application.Initialize;
-  SetIdleEvent(@Scheduler.IdleEventHandler);
+  Application.OnIdle := @Scheduler.IdleEventHandler;
   OnServerTerminate := @Application.Terminate;
+  Application.Initialize;
   Application.Run;
 end.

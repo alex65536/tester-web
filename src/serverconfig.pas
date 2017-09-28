@@ -54,6 +54,8 @@ type
     function GetOwner_DefaultPassword: string;
     function GetOwner_DefaultUsername: string;
     function GetProblem_DefaultPropsFile: string;
+    function GetServer_Address: string;
+    function GetServer_Port: integer;
     function GetSession_AliveTimeMinutes: integer;
     function GetSession_IDLength: integer;
     function GetSession_TokenLength: integer;
@@ -105,6 +107,10 @@ type
 
     // problem default settings
     property Problem_DefaultPropsFile: string read GetProblem_DefaultPropsFile;
+
+    // server settings
+    property Server_Address: string read GetServer_Address;
+    property Server_Port: integer read GetServer_Port;
 
     constructor Create;
     procedure Reload;
@@ -215,6 +221,16 @@ begin
   Result := FStorage.ReadString('problem.defaultPropsFile', 'props.json');
 end;
 
+function TTesterServerConfig.GetServer_Address: string;
+begin
+  Result := FStorage.ReadString('server.address', '');
+end;
+
+function TTesterServerConfig.GetServer_Port: integer;
+begin
+  Result := FStorage.ReadInteger('server.port', 8080);
+end;
+
 function TTesterServerConfig.GetSession_AliveTimeMinutes: integer;
 begin
   Result := FStorage.ReadInteger('session.aliveTimeMinutes', 60);
@@ -280,6 +296,9 @@ begin
     WriteInteger('files.maxUnpackedArchiveSize', Files_MaxUnpackedArchiveSize);
 
     WriteString('problem.defaultPropsFile', Problem_DefaultPropsFile);
+
+    WriteString('server.address', Server_Address);
+    WriteInteger('server.port', Server_Port);
   end;
 end;
 
