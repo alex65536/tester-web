@@ -223,6 +223,9 @@ resourcestring
   SFileSizeMBytes = '%.1f MB';
   SObjectEditSuccessful = 'Edited successfully.';
   SUnknownSubmissionLanguage = 'Unknown submission language: "%s"!';
+  SErrorTitle = 'Error!';
+  SErrorMsg = 'Error %s : "%s".';
+  SErrorStackTrace = 'Stack trace:';
 
 implementation
 

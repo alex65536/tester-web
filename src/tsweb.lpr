@@ -76,7 +76,8 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   tswebproblempages,
   downloadhandlers,
   webstrutils,
-  submissionlanguages;
+  submissionlanguages,
+  errorpages;
 
 {$ifdef Windows}
 var

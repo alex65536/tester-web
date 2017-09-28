@@ -27,7 +27,7 @@ unit tswebhttpapp;
 interface
 
 uses
-  Classes, SysUtils, CustApp, custhttpapp, HTTPDefs, serverconfig;
+  Classes, SysUtils, CustApp, custhttpapp, HTTPDefs, serverconfig, errorpages;
 
 type
 
@@ -43,6 +43,7 @@ type
     property Thread: TThread read FThread;
     property Request: TRequest read FRequest;
     property Response: TResponse read FResponse;
+    procedure ShowRequestException(AResponse: TResponse; AException: Exception); override;
     procedure HandleRequest(ARequest: TRequest; AResponse: TResponse); override;
     constructor Create(AOwner: TComponent; AThread: TThread); overload;
   end;
@@ -196,6 +197,26 @@ end;
 procedure TTesterWebHandler.InternalRequestHandler;
 begin
   inherited HandleRequest(FRequest, FResponse);
+end;
+
+procedure TTesterWebHandler.ShowRequestException(AResponse: TResponse;
+  AException: Exception);
+var
+  Page: TErrorHtmlPage;
+begin
+  try
+    Page := TErrorHtmlPage.Create;
+    try
+      Page.ExceptObj := AException;
+      Page.Response := AResponse;
+      Page.UpdateResponse;
+    finally
+      FreeAndNil(Page);
+    end;
+  except
+    // exception while showing an exception :)
+    inherited ShowRequestException(AResponse, AException);
+  end;
 end;
 
 procedure TTesterWebHandler.HandleRequest(ARequest: TRequest;
