@@ -25,7 +25,8 @@ unit errorpages;
 interface
 
 uses
-  SysUtils, htmlpages, tswebpagesbase, tswebfeatures, htmlpreprocess, webstrconsts;
+  SysUtils, htmlpages, tswebpagesbase, tswebfeatures, htmlpreprocess, webstrconsts,
+  HTTPDefs;
 
 type
 
@@ -44,6 +45,7 @@ type
   protected
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
     procedure AddFeatures; override;
+    procedure DoUpdateResponse; override;
   public
     property ExceptObj: Exception read FExceptObj write FExceptObj;
   end;
@@ -105,6 +107,33 @@ begin
   AddFeature(THeaderFeature);
   AddFeature(TErrorPageFeature);
   AddFeature(TFooterFeature);
+end;
+
+procedure TErrorHtmlPage.DoUpdateResponse;
+var
+  ErrorCode: integer;
+  ErrorText: string;
+begin
+  inherited DoUpdateResponse;
+  // fill error code & text
+  if ExceptObj is EHTTP then
+  begin
+    ErrorCode := (ExceptObj as EHTTP).StatusCode;
+    ErrorText := (ExceptObj as EHTTP).StatusText;
+  end
+  else
+  begin
+    ErrorCode := ExceptObj.HelpContext;
+    ErrorText := '';
+  end;
+  // if necessary, set defult values
+  if ErrorCode = 0 then
+    ErrorCode := 500;
+  if ErrorText = '' then
+    ErrorText := 'Application Error ' + ExceptObj.ClassName;
+  // add them into response
+  Response.Code := ErrorCode;
+  Response.CodeText := ErrorText;
 end;
 
 end.
