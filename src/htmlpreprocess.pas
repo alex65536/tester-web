@@ -44,6 +44,8 @@ uses
          instead of the variable. Default behaviour is to panic when a variable
          was not found.
       +    Preprocess the contents of the variable recursively.
+      `    Adds <br> at the end of each line. Can be used only when the contents
+         are indented as HTML.
     MODIFIERS may not conflict or repeat. VARNAME must contain latin letters,
     numbers and underscores, but not starting with number.
 
@@ -339,6 +341,7 @@ var
     EscapeStyle: TEscapeStyle;
     PanicIfNotFound: boolean;
     RecursePreprocess: boolean;
+    EndWithBr: boolean;
     Pos: integer;
     VarName: string;
     Strings: TIndentTaggedStrings;
@@ -350,13 +353,15 @@ var
     EscapeStyle := esUnknown;
     PanicIfNotFound := True;
     RecursePreprocess := False;
+    EndWithBr := False;
     Pos := 2;
     while Pos < Length(Variable) do
     begin
       if ((Variable[Pos] in ['&', '\', '#']) and (EscapeStyle <> esUnknown)) or
         ((Variable[Pos] in ['<', '=', '>']) and (IndentStyle <> isUnknown)) or
         ((Variable[Pos] = '?') and (not PanicIfNotFound)) or
-        ((Variable[Pos] = '+') and RecursePreprocess) then
+        ((Variable[Pos] = '+') and RecursePreprocess) or
+        ((Variable[Pos] = '`') and EndWithBr) then
         raise EHtmlPreprocessSyntaxError.CreateFmt(SConflictingModifiers, [Variable]);
       case Variable[Pos] of
         '&': EscapeStyle := esHTML;
@@ -366,7 +371,8 @@ var
         '<': IndentStyle := isNoIndent;
         '>': IndentStyle := isVeryIndent;
         '?': PanicIfNotFound := False;
-        '+': RecursePreprocess := True
+        '+': RecursePreprocess := True;
+        '`': EndWithBr := True
         else
           Break;
       end;
@@ -376,6 +382,10 @@ var
       IndentStyle := isIndent;
     if EscapeStyle = esUnknown then
       EscapeStyle := esHTML;
+
+    // check for logical confilcts
+    if (EndWithBr and (EscapeStyle <> esHTML)) then
+      raise EHtmlPreprocessSyntaxError.CreateFmt(SConflictingModifiers, [Variable]);
 
     // parse variable name
     VarName := Copy(Variable, Pos, Length(Variable) - Pos);
@@ -407,7 +417,11 @@ var
         begin
           // escape line-by-line
           for I := 0 to Strings.Count - 1 do
+          begin
             Strings[I] := HtmlEscapeString(Strings[I]);
+            if EndWithBr then
+              Strings[I] := Strings[I] + '<br>';
+          end;
         end;
         // append (with indentation)
         case IndentStyle of
