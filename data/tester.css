@@ -361,3 +361,19 @@ td.a-delete-wrapper {
 	text-align: left;
 	vertical-align: middle;
 }
+
+
+.error-msg {
+	color: red;
+	font-size: 14pt;
+	font-weight: bold;
+	text-align: center;
+}
+.error-stack-trace-header {
+	font-size: 14pt;
+	font-weight: bold;
+}
+.error-stack-trace {
+	padding-left: 20pt;
+	padding-top: 5pt;
+}

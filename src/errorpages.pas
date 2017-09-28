@@ -70,9 +70,9 @@ procedure TErrorPageFeature.Satisfy;
     try
       FrameCount := ExceptFrameCount;
       Frames := ExceptFrames;
-      Strings.Add(BackTraceStrFunc(ExceptAddr));
+      Strings.Add(Trim(BackTraceStrFunc(ExceptAddr)));
       for I := 0 to FrameCount - 1 do
-        Strings.Add(BackTraceStrFunc(Frames[I]));
+        Strings.Add(Trim(BackTraceStrFunc(Frames[I])));
       Parent.Variables.SetItemAsStrings('stackTrace', Strings);
     finally
       FreeAndNil(Strings);
