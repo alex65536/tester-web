@@ -25,17 +25,9 @@ unit errorpages;
 interface
 
 uses
-  SysUtils, htmlpages, tswebpagesbase, tswebfeatures, htmlpreprocess, webstrconsts,
-  HTTPDefs;
+  SysUtils, htmlpages, HTTPDefs;
 
 type
-
-  { TErrorPageFeature }
-
-  TErrorPageFeature = class(TTesterPageFeature)
-  public
-    procedure Satisfy; override;
-  end;
 
   { TErrorHtmlPage }
 
@@ -43,8 +35,6 @@ type
   private
     FExceptObj: Exception;
   protected
-    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
-    procedure AddFeatures; override;
     procedure DoUpdateResponse; override;
   public
     property ExceptObj: Exception read FExceptObj write FExceptObj;
@@ -53,61 +43,11 @@ type
   TErrorHtmlPageClass = class of TErrorHtmlPage;
 
 var
-  TDefaultErrorPage: TErrorHtmlPageClass = TErrorHtmlPage;
+  TDefaultErrorPage: TErrorHtmlPageClass = nil;
 
 implementation
 
-{ TErrorPageFeature }
-
-procedure TErrorPageFeature.Satisfy;
-
-  procedure SetStackTrace;
-  var
-    Strings: TIndentTaggedStrings;
-    FrameCount: integer;
-    Frames: PCodePointer;
-    I: integer;
-  begin
-    Strings := TIndentTaggedStrings.Create;
-    try
-      FrameCount := ExceptFrameCount;
-      Frames := ExceptFrames;
-      Strings.Add(Trim(BackTraceStrFunc(ExceptAddr)));
-      for I := 0 to FrameCount - 1 do
-        Strings.Add(Trim(BackTraceStrFunc(Frames[I])));
-      Parent.Variables.SetItemAsStrings('stackTrace', Strings);
-    finally
-      FreeAndNil(Strings);
-    end;
-  end;
-
-begin
-  with Parent.Variables do
-  begin
-    ItemsAsText['pageHeader'] := SErrorTitle;
-    ItemsAsText['title'] := SErrorTitle;
-    with (Parent as TErrorHtmlPage).ExceptObj do
-      ItemsAsText['errorMsg'] := Format(SErrorMsg, [ClassName, Message]);
-    ItemsAsText['stackTraceMsg'] := SErrorStackTrace;
-    SetStackTrace;
-  end;
-  LoadPagePart('', 'errorPage', 'content');
-end;
-
 { TErrorHtmlPage }
-
-procedure TErrorHtmlPage.DoGetSkeleton(Strings: TIndentTaggedStrings);
-begin
-  Strings.LoadFromFile(TemplateLocation('', 'skeleton'));
-end;
-
-procedure TErrorHtmlPage.AddFeatures;
-begin
-  inherited AddFeatures;
-  AddFeature(THeaderFeature);
-  AddFeature(TErrorPageFeature);
-  AddFeature(TFooterFeature);
-end;
 
 procedure TErrorHtmlPage.DoUpdateResponse;
 var

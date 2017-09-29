@@ -27,8 +27,7 @@ interface
 uses
   SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess, fphttp,
   htmlpages, tswebpages, HTTPDefs, users, webstrconsts, authwebmodules,
-  tswebprofilefeatures, tswebpagesbase, tsmiscwebmodules, allusers, errorpages,
-  tswebfeatures;
+  tswebprofilefeatures, tswebpagesbase, tsmiscwebmodules, allusers;
 
 type
 
@@ -64,20 +63,6 @@ type
   public
     constructor Create; override;
     constructor Create(const AUsername: string);
-  end;
-
-  { TNavErrorPage }
-
-  TNavErrorPage = class(TErrorHtmlPage, IPageNavBar)
-  private
-    FNavBar: TNavBar;
-  protected
-    function GetNavBar: TNavBar;
-    procedure AddFeatures; override;
-  public
-    procedure Clear; override;
-    constructor Create; override;
-    destructor Destroy; override;
   end;
 
   { TNavLoginPage }
@@ -208,37 +193,6 @@ type
   end;
 
 implementation
-
-{ TNavErrorPage }
-
-function TNavErrorPage.GetNavBar: TNavBar;
-begin
-  Result := FNavBar;
-end;
-
-procedure TNavErrorPage.AddFeatures;
-begin
-  inherited AddFeatures;
-  AddFeature(TNavBarFeature);
-end;
-
-procedure TNavErrorPage.Clear;
-begin
-  inherited Clear;
-  FNavBar.Clear;
-end;
-
-constructor TNavErrorPage.Create;
-begin
-  inherited Create;
-  FNavBar := TDefaultNavBar.Create(Self);
-end;
-
-destructor TNavErrorPage.Destroy;
-begin
-  FreeAndNil(FNavBar);
-  inherited Destroy;
-end;
 
 { TDeleteUserWebModule }
 
@@ -516,7 +470,6 @@ begin
 end;
 
 initialization
-  TDefaultErrorPage := TNavErrorPage;
   RegisterHTTPModule('index', TIndexWebModule, True);
   RegisterHTTPModule('page1', TPage1WebModule, True);
   RegisterHTTPModule('page2', TPage2WebModule, True);
