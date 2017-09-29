@@ -78,7 +78,8 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   webstrutils,
   submissionlanguages,
   errorpages,
-  tsweberrorpages;
+  tsweberrorpages,
+  submissions;
 
 {$ifdef Windows}
 var
