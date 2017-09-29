@@ -27,9 +27,11 @@ unit tswebhttpapp;
 interface
 
 uses
-  Classes, SysUtils, CustApp, custhttpapp, HTTPDefs, serverconfig, errorpages;
+  Classes, SysUtils, CustApp, custhttpapp, HTTPDefs, serverconfig, errorpages,
+  webstrconsts;
 
 type
+  ETesterWebApplication = class(Exception);
 
   { TTesterWebHandler }
 
@@ -71,7 +73,9 @@ type
     FServerActive: boolean;
     FOnIdle: TNotifyEvent;
     FServerThread: TTesterServerThread;
+    function GetDefaultModuleName: string;
     procedure ServerTerminated(Sender: TObject);
+    procedure SetDefaultModuleName(AValue: string);
   protected
     property ServerThread: TTesterServerThread read FServerThread;
     procedure DoRun; override;
@@ -79,6 +83,7 @@ type
     procedure DoIdle; virtual;
   public
     property OnIdle: TNotifyEvent read FOnIdle write FOnIdle;
+    property DefaultModuleName: string read GetDefaultModuleName write SetDefaultModuleName;
     procedure Terminate(AExitCode: Integer); override;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -108,6 +113,18 @@ end;
 procedure TTesterWebApplication.ServerTerminated(Sender: TObject);
 begin
   FServerActive := False;
+end;
+
+function TTesterWebApplication.GetDefaultModuleName: string;
+begin
+  Result := FServerThread.WebHandler.DefaultModuleName;
+end;
+
+procedure TTesterWebApplication.SetDefaultModuleName(AValue: string);
+begin
+  if not FServerThread.Suspended then
+    raise ETesterWebApplication.CreateFmt(SServerRunning, ['DefaultModuleName']);
+  FServerThread.WebHandler.DefaultModuleName := AValue;
 end;
 
 procedure TTesterWebApplication.DoRun;
@@ -151,7 +168,6 @@ begin
     OnLog := @Self.Log;
     Address := Config.Server_Address;
     Port := Config.Server_Port;
-    DefaultModuleName := 'index';
     PreferModuleName := True;
   end;
 end;

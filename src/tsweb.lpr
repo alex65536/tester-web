@@ -101,6 +101,7 @@ begin
 
   Application.Title := 'Tester Web';
   Application.OnIdle := @Scheduler.IdleEventHandler;
+  Application.DefaultModuleName := 'main';
   OnServerTerminate := @Application.Terminate;
   Application.Initialize;
   Application.Run;

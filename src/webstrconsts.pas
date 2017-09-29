@@ -226,6 +226,7 @@ resourcestring
   SErrorTitle = 'Error!';
   SErrorMsg = 'Error %s : "%s".';
   SErrorStackTrace = 'Stack trace:';
+  SServerRunning = 'Server is running, cannot change %s!';
 
 implementation
 
