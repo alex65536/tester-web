@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, editableobjects, datastorages, webstrconsts, TypInfo,
   tswebdirectories, filemanager, archivemanager, FileUtil, LazFileUtils,
-  serverconfig;
+  serverconfig, users;
 
 type
   TProblemStatementsType = (stNone, stHtml, stPdf, stDoc, stDocx);
@@ -67,7 +67,7 @@ type
 
   TProblemAccessSession = class(TEditableObjectAccessSession)
   protected
-    {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser;
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
   end;
 
@@ -83,7 +83,7 @@ type
   protected
     procedure DoCommit; override;
     procedure DoReload; override;
-    {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser;
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
   public
     property Problem: TProblem read GetProblem;
@@ -100,7 +100,7 @@ type
 
   TProblemManagerSession = class(TEditableManagerSession)
   protected
-    {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser);
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
   end;
 
   { TProblem }
@@ -271,7 +271,7 @@ end;
 { TProblemManagerSession }
 
 constructor TProblemManagerSession.Create(AManager: TEditableManager;
-  AUser: TEditorUser);
+  AUser: TUser);
 begin
   inherited Create(AManager, AUser);
 end;
@@ -279,7 +279,7 @@ end;
 { TProblemAccessSession }
 
 constructor TProblemAccessSession.Create(AManager: TEditableManager;
-  AUser: TEditorUser; AObject: TEditableObject);
+  AUser: TUser; AObject: TEditableObject);
 begin
   inherited Create(AManager, AUser, AObject);
 end;
@@ -330,7 +330,7 @@ begin
 end;
 
 constructor TProblemTransaction.Create(AManager: TEditableManager;
-  AUser: TEditorUser; AObject: TEditableObject);
+  AUser: TUser; AObject: TEditableObject);
 begin
   inherited Create(AManager, AUser, AObject);
 end;

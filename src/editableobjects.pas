@@ -66,13 +66,13 @@ type
   private
     FManager: TEditableManager;
     FStorage: TAbstractDataStorage;
-    FUser: TEditorUser;
+    FUser: TUser;
   protected
     property Storage: TAbstractDataStorage read FStorage;
-    {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser);
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
   public
     property Manager: TEditableManager read FManager;
-    property User: TEditorUser read FUser;
+    property User: TUser read FUser;
     constructor Create;
   end;
 
@@ -84,7 +84,7 @@ type
   protected
     function FullUserKeyName(const Key: string): string;
     function FullKeyName(const Key: string): string;
-    {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser;
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
   public
     property EditableObject: TEditableObject read FEditableObject;
@@ -114,8 +114,6 @@ type
   protected
     procedure DoCommit; virtual;
     procedure DoReload; virtual;
-    {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser;
-      AObject: TEditableObject);
   public
     property Title: string read FTitle write FTitle;
     property LastModifyTime: TDateTime read FLastModifyTime;
@@ -130,14 +128,13 @@ type
   { TEditableManagerSession }
 
   TEditableManagerSession = class(TEditableCustomSession)
-  protected
-    {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser);
   public
     function CanCreateNewObject: boolean; virtual;
     function CanDeleteObject(const AName: string): boolean; virtual;
     function CreateNewObject(const AName, ATitle: string): TEditableObject;
     procedure DeleteObject(const AName: string);
     function ListAvailableObjects: TStringList;
+    procedure AfterConstruction; override;
   end;
 
   { TEditableObject }
@@ -775,27 +772,22 @@ end;
 
 { TEditableManagerSession }
 
-constructor TEditableManagerSession.Create(AManager: TEditableManager;
-  AUser: TEditorUser);
-begin
-  inherited Create(AManager, AUser);
-end;
-
 function TEditableManagerSession.CanCreateNewObject: boolean;
 begin
-  Result := True;
+  Result := User is TEditorUser;
 end;
 
 function TEditableManagerSession.CanDeleteObject(const AName: string): boolean;
 begin
-  Result := Manager.GetAccessRights(AName, User.Info) = erOwner;
+  Result := (Manager.GetAccessRights(AName, User.Info) = erOwner) and
+    (User is TEditorUser);
 end;
 
 function TEditableManagerSession.CreateNewObject(const AName, ATitle: string): TEditableObject;
 begin
   if not CanCreateNewObject then
     raise EEditableAccessDenied.Create(SAccessDenied);
-  Result := Manager.CreateNewObject(User, AName, ATitle);
+  Result := Manager.CreateNewObject(User as TEditorUser, AName, ATitle);
 end;
 
 procedure TEditableManagerSession.DeleteObject(const AName: string);
@@ -807,7 +799,14 @@ end;
 
 function TEditableManagerSession.ListAvailableObjects: TStringList;
 begin
-  Result := Manager.ListAvailableObjects(User);
+  Result := Manager.ListAvailableObjects(User as TEditorUser);
+end;
+
+procedure TEditableManagerSession.AfterConstruction;
+begin
+  if not (User is TEditorUser) then
+    raise EEditableAccessDenied.Create(SAccessDenied);
+  inherited AfterConstruction;
 end;
 
 { TEditableTransaction }
@@ -825,20 +824,14 @@ begin
   FLastModifyTime := Storage.ReadFloat(FullKeyName('lastModified'), 0.0);
 end;
 
-constructor TEditableTransaction.Create(AManager: TEditableManager;
-  AUser: TEditorUser; AObject: TEditableObject);
-begin
-  inherited Create(AManager, AUser, AObject);
-end;
-
 function TEditableTransaction.CanReadData: boolean;
 begin
-  Result := EditableObject.GetAccessRights(User) in AccessCanReadSet;
+  Result := AccessLevel in AccessCanReadSet;
 end;
 
 function TEditableTransaction.CanWriteData: boolean;
 begin
-  Result := EditableObject.GetAccessRights(User) in AccessCanWriteSet;
+  Result := AccessLevel in AccessCanWriteSet;
 end;
 
 procedure TEditableTransaction.Validate;
@@ -863,8 +856,8 @@ end;
 
 procedure TEditableTransaction.AfterConstruction;
 begin
-  inherited AfterConstruction;
   Reload;
+  inherited AfterConstruction;
 end;
 
 { TEditableObjectAccessSession }
@@ -878,7 +871,7 @@ end;
 
 function TEditableObjectAccessSession.CanAddUser: boolean;
 begin
-  Result := EditableObject.GetAccessRights(User) in AccessCanWriteSet;
+  Result := AccessLevel in AccessCanWriteSet;
 end;
 
 function TEditableObjectAccessSession.CanDeleteUser(Target: TUserInfo): boolean;
@@ -889,6 +882,8 @@ begin
   UserRights := AccessLevel;
   TargetRights := EditableObject.GetAccessRights(Target);
   // check (pt. 1)
+  if UserRights = erNone then
+    Exit(False);
   if TargetRights in [erNone, erOwner] then
     Exit(False);
   if Target.Username = User.Username then
@@ -910,6 +905,8 @@ begin
   UserRights := AccessLevel;
   TargetRights := EditableObject.GetAccessRights(Target);
   // check (pt. 1)
+  if (UserRights = erNone) then
+    Exit(False);
   if (TargetRights = erNone) or (AAccess = erNone) then
     Exit(False);
   if AAccess = TargetRights then
@@ -957,7 +954,7 @@ begin
 end;
 
 constructor TEditableObjectSession.Create(AManager: TEditableManager;
-  AUser: TEditorUser; AObject: TEditableObject);
+  AUser: TUser; AObject: TEditableObject);
 begin
   inherited Create(AManager, AUser);
   FEditableObject := AObject;
@@ -965,13 +962,16 @@ end;
 
 function TEditableObjectSession.AccessLevel: TEditableAccessRights;
 begin
-  Result := EditableObject.GetAccessRights(User);
+  if User is TEditorUser then
+    Result := EditableObject.GetAccessRights(User as TEditorUser)
+  else
+    Result := erNone;
 end;
 
 { TEditableCustomSession }
 
 constructor TEditableCustomSession.Create(AManager: TEditableManager;
-  AUser: TEditorUser);
+  AUser: TUser);
 begin
   FManager := AManager;
   FStorage := AManager.Storage;
