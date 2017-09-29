@@ -100,6 +100,8 @@ type
     procedure Validate; override;
   end;
 
+  { TProblemTransaction }
+
   TProblemTransaction = class(TBaseProblemTransaction)
   public
     property ArchiveFileName;
@@ -131,6 +133,8 @@ type
     function CreateTransaction(AUser: TEditorUser): TEditableTransaction;
       override;
   end;
+
+  { TProblemManager }
 
   TProblemManager = class(TEditableManager)
   protected

@@ -234,9 +234,10 @@ type
 
   TEditableObjectMessage = class(TAuthorMessage)
   private
-    FObject: TEditableObject;
+    FEditableObject: TEditableObject;
   public
-    function AddObject(AObject: TEditableObject): TEditableObjectMessage;
+    property EditableObject: TEditableObject read FEditableObject;
+    function AddObject(AEditableObject: TEditableObject): TEditableObjectMessage;
   end;
 
   TEditableDeletingMessage = class(TEditableObjectMessage);
@@ -296,10 +297,10 @@ end;
 
 { TEditableObjectMessage }
 
-function TEditableObjectMessage.AddObject(AObject: TEditableObject): TEditableObjectMessage;
+function TEditableObjectMessage.AddObject(AEditableObject: TEditableObject): TEditableObjectMessage;
 begin
   NeedsUnlocked;
-  FObject := AObject;
+  FEditableObject := AEditableObject;
   Result := Self;
 end;
 
