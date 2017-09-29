@@ -18,7 +18,7 @@
   to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
   MA 02111-1307, USA.
 }
-unit tswebhttpapp;
+unit threadedhttpapp;
 
 // TODO : Implement logging!
 
@@ -31,36 +31,36 @@ uses
   webstrconsts;
 
 type
-  ETesterWebApplication = class(Exception);
+  EThreadedHttpApplication = class(Exception);
 
-  TTesterServerThread = class;
+  THttpApplicationHandlerThread = class;
 
-  { TTesterWebHandler }
+  { TThreadedHttpHandler }
 
-  TTesterWebHandler = class(TFPHTTPServerHandler)
+  TThreadedHttpHandler = class(TFPHTTPServerHandler)
   private
     FRequest: TRequest;
     FResponse: TResponse;
-    FThread: TTesterServerThread;
+    FThread: THttpApplicationHandlerThread;
     procedure InternalRequestHandler; virtual;
   public
-    property Thread: TTesterServerThread read FThread;
+    property Thread: THttpApplicationHandlerThread read FThread;
     property Request: TRequest read FRequest;
     property Response: TResponse read FResponse;
     procedure ShowRequestException(AResponse: TResponse; AException: Exception); override;
     procedure HandleRequest(ARequest: TRequest; AResponse: TResponse); override;
-    constructor Create(AOwner: TComponent; AThread: TTesterServerThread); overload;
+    constructor Create(AOwner: TComponent; AThread: THttpApplicationHandlerThread); overload;
   end;
 
-  { TTesterServerThread }
+  { THttpApplicationHandlerThread }
 
-  TTesterServerThread = class(TThread)
+  THttpApplicationHandlerThread = class(TThread)
   private
-    FWebHandler: TTesterWebHandler;
+    FWebHandler: TThreadedHttpHandler;
   protected
     procedure Synchronize(AMethod: TThreadMethod);
   public
-    property WebHandler: TTesterWebHandler read FWebHandler;
+    property WebHandler: TThreadedHttpHandler read FWebHandler;
     procedure Execute; override;
     procedure Terminate;
     constructor Create(CreateSuspended: Boolean; const StackSize: SizeUInt =
@@ -68,18 +68,18 @@ type
     destructor Destroy; override;
   end;
 
-  { TTesterWebApplication }
+  { TThreadedHttpApplication }
 
-  TTesterWebApplication = class(TCustomApplication)
+  TThreadedHttpApplication = class(TCustomApplication)
   private
     FServerActive: boolean;
     FOnIdle: TNotifyEvent;
-    FServerThread: TTesterServerThread;
+    FServerThread: THttpApplicationHandlerThread;
     function GetDefaultModuleName: string;
     procedure ServerTerminated(Sender: TObject);
     procedure SetDefaultModuleName(AValue: string);
   protected
-    property ServerThread: TTesterServerThread read FServerThread;
+    property ServerThread: THttpApplicationHandlerThread read FServerThread;
     procedure DoRun; override;
     procedure SetTitle(const AValue: string); override;
     procedure DoIdle; virtual;
@@ -92,13 +92,13 @@ type
   end;
 
 var
-  Application: TTesterWebApplication;
+  Application: TThreadedHttpApplication;
 
 implementation
 
 procedure InitApp;
 begin
-  Application := TTesterWebApplication.Create(nil);
+  Application := TThreadedHttpApplication.Create(nil);
   if not Assigned(CustomApplication) then
     CustomApplication := Application;
 end;
@@ -110,26 +110,26 @@ begin
   FreeAndNil(Application);
 end;
 
-{ TTesterWebApplication }
+{ TThreadedHttpApplication }
 
-procedure TTesterWebApplication.ServerTerminated(Sender: TObject);
+procedure TThreadedHttpApplication.ServerTerminated(Sender: TObject);
 begin
   FServerActive := False;
 end;
 
-function TTesterWebApplication.GetDefaultModuleName: string;
+function TThreadedHttpApplication.GetDefaultModuleName: string;
 begin
   Result := FServerThread.WebHandler.DefaultModuleName;
 end;
 
-procedure TTesterWebApplication.SetDefaultModuleName(AValue: string);
+procedure TThreadedHttpApplication.SetDefaultModuleName(AValue: string);
 begin
   if not FServerThread.Suspended then
-    raise ETesterWebApplication.CreateFmt(SServerRunning, ['DefaultModuleName']);
+    raise EThreadedHttpApplication.CreateFmt(SServerRunning, ['DefaultModuleName']);
   FServerThread.WebHandler.DefaultModuleName := AValue;
 end;
 
-procedure TTesterWebApplication.DoRun;
+procedure TThreadedHttpApplication.DoRun;
 begin
   inherited DoRun;
   FServerActive := True;
@@ -138,32 +138,32 @@ begin
   begin
     DoIdle;
     CheckSynchronize;
-    Sleep(15);
+    Sleep(1);
   end;
 end;
 
-procedure TTesterWebApplication.SetTitle(const AValue: string);
+procedure TThreadedHttpApplication.SetTitle(const AValue: string);
 begin
   inherited SetTitle(AValue);
   FServerThread.WebHandler.Title := AValue;
 end;
 
-procedure TTesterWebApplication.DoIdle;
+procedure TThreadedHttpApplication.DoIdle;
 begin
   if Assigned(FOnIdle) then
     FOnIdle(Self);
 end;
 
-procedure TTesterWebApplication.Terminate(AExitCode: Integer);
+procedure TThreadedHttpApplication.Terminate(AExitCode: Integer);
 begin
   inherited Terminate(AExitCode);
   FServerThread.Terminate;
 end;
 
-constructor TTesterWebApplication.Create(AOwner: TComponent);
+constructor TThreadedHttpApplication.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  FServerThread := TTesterServerThread.Create(True);
+  FServerThread := THttpApplicationHandlerThread.Create(True);
   FServerThread.OnTerminate := @ServerTerminated;
   with FServerThread.WebHandler do
   begin
@@ -174,50 +174,50 @@ begin
   end;
 end;
 
-destructor TTesterWebApplication.Destroy;
+destructor TThreadedHttpApplication.Destroy;
 begin
   FreeAndNil(FServerThread);
   inherited Destroy;
 end;
 
-{ TTesterServerThread }
+{ THttpApplicationHandlerThread }
 
-procedure TTesterServerThread.Synchronize(AMethod: TThreadMethod);
+procedure THttpApplicationHandlerThread.Synchronize(AMethod: TThreadMethod);
 begin
   inherited Synchronize(AMethod);
 end;
 
-procedure TTesterServerThread.Execute;
+procedure THttpApplicationHandlerThread.Execute;
 begin
   FWebHandler.Run;
 end;
 
-procedure TTesterServerThread.Terminate;
+procedure THttpApplicationHandlerThread.Terminate;
 begin
   FWebHandler.Terminate;
 end;
 
-constructor TTesterServerThread.Create(CreateSuspended: Boolean;
+constructor THttpApplicationHandlerThread.Create(CreateSuspended: Boolean;
   const StackSize: SizeUInt);
 begin
-  FWebHandler := TTesterWebHandler.Create(nil, Self);
+  FWebHandler := TThreadedHttpHandler.Create(nil, Self);
   inherited Create(CreateSuspended, StackSize);
 end;
 
-destructor TTesterServerThread.Destroy;
+destructor THttpApplicationHandlerThread.Destroy;
 begin
   FreeAndNil(FWebHandler);
   inherited Destroy;
 end;
 
-{ TTesterWebHandler }
+{ TThreadedHttpHandler }
 
-procedure TTesterWebHandler.InternalRequestHandler;
+procedure TThreadedHttpHandler.InternalRequestHandler;
 begin
   inherited HandleRequest(FRequest, FResponse);
 end;
 
-procedure TTesterWebHandler.ShowRequestException(AResponse: TResponse;
+procedure TThreadedHttpHandler.ShowRequestException(AResponse: TResponse;
   AException: Exception);
 var
   Page: TErrorHtmlPage;
@@ -237,7 +237,7 @@ begin
   end;
 end;
 
-procedure TTesterWebHandler.HandleRequest(ARequest: TRequest;
+procedure TThreadedHttpHandler.HandleRequest(ARequest: TRequest;
   AResponse: TResponse);
 begin
   FRequest := ARequest;
@@ -250,8 +250,8 @@ begin
   end;
 end;
 
-constructor TTesterWebHandler.Create(AOwner: TComponent;
-  AThread: TTesterServerThread);
+constructor TThreadedHttpHandler.Create(AOwner: TComponent;
+  AThread: THttpApplicationHandlerThread);
 begin
   Create(AOwner);
   FThread := AThread;

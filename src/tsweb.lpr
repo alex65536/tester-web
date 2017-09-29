@@ -35,7 +35,7 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   serverevents,
   tswebsessions,
   hash_3rdparty,
-  tswebhttpapp,
+  threadedhttpapp,
   allusers,
   htmlpreprocess,
   escaping,
