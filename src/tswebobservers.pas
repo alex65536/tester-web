@@ -61,7 +61,7 @@ type
 
   { TMessageAuthor }
 
-  TMessageAuthor = class(IMessageAuthor)
+  TMessageAuthor = class(TObject, IMessageAuthor)
   private
     FSubscribers: TList;
   public

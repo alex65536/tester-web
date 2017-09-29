@@ -139,7 +139,7 @@ type
 
   { TEditableObject }
 
-  TEditableObject = class(IMessageSubscriber)
+  TEditableObject = class(TObject, IMessageSubscriber)
   private
     FManager: TEditableManager;
     FName: string;

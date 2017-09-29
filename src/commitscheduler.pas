@@ -32,7 +32,7 @@ type
 
   { TCommitScheduler }
 
-  TCommitScheduler = class(IFPObserver)
+  TCommitScheduler = class(TObject, IFPObserver)
   private
     FCommitIntervalSeconds: integer;
     FStorages: TDataStorageList;

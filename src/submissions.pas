@@ -36,22 +36,18 @@ uses
 //
 //  TIdList = specialize TFPGList<integer>;
 //
-//  TSubmissionQueue = class
-//  private
+//  TSubmissionManager = class;
 //
-//  public
-//
-//  end;
-//
-//  TSubmissionBase = class
+//  TBaseSubmission = class
 //  protected
 //    function GetLanguage: TSubmissionLanguage; virtual;
 //    function GetFileName: string; virtual;
 //    function GetOwner: TUserInfo; virtual;
-//    constructor Create(AUser: TUser; AProblem: TProblem; AID: integer);
+//    constructor Create(AManager: TSubmissionManager; ATransaction: TProblemTransaction;
+//      AID: integer);
 //  public
-//    property User: TUser read FUser;
-//    property Problem: TProblem read FProblem;
+//    property Manager: TSubmissionManager read FManager;
+//    property Transaction: TProblemTransaction read FTransaction;
 //    property ID: integer read FID;
 //    property Language: TSubmissionLanguage read GetLanguage;
 //    property FileName: string read GetFileName;
@@ -60,22 +56,81 @@ uses
 //    constructor Create;
 //  end;
 //
-//  TSubmissionCreator = class(TSubmissionBase, IMessageSubscriber)
-//  protected
-//    procedure MessageReceived(AMessage: TAuthorMessage);
-//    constructor Create(AUser: TUser; AProblem: TProblem; AID: integer);
+//  TTestSubmission = class(TBaseSubmission)
 //  public
 //    procedure AddFile(ALanguage: TSubmissionLanguage; const AFile: string);
-//    procedure Stop; virtual;
+//    destructor Destroy; override;
 //  end;
 //
-//  TSubmissionViewer = class(TSubmissionBase)
+//  TViewSubmission = class(TBaseSubmission)
 //  protected
 //    procedure LoadResults; virtual;
-//    constructor Create(AUser: TUser; AProblem: TProblem; AID: integer);
+//    constructor Create(AManager: TSubmissionManager;
+//      ATransaction: TProblemTransaction; AID: integer);
 //  public
 //    property Results: TTestedProblem read FResults;
 //    function CanAccess(AUser: TUser): boolean; virtual;
+//    procedure AfterConstruction; override;
+//    destructor Destroy; override;
+//  end;
+//
+//  TTestSubmissionList = specialize TFPGObjectList<TTestSubmission>;
+//
+//  TTestSubmissionMessage = class(TAuthorMessage)
+//  public
+//    property Submission: TTestSubmission read FSubmission;
+//    function AddSubmission(ASubmission: TTestSubmission): TTestSubmissionMessage;
+//  end;
+//
+//  TSubmissionTestedMessage = class(TTestSubmissionMessage);
+//  TSubmissionDeletedPoolMessage = class(TTestSubmissionMessage);
+//
+//  TSubmissionPool = class(TMessageAuthor)
+//  private
+//    FList: TTestSubmissionList;
+//  protected
+//    property Storage: TAbstractDataStorage read FStorage;
+//    procedure DoAdd(ASubmission: TTestSubmission); virtual;
+//    procedure DoDelete(ASubmission: TTestSubmission); virtual;
+//    procedure TestingFinished;
+//    constructor Create(AQueue: TSubmissionQueue);
+//  public
+//    property Submissions[I: integer]: TTestSubmission read GetSubmissions
+//      write SetSubmissions; default;
+//    property SubmissionCount: integer read GetSubmissionCount;
+//    property Queue: TSubmissionQueue read FQueue;
+//    function AddSubmission(ASubmission: TTestSubmission): boolean;
+//    function DeleteSubmission(ASubmission: TTestSubmission): boolean;
+//    procedure Clear;
+//    constructor Create;
+//    destructor Destroy; override;
+//  end;
+//
+//  TSubmissionQueue = class(TMessageAuthor)
+//  private
+//    FList: TTestSubmissionList;
+//    FDeleting: integer;
+//    procedure BeginDelete;
+//    procedure EndDelete;
+//  protected
+//    property Storage: TAbstractDataStorage read FStorage;
+//    procedure TriggerAddToPool;
+//    function CreateStorage: TAbstractDataStorage; virtual;
+//    function CreatePool: TSubmissionPool; virtual; abstract;
+//    procedure Reload; virtual;
+//    procedure Commit; virtual;
+//    constructor Create(AManager: TSubmissionManager);
+//  public
+//    property Submissions[I: integer]: TTestSubmission read GetSubmissions
+//      write SetSubmissions; default;
+//    property SubmissionCount: integer read GetSubmissionCount;
+//    property Manager: TSubmissionManager read FManager;
+//    property Pool: TSubmissionPool read FPool;
+//    procedure AddSubmission(ASubmission: TTestSubmission);
+//    procedure DeleteSubmission(ASubmission: TTestSubmission);
+//    procedure Clear;
+//    procedure BeforeDestruction; override;
+//    constructor Create;
 //    destructor Destroy; override;
 //  end;
 //
@@ -83,24 +138,21 @@ uses
 //  protected
 //    property Storage: TAbstractDataStorage read FStorage;
 //    function CreateStorage: TAbstractDataStorage; virtual;
+//    function CreateQueue: TSubmissionQueue; virtual; abstract;
 //    procedure DeleteSubmission(AID: integer); virtual;
 //    procedure MessageReceived(AMessage: TAuthorMessage);
 //  public
+//    property Queue: TSubmissionQueue read FQueue;
+//    function CreateSubmission(ATransaction: TProblemTransaction): TTestSubmission; virtual;
+//    function GetSubmission(ATransaction: TProblemTransaction): TTestSubmission; virtual;
 //    function ListSubmissions(AUser: TUser): TIdList;
 //    function ListSubmissions(AUser: TUser; AProblem: TProblem): TIdList;
 //    constructor Create;
 //    destructor Destroy; override;
 //  end;
-//
-//  TSubmissionMessage = class(TAuthorMessage)
-//  private
-//    FID: integer;
-//  public
-//    property ID: integer read FID;
-//    function AddID(AID: integer): TSubmissionMessage;
-//  end;
 
 implementation
+
 
 end.
 

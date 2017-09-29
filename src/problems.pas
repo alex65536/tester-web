@@ -71,16 +71,21 @@ type
       AObject: TEditableObject);
   end;
 
-  { TProblemTransaction }
+  { TBaseProblemTransaction }
 
-  TProblemTransaction = class(TEditableTransaction)
+  TBaseProblemTransaction = class(TEditableTransaction)
   private
     FArchiveFileName: string;
     FMaxSrcLimit: integer;
+    FPropsFileName: string;
     FStatementsFileName: string;
     FStatementsType: TProblemStatementsType;
+    FUnpackedFileName: string;
     function GetProblem: TProblem;
   protected
+    property ArchiveFileName: string read FArchiveFileName write FArchiveFileName;
+    property UnpackedFileName: string read FUnpackedFileName;
+    property PropsFileName: string read FPropsFileName;
     procedure DoCommit; override;
     procedure DoReload; override;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
@@ -91,9 +96,13 @@ type
       FStatementsType;
     property StatementsFileName: string read FStatementsFileName write
       FStatementsFileName;
-    property ArchiveFileName: string read FArchiveFileName write FArchiveFileName;
     property MaxSrcLimit: integer read FMaxSrcLimit write FMaxSrcLimit;
     procedure Validate; override;
+  end;
+
+  TProblemTransaction = class(TBaseProblemTransaction)
+  public
+    property ArchiveFileName;
   end;
 
   { TProblemManagerSession }
@@ -284,14 +293,14 @@ begin
   inherited Create(AManager, AUser, AObject);
 end;
 
-{ TProblemTransaction }
+{ TBaseProblemTransaction }
 
-function TProblemTransaction.GetProblem: TProblem;
+function TBaseProblemTransaction.GetProblem: TProblem;
 begin
   Result := EditableObject as TProblem;
 end;
 
-procedure TProblemTransaction.DoCommit;
+procedure TBaseProblemTransaction.DoCommit;
 begin
   inherited DoCommit;
   try
@@ -320,22 +329,24 @@ begin
   end;
 end;
 
-procedure TProblemTransaction.DoReload;
+procedure TBaseProblemTransaction.DoReload;
 begin
   inherited DoReload;
   FArchiveFileName := Problem.ArchiveFileName(True);
+  FUnpackedFileName := Problem.UnpackedFileName(True);
   FStatementsFileName := Problem.StatementsFileName(True);
   FStatementsType := Problem.StatementsFileType;
   FMaxSrcLimit := Storage.ReadInteger(FullKeyName('maxSrc'), Config.Files_DefaultSrcSize);
+  FPropsFileName := Problem.PropsFileName;
 end;
 
-constructor TProblemTransaction.Create(AManager: TEditableManager;
+constructor TBaseProblemTransaction.Create(AManager: TEditableManager;
   AUser: TUser; AObject: TEditableObject);
 begin
   inherited Create(AManager, AUser, AObject);
 end;
 
-procedure TProblemTransaction.Validate;
+procedure TBaseProblemTransaction.Validate;
 begin
   inherited Validate;
   try
