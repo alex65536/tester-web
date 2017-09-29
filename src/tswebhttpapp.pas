@@ -33,21 +33,23 @@ uses
 type
   ETesterWebApplication = class(Exception);
 
+  TTesterServerThread = class;
+
   { TTesterWebHandler }
 
   TTesterWebHandler = class(TFPHTTPServerHandler)
   private
     FRequest: TRequest;
     FResponse: TResponse;
-    FThread: TThread;
+    FThread: TTesterServerThread;
     procedure InternalRequestHandler; virtual;
   public
-    property Thread: TThread read FThread;
+    property Thread: TTesterServerThread read FThread;
     property Request: TRequest read FRequest;
     property Response: TResponse read FResponse;
     procedure ShowRequestException(AResponse: TResponse; AException: Exception); override;
     procedure HandleRequest(ARequest: TRequest; AResponse: TResponse); override;
-    constructor Create(AOwner: TComponent; AThread: TThread); overload;
+    constructor Create(AOwner: TComponent; AThread: TTesterServerThread); overload;
   end;
 
   { TTesterServerThread }
@@ -241,14 +243,15 @@ begin
   FRequest := ARequest;
   FResponse := AResponse;
   try
-    TTesterServerThread(FThread).Synchronize(@InternalRequestHandler);
+    FThread.Synchronize(@InternalRequestHandler);
   finally
     FRequest := nil;
     FResponse := nil;
   end;
 end;
 
-constructor TTesterWebHandler.Create(AOwner: TComponent; AThread: TThread);
+constructor TTesterWebHandler.Create(AOwner: TComponent;
+  AThread: TTesterServerThread);
 begin
   Create(AOwner);
   FThread := AThread;
