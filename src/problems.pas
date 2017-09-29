@@ -115,7 +115,6 @@ type
     function StatementsFileName(MustExist: boolean): string;
     function StatementsFileType: TProblemStatementsType;
     function PropsFileName: string;
-    procedure WaitForFiles;
     procedure HandleSelfDeletion; override;
   public
     function CreateAccessSession(AUser: TEditorUser): TEditableObjectAccessSession;
@@ -246,17 +245,11 @@ begin
   Result := AppendPathDelim(Result) + PropsFile;
 end;
 
-procedure TProblem.WaitForFiles;
-begin
-  // This will be used later, when the problem testing will be added
-end;
-
 procedure TProblem.HandleSelfDeletion;
 var
   Success: boolean;
 begin
   inherited HandleSelfDeletion;
-  WaitForFiles;
   Success := True;
   Success := Success and TryDeleteFile(StatementsFileName(True));
   Success := Success and TryDeleteFile(ArchiveFileName(True));

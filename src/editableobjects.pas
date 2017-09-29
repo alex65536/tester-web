@@ -233,6 +233,17 @@ type
     destructor Destroy; override;
   end;
 
+  { TEditableObjectMessage }
+
+  TEditableObjectMessage = class(TAuthorMessage)
+  private
+    FObject: TEditableObject;
+  public
+    function AddObject(AObject: TEditableObject): TEditableObjectMessage;
+  end;
+
+  TEditableDeletingMessage = class(TEditableObjectMessage);
+
 function AccessRightsToStr(ARights: TEditableAccessRights): string;
 function StrToAccessRights(const S: string): TEditableAccessRights;
 
@@ -284,6 +295,15 @@ const
 begin
   if (Length(ObjTitle) < MinTitleLen) or (Length(ObjTitle) > MaxTitleLen) then
     raise EEditableValidate.CreateFmt(SObjectTitleLength, [MinTitleLen, MaxTitleLen]);
+end;
+
+{ TEditableObjectMessage }
+
+function TEditableObjectMessage.AddObject(AObject: TEditableObject): TEditableObjectMessage;
+begin
+  NeedsUnlocked;
+  FObject := AObject;
+  Result := Self;
 end;
 
 { TEditableManager }
@@ -415,6 +435,8 @@ begin
     raise EEditableNotExist.CreateFmt(SObjectDoesNotExist, [ObjectTypeName, AName]);
   EditableObject := GetObject(AName);
   try
+    Broadcast(TEditableDeletingMessage.Create.AddObject(EditableObject)
+      .AddSender(Self).Lock);
     EditableObject.HandleSelfDeletion;
   finally
     FreeAndNil(EditableObject);
