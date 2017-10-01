@@ -25,7 +25,8 @@ unit editableobjects;
 interface
 
 uses
-  Classes, SysUtils, TypInfo, webstrconsts, users, datastorages, tswebobservers;
+  Classes, SysUtils, TypInfo, webstrconsts, users, datastorages, tswebobservers,
+  tswebutils;
 
 type
   TEditableAccessRights = (erNone, erRead, erWrite, erOwner);
@@ -323,7 +324,7 @@ end;
 
 function TEditableManager.UserSection(const AObject: string; UserID: integer): string;
 begin
-  Result := UsersSection(AObject) + '.id' + IntToStr(UserID);
+  Result := UsersSection(AObject) + '.' + Id2Str(UserID);
 end;
 
 function TEditableManager.UsersSection(const AObject: string): string;
@@ -339,7 +340,7 @@ end;
 
 function TEditableManager.GetIdKey(AID: integer): string;
 begin
-  Result := Format('ids.id%d', [AID]);
+  Result := 'ids.' + Id2Str(AID);
 end;
 
 function TEditableManager.NextID: integer;
