@@ -227,6 +227,10 @@ resourcestring
   SErrorMsg = 'Error %s : "%s".';
   SErrorStackTrace = 'Stack trace:';
   SServerRunning = 'Server is running, cannot change %s!';
+  SInvalidIDStr = 'Invalid ID string "%s"';
+  SFileOpenTimeout = 'Opening file "%s" timed out.';
+  SNoTestingResultsAvailable = 'No testing results available!';
+  SSubmissionDoesNotExist = 'Submission %d doesn''t exist!';
 
 implementation
 

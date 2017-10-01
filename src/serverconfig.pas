@@ -60,6 +60,7 @@ type
     function GetSession_IDLength: integer;
     function GetSession_TokenLength: integer;
     function GetStorages_CommitIntervalSeconds: integer;
+    function GetTesting_MaxPoolSize: integer;
   protected
     procedure FPOObservedChanged(ASender: TObject; Operation: TFPObservedOperation;
       Data: Pointer);
@@ -111,6 +112,9 @@ type
     // server settings
     property Server_Address: string read GetServer_Address;
     property Server_Port: integer read GetServer_Port;
+
+    // testing options
+    property Testing_MaxPoolSize: integer read GetTesting_MaxPoolSize;
 
     constructor Create;
     procedure Reload;
@@ -251,6 +255,11 @@ begin
   Result := FStorage.ReadInteger('storages.commitIntervalSeconds', 30);
 end;
 
+function TTesterServerConfig.GetTesting_MaxPoolSize: integer;
+begin
+  Result := FStorage.ReadInteger('testing.maxPoolSize', 2);
+end;
+
 procedure TTesterServerConfig.FPOObservedChanged(ASender: TObject;
   Operation: TFPObservedOperation; Data: Pointer);
 begin
@@ -299,6 +308,8 @@ begin
 
     WriteString('server.address', Server_Address);
     WriteInteger('server.port', Server_Port);
+
+    WriteInteger('testing.maxPoolSize', Testing_MaxPoolSize);
   end;
 end;
 

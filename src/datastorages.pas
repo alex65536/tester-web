@@ -32,7 +32,7 @@ uses
 
 const
   // action codes for ooCustom in data storages
-  DS_CODE_COMMITING = 42;
+  DS_CODE_COMMITING: PtrUInt = 42;
 
 type
 

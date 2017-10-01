@@ -36,6 +36,7 @@ procedure CopyReplaceFile(const SrcFile, DstFile: string);
 procedure MoveReplaceFile(const SrcFile, DstFile: string);
 function TryDeleteFile(const FileName: string; RaiseException: boolean = False): boolean;
 function TryDeleteDir(const DirName: string; RaiseException: boolean = False): boolean;
+function WaitForFile(const FileName: string; Mode: Word): TFileStream;
 
 implementation
 
@@ -92,6 +93,29 @@ begin
     Result := True;
   if RaiseException and (not Result) then
     raise EFileManager.CreateFmt(SCouldNotDeleteDir, [DirName]);
+end;
+
+function WaitForFile(const FileName: string; Mode: Word): TFileStream;
+const
+  TriesCount = 300;
+  TriesTimeout = 15;
+var
+  I: integer;
+begin
+  I := 0;
+  while True do
+    try
+      Result := TFileStream.Create(FileName, Mode);
+      Exit;
+    except
+      if I < TriesCount then
+      begin
+        Inc(I);
+        Sleep(TriesTimeout);
+      end
+      else
+        raise EFileManager.CreateFmt(SFileOpenTimeout, [FileName]);
+    end;
 end;
 
 end.
