@@ -30,6 +30,10 @@ uses
   Classes, SysUtils, IniFiles, LazFileUtils, Laz2_DOM, Laz2_XMLRead,
   Laz2_XMLWrite, AvgLvlTree, escaping, tswebdirectories;
 
+const
+  // action codes for ooCustom in data storages
+  DS_CODE_COMMITING = 42;
+
 type
 
   { TAbstractDataStorage }
@@ -769,7 +773,7 @@ end;
 
 procedure TAbstractDataStorage.Commit;
 begin
-  FPONotifyObservers(Self, ooCustom, PChar('commiting'));
+  FPONotifyObservers(Self, ooCustom, Pointer(DS_CODE_COMMITING));
 end;
 
 procedure TAbstractDataStorage.Reload;
