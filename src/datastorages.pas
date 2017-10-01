@@ -56,7 +56,7 @@ type
     procedure WriteString(const Path: string; const Value: string); virtual;
     procedure WriteBool(const Path: string; Value: boolean); virtual;
     procedure WriteFloat(const Path: string; Value: double); virtual;
-    procedure Commit; virtual; abstract;
+    procedure Commit; virtual;
     procedure Reload; virtual;
     constructor Create(const AStoragePath: string);
     procedure AfterConstruction; override;
@@ -351,6 +351,7 @@ end;
 
 procedure TXmlDataStorage.Commit;
 begin
+  inherited Commit;
   WriteXMLFile(FDocument, GetFileName);
 end;
 
@@ -699,6 +700,7 @@ end;
 
 procedure TIniDataStorage.Commit;
 begin
+  inherited Commit;
   RemoveEmptySections;
   FIniFile.UpdateFile;
   FStream.SaveToFile(GetFileName);
@@ -763,6 +765,11 @@ end;
 procedure TAbstractDataStorage.WriteFloat(const Path: string; Value: double);
 begin
   FPONotifyObservers(Self, ooChange, @Path);
+end;
+
+procedure TAbstractDataStorage.Commit;
+begin
+  FPONotifyObservers(Self, ooCustom, PChar('commiting'));
 end;
 
 procedure TAbstractDataStorage.Reload;

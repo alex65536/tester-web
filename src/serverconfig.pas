@@ -255,7 +255,7 @@ procedure TTesterServerConfig.FPOObservedChanged(ASender: TObject;
   Operation: TFPObservedOperation; Data: Pointer);
 begin
   ASender := ASender; // to prevent hints
-  if not (Operation in [ooAddItem, ooDeleteItem, ooChange]) then
+  if not (Operation in [ooAddItem, ooDeleteItem, ooChange, ooCustom]) then
     Exit;
   if FConstructing then
     Exit;
