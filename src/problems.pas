@@ -268,7 +268,7 @@ begin
   Success := Success and TryDeleteFile(ArchiveFileName(True));
   Success := Success and TryDeleteDir(UnpackedFileName(True));
   if not Success then
-    raise EEditableAction.CreateFmt(SErrorsWhileDeleting, [Name]);
+    raise EEditableAction.CreateFmt(SErrorsWhileDeletingProblem, [Name]);
 end;
 
 function TProblem.CreateAccessSession(AUser: TEditorUser): TEditableObjectAccessSession;

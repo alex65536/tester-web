@@ -79,7 +79,8 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   submissionlanguages,
   errorpages,
   tsweberrorpages,
-  submissions, tswebutils;
+  submissions,
+  tswebutils;
 
 {$ifdef Windows}
 var

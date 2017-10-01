@@ -41,6 +41,7 @@ type
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
   public
+    function CanWriteData: boolean; override;
     function CanTestProblem: boolean; virtual;
     function CanReadSubmissions(AOwner: TUserInfo): boolean; virtual;
   end;
@@ -120,6 +121,7 @@ type
     FResults: TTestedProblem;
   protected
     procedure LoadResults; virtual;
+    procedure HandleSelfDeletion; virtual;
     {%H-}constructor Create(AManager: TSubmissionManager; AID: integer);
   public
     property Results: TTestedProblem read FResults;
@@ -212,8 +214,8 @@ type
     procedure AddSubmission(ASubmission: TTestSubmission);
     procedure DeleteSubmission(AID: integer);
     procedure Clear;
-    procedure BeforeDestruction; override;
     constructor Create;
+    procedure BeforeDestruction; override;
     destructor Destroy; override;
   end;
 
@@ -295,6 +297,11 @@ begin
   inherited Create(AManager, AUser, AObject);
 end;
 
+function TTestProblemTransaction.CanWriteData: boolean;
+begin
+  Result := False;
+end;
+
 function TTestProblemTransaction.CanTestProblem: boolean;
 begin
   Result := CanReadData;
@@ -305,7 +312,7 @@ begin
   Result := True;
   if CanReadData and (AOwner.ID = User.ID) then
     Exit;
-  if CanWriteData then
+  if AccessLevel in AccessCanWriteSet then
     Exit;
   Result := False;
 end;
@@ -350,8 +357,19 @@ begin
 end;
 
 procedure TSubmissionManager.DeleteSubmission(AID: integer);
+var
+  Submission: TViewSubmission;
 begin
+  // ask the queue to delete
   Queue.DeleteSubmission(AID);
+  // delete files using HandleDeletion
+  Submission := DoCreateViewSubmission(AID);
+  try
+    Submission.HandleSelfDeletion;
+  finally
+    FreeAndNil(Submission);
+  end;
+  // remove from storage
   Storage.DeleteVariable(OwnerSectionName(SubmissionOwnerID(AID)) + '.' + Id2Str(AID));
   Storage.DeleteVariable(OwnerSectionName(SubmissionProblemID(AID)) + '.' +  Id2Str(AID));
   Storage.DeletePath(SubmissionSectionName(AID));
@@ -534,11 +552,19 @@ end;
 function TSubmissionManager.GetSubmission(AID: integer;
   ATransaction: TTestProblemTransaction): TViewSubmission;
 begin
+  // check for validness
   if not SubmissionExists(AID) then
     raise ESubmissionNotExist.CreateFmt(SSubmissionDoesNotExist, [AID]);
   if not CanAccessSubmission(AID, ATransaction) then
     raise ESubmissionAccessDenied.Create(SAccessDenied);
+  // create submission instance
   Result := DoCreateViewSubmission(AID);
+  try
+    Result.LoadResults;
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
 end;
 
 function TSubmissionManager.SubmissionExists(AID: integer): boolean;
@@ -628,7 +654,6 @@ var
   StrList: TStringList;
   StrId: string;
 begin
-  // load queue
   StrList := Storage.GetChildElements('queue');
   try
     for StrId in StrList do
@@ -636,8 +661,6 @@ begin
   finally
     FreeAndNil(StrList);
   end;
-  // add elements to pool
-  while TriggerAddToPool do;
 end;
 
 procedure TSubmissionQueue.Commit;
@@ -658,13 +681,19 @@ end;
 
 procedure TSubmissionQueue.MessageReceived(AMessage: TAuthorMessage);
 begin
-  Broadcast(AMessage);
+  if (AMessage is TSubmissionDeletingPoolMessage) or
+    (AMessage is TSubmissionTestedMessage) then
+  begin
+    TriggerAddToPool;
+    Broadcast(AMessage);
+  end;
 end;
 
 procedure TSubmissionQueue.FPOObservedChanged(ASender: TObject;
   Operation: TFPObservedOperation; Data: Pointer);
 begin
-  if (Operation = ooCustom) and ({%H-}PtrUInt(Data) = DS_CODE_COMMITING) then
+  if (Operation = ooCustom) and ({%H-}PtrUInt(Data) = DS_CODE_COMMITING) and
+    (not FDestructing) then
     Commit;
 end;
 
@@ -697,6 +726,7 @@ begin
   end
   else
     Pool.DeleteSubmission(AID);
+  TriggerAddToPool;
 end;
 
 procedure TSubmissionQueue.Clear;
@@ -869,11 +899,16 @@ begin
   end;
 end;
 
+procedure TViewSubmission.HandleSelfDeletion;
+begin
+  TryDeleteFile(FileName);
+  TryDeleteFile(ResultsFileName);
+end;
+
 constructor TViewSubmission.Create(AManager: TSubmissionManager; AID: integer);
 begin
   inherited Create(AManager, AID);
   FResults := TTestedProblem.Create;
-  LoadResults;
 end;
 
 destructor TViewSubmission.Destroy;

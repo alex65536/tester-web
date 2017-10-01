@@ -201,7 +201,7 @@ resourcestring
   SCouldNotDeleteFile = 'Could not delete file "%s"!';
   SCouldNotDeleteDir = 'Could not delete directory "%s"!';
   SCouldNotUnpack = 'Could not unpack archive!';
-  SErrorsWhileDeleting = 'Errors while deleting problem "%s".';
+  SErrorsWhileDeletingProblem = 'Errors while deleting problem "%s".';
   SMaxSrcSize = 'Max submission file size must be between %d and %d KBytes!';
   SProblemArchiveKey = 'Archive:';
   SProblemStatementsKey = 'Statements:';
