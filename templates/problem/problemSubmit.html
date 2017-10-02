@@ -1,0 +1,26 @@
+<div class="box problem-submit">
+	<form action="" method="post">
+		<div>
+			<span class="problem-submit-header">
+					~problemSubmitSolution;
+			</span>
+			<span class="problem-submit-item">
+				~problemLanguage;
+				<select name="sol-lang" class="problem-submit-input">
+					~+#problemLanguageItems;
+				</select>
+			</span>
+			<span class="problem-submit-item">
+				~problemFile;
+				<input type="file" name="sol-file" class="problem-submit-input">
+			</span>
+			<span class="problem-submit-btn-wrap">
+				~+#formToken;
+				<button type="submit" class="styled-btn problem-submit-btn">~problemSubmit;</button>
+				<span class="auth-error">
+					~authError;
+				</span>
+			</span>
+		</div>
+	</form>
+</div>
