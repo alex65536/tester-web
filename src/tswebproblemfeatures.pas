@@ -26,8 +26,8 @@ interface
 
 uses
   SysUtils, Classes, tswebeditablefeatures, webstrconsts, htmlpages,
-  tswebfeatures, serverconfig, problems, webstrutils, submissions,
-  editableobjects;
+  tswebfeatures, serverconfig, problems, webstrutils, editableobjects,
+  tswebsubmissionfeatures;
 
 type
 
@@ -83,12 +83,8 @@ type
 
   { TProblemTestInnerFeature }
 
-  TProblemTestInnerFeature = class(TEditableTransactionPageFeature)
-  private
-    function GetTransaction: TTestProblemTransaction;
+  TProblemTestInnerFeature = class(TSubmissionTransactionPageFeature)
   protected
-    property Transaction: TTestProblemTransaction read GetTransaction;
-    function CreateTransaction: TEditableTransaction; override;
     procedure InternalSatisfy; override;
   end;
 
@@ -197,16 +193,6 @@ begin
 end;
 
 { TProblemTestInnerFeature }
-
-function TProblemTestInnerFeature.GetTransaction: TTestProblemTransaction;
-begin
-  Result := (inherited Transaction) as TTestProblemTransaction;
-end;
-
-function TProblemTestInnerFeature.CreateTransaction: TEditableTransaction;
-begin
-  Result := (EditableObject as TTestableProblem).CreateTestTransaction(User);
-end;
 
 procedure TProblemTestInnerFeature.InternalSatisfy;
 begin

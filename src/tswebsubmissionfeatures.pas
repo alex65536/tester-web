@@ -25,9 +25,33 @@ unit tswebsubmissionfeatures;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, submissions, tswebeditablefeatures, editableobjects;
+
+type
+
+  { TSubmissionTransactionPageFeature }
+
+  TSubmissionTransactionPageFeature = class(TEditableTransactionPageFeature)
+  private
+    function GetTransaction: TTestProblemTransaction;
+  protected
+    property Transaction: TTestProblemTransaction read GetTransaction;
+    function CreateTransaction: TEditableTransaction; override;
+  end;
 
 implementation
+
+{ TSubmissionTransactionPageFeature }
+
+function TSubmissionTransactionPageFeature.GetTransaction: TTestProblemTransaction;
+begin
+  Result := (inherited Transaction) as TTestProblemTransaction;
+end;
+
+function TSubmissionTransactionPageFeature.CreateTransaction: TEditableTransaction;
+begin
+  Result := (EditableObject as TTestableProblem).CreateTestTransaction(User);
+end;
 
 end.
 
