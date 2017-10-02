@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en_UK">
+	<head>
+		<meta charset="utf-8">
+		<meta name="author" content="Alexander Kernozhitsky">
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+		<link rel="stylesheet" href="~dataRoot;/tester.css" type="text/css">
+		<script>
+			fileTooBigAlertHead = 'File size must not exceed ';
+			fileTooBigAlertTail = ' KBytes.';
+		</script>
+		<script type="text/javascript" src="~dataRoot;/tester.js"></script>
+		<title>Problems List</title>
+	</head>
+	<body>
+		<table class="container">
+			<tr>
+				<td rowspan="2" class="box logo-box">
+					<a href="/">
+						<img src="~dataRoot;/logoWithText.png" alt="Tester Web logo" class="logo">
+					</a>
+				</td>
+				<td class="box header">
+					Problems List
+				</td>
+			</tr>
+			<tr>
+				<td class="box userbar">
+					You are logged in as <a href="/profile?user=admin" class="role role-owner">admin</a>.
+					<a class="action" href="/profile">View profile</a>
+					<a class="action" href="/logout">Log out</a>
+				</td>
+			</tr>
+		</table>
+		<table class="container"><tr>
+			<td class="box nav">
+				<ul>
+					<li><a href="/main">Main Page</a></li>
+					<li><a href="/page1">Page 1</a></li>
+					<li><a href="/page2">Page 2</a></li>
+					<li><a href="/problems" class="active">Problems List</a></li>
+				</ul>
+			</td>
+			<td class="content-cell">
+				<table class="box content-table">
+					<tr><td class="content">
+						<div class="problem-title">
+							Problem
+						</div>
+						<div class="problem-statements">
+							<a href="/problem-download/statements/problem.doc">
+								Download statements
+							</a>
+						</div>
+						<div class="problem-no-statements">
+							No statements available!
+						</div>
+					</td></tr>
+					<tr><td class="content-footer">
+						<div class="box problem-submit">
+							<form action="" method="post">
+								<div>
+									<span class="problem-submit-header">
+											Submit solution:
+									</span>
+									<span class="problem-submit-item">
+										Language:
+										<select name="sol-lang" class="problem-submit-input">
+											<option>Pascal (fpc 3.0.2)</option>
+											<option>C++ (g++ 5.4.1)</option>
+										</select>
+									</span>
+									<span class="problem-submit-item">
+										File:
+										<input type="file" name="sol-file" class="problem-submit-input">
+									</span>
+									<span class="problem-submit-btn-wrap">
+										<button type="submit" class="styled-btn problem-submit-btn">
+											Submit
+										</button>
+										<span class="auth-error">
+											Error!
+										</span>
+									</span>
+								</div>
+							</form>
+						</div>
+						<div class="submission-table-wrapper">
+							<table class="box styled">
+								<tr>
+									<th class="narrow">ID</th>
+									<th>Submit time</th>
+									<th>Author</th>
+									<th>Language</th>
+									<th>Verdict</th>
+									<th class="narrow">Time</th>
+									<th class="narrow">Memory</th>
+									<th class="narrow">Score</th>
+								</tr>
+								<tr>
+									<td>
+										<a href="/submissions?id=142857">142857</a>
+									</td>
+									<td>02.10.2017 17:37</td>
+									<td>
+										<a href="/profile?user=admin" class="role role-owner">admin</a>
+									</td>
+									<td>Pascal (fpc 3.0.2)</td>
+									<td>Accepted</td>
+									<td class="nowrap">0.22 s</td>
+									<td class="nowrap">14.22 MB</td>
+									<td>100.00</td>
+								</tr>
+							</table>
+						</div>
+					</td></tr>
+				</table>
+			</td>
+		</tr></table>
+		<div class="box footer">
+			Copyright &copy; 2017 Alexander Kernozhitsky
+			<br>
+			Tester Web is licensed under the terms of <a href="https://github.com/alex65536/tester-web/blob/master/LICENSE">GNU GPL</a> version 2 or any later version.
+			<br>
+			Sources are available on <a href="https://github.com/alex65536/tester-web">Github</a>.
+		</div>
+	</body>
+</html>
+

@@ -123,6 +123,14 @@ table.content-table {
 	padding: 5pt 1pt;
 	text-align: center;
 }
+.content-footer {
+	background-color: #7CE6AB;
+	border-top-color: #1CA757;
+	border-top-style: ridge;
+	border-top-width: 2pt;
+	padding: 2pt;
+	padding-bottom: 10pt;
+}
 
 
 table.center-wrapper {
@@ -338,6 +346,9 @@ table.styled th {
 table.styled th.narrow {
 	width: 1pt;
 }
+table.styled td.nowrap {
+	white-space: nowrap;
+}
 
 
 table.access-table th.id {
@@ -376,4 +387,53 @@ td.a-delete-wrapper {
 .error-stack-trace {
 	padding-left: 20pt;
 	padding-top: 5pt;
+}
+
+
+.problem-title {
+	font-size: 24pt;
+	font-weight: bold;
+	text-align: center;
+}
+.problem-statements {
+}
+.problem-no-statements {
+	font-style: italic;
+}
+.problem-submit {
+	background-color: #E3FFF0;
+	font-size: 11pt;
+	margin: 5pt;
+}
+.problem-submit-header {
+	font-size: 12pt;
+	font-weight: bold;
+	margin-right: 5pt;
+}
+.problem-submit-item {
+	background-color: white;
+	border-style: ridge;
+	border-width: 1pt;
+	border-color: #1CA757;
+	border-radius: 2pt;
+	display: inline-block;
+	margin-right: 7pt;
+	padding: 2pt;
+	padding-left: 5pt;
+	white-space: nowrap;
+}
+.problem-submit-input {
+	font-size: inherit;
+}
+.problem-submit-btn-wrap {
+	white-space: nowrap;
+}
+.problem-submit-btn {
+	font-size: 12pt;
+	margin-left: 0;
+	margin-right: 2pt;
+}
+.submission-table-wrapper {
+	padding-top: 2pt;
+	padding-right: 9pt;
 }
