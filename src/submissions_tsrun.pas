@@ -156,6 +156,7 @@ end;
 
 procedure TTsRunTestSubmission.ThreadTerminate(Sender: TObject);
 begin
+  Finish(FThread.ExitCode = 0);
   Broadcast(TTsRunThreadTerminateMessage.Create.AddSender(Self).Lock);
   FThread := nil; // it will be freed automatically!
 end;

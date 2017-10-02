@@ -229,7 +229,6 @@ resourcestring
   SServerRunning = 'Server is running, cannot change %s!';
   SInvalidIDStr = 'Invalid ID string "%s"';
   SFileOpenTimeout = 'Opening file "%s" timed out.';
-  SNoTestingResultsAvailable = 'No testing results available!';
   SSubmissionDoesNotExist = 'Submission %d doesn''t exist!';
   SThreadAlreadyAssigned = 'A thread is already assigned to the submission. ' +
     'Maybe the submission is already running?';

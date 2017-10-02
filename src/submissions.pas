@@ -77,6 +77,7 @@ type
     FManager: TSubmissionManager;
     FStorage: TAbstractDataStorage;
     function GetFileName: string;
+    function GetFinished: boolean;
     function GetLanguage: TSubmissionLanguage;
     function GetOwner: TUserInfo;
     function GetOwnerName: string;
@@ -84,6 +85,7 @@ type
     function GetProblemName: string;
     function GetResultsFileName: string;
     function GetSubmitTime: TDateTime;
+    function GetSuccess: boolean;
   protected
     property Storage: TAbstractDataStorage read FStorage;
     function FilesLocation: string; virtual;
@@ -101,6 +103,8 @@ type
     property OwnerName: string read GetOwnerName;
     property Problem: TTestableProblem read GetProblem;
     property ProblemName: string read GetProblemName;
+    property Finished: boolean read GetFinished;
+    property Success: boolean read GetSuccess;
     function SourceCode: TStringList;
     constructor Create;
   end;
@@ -113,6 +117,8 @@ type
     function GetPropsFileName: string;
     procedure Prepare; virtual;
     procedure UpdateSubmitTime;
+    procedure Finish(ASuccess: boolean);
+    procedure Unfinish;
   public
     procedure AddFile(ALanguage: TSubmissionLanguage; const AFile: string);
   end;
@@ -797,6 +803,8 @@ procedure TSubmissionPool.TriggerTestingFinished(ASubmission: TTestSubmission);
 begin
   Broadcast(TSubmissionTestedMessage.Create.AddSubmission(ASubmission)
     .AddSender(Self).Lock);
+  if not ASubmission.Finished then
+    ASubmission.Finish(True);
   FList.Remove(ASubmission);
   FreeAndNil(ASubmission);
 end;
@@ -879,15 +887,22 @@ var
   FileStream: TFileStream;
   S: string;
 begin
+  FreeAndNil(FResults);
   if not FileExistsUTF8(ResultsFileName) then
-    raise ESubmissionAction.Create(SNoTestingResultsAvailable);
-  FileStream := WaitForFile(ResultsFileName, fmOpenRead or fmShareExclusive);
+    Exit;
+  FResults := TTestedProblem.Create;
   try
-    SetLength(S, FileStream.Size);
-    FileStream.Read(S[1], FileStream.Size);
-    LoadTestedProblemFromJSONStr(S, Results);
-  finally
-    FreeAndNil(FileStream);
+    FileStream := WaitForFile(ResultsFileName, fmOpenRead or fmShareExclusive);
+    try
+      SetLength(S, FileStream.Size);
+      FileStream.Read(S[1], FileStream.Size);
+      LoadTestedProblemFromJSONStr(S, Results);
+    finally
+      FreeAndNil(FileStream);
+    end;
+  except
+    FreeAndNil(FResults);
+    raise;
   end;
 end;
 
@@ -900,7 +915,7 @@ end;
 constructor TViewSubmission.Create(AManager: TSubmissionManager; AID: integer);
 begin
   inherited Create(AManager, AID);
-  FResults := TTestedProblem.Create;
+  FResults := nil;
 end;
 
 destructor TViewSubmission.Destroy;
@@ -923,12 +938,24 @@ end;
 
 procedure TTestSubmission.Prepare;
 begin
-  // do nothing
+  Unfinish;
 end;
 
 procedure TTestSubmission.UpdateSubmitTime;
 begin
   Storage.WriteFloat(FullKeyName('time'), Now);
+end;
+
+procedure TTestSubmission.Finish(ASuccess: boolean);
+begin
+  Storage.WriteBool(FullKeyName('finished'), True);
+  Storage.WriteBool(FullKeyName('success'), ASuccess);
+end;
+
+procedure TTestSubmission.Unfinish;
+begin
+  Storage.WriteBool(FullKeyName('finished'), False);
+  Storage.DeleteVariable(FullKeyName('success'));
 end;
 
 procedure TTestSubmission.AddFile(ALanguage: TSubmissionLanguage; const AFile: string);
@@ -942,6 +969,11 @@ end;
 function TBaseSubmission.GetFileName: string;
 begin
   Result := AppendPathDelim(FilesLocation) + IntToStr(ID) + LanguageExts[Language];
+end;
+
+function TBaseSubmission.GetFinished: boolean;
+begin
+  Result := Storage.ReadBool(FullKeyName('finished'), False);
 end;
 
 function TBaseSubmission.GetLanguage: TSubmissionLanguage;
@@ -988,6 +1020,11 @@ end;
 function TBaseSubmission.GetSubmitTime: TDateTime;
 begin
   Result := Storage.ReadFloat(FullKeyName('time'), 0.0);
+end;
+
+function TBaseSubmission.GetSuccess: boolean;
+begin
+  Result := Storage.ReadBool(FullKeyName('success'), True);
 end;
 
 function TBaseSubmission.FilesLocation: string;
