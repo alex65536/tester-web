@@ -135,7 +135,7 @@ end;
 procedure TProblemAccessPage.AddFeatures;
 begin
   inherited AddFeatures;
-  AddFeature(TEditableManageAccessFeature);
+  AddFeature(TProblemManageAccessFeature);
 end;
 
 { TProblemCreateNewPage }

@@ -111,6 +111,7 @@ type
   TEditableNavButtonFeature = class(TEditableObjectFeature)
   protected
     function Enabled: boolean; virtual; abstract;
+    function PagePartDir: string; virtual;
     function PagePartName: string; virtual; abstract;
     function BtnInnerName: string; virtual;
     procedure InternalSatisfy; override;
@@ -344,6 +345,11 @@ end;
 
 { TEditableNavButtonFeature }
 
+function TEditableNavButtonFeature.PagePartDir: string;
+begin
+  Result := 'editable';
+end;
+
 function TEditableNavButtonFeature.BtnInnerName: string;
 begin
   Result := PagePartName + 'Inner';
@@ -358,7 +364,7 @@ begin
   else
     BtnInnerVar := '~+#editableLinkDisabled;';
   Parent.Variables.ItemsAsText[BtnInnerName] := BtnInnerVar;
-  LoadPagePart('editable', PagePartName);
+  LoadPagePart(PagePartDir, PagePartName);
 end;
 
 procedure TEditableNavButtonFeature.DependsOn(ADependencies: THtmlPageFeatureList);

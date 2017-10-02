@@ -55,6 +55,14 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TProblemManageAccessFeature }
+
+  TProblemManageAccessFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
   { TProblemEditFeature }
 
   TProblemEditFeature = class(TEditableTransactionPageFeature)
@@ -92,7 +100,79 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TProblemTestButtonFeature }
+
+  TProblemTestButtonFeature = class(TEditableNavButtonFeature)
+  protected
+    function Enabled: boolean; override;
+    function PagePartDir: string; override;
+    function PagePartName: string; override;
+    procedure InternalSatisfy; override;
+  end;
+
+  { TProblemButtonsFeature }
+
+  TProblemButtonsFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TProblemManageAccessFeature }
+
+procedure TProblemManageAccessFeature.Satisfy;
+begin
+  // do nothing
+end;
+
+procedure TProblemManageAccessFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TProblemButtonsFeature);
+  ADependencies.Add(TEditableManageAccessFeature);
+end;
+
+{ TProblemButtonsFeature }
+
+procedure TProblemButtonsFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['problemTestText'] := SProblemTestText;
+  end;
+end;
+
+procedure TProblemButtonsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableButtonsFeature);
+  ADependencies.Add(TProblemTestButtonFeature);
+end;
+
+{ TProblemTestButtonFeature }
+
+function TProblemTestButtonFeature.Enabled: boolean;
+begin
+  Result := EditableObject.GetAccessRights(User as TEditorUser) in AccessCanReadSet;
+end;
+
+function TProblemTestButtonFeature.PagePartDir: string;
+begin
+  Result := 'problem';
+end;
+
+function TProblemTestButtonFeature.PagePartName: string;
+begin
+  Result := 'problemTestBtn';
+end;
+
+procedure TProblemTestButtonFeature.InternalSatisfy;
+begin
+  inherited InternalSatisfy;
+  Parent.Variables.ItemsAsText['editableReserved1Btn'] := '~+#problemTestBtn;';
+end;
 
 { TProblemTestFeature }
 
@@ -113,6 +193,7 @@ begin
   ADependencies.Add(TContentFeature);
   ADependencies.Add(TProblemTestInnerFeature);
   ADependencies.Add(TEditablePageTitleFeature);
+  ADependencies.Add(TProblemButtonsFeature);
 end;
 
 { TProblemTestInnerFeature }
@@ -194,6 +275,7 @@ begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TProblemEditViewBaseFeature);
   ADependencies.Add(TEditableViewFeature);
+  ADependencies.Add(TProblemButtonsFeature);
 end;
 
 { TProblemEditViewBaseFeature }
@@ -241,6 +323,7 @@ begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TProblemEditViewBaseFeature);
   ADependencies.Add(TEditableEditFeature);
+  ADependencies.Add(TProblemButtonsFeature);
 end;
 
 { TProblemCreateFormFeature }
