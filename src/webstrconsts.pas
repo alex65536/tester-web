@@ -232,6 +232,11 @@ resourcestring
   SSubmissionDoesNotExist = 'Submission %d doesn''t exist!';
   SThreadAlreadyAssigned = 'A thread is already assigned to the submission. ' +
     'Maybe the submission is already running?';
+  SVerdictUnknown = 'Unknown';
+  SVerdictTestFailed = 'Testing failed';
+  SVerdictRunning = 'Running...';
+  SVerdictCompiling = 'Compiling...';
+  SVerdictFinishing = 'Finishing...';
 
 implementation
 

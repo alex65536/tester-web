@@ -968,7 +968,7 @@ end;
 
 function TBaseSubmission.GetFileName: string;
 begin
-  Result := AppendPathDelim(FilesLocation) + IntToStr(ID) + LanguageExts[Language];
+  Result := AppendPathDelim(FilesLocation) + IntToStr(ID) + LanguageInnerExts[Language];
 end;
 
 function TBaseSubmission.GetFinished: boolean;
