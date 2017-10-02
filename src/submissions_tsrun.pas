@@ -36,15 +36,14 @@ type
   TTsRunThread = class(TThread)
   private
     FProcess: TProcessUTF8;
-    FExitCode: integer;
-    FProblemPropsFile: string;
-    FProblemWorkDir: string;
-    FResFile: string;
-    FTag: PtrInt;
-    FTestDirName: string;
-    FTestSrc: string;
-    FTimeout: integer;
     FTsRunExe: string;
+    FProblemWorkDir: string;
+    FProblemPropsFile: string;
+    FTestSrc: string;
+    FResFile: string;
+    FTestDirName: string;
+    FTimeout: integer;
+    FExitCode: integer;
   public
     property TsRunExe: string read FTsRunExe write FTsRunExe;
     property ProblemWorkDir: string read FProblemWorkDir write FProblemWorkDir;
@@ -53,7 +52,6 @@ type
     property ResFile: string read FResFile write FResFile;
     property TestDirName: string read FTestDirName write FTestDirName;
     property Timeout: integer read FTimeout write FTimeout;
-    property Tag: PtrInt read FTag write FTag;
     property ExitCode: integer read FExitCode;
     procedure Run;
     procedure Execute; override;
@@ -140,13 +138,18 @@ end;
 procedure TTsRunSubmissionPool.DoAdd(ASubmission: TTestSubmission);
 begin
   ASubmission.Subscribe(Self);
-  (ASubmission as TTsRunTestSubmission).Thread.Run;
+  with (ASubmission as TTsRunTestSubmission).Thread do
+    Run;
 end;
 
 procedure TTsRunSubmissionPool.DoDelete(ASubmission: TTestSubmission);
 begin
   ASubmission.Unsubscribe(Self);
-  (ASubmission as TTsRunTestSubmission).Thread.Terminate;
+  with (ASubmission as TTsRunTestSubmission).Thread do
+  begin
+    Terminate;
+    WaitFor;
+  end;
 end;
 
 { TTsRunTestSubmission }
