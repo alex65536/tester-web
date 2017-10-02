@@ -176,7 +176,6 @@ type
     procedure InternalDelete(ASubmission: TTestSubmission);
     procedure InternalDeleteAndFree(ASubmission: TTestSubmission);
     procedure TriggerTestingFinished(ASubmission: TTestSubmission);
-    procedure RevertToQueue;
     {%H-}constructor Create(AQueue: TSubmissionQueue; AMaxPoolSize: integer = 0);
   public
     property MaxPoolSize: integer read FMaxPoolSize;
@@ -673,13 +672,16 @@ end;
 
 procedure TSubmissionQueue.Commit;
 var
-  Submission: TTestSubmission;
+  I: integer;
 begin
   // remove old section
   Storage.DeletePath('queue');
-  // append submissions
-  for Submission in FList do
-    Storage.WriteBool(SubmissionNode(Submission), True);
+  // append submissions (from queue)
+  for I := 0 to SubmissionCount - 1 do
+    Storage.WriteBool(SubmissionNode(Submissions[I]), True);
+  // append submissions (from pool)
+  for I := 0 to Pool.SubmissionCount - 1 do
+    Storage.WriteBool(SubmissionNode(Pool.Submissions[I]), True);
 end;
 
 function TSubmissionQueue.SubmissionNode(ASubmission: TTestSubmission): string;
@@ -751,8 +753,8 @@ end;
 
 procedure TSubmissionQueue.BeforeDestruction;
 begin
+  Commit;
   FDestructing := True;
-  Pool.RevertToQueue;
   inherited BeforeDestruction;
 end;
 
@@ -807,18 +809,6 @@ begin
     ASubmission.Finish(True);
   FList.Remove(ASubmission);
   FreeAndNil(ASubmission);
-end;
-
-procedure TSubmissionPool.RevertToQueue;
-var
-  Submission: TTestSubmission;
-begin
-  while FList.Count > 0 do
-  begin
-    Submission := FList.Last;
-    InternalDelete(Submission);
-    Queue.AddSubmission(Submission);
-  end;
 end;
 
 constructor TSubmissionPool.Create(AQueue: TSubmissionQueue; AMaxPoolSize: integer);
