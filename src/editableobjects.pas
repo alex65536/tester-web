@@ -178,9 +178,9 @@ type
     function GetObjectAuthorName: string;
     function GetAccessRights(Target: TUserInfo): TEditableAccessRights;
     function GetAccessRights(AUser: TEditorUser): TEditableAccessRights;
-    function CreateAccessSession(AUser: TEditorUser): TEditableObjectAccessSession;
+    function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession;
       virtual; abstract;
-    function CreateTransaction(AUser: TEditorUser): TEditableTransaction;
+    function CreateTransaction(AUser: TUser): TEditableTransaction;
       virtual; abstract;
     function ListUsers: TStringList; virtual;
     constructor Create;
@@ -216,7 +216,7 @@ type
     procedure SpreadMessageToObjects(AMessage: TAuthorMessage);
     procedure MessageReceived(AMessage: TAuthorMessage);
   public
-    function CreateManagerSession(AUser: TEditorUser): TEditableManagerSession;
+    function CreateManagerSession(AUser: TUser): TEditableManagerSession;
       virtual; abstract;
     function IdToObjectName(AID: integer): string;
     function ObjectNameToId(const AName: string): integer;

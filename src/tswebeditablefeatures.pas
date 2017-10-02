@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, editableobjects, htmlpages, tswebfeatures, webstrconsts,
-  userpages, tswebeditableelements;
+  userpages, tswebeditableelements, users;
 
 type
 
@@ -40,7 +40,7 @@ type
     procedure BeforeSatisfy; virtual;
     procedure AfterSatisfy; virtual;
   public
-    function User: TEditorUser;
+    function User: TUser;
     property EditableObject: TEditableObject read FEditableObject;
     procedure Satisfy; override;
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
@@ -52,6 +52,7 @@ type
   private
     FTransaction: TEditableTransaction;
   protected
+    function CreateTransaction: TEditableTransaction; virtual;
     procedure BeforeSatisfy; override;
     procedure AfterSatisfy; override;
   public
@@ -309,7 +310,7 @@ end;
 
 function TEditableAccessButtonFeature.Enabled: boolean;
 begin
-  Result := EditableObject.GetAccessRights(User) in AccessCanReadSet;
+  Result := EditableObject.GetAccessRights(User as TEditorUser) in AccessCanReadSet;
 end;
 
 function TEditableAccessButtonFeature.PagePartName: string;
@@ -321,7 +322,7 @@ end;
 
 function TEditableEditButtonFeature.Enabled: boolean;
 begin
-  Result := EditableObject.GetAccessRights(User) in AccessCanWriteSet;
+  Result := EditableObject.GetAccessRights(User as TEditorUser) in AccessCanWriteSet;
 end;
 
 function TEditableEditButtonFeature.PagePartName: string;
@@ -333,7 +334,7 @@ end;
 
 function TEditableViewButtonFeature.Enabled: boolean;
 begin
-  Result := EditableObject.GetAccessRights(User) in AccessCanReadSet;
+  Result := EditableObject.GetAccessRights(User as TEditorUser) in AccessCanReadSet;
 end;
 
 function TEditableViewButtonFeature.PagePartName: string;
@@ -479,10 +480,15 @@ end;
 
 { TEditableTransactionPageFeature }
 
+function TEditableTransactionPageFeature.CreateTransaction: TEditableTransaction;
+begin
+  Result := EditableObject.CreateTransaction(User);
+end;
+
 procedure TEditableTransactionPageFeature.BeforeSatisfy;
 begin
   inherited BeforeSatisfy;
-  FTransaction := EditableObject.CreateTransaction(User);
+  FTransaction := CreateTransaction;
 end;
 
 procedure TEditableTransactionPageFeature.AfterSatisfy;
@@ -493,9 +499,9 @@ end;
 
 { TEditableObjectFeature }
 
-function TEditableObjectFeature.User: TEditorUser;
+function TEditableObjectFeature.User: TUser;
 begin
-  Result := (Parent as TUserPage).User as TEditorUser;
+  Result := (Parent as TUserPage).User;
 end;
 
 procedure TEditableObjectFeature.BeforeSatisfy;

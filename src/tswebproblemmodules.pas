@@ -106,7 +106,41 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TProblemTestBaseWebModule }
+
+  TProblemTestBaseWebModule = class(TEditablePostWebModule)
+  protected
+    function Inside: boolean; override;
+    function HookClass: TEditableModuleHookClass; override;
+  end;
+
+  { TProblemTestWebModule }
+
+  TProblemTestWebModule = class(TProblemTestBaseWebModule)
+  protected
+    function DoCreatePage: THtmlPage; override;
+  end;
+
 implementation
+
+{ TProblemTestWebModule }
+
+function TProblemTestWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemTestPage.Create;
+end;
+
+{ TProblemTestBaseWebModule }
+
+function TProblemTestBaseWebModule.Inside: boolean;
+begin
+  Result := True;
+end;
+
+function TProblemTestBaseWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TProblemModuleHook;
+end;
 
 { TProblemDownloadWebModule }
 
@@ -294,6 +328,7 @@ initialization
   RegisterHTTPModule('problem-view', TProblemViewWebModule, True);
   RegisterHTTPModule('problem-edit', TProblemEditWebModule, True);
   RegisterHTTPModule('problem-download', TProblemDownloadWebModule, True);
+  RegisterHTTPModule('problem-test', TProblemTestWebModule, True);
 
 end.
 

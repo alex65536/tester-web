@@ -26,7 +26,8 @@ interface
 
 uses
   SysUtils, Classes, tswebeditablefeatures, webstrconsts, htmlpages,
-  tswebfeatures, serverconfig, problems, webstrutils;
+  tswebfeatures, serverconfig, problems, webstrutils, submissions,
+  editableobjects;
 
 type
 
@@ -72,7 +73,88 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TProblemTestInnerFeature }
+
+  TProblemTestInnerFeature = class(TEditableTransactionPageFeature)
+  private
+    function GetTransaction: TTestProblemTransaction;
+  protected
+    property Transaction: TTestProblemTransaction read GetTransaction;
+    function CreateTransaction: TEditableTransaction; override;
+    procedure InternalSatisfy; override;
+  end;
+
+  { TProblemTestFeature }
+
+  TProblemTestFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TProblemTestFeature }
+
+procedure TProblemTestFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['contentHeaderText'] := SProblemTestText;
+  end;
+  LoadPagePart('problem', 'problemTest', 'content');
+end;
+
+procedure TProblemTestFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TProblemBaseFeature);
+  ADependencies.Add(TEditableObjectBaseFeature);
+  ADependencies.Add(TContentFeature);
+  ADependencies.Add(TProblemTestInnerFeature);
+  ADependencies.Add(TEditablePageTitleFeature);
+end;
+
+{ TProblemTestInnerFeature }
+
+function TProblemTestInnerFeature.GetTransaction: TTestProblemTransaction;
+begin
+  Result := (inherited Transaction) as TTestProblemTransaction;
+end;
+
+function TProblemTestInnerFeature.CreateTransaction: TEditableTransaction;
+begin
+  Result := (EditableObject as TTestableProblem).CreateTestTransaction(User);
+end;
+
+procedure TProblemTestInnerFeature.InternalSatisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['problemTitle'] := Transaction.Title;
+    case Transaction.StatementsType of
+      stNone:
+      begin
+        ItemsAsText['problemNoStatementsCaption'] := SProblemNoStatementsCaption;
+        LoadPagePart('problem', 'problemNoStatements', 'problemStatements');
+      end;
+      stHtml:
+      begin
+        SetFromFile('problemStatementsInner', Transaction.StatementsFileName);
+        LoadPagePart('problem', 'problemStatementsHtml', 'problemStatements');
+      end
+      else
+      begin
+        ItemsAsText['objectStatementsExt'] := SFileTypesByExt[Transaction.StatementsType];
+        ItemsAsText['problemStatementsDownload'] :=
+          Format(SDownloadPrompt, [FileSizeStr(Transaction.StatementsFileName)]);
+        ItemsAsText['problemStatementsCaption'] := SProblemStatementsCaption;
+        LoadPagePart('problem', 'problemStatementsDownload', 'problemStatements');
+      end;
+    end;
+  end;
+  LoadPagePart('problem', 'problemTestInner');
+end;
 
 { TProblemViewFeature }
 
@@ -85,8 +167,8 @@ begin
       ItemsAsText['archiveDownloadLink'] := SNone
     else
     begin
-      ItemsAsText['archiveDownloadPrompt'] := Format(SDownloadPrompt,
-        [FileSizeStr(ArchiveFileName)]);
+      ItemsAsText['archiveDownloadPrompt'] :=
+        Format(SDownloadPrompt, [FileSizeStr(ArchiveFileName)]);
       LoadPagePart('problem', 'problemViewLink', 'archiveDownloadLink');
     end;
     // statements type
@@ -97,8 +179,8 @@ begin
     else
     begin
       ItemsAsText['objectStatementsExt'] := SFileTypesByExt[StatementsType];
-      ItemsAsText['statementsDownloadPrompt'] := Format(SDownloadPrompt,
-        [FileSizeStr(StatementsFileName)]);
+      ItemsAsText['statementsDownloadPrompt'] :=
+        Format(SDownloadPrompt, [FileSizeStr(StatementsFileName)]);
       LoadPagePart('problem', 'problemViewLink', 'statementsDownloadLink');
     end;
     // max source file size

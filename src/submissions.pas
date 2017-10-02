@@ -54,7 +54,7 @@ type
     function PropsFileName: string;
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
   public
-    function CreateTestTransaction(AUser: TEditorUser): TTestProblemTransaction;
+    function CreateTestTransaction(AUser: TUser): TTestProblemTransaction;
       virtual;
   end;
 
@@ -1081,7 +1081,7 @@ begin
   inherited Create(AName, AManager);
 end;
 
-function TTestableProblem.CreateTestTransaction(AUser: TEditorUser): TTestProblemTransaction;
+function TTestableProblem.CreateTestTransaction(AUser: TUser): TTestProblemTransaction;
 begin
   Result := TTestProblemTransaction.Create(Manager, AUser, Self);
 end;

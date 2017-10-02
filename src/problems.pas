@@ -128,9 +128,9 @@ type
     function PropsFileName: string;
     procedure HandleSelfDeletion; override;
   public
-    function CreateAccessSession(AUser: TEditorUser): TEditableObjectAccessSession;
+    function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession;
       override;
-    function CreateTransaction(AUser: TEditorUser): TEditableTransaction;
+    function CreateTransaction(AUser: TUser): TEditableTransaction;
       override;
   end;
 
@@ -142,7 +142,7 @@ type
     function CreateStorage: TAbstractDataStorage; override;
     function CreateObject(const AName: string): TEditableObject; override;
   public
-    function CreateManagerSession(AUser: TEditorUser): TEditableManagerSession;
+    function CreateManagerSession(AUser: TUser): TEditableManagerSession;
       override;
   end;
 
@@ -183,7 +183,7 @@ begin
   Result := TProblem.Create(AName, Self);
 end;
 
-function TProblemManager.CreateManagerSession(AUser: TEditorUser): TEditableManagerSession;
+function TProblemManager.CreateManagerSession(AUser: TUser): TEditableManagerSession;
 begin
   Result := TProblemManagerSession.Create(Self, AUser);
 end;
@@ -259,12 +259,12 @@ begin
     raise EEditableAction.CreateFmt(SErrorsWhileDeletingProblem, [Name]);
 end;
 
-function TProblem.CreateAccessSession(AUser: TEditorUser): TEditableObjectAccessSession;
+function TProblem.CreateAccessSession(AUser: TUser): TEditableObjectAccessSession;
 begin
   Result := TProblemAccessSession.Create(Manager, AUser, Self);
 end;
 
-function TProblem.CreateTransaction(AUser: TEditorUser): TEditableTransaction;
+function TProblem.CreateTransaction(AUser: TUser): TEditableTransaction;
 begin
   Result := TProblemTransaction.Create(Manager, AUser, Self);
 end;

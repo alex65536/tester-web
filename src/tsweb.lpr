@@ -83,7 +83,8 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   tswebutils,
   submissions_tsrun,
   tswebmanagers,
-  submissioninfo;
+  submissioninfo,
+  tswebsubmissionfeatures;
 
 {$ifdef Windows}
 var

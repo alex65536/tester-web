@@ -237,6 +237,9 @@ resourcestring
   SVerdictRunning = 'Running...';
   SVerdictCompiling = 'Compiling...';
   SVerdictFinishing = 'Finishing...';
+  SProblemStatementsCaption = 'Statements:';
+  SProblemNoStatementsCaption = 'No statements available';
+  SProblemTestText = 'Test problem';
 
 implementation
 
