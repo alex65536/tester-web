@@ -27,6 +27,13 @@ interface
 uses
   serverevents, Classes, SysUtils, datastorages, webstrconsts;
 
+const
+  {$IfDef Windows}
+  ExeExt = '.exe';
+  {$Else}
+  ExeExt = '';
+  {$EndIf}
+
 type
 
   { TTesterServerConfig }
@@ -49,6 +56,7 @@ type
     function GetFiles_MaxUnpackedArchiveSize: integer;
     function GetLocation_DataDir: string;
     function GetLocation_TemplatesDir: string;
+    function GetLocation_TsRunExe: string;
     function GetOwner_DefaultFirstName: string;
     function GetOwner_DefaultLastName: string;
     function GetOwner_DefaultPassword: string;
@@ -79,6 +87,7 @@ type
     // data & templates location
     property Location_DataDir: string read GetLocation_DataDir;
     property Location_TemplatesDir: string read GetLocation_TemplatesDir;
+    property Location_TsRunExe: string read GetLocation_TsRunExe;
 
     // session parameters
     property Session_IDLength: integer read GetSession_IDLength;
@@ -198,6 +207,12 @@ begin
   Result := FStorage.ReadString('location.templatesDir', '..' + PathDelim + 'templates');
 end;
 
+function TTesterServerConfig.GetLocation_TsRunExe: string;
+begin
+  Result := FStorage.ReadString('location.tsRunExe', '..' + PathDelim + '..' +
+    PathDelim + 'tester' + PathDelim + 'tsrun' + PathDelim + 'tsrun' + ExeExt);
+end;
+
 function TTesterServerConfig.GetOwner_DefaultFirstName: string;
 begin
   Result := FStorage.ReadString('owner.defaults.firstName', 'Admin');
@@ -290,6 +305,7 @@ begin
 
     WriteString('location.dataDir', Location_DataDir);
     WriteString('location.templatesDir', Location_TemplatesDir);
+    WriteString('location.tsRunExe', GetLocation_TsRunExe);
 
     WriteString('owner.defaults.notice', SOwnerParamsNotice);
     WriteString('owner.defaults.firstName', Owner_DefaultFirstName);

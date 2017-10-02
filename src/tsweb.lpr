@@ -80,7 +80,8 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   errorpages,
   tsweberrorpages,
   submissions,
-  tswebutils;
+  tswebutils,
+  submissions_tsrun;
 
 {$ifdef Windows}
 var

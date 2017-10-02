@@ -71,7 +71,7 @@ type
 
   { TBaseSubmission }
 
-  TBaseSubmission = class
+  TBaseSubmission = class(TMessageAuthor)
   private
     FID: integer;
     FManager: TSubmissionManager;
@@ -109,7 +109,10 @@ type
 
   TTestSubmission = class(TBaseSubmission)
   protected
+    function GetUnpackedFileName: string;
+    function GetPropsFileName: string;
     procedure Prepare; virtual;
+    procedure UpdateSubmitTime;
   public
     procedure AddFile(ALanguage: TSubmissionLanguage; const AFile: string);
   end;
@@ -162,8 +165,6 @@ type
     function GetSubmissions(I: integer): TTestSubmission;
   protected
     property Storage: TAbstractDataStorage read FStorage;
-    function GetUnpackedFileName(ASubmission: TTestSubmission): string;
-    function GetPropsFileName(ASubmission: TTestSubmission): string;
     procedure DoAdd(ASubmission: TTestSubmission); virtual; abstract;
     procedure DoDelete(ASubmission: TTestSubmission); virtual; abstract;
     procedure InternalDelete(ASubmission: TTestSubmission);
@@ -539,7 +540,8 @@ begin
     Storage.WriteBool(OwnerSectionName(User.ID) + '.' + Id2Str(ID), True);
     Storage.WriteString(SubmissionSectionName(ID) + '.problemId', Id2Str(Problem.ID));
     Storage.WriteBool(ProblemSectionName(Problem.ID) + '.' + Id2Str(ID), True);
-    // attach file
+    // prepare submission for adding to queue
+    Submission.UpdateSubmitTime;
     Submission.AddFile(ALanguage, AFileName);
     // add to queue
     Queue.AddSubmission(Submission);
@@ -777,16 +779,6 @@ begin
   Result := FList[I];
 end;
 
-function TSubmissionPool.GetUnpackedFileName(ASubmission: TTestSubmission): string;
-begin
-  Result := ASubmission.Problem.UnpackedFileName;
-end;
-
-function TSubmissionPool.GetPropsFileName(ASubmission: TTestSubmission): string;
-begin
-  Result := ASubmission.Problem.PropsFileName;
-end;
-
 procedure TSubmissionPool.InternalDelete(ASubmission: TTestSubmission);
 begin
   FList.Remove(ASubmission);
@@ -919,7 +911,22 @@ end;
 
 { TTestSubmission }
 
+function TTestSubmission.GetUnpackedFileName: string;
+begin
+  Result := Problem.UnpackedFileName;
+end;
+
+function TTestSubmission.GetPropsFileName: string;
+begin
+  Result := Problem.PropsFileName;
+end;
+
 procedure TTestSubmission.Prepare;
+begin
+  // do nothing
+end;
+
+procedure TTestSubmission.UpdateSubmitTime;
 begin
   Storage.WriteFloat(FullKeyName('time'), Now);
 end;

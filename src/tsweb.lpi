@@ -57,7 +57,7 @@
         <PackageName Value="FCL"/>
       </Item7>
     </RequiredPackages>
-    <Units Count="48">
+    <Units Count="49">
       <Unit0>
         <Filename Value="tsweb.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -250,6 +250,10 @@
         <Filename Value="tswebutils.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit47>
+      <Unit48>
+        <Filename Value="submissions_tsrun.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit48>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
