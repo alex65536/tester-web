@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, tswebmodules, tswebeditablefeatures, tswebeditablemodules,
   webstrconsts, problems, editableobjects, navbars, tswebpagesbase, tswebpages,
-  htmlpreprocess, tswebeditableelements, tswebproblemfeatures;
+  htmlpreprocess, tswebeditableelements, tswebproblemfeatures, tswebmanagers;
 
 type
 

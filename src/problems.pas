@@ -146,22 +146,10 @@ type
       override;
   end;
 
-function ProblemManager: TProblemManager;
-
 function StatementsTypeToStr(AType: TProblemStatementsType): string;
 function StrToStatementsType(const S: string): TProblemStatementsType;
 
 implementation
-
-var
-  FManager: TProblemManager = nil;
-
-function ProblemManager: TProblemManager;
-begin
-  if FManager = nil then
-    FManager := TProblemManager.Create;
-  Result := FManager;
-end;
 
 function StatementsTypeToStr(AType: TProblemStatementsType): string;
 begin
@@ -371,8 +359,5 @@ begin
       raise;
   end;
 end;
-
-finalization
-  FreeAndNil(FManager);
 
 end.
