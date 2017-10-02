@@ -25,7 +25,8 @@ unit tswebsubmissionfeatures;
 interface
 
 uses
-  Classes, SysUtils, submissions, tswebeditablefeatures, editableobjects;
+  Classes, SysUtils, submissions, tswebeditablefeatures, editableobjects,
+  tswebfeatures, htmlpages;
 
 type
 
@@ -39,7 +40,57 @@ type
     function CreateTransaction: TEditableTransaction; override;
   end;
 
+  { TSubmitPageFeature }
+
+  TSubmitPageFeature = class(TSubmissionTransactionPageFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TSubmitFooterPageFeature }
+
+  TSubmitFooterPageFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TSubmitFooterPageFeature }
+
+procedure TSubmitFooterPageFeature.Satisfy;
+begin
+  LoadPagePart('problem', 'problemSubmitFooter', 'contentFooterInner');
+end;
+
+procedure TSubmitFooterPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TContentFooterFeature);
+  ADependencies.Add(TSubmitPageFeature);
+end;
+
+{ TSubmitPageFeature }
+
+procedure TSubmitPageFeature.InternalSatisfy;
+begin
+  {
+    problemSubmitSolution
+    problemLanguage
+    problemLanguageList
+    problemSubmit
+  }
+  // TODO : Write it !!!
+end;
+
+procedure TSubmitPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TPostDataFeature);
+end;
 
 { TSubmissionTransactionPageFeature }
 

@@ -2,13 +2,11 @@
 	<form action="" method="post">
 		<div>
 			<span class="problem-submit-header">
-					~problemSubmitSolution;
+				~problemSubmitSolution;
 			</span>
 			<span class="problem-submit-item">
 				~problemLanguage;
-				<select name="sol-lang" class="problem-submit-input">
-					~+#problemLanguageItems;
-				</select>
+				~#+problemLanguageList;
 			</span>
 			<span class="problem-submit-item">
 				~problemFile;

@@ -86,6 +86,8 @@ type
   TProblemTestInnerFeature = class(TSubmissionTransactionPageFeature)
   protected
     procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
   { TProblemTestFeature }
@@ -221,6 +223,12 @@ begin
     end;
   end;
   LoadPagePart('problem', 'problemTestInner');
+end;
+
+procedure TProblemTestInnerFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TSubmitFooterPageFeature);
 end;
 
 { TProblemViewFeature }
