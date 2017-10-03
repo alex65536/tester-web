@@ -26,7 +26,8 @@ interface
 
 uses
   Classes, SysUtils, submissions, tswebeditablefeatures, editableobjects,
-  tswebfeatures, htmlpages, webstrconsts, tswebsubmissionelements;
+  tswebfeatures, htmlpages, webstrconsts, tswebsubmissionelements,
+  tswebmanagers;
 
 type
 
@@ -51,9 +52,10 @@ type
 
   { TSubmitFooterPageFeature }
 
-  TSubmitFooterPageFeature = class(TTesterPageFeature)
+  TSubmitFooterPageFeature = class(TSubmissionTransactionPageFeature)
+  protected
+    procedure InternalSatisfy; override;
   public
-    procedure Satisfy; override;
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
@@ -61,8 +63,18 @@ implementation
 
 { TSubmitFooterPageFeature }
 
-procedure TSubmitFooterPageFeature.Satisfy;
+procedure TSubmitFooterPageFeature.InternalSatisfy;
+var
+  SubmissionIds: TIdList;
+  List: TSubmissionItemList;
 begin
+  SubmissionIds := SubmissionManager.ListByOwner(User, EditableObject as TTestableProblem);
+  List := TSubmissionItemList.Create(Parent, SubmissionIds, Transaction);
+  try
+    Parent.AddElementPagePart('problemSubmissionList', List);
+  finally
+    FreeAndNil(List);
+  end;
   LoadPagePart('problem', 'problemSubmitFooter', 'contentFooterInner');
 end;
 

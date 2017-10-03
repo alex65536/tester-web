@@ -244,6 +244,15 @@ resourcestring
   SProblemLanguage = 'Language:';
   SProblemSubmitText = 'Submit';
   SProblemFile = 'File:';
+  SSubmissionHeaderId = 'ID';
+  SSubmissionHeaderSubmitTime = 'Submit time';
+  SSubmissionHeaderAuthor = 'Author';
+  SSubmissionHeaderLanguage = 'Language';
+  SSubmissionHeaderVerdict = 'Verdict';
+  SSubmissionHeaderTest = 'Test';
+  SSubmissionHeaderTime = 'Time';
+  SSubmissionHeaderMemory = 'Memory';
+  SSubmissionHeaderScore = 'Score';
 
 implementation
 
