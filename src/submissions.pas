@@ -31,6 +31,7 @@ uses
 
 type
   ESubmissionAction = class(EUserAction);
+  ESubmissionValidate = class(ESubmissionAction);
   ESubmissionAccessDenied = class(ESubmissionAction);
   ESubmissionNotExist = class(ESubmissionAction);
 
@@ -535,7 +536,7 @@ begin
   if not ATransaction.CanTestProblem then
     raise ESubmissionAccessDenied.Create(SAccessDenied);
   if FileSizeUTF8(AFileName) > ATransaction.MaxSrcLimit * 1024 then
-    raise ESubmissionAction.CreateFmt(SSubmissionTooBig, [ATransaction.MaxSrcLimit]);
+    raise ESubmissionValidate.CreateFmt(SSubmissionTooBig, [ATransaction.MaxSrcLimit]);
   // determine data
   Problem := ATransaction.Problem as TTestableProblem;
   User := ATransaction.User;
@@ -818,7 +819,7 @@ begin
   if not ASubmission.Finished then
     ASubmission.Finish(True);
   FList.Remove(ASubmission);
-  //FreeAndNil(ASubmission);
+  FreeAndNil(ASubmission);
 end;
 
 constructor TSubmissionPool.Create(AQueue: TSubmissionQueue; AMaxPoolSize: integer);

@@ -34,11 +34,14 @@ uses
 type
   ETsRunSubmission = class(Exception);
 
+  TTsRunTestSubmission = class;
+
   { TTsRunThread }
 
   TTsRunThread = class(TThread)
   private
     FProcess: TProcessUTF8;
+    FSubmission: TTsRunTestSubmission;
     FTsRunExe: string;
     FProblemWorkDir: string;
     FProblemPropsFile: string;
@@ -50,6 +53,7 @@ type
     procedure InternalExecute;
   public
     property Terminated;
+    property Submission: TTsRunTestSubmission read FSubmission write FSubmission;
     property TsRunExe: string read FTsRunExe write FTsRunExe;
     property ProblemWorkDir: string read FProblemWorkDir write FProblemWorkDir;
     property ProblemPropsFile: string read FProblemPropsFile write FProblemPropsFile;
@@ -58,7 +62,6 @@ type
     property TestDirName: string read FTestDirName write FTestDirName;
     property Timeout: integer read FTimeout write FTimeout;
     property ExitCode: integer read FExitCode;
-    procedure Run;
     procedure Execute; override;
     constructor Create;
   end;
@@ -68,7 +71,6 @@ type
   TTsRunTestSubmission = class(TTestSubmission)
   private
     FThread: TTsRunThread;
-    procedure ThreadTerminate(Sender: TObject);
   protected
     property Thread: TTsRunThread read FThread;
     procedure Prepare; override;
@@ -81,11 +83,12 @@ type
 
   { TTsRunSubmissionPool }
 
-  TTsRunSubmissionPool = class(TSubmissionPool, IMessageSubscriber)
+  TTsRunSubmissionPool = class(TSubmissionPool)
+  private
+    procedure ThreadTerminate(Sender: TObject);
   protected
     procedure DoAdd(ASubmission: TTestSubmission); override;
     procedure DoDelete(ASubmission: TTestSubmission); override;
-    procedure MessageReceived(AMessage: TAuthorMessage);
     {%H-}constructor Create(AQueue: TSubmissionQueue; AMaxPoolSize: integer = 0);
   end;
 
@@ -133,28 +136,39 @@ end;
 
 { TTsRunSubmissionPool }
 
-procedure TTsRunSubmissionPool.MessageReceived(AMessage: TAuthorMessage);
-begin
-  if AMessage is TTsRunThreadTerminateMessage then
-    TriggerTestingFinished(AMessage.Sender as TTestSubmission);
-end;
-
 constructor TTsRunSubmissionPool.Create(AQueue: TSubmissionQueue;
   AMaxPoolSize: integer);
 begin
   inherited Create(AQueue, AMaxPoolSize);
 end;
 
+procedure TTsRunSubmissionPool.ThreadTerminate(Sender: TObject);
+var
+  Submission: TTsRunTestSubmission;
+begin
+  Submission := (Sender as TTsRunThread).Submission;
+
+  // TODO : Move this into submission!!!
+  Submission.Finish(Submission.Thread.ExitCode = 0);
+  Submission.FThread.Submission := nil;
+  Submission.FThread.OnTerminate := nil;
+  Submission.FThread := nil; // it will be freed automatically!
+
+
+  TriggerTestingFinished(Submission);
+end;
+
 procedure TTsRunSubmissionPool.DoAdd(ASubmission: TTestSubmission);
 begin
-  ASubmission.Subscribe(Self);
   with (ASubmission as TTsRunTestSubmission).Thread do
-    Run;
+  begin
+    OnTerminate := @ThreadTerminate;
+    Start;
+  end;
 end;
 
 procedure TTsRunSubmissionPool.DoDelete(ASubmission: TTestSubmission);
 begin
-  ASubmission.Unsubscribe(Self);
   with (ASubmission as TTsRunTestSubmission).Thread do
   begin
     Terminate;
@@ -164,15 +178,6 @@ end;
 
 { TTsRunTestSubmission }
 
-procedure TTsRunTestSubmission.ThreadTerminate(Sender: TObject);
-begin
-  Finish(FThread.ExitCode = 0);
-  FThread.OnTerminate := nil;
-  FThread := nil; // it will be freed automatically!
-  Broadcast(TTsRunThreadTerminateMessage.Create.AddSender(Self).Lock);
-  Free;
-end;
-
 procedure TTsRunTestSubmission.Prepare;
 begin
   inherited Prepare;
@@ -181,11 +186,11 @@ begin
   FThread := TTsRunThread.Create;
   with FThread do
   begin
+    Submission := Self;
     ProblemWorkDir := GetUnpackedFileName;
     ProblemPropsFile := CreateRelativePath(GetPropsFileName, ProblemWorkDir);
     TestSrc := FileName;
     ResFile := ResultsFileName;
-    OnTerminate := @ThreadTerminate;
   end;
 end;
 
@@ -198,13 +203,12 @@ end;
 
 destructor TTsRunTestSubmission.Destroy;
 begin
-  if Thread <> nil then
+  {if Thread <> nil then
   begin
     Thread.OnTerminate := nil;
     if (not Thread.Finished) and (not Thread.Terminated) then
       Thread.Terminate;
-    Thread.WaitFor;
-  end;
+  end;}
   inherited Destroy;
 end;
 
@@ -250,12 +254,6 @@ begin
     FExitCode := FProcess.ExitStatus;
   // cleanup working directory
   TryDeleteDir(AppendPathDelim(GetTempDir) + FTestDirName);
-end;
-
-procedure TTsRunThread.Run;
-begin
-  // start thread to wait for the end
-  Start;
 end;
 
 constructor TTsRunThread.Create;

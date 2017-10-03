@@ -169,18 +169,12 @@ begin
       if Files[I].FieldName = 'sol-file' then
       begin
         if LowerCase(ExtractFileExt(Files[I].FileName)) <> LanguageExts[Language] then
-        begin
-          Error := Format(SSubmissionExtensionExpected, [LanguageExts[Language]]);
-          Exit;
-        end;
+          raise ESubmissionValidate.CreateFmt(SSubmissionExtensionExpected, [LanguageExts[Language]]);
         FileName := Files[I].LocalFileName;
       end;
   // if solution file was not found - raise an error
   if FileName = '' then
-  begin
-    Error := SNoSubmissionFile;
-    Exit;
-  end;
+    raise ESubmissionValidate.Create(SNoSubmissionFile);
   // create and run the submission
   TestProblem := GetTestableProblem;
   try
