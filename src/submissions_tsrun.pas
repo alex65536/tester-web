@@ -20,13 +20,16 @@
 }
 unit submissions_tsrun;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}{$H+}{$B-}
 
 interface
 
 uses
   Classes, SysUtils, submissions, UTF8Process, tswebcrypto, serverconfig,
   filemanager, LazFileUtils, tswebobservers, webstrconsts;
+
+// Quite unsure what to do with this.
+// TODO : Maybe try threadless architecture (?)
 
 type
   ETsRunSubmission = class(Exception);
@@ -44,7 +47,9 @@ type
     FTestDirName: string;
     FTimeout: integer;
     FExitCode: integer;
+    procedure InternalExecute;
   public
+    property Terminated;
     property TsRunExe: string read FTsRunExe write FTsRunExe;
     property ProblemWorkDir: string read FProblemWorkDir write FProblemWorkDir;
     property ProblemPropsFile: string read FProblemPropsFile write FProblemPropsFile;
@@ -55,9 +60,7 @@ type
     property ExitCode: integer read FExitCode;
     procedure Run;
     procedure Execute; override;
-    procedure Terminate;
     constructor Create;
-    destructor Destroy; override;
   end;
 
   { TTsRunTestSubmission }
@@ -78,7 +81,7 @@ type
 
   { TTsRunSubmissionPool }
 
-  TTsRunSubmissionPool = class(TSubmissionPool)
+  TTsRunSubmissionPool = class(TSubmissionPool, IMessageSubscriber)
   protected
     procedure DoAdd(ASubmission: TTestSubmission); override;
     procedure DoDelete(ASubmission: TTestSubmission); override;
@@ -164,8 +167,10 @@ end;
 procedure TTsRunTestSubmission.ThreadTerminate(Sender: TObject);
 begin
   Finish(FThread.ExitCode = 0);
-  Broadcast(TTsRunThreadTerminateMessage.Create.AddSender(Self).Lock);
+  FThread.OnTerminate := nil;
   FThread := nil; // it will be freed automatically!
+  Broadcast(TTsRunThreadTerminateMessage.Create.AddSender(Self).Lock);
+  Free;
 end;
 
 procedure TTsRunTestSubmission.Prepare;
@@ -177,7 +182,7 @@ begin
   with FThread do
   begin
     ProblemWorkDir := GetUnpackedFileName;
-    ProblemPropsFile := GetPropsFileName;
+    ProblemPropsFile := CreateRelativePath(GetPropsFileName, ProblemWorkDir);
     TestSrc := FileName;
     ResFile := ResultsFileName;
     OnTerminate := @ThreadTerminate;
@@ -193,7 +198,13 @@ end;
 
 destructor TTsRunTestSubmission.Destroy;
 begin
-  FreeAndNil(FThread);
+  if Thread <> nil then
+  begin
+    Thread.OnTerminate := nil;
+    if (not Thread.Finished) and (not Thread.Terminated) then
+      Thread.Terminate;
+    Thread.WaitFor;
+  end;
   inherited Destroy;
 end;
 
@@ -201,17 +212,15 @@ end;
 
 procedure TTsRunThread.Execute;
 begin
-  // wait
-  FProcess.WaitOnExit;
-  // retrieve exit code
-  FExitCode := FProcess.ExitCode;
-  if FExitCode = 0 then
-    FExitCode := FProcess.ExitStatus;
-  // cleanup working directory
-  TryDeleteDir(AppendPathDelim(GetTempDir) + FTestDirName);
+  FProcess := TProcessUTF8.Create(nil);
+  try
+    InternalExecute;
+  finally
+    FreeAndNil(FProcess);
+  end;
 end;
 
-procedure TTsRunThread.Run;
+procedure TTsRunThread.InternalExecute;
 begin
   // add parameters
   FProcess.Executable := FTsRunExe;
@@ -224,32 +233,39 @@ begin
     Add(FTestDirName);
     Add(IntToStr(FTimeout));
   end;
+  if Terminated then
+    Exit;
   // run
   FProcess.Execute;
-  // start thread to wait for the end
-  Start;
+  // wait
+  while FProcess.Active do
+  begin
+    if Terminated then
+      FProcess.Terminate(42);
+    Sleep(15);
+  end;
+  // retrieve exit code
+  FExitCode := FProcess.ExitCode;
+  if FExitCode = 0 then
+    FExitCode := FProcess.ExitStatus;
+  // cleanup working directory
+  TryDeleteDir(AppendPathDelim(GetTempDir) + FTestDirName);
 end;
 
-procedure TTsRunThread.Terminate;
+procedure TTsRunThread.Run;
 begin
-  FProcess.Terminate(42);
-  inherited Terminate;
+  // start thread to wait for the end
+  Start;
 end;
 
 constructor TTsRunThread.Create;
 begin
   inherited Create(True, DefaultStackSize);
-  FProcess := TProcessUTF8.Create(nil);
+  FProcess := nil;
   FTsRunExe := Config.Location_TsRunExe;
   FTestDirName := 'tsweb-' + RandomFileName(12);
-  FTimeout := 30;
+  FTimeout := 300;
   FreeOnTerminate := True;
-end;
-
-destructor TTsRunThread.Destroy;
-begin
-  FreeAndNil(FProcess);
-  inherited Destroy;
 end;
 
 end.

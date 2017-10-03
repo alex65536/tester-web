@@ -425,9 +425,6 @@ td.a-delete-wrapper {
 .problem-submit-input {
 	font-size: inherit;
 }
-.problem-submit-btn-wrap {
-	white-space: nowrap;
-}
 .problem-submit-btn {
 	font-size: 12pt;
 	margin-left: 0;

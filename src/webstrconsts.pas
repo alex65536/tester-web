@@ -194,6 +194,7 @@ resourcestring
   SFilesNotice = 'NOTE: All sizes are listed in KBytes!';
   SArchiveTooBig = 'Archive size must not exceed %d KBytes.';
   SStatementsTooBig = 'Statements size must not exceed %d KBytes.';
+  SSubmissionTooBig = 'File size must not exceed %d KBytes.';
   SUnpackedTooBig = 'Unpacked archive size must not exceed %d KBytes.';
   SBadArchive = 'Bad archive!';
   SCouldNotCopyFile = 'Could not copy file "%s" to "%s"!';
@@ -253,6 +254,8 @@ resourcestring
   SSubmissionHeaderTime = 'Time';
   SSubmissionHeaderMemory = 'Memory';
   SSubmissionHeaderScore = 'Score';
+  SNoSubmissionFile = 'No file specified!';
+  SSubmissionExtensionExpected = 'File expected to have extension "%s"';
 
 implementation
 

@@ -60,7 +60,6 @@ type
   private
     FInfo: TSubmissionInfo;
     FSubmission: TViewSubmission;
-    FSubmissionInfo: TSubmissionInfo;
   protected
     procedure DoFillVariables; override;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
@@ -147,7 +146,7 @@ procedure TSubmissionItem.DoFillVariables;
     if ATestNumber = -1 then
       Result := '-'
     else
-      Result := IntToStr(ATestNumber);
+      Result := IntToStr(ATestNumber + 1);
   end;
 
 begin
@@ -174,12 +173,12 @@ constructor TSubmissionItem.Create(AParent: THtmlPage; ASubmission: TViewSubmiss
 begin
   inherited Create(AParent);
   FSubmission := ASubmission;
-  FSubmissionInfo := TSubmissionInfo.Create(ASubmission);
+  FInfo := TSubmissionInfo.Create(ASubmission);
 end;
 
 destructor TSubmissionItem.Destroy;
 begin
-  FreeAndNil(FSubmissionInfo);
+  FreeAndNil(FInfo);
   FreeAndNil(FSubmission);
   inherited Destroy;
 end;

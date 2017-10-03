@@ -495,7 +495,7 @@ end;
 
 function TSubmissionManager.ProblemFilter(AID: integer; AObject: TObject): boolean;
 begin
-  Result := AID = (AObject as TTestableProblem).ID;
+  Result := SubmissionProblemID(AID) = (AObject as TTestableProblem).ID;
 end;
 
 function TSubmissionManager.AvailableFilter(AID: integer; AObject: TObject): boolean;
@@ -534,6 +534,8 @@ var
 begin
   if not ATransaction.CanTestProblem then
     raise ESubmissionAccessDenied.Create(SAccessDenied);
+  if FileSizeUTF8(AFileName) > ATransaction.MaxSrcLimit * 1024 then
+    raise ESubmissionAction.CreateFmt(SSubmissionTooBig, [ATransaction.MaxSrcLimit]);
   // determine data
   Problem := ATransaction.Problem as TTestableProblem;
   User := ATransaction.User;
@@ -542,9 +544,9 @@ begin
   Submission := DoCreateTestSubmission(ID);
   try
     // fill owner & problem
-    Storage.WriteString(SubmissionSectionName(ID) + '.ownerId', Id2Str(User.ID));
+    Storage.WriteInteger(SubmissionSectionName(ID) + '.ownerId', User.ID);
     Storage.WriteBool(OwnerSectionName(User.ID) + '.' + Id2Str(ID), True);
-    Storage.WriteString(SubmissionSectionName(ID) + '.problemId', Id2Str(Problem.ID));
+    Storage.WriteInteger(SubmissionSectionName(ID) + '.problemId', Problem.ID);
     Storage.WriteBool(ProblemSectionName(Problem.ID) + '.' + Id2Str(ID), True);
     // prepare submission for adding to queue
     Submission.UpdateSubmitTime;
@@ -701,10 +703,7 @@ procedure TSubmissionQueue.MessageReceived(AMessage: TAuthorMessage);
 begin
   if (AMessage is TSubmissionDeletingPoolMessage) or
     (AMessage is TSubmissionTestedMessage) then
-  begin
     TriggerAddToPool;
-    Broadcast(AMessage);
-  end;
 end;
 
 procedure TSubmissionQueue.FPOObservedChanged(ASender: TObject;
@@ -819,7 +818,7 @@ begin
   if not ASubmission.Finished then
     ASubmission.Finish(True);
   FList.Remove(ASubmission);
-  FreeAndNil(ASubmission);
+  //FreeAndNil(ASubmission);
 end;
 
 constructor TSubmissionPool.Create(AQueue: TSubmissionQueue; AMaxPoolSize: integer);
@@ -1046,6 +1045,7 @@ end;
 
 constructor TBaseSubmission.Create(AManager: TSubmissionManager; AID: integer);
 begin
+  inherited Create;
   FID := AID;
   FManager := AManager;
   FStorage := AManager.Storage;

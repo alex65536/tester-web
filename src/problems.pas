@@ -240,7 +240,7 @@ var
   PropsFile: string;
 begin
   Result := UnpackedFileName(True);
-  PropsFile := Storage.ReadString('propsFile', '');
+  PropsFile := Storage.ReadString(FullKeyName('propsFile'), '');
   if (Result = '') or (PropsFile = '') then
     Exit('');
   Result := AppendPathDelim(Result) + PropsFile;
