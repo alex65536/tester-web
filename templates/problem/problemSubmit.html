@@ -10,11 +10,11 @@
 			</span>
 			<span class="problem-submit-item">
 				~problemFile;
-				<input type="file" name="sol-file" class="problem-submit-input">
+				<input type="file" name="sol-file" id="sol-file" class="problem-submit-input" onchange="checkFileSize('sol-file', ~problemSubmitMaxSize;);">
 			</span>
 			<span class="problem-submit-btn-wrap">
 				~+#formToken;
-				<button type="submit" class="styled-btn problem-submit-btn">~problemSubmit;</button>
+				<button type="submit" class="styled-btn problem-submit-btn">~problemSubmitText;</button>
 				<span class="auth-error">
 					~authError;
 				</span>

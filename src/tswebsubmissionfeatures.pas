@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, submissions, tswebeditablefeatures, editableobjects,
-  tswebfeatures, htmlpages;
+  tswebfeatures, htmlpages, webstrconsts, tswebsubmissionelements;
 
 type
 
@@ -76,14 +76,25 @@ end;
 { TSubmitPageFeature }
 
 procedure TSubmitPageFeature.InternalSatisfy;
+var
+  List: TSubmissionLanguageItemList;
 begin
-  {
-    problemSubmitSolution
-    problemLanguage
-    problemLanguageList
-    problemSubmit
-  }
-  // TODO : Write it !!!
+  with Parent.Variables do
+  begin
+    ItemsAsText['problemSubmitSolution'] := SProblemSubmitSolution;
+    ItemsAsText['problemLanguage'] := SProblemLanguage;
+    ItemsAsText['problemFile'] := SProblemFile;
+    ItemsAsText['problemSubmitText'] := SProblemSubmitText;
+    ItemsAsText['problemSubmitMaxSize'] := IntToStr(Transaction.MaxSrcLimit);
+  end;
+  // load language list
+  List := TSubmissionLanguageItemList.Create(Parent);
+  try
+    Parent.AddElementPagePart('problemLanguageList', List);
+  finally
+    FreeAndNil(List);
+  end;
+  LoadPagePart('problem', 'problemSubmit');
 end;
 
 procedure TSubmitPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);

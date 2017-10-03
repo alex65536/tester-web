@@ -240,6 +240,10 @@ resourcestring
   SProblemStatementsCaption = 'Statements:';
   SProblemNoStatementsCaption = 'No statements available';
   SProblemTestText = 'Test problem';
+  SProblemSubmitSolution = 'Submit solution:';
+  SProblemLanguage = 'Language:';
+  SProblemSubmitText = 'Submit';
+  SProblemFile = 'File:';
 
 implementation
 

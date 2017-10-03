@@ -25,9 +25,75 @@ unit tswebsubmissionelements;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, submissionlanguages, tswebpagesbase, htmlpages,
+  htmlpreprocess;
+
+type
+
+  { TSubmissionLanguageItem }
+
+  TSubmissionLanguageItem = class(TTesterHtmlPageElement)
+  private
+    FLanguage: TSubmissionLanguage;
+  protected
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Language: TSubmissionLanguage read FLanguage;
+    constructor Create(AParent: THtmlPage; ALanguage: TSubmissionLanguage);
+  end;
+
+  { TSubmissionLanguageItemList }
+
+  TSubmissionLanguageItemList = class(TTesterHtmlListedPageElement)
+  protected
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    constructor Create(AParent: THtmlPage);
+  end;
 
 implementation
+
+{ TSubmissionLanguageItemList }
+
+procedure TSubmissionLanguageItemList.DoFillVariables;
+begin
+  AddListToVariable('problemLanguageItems');
+end;
+
+procedure TSubmissionLanguageItemList.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('problem', 'problemLanguageList'));
+end;
+
+constructor TSubmissionLanguageItemList.Create(AParent: THtmlPage);
+var
+  L: TSubmissionLanguage;
+begin
+  inherited Create(AParent);
+  for L in TSubmissionLanguage do
+    List.Add(TSubmissionLanguageItem.Create(AParent, L));
+end;
+
+{ TSubmissionLanguageItem }
+
+procedure TSubmissionLanguageItem.DoFillVariables;
+begin
+  Storage.ItemsAsText['problemLanguageOptionName'] := LanguageToStr(Language);
+  Storage.ItemsAsText['problemLanguageOptionText'] := LanguageFullCompilerNames(Language);
+end;
+
+procedure TSubmissionLanguageItem.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('problem', 'problemLanguageOption'));
+end;
+
+constructor TSubmissionLanguageItem.Create(AParent: THtmlPage; ALanguage: TSubmissionLanguage);
+begin
+  inherited Create(AParent);
+  FLanguage := ALanguage;
+end;
 
 end.
 
