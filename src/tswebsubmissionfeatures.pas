@@ -25,7 +25,9 @@ unit tswebsubmissionfeatures;
 interface
 
 uses
-  Classes, SysUtils, submissions, tswebeditablefeatures, editableobjects;
+  Classes, SysUtils, submissions, tswebeditablefeatures, editableobjects,
+  tswebfeatures, htmlpages, webstrconsts, tswebsubmissionelements,
+  tswebmanagers;
 
 type
 
@@ -39,7 +41,79 @@ type
     function CreateTransaction: TEditableTransaction; override;
   end;
 
+  { TSubmitPageFeature }
+
+  TSubmitPageFeature = class(TSubmissionTransactionPageFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TSubmitFooterPageFeature }
+
+  TSubmitFooterPageFeature = class(TSubmissionTransactionPageFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TSubmitFooterPageFeature }
+
+procedure TSubmitFooterPageFeature.InternalSatisfy;
+var
+  SubmissionIds: TIdList;
+  List: TSubmissionItemList;
+begin
+  SubmissionIds := SubmissionManager.ListByOwner(User, EditableObject as TTestableProblem);
+  List := TSubmissionItemList.Create(Parent, SubmissionIds, Transaction);
+  try
+    Parent.AddElementPagePart('problemSubmissionList', List);
+  finally
+    FreeAndNil(List);
+  end;
+  LoadPagePart('problem', 'problemSubmitFooter', 'contentFooterInner');
+end;
+
+procedure TSubmitFooterPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TContentFooterFeature);
+  ADependencies.Add(TSubmitPageFeature);
+end;
+
+{ TSubmitPageFeature }
+
+procedure TSubmitPageFeature.InternalSatisfy;
+var
+  List: TSubmissionLanguageItemList;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['problemSubmitSolution'] := SProblemSubmitSolution;
+    ItemsAsText['problemLanguage'] := SProblemLanguage;
+    ItemsAsText['problemFile'] := SProblemFile;
+    ItemsAsText['problemSubmitText'] := SProblemSubmitText;
+    ItemsAsText['problemSubmitMaxSize'] := IntToStr(Transaction.MaxSrcLimit);
+  end;
+  // load language list
+  List := TSubmissionLanguageItemList.Create(Parent);
+  try
+    Parent.AddElementPagePart('problemLanguageList', List);
+  finally
+    FreeAndNil(List);
+  end;
+  LoadPagePart('problem', 'problemSubmit');
+end;
+
+procedure TSubmitPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TPostDataFeature);
+end;
 
 { TSubmissionTransactionPageFeature }
 

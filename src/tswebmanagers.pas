@@ -5,13 +5,15 @@ unit tswebmanagers;
 interface
 
 uses
-  Classes, SysUtils, submissions, submissions_tsrun, problems;
+  Classes, SysUtils, submissions, submissions_tsrun, problems, commitscheduler;
 
 type
 
   { TTsWebProblemManager }
 
   TTsWebProblemManager = class(TTestableProblemManager)
+  public
+    constructor Create;
   end;
 
   { TTsWebSubmissionManager }
@@ -19,6 +21,8 @@ type
   TTsWebSubmissionManager = class(TTsRunSubmissionManager)
   protected
     function GetProblemManager: TTestableProblemManager; override;
+  public
+    constructor Create;
   end;
 
 function ProblemManager: TTsWebProblemManager;
@@ -44,11 +48,25 @@ begin
   Result := FSubmissionManager;
 end;
 
+{ TTsWebProblemManager }
+
+constructor TTsWebProblemManager.Create;
+begin
+  inherited Create;
+  Scheduler.AttachStorage(Storage);
+end;
+
 { TTsWebSubmissionManager }
 
 function TTsWebSubmissionManager.GetProblemManager: TTestableProblemManager;
 begin
-  Result := ProblemManager;
+  Result := tswebmanagers.ProblemManager;
+end;
+
+constructor TTsWebSubmissionManager.Create;
+begin
+  inherited Create;
+  Scheduler.AttachStorage(Storage);
 end;
 
 finalization

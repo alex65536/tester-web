@@ -430,8 +430,9 @@ var
 begin
   Result := TIdList.Create;
   try
-    for IdStr in AList do
-      Result.Add(Str2Id(IdStr));
+    if AList <> nil then
+      for IdStr in AList do
+        Result.Add(Str2Id(IdStr));
   except
     FreeAndNil(Result);
     raise;
@@ -602,6 +603,7 @@ end;
 
 constructor TSubmissionManager.Create;
 begin
+  inherited Create;
   FStorage := CreateStorage;
   FQueue := CreateQueue;
   UserManager.Subscribe(Self);
@@ -611,8 +613,14 @@ end;
 
 destructor TSubmissionManager.Destroy;
 begin
-  FreeAndNil(FStorage);
+  if Queue <> nil then
+    Queue.Unsubscribe(Self);
+  if ProblemManager <> nil then
+    ProblemManager.Unsubscribe(Self);
+  if UserManager <> nil then
+    UserManager.Unsubscribe(Self);
   FreeAndNil(FQueue);
+  FreeAndNil(FStorage);
   inherited Destroy;
 end;
 
@@ -709,6 +717,7 @@ end;
 
 constructor TSubmissionQueue.Create(AManager: TSubmissionManager);
 begin
+  inherited Create;
   FDestructing := False;
   FList := TTestSubmissionList.Create(False);
   FManager := AManager;
@@ -766,6 +775,8 @@ end;
 
 destructor TSubmissionQueue.Destroy;
 begin
+  if Pool <> nil then
+    Pool.Unsubscribe(Self);
   if Storage <> nil then
     Storage.FPODetachObserver(Self);
   if FList <> nil then
@@ -813,6 +824,7 @@ end;
 
 constructor TSubmissionPool.Create(AQueue: TSubmissionQueue; AMaxPoolSize: integer);
 begin
+  inherited Create;
   FQueue := AQueue;
   if AMaxPoolSize = 0 then
     AMaxPoolSize := Config.Testing_MaxPoolSize;

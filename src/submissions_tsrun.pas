@@ -83,6 +83,7 @@ type
     procedure DoAdd(ASubmission: TTestSubmission); override;
     procedure DoDelete(ASubmission: TTestSubmission); override;
     procedure MessageReceived(AMessage: TAuthorMessage);
+    {%H-}constructor Create(AQueue: TSubmissionQueue; AMaxPoolSize: integer = 0);
   end;
 
   { TTsRunSubmissionQueue }
@@ -119,7 +120,7 @@ end;
 
 function TTsRunSubmissionQueue.CreatePool: TSubmissionPool;
 begin
-  Result := TTsRunSubmissionPool.Create;
+  Result := TTsRunSubmissionPool.Create(Self);
 end;
 
 constructor TTsRunSubmissionQueue.Create(AManager: TSubmissionManager);
@@ -133,6 +134,12 @@ procedure TTsRunSubmissionPool.MessageReceived(AMessage: TAuthorMessage);
 begin
   if AMessage is TTsRunThreadTerminateMessage then
     TriggerTestingFinished(AMessage.Sender as TTestSubmission);
+end;
+
+constructor TTsRunSubmissionPool.Create(AQueue: TSubmissionQueue;
+  AMaxPoolSize: integer);
+begin
+  inherited Create(AQueue, AMaxPoolSize);
 end;
 
 procedure TTsRunSubmissionPool.DoAdd(ASubmission: TTestSubmission);

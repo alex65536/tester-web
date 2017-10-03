@@ -240,6 +240,19 @@ resourcestring
   SProblemStatementsCaption = 'Statements:';
   SProblemNoStatementsCaption = 'No statements available';
   SProblemTestText = 'Test problem';
+  SProblemSubmitSolution = 'Submit solution:';
+  SProblemLanguage = 'Language:';
+  SProblemSubmitText = 'Submit';
+  SProblemFile = 'File:';
+  SSubmissionHeaderId = 'ID';
+  SSubmissionHeaderSubmitTime = 'Submit time';
+  SSubmissionHeaderAuthor = 'Author';
+  SSubmissionHeaderLanguage = 'Language';
+  SSubmissionHeaderVerdict = 'Verdict';
+  SSubmissionHeaderTest = 'Test';
+  SSubmissionHeaderTime = 'Time';
+  SSubmissionHeaderMemory = 'Memory';
+  SSubmissionHeaderScore = 'Score';
 
 implementation
 
