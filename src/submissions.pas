@@ -206,8 +206,6 @@ type
     function TriggerAddToPool: boolean;
     function NextSubmission: TTestSubmission;
     function CreatePool: TSubmissionPool; virtual; abstract;
-    procedure Reload; virtual;
-    procedure Commit; virtual;
     procedure DoDestroySubmission(ASubmission: TTestSubmission); virtual;
     function SubmissionNode(ASubmission: TTestSubmission): string;
     procedure MessageReceived(AMessage: TAuthorMessage);
@@ -222,6 +220,8 @@ type
     procedure AddSubmission(ASubmission: TTestSubmission);
     procedure FreeSubmission(var ASubmission: TTestSubmission);
     procedure DeleteSubmission(AID: integer);
+    procedure Reload; virtual;
+    procedure Commit; virtual;
     procedure Clear;
     constructor Create;
     procedure BeforeDestruction; override;
