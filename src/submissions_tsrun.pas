@@ -171,6 +171,7 @@ procedure TTsRunSubmissionPool.DoDelete(ASubmission: TTestSubmission);
 begin
   with (ASubmission as TTsRunTestSubmission).Thread do
   begin
+    OnTerminate := nil;
     Terminate;
     WaitFor;
   end;
