@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, submissions, UTF8Process, tswebcrypto, serverconfig,
-  filemanager, LazFileUtils, tswebobservers, webstrconsts;
+  filemanager, LazFileUtils, tswebobservers, webstrconsts, objectshredder;
 
 // Quite unsure what to do with this.
 // TODO : Maybe try threadless architecture (?)
@@ -75,8 +75,6 @@ type
     property Thread: TTsRunThread read FThread;
     procedure Prepare; override;
     {%H-}constructor Create(AManager: TSubmissionManager; AID: integer);
-  public
-    destructor Destroy; override;
   end;
 
   TTsRunThreadTerminateMessage = class(TAuthorMessage);
@@ -95,9 +93,14 @@ type
   { TTsRunSubmissionQueue }
 
   TTsRunSubmissionQueue = class(TSubmissionQueue)
+  private
+    FShredder: TObjectShredder;
   protected
+    procedure DoDestroySubmission(ASubmission: TTestSubmission); override;
     function CreatePool: TSubmissionPool; override;
     {%H-}constructor Create(AManager: TSubmissionManager);
+  public
+    destructor Destroy; override;
   end;
 
   { TTsRunSubmissionManager }
@@ -124,6 +127,11 @@ end;
 
 { TTsRunSubmissionQueue }
 
+procedure TTsRunSubmissionQueue.DoDestroySubmission(ASubmission: TTestSubmission);
+begin
+  FShredder.Add(ASubmission);
+end;
+
 function TTsRunSubmissionQueue.CreatePool: TSubmissionPool;
 begin
   Result := TTsRunSubmissionPool.Create(Self);
@@ -131,7 +139,14 @@ end;
 
 constructor TTsRunSubmissionQueue.Create(AManager: TSubmissionManager);
 begin
+  FShredder := TObjectShredder.Create;
   inherited Create(AManager);
+end;
+
+destructor TTsRunSubmissionQueue.Destroy;
+begin
+  inherited Destroy;
+  FreeAndNil(FShredder);
 end;
 
 { TTsRunSubmissionPool }
@@ -200,17 +215,6 @@ constructor TTsRunTestSubmission.Create(AManager: TSubmissionManager;
 begin
   inherited Create(AManager, AID);
   FThread := nil;
-end;
-
-destructor TTsRunTestSubmission.Destroy;
-begin
-  {if Thread <> nil then
-  begin
-    Thread.OnTerminate := nil;
-    if (not Thread.Finished) and (not Thread.Terminated) then
-      Thread.Terminate;
-  end;}
-  inherited Destroy;
 end;
 
 { TTsRunThread }

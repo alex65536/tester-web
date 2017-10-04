@@ -208,6 +208,7 @@ type
     function CreatePool: TSubmissionPool; virtual; abstract;
     procedure Reload; virtual;
     procedure Commit; virtual;
+    procedure DoDestroySubmission(ASubmission: TTestSubmission); virtual;
     function SubmissionNode(ASubmission: TTestSubmission): string;
     procedure MessageReceived(AMessage: TAuthorMessage);
     procedure FPOObservedChanged({%H-}ASender: TObject;
@@ -219,6 +220,7 @@ type
     property Manager: TSubmissionManager read FManager;
     property Pool: TSubmissionPool read FPool;
     procedure AddSubmission(ASubmission: TTestSubmission);
+    procedure FreeSubmission(var ASubmission: TTestSubmission);
     procedure DeleteSubmission(AID: integer);
     procedure Clear;
     constructor Create;
@@ -275,6 +277,7 @@ type
     function ListAvailable(ATransaction: TTestProblemTransaction): TIdList;
     function ListAvailable(ATransaction: TTestProblemTransaction;
       AProblem: TTestableProblem): TIdList;
+    procedure AfterConstruction; override;
     constructor Create;
     destructor Destroy; override;
   end;
@@ -604,6 +607,12 @@ begin
   Result := Filter(ListByProblem(AProblem), ATransaction, @AvailableFilter);
 end;
 
+procedure TSubmissionManager.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Queue.Reload;
+end;
+
 constructor TSubmissionManager.Create;
 begin
   inherited Create;
@@ -674,8 +683,9 @@ var
 begin
   StrList := Storage.GetChildElements('queue');
   try
-    for StrId in StrList do
-      Manager.ResumeCreateSubmission(Str2Id(StrId));
+    if StrList <> nil then
+      for StrId in StrList do
+        Manager.ResumeCreateSubmission(Str2Id(StrId));
   finally
     FreeAndNil(StrList);
   end;
@@ -693,6 +703,17 @@ begin
   // append submissions (from pool)
   for I := 0 to Pool.SubmissionCount - 1 do
     Storage.WriteBool(SubmissionNode(Pool.Submissions[I]), True);
+end;
+
+procedure TSubmissionQueue.DoDestroySubmission(ASubmission: TTestSubmission);
+begin
+  FreeAndNil(ASubmission);
+end;
+
+procedure TSubmissionQueue.FreeSubmission(var ASubmission: TTestSubmission);
+begin
+  DoDestroySubmission(ASubmission);
+  ASubmission := nil;
 end;
 
 function TSubmissionQueue.SubmissionNode(ASubmission: TTestSubmission): string;
@@ -741,7 +762,7 @@ begin
   if Submission <> nil then
   begin
     FList.Remove(Submission);
-    FreeAndNil(Submission);
+    FreeSubmission(Submission);
   end
   else
     Pool.DeleteSubmission(AID);
@@ -756,7 +777,7 @@ begin
   begin
     Submission := FList.Last;
     FList.Delete(FList.Count - 1);
-    FreeAndNil(Submission);
+    FreeSubmission(Submission);
   end;
 end;
 
@@ -809,7 +830,7 @@ begin
   Broadcast(TSubmissionDeletingPoolMessage.Create.AddSubmission(ASubmission)
     .AddSender(Self).Lock);
   InternalDelete(ASubmission);
-  FreeAndNil(ASubmission);
+  Queue.FreeSubmission(ASubmission);
 end;
 
 procedure TSubmissionPool.TriggerTestingFinished(ASubmission: TTestSubmission);
@@ -819,7 +840,7 @@ begin
   if not ASubmission.Finished then
     ASubmission.Finish(True);
   FList.Remove(ASubmission);
-  FreeAndNil(ASubmission);
+  Queue.FreeSubmission(ASubmission);
 end;
 
 constructor TSubmissionPool.Create(AQueue: TSubmissionQueue; AMaxPoolSize: integer);
@@ -930,12 +951,22 @@ end;
 
 function TTestSubmission.GetUnpackedFileName: string;
 begin
-  Result := Problem.UnpackedFileName;
+  with Problem do
+    try
+      Result := UnpackedFileName;
+    finally
+      Free;
+    end;
 end;
 
 function TTestSubmission.GetPropsFileName: string;
 begin
-  Result := Problem.PropsFileName;
+  with Problem do
+    try
+      Result := PropsFileName;
+    finally
+      Free;
+    end;
 end;
 
 procedure TTestSubmission.Prepare;

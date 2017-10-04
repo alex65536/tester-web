@@ -290,6 +290,11 @@
         <StackChecks Value="True"/>
       </Checks>
     </CodeGeneration>
+    <Linking>
+      <Debugging>
+        <GenerateDebugInfo Value="False"/>
+      </Debugging>
+    </Linking>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

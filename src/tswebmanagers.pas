@@ -69,6 +69,10 @@ begin
   Scheduler.AttachStorage(Storage);
 end;
 
+initialization
+  ProblemManager;
+  SubmissionManager;
+
 finalization
   FreeAndNil(FSubmissionManager);
   FreeAndNil(FProblemManager);
