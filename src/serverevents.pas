@@ -27,13 +27,23 @@ unit serverevents;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, tswebobservers;
 
 type
   TTerminateMethod = procedure of object;
 
+  TIdleMessage = class(TAuthorMessage);
+
+  { TIdleMessenger }
+
+  TIdleMessenger = class(TMessageAuthor)
+  public
+    procedure OnIdle(Sender: TObject);
+  end;
+
 var
   OnServerTerminate: TTerminateMethod = nil;
+  IdleMessenger: TIdleMessenger;
 
 implementation
 
@@ -42,8 +52,19 @@ begin
   Result := 'tsweb';
 end;
 
+{ TIdleMessenger }
+
+procedure TIdleMessenger.OnIdle(Sender: TObject);
+begin
+  Broadcast(TIdleMessage.Create.AddSender(Sender).Lock);
+end;
+
 initialization
   OnGetApplicationName := @DoGetApplicationName;
+  IdleMessenger := TIdleMessenger.Create;
+
+finalization
+  FreeAndNil(IdleMessenger);
 
 end.
 

@@ -107,7 +107,7 @@ begin
   RegisterFileLocation('data', Config.Location_DataDir);
 
   Application.Title := 'Tester Web';
-  Application.OnIdle := @Scheduler.IdleEventHandler;
+  Application.OnIdle := @IdleMessenger.OnIdle;
   Application.DefaultModuleName := 'main';
   OnServerTerminate := @Application.Terminate;
   Application.Initialize;
