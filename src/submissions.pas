@@ -27,10 +27,11 @@ interface
 uses
   Classes, SysUtils, submissionlanguages, users, datastorages, problems,
   testresults, jsonsaver, tswebobservers, filemanager, fgl, editableobjects,
-  webstrconsts, tswebutils, serverconfig, LazFileUtils, tswebdirectories;
+  webstrconsts, tswebutils, serverconfig, LazFileUtils, tswebdirectories, math;
 
 type
   ESubmissionAction = class(EUserAction);
+  ESubmissionValidate = class(ESubmissionAction);
   ESubmissionAccessDenied = class(ESubmissionAction);
   ESubmissionNotExist = class(ESubmissionAction);
 
@@ -65,7 +66,12 @@ type
     function CreateObject(const AName: string): TEditableObject; override;
   end;
 
-  TIdList = specialize TFPGList<integer>;
+  { TIdList }
+
+  TIdList = class(specialize TFPGList<integer>)
+  public
+    procedure Sort(Reversed: boolean);
+  end;
 
   TSubmissionManager = class;
 
@@ -205,8 +211,7 @@ type
     function TriggerAddToPool: boolean;
     function NextSubmission: TTestSubmission;
     function CreatePool: TSubmissionPool; virtual; abstract;
-    procedure Reload; virtual;
-    procedure Commit; virtual;
+    procedure DoDestroySubmission(ASubmission: TTestSubmission); virtual;
     function SubmissionNode(ASubmission: TTestSubmission): string;
     procedure MessageReceived(AMessage: TAuthorMessage);
     procedure FPOObservedChanged({%H-}ASender: TObject;
@@ -218,7 +223,10 @@ type
     property Manager: TSubmissionManager read FManager;
     property Pool: TSubmissionPool read FPool;
     procedure AddSubmission(ASubmission: TTestSubmission);
+    procedure FreeSubmission(var ASubmission: TTestSubmission);
     procedure DeleteSubmission(AID: integer);
+    procedure Reload; virtual;
+    procedure Commit; virtual;
     procedure Clear;
     constructor Create;
     procedure BeforeDestruction; override;
@@ -274,11 +282,32 @@ type
     function ListAvailable(ATransaction: TTestProblemTransaction): TIdList;
     function ListAvailable(ATransaction: TTestProblemTransaction;
       AProblem: TTestableProblem): TIdList;
+    procedure AfterConstruction; override;
     constructor Create;
     destructor Destroy; override;
   end;
 
 implementation
+
+function IdComparePlain(const AID1, AID2: integer): integer;
+begin
+  Result := CompareValue(AID1, AID2);
+end;
+
+function IdCompareReversed(const AID1, AID2: integer): integer;
+begin
+  Result := -CompareValue(AID1, AID2);
+end;
+
+{ TIdList }
+
+procedure TIdList.Sort(Reversed: boolean);
+begin
+  if Reversed then
+    inherited Sort(@IdCompareReversed)
+  else
+    inherited Sort(@IdComparePlain);
+end;
 
 { TTestSubmissionList }
 
@@ -377,7 +406,7 @@ begin
   end;
   // remove from storage
   Storage.DeleteVariable(OwnerSectionName(SubmissionOwnerID(AID)) + '.' + Id2Str(AID));
-  Storage.DeleteVariable(OwnerSectionName(SubmissionProblemID(AID)) + '.' +  Id2Str(AID));
+  Storage.DeleteVariable(ProblemSectionName(SubmissionProblemID(AID)) + '.' + Id2Str(AID));
   Storage.DeletePath(SubmissionSectionName(AID));
 end;
 
@@ -390,6 +419,7 @@ begin
   try
     for ID in List do
       DeleteSubmission(ID);
+    Storage.DeletePath(OwnerSectionName(AInfo.ID));
   finally
     FreeAndNil(List);
   end;
@@ -404,6 +434,7 @@ begin
   try
     for ID in List do
       DeleteSubmission(ID);
+    Storage.DeletePath(ProblemSectionName(AProblem.ID));
   finally
     FreeAndNil(List);
   end;
@@ -495,7 +526,7 @@ end;
 
 function TSubmissionManager.ProblemFilter(AID: integer; AObject: TObject): boolean;
 begin
-  Result := AID = (AObject as TTestableProblem).ID;
+  Result := SubmissionProblemID(AID) = (AObject as TTestableProblem).ID;
 end;
 
 function TSubmissionManager.AvailableFilter(AID: integer; AObject: TObject): boolean;
@@ -534,6 +565,8 @@ var
 begin
   if not ATransaction.CanTestProblem then
     raise ESubmissionAccessDenied.Create(SAccessDenied);
+  if FileSizeUTF8(AFileName) > ATransaction.MaxSrcLimit * 1024 then
+    raise ESubmissionValidate.CreateFmt(SSubmissionTooBig, [ATransaction.MaxSrcLimit]);
   // determine data
   Problem := ATransaction.Problem as TTestableProblem;
   User := ATransaction.User;
@@ -542,9 +575,9 @@ begin
   Submission := DoCreateTestSubmission(ID);
   try
     // fill owner & problem
-    Storage.WriteString(SubmissionSectionName(ID) + '.ownerId', Id2Str(User.ID));
+    Storage.WriteInteger(SubmissionSectionName(ID) + '.ownerId', User.ID);
     Storage.WriteBool(OwnerSectionName(User.ID) + '.' + Id2Str(ID), True);
-    Storage.WriteString(SubmissionSectionName(ID) + '.problemId', Id2Str(Problem.ID));
+    Storage.WriteInteger(SubmissionSectionName(ID) + '.problemId', Problem.ID);
     Storage.WriteBool(ProblemSectionName(Problem.ID) + '.' + Id2Str(ID), True);
     // prepare submission for adding to queue
     Submission.UpdateSubmitTime;
@@ -599,6 +632,12 @@ function TSubmissionManager.ListAvailable(ATransaction: TTestProblemTransaction;
   AProblem: TTestableProblem): TIdList;
 begin
   Result := Filter(ListByProblem(AProblem), ATransaction, @AvailableFilter);
+end;
+
+procedure TSubmissionManager.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Queue.Reload;
 end;
 
 constructor TSubmissionManager.Create;
@@ -671,8 +710,9 @@ var
 begin
   StrList := Storage.GetChildElements('queue');
   try
-    for StrId in StrList do
-      Manager.ResumeCreateSubmission(Str2Id(StrId));
+    if StrList <> nil then
+      for StrId in StrList do
+        Manager.ResumeCreateSubmission(Str2Id(StrId));
   finally
     FreeAndNil(StrList);
   end;
@@ -692,6 +732,17 @@ begin
     Storage.WriteBool(SubmissionNode(Pool.Submissions[I]), True);
 end;
 
+procedure TSubmissionQueue.DoDestroySubmission(ASubmission: TTestSubmission);
+begin
+  FreeAndNil(ASubmission);
+end;
+
+procedure TSubmissionQueue.FreeSubmission(var ASubmission: TTestSubmission);
+begin
+  DoDestroySubmission(ASubmission);
+  ASubmission := nil;
+end;
+
 function TSubmissionQueue.SubmissionNode(ASubmission: TTestSubmission): string;
 begin
   Result := 'queue.' + Id2Str(ASubmission.ID);
@@ -701,10 +752,7 @@ procedure TSubmissionQueue.MessageReceived(AMessage: TAuthorMessage);
 begin
   if (AMessage is TSubmissionDeletingPoolMessage) or
     (AMessage is TSubmissionTestedMessage) then
-  begin
     TriggerAddToPool;
-    Broadcast(AMessage);
-  end;
 end;
 
 procedure TSubmissionQueue.FPOObservedChanged(ASender: TObject;
@@ -741,7 +789,7 @@ begin
   if Submission <> nil then
   begin
     FList.Remove(Submission);
-    FreeAndNil(Submission);
+    FreeSubmission(Submission);
   end
   else
     Pool.DeleteSubmission(AID);
@@ -756,7 +804,7 @@ begin
   begin
     Submission := FList.Last;
     FList.Delete(FList.Count - 1);
-    FreeAndNil(Submission);
+    FreeSubmission(Submission);
   end;
 end;
 
@@ -809,7 +857,7 @@ begin
   Broadcast(TSubmissionDeletingPoolMessage.Create.AddSubmission(ASubmission)
     .AddSender(Self).Lock);
   InternalDelete(ASubmission);
-  FreeAndNil(ASubmission);
+  Queue.FreeSubmission(ASubmission);
 end;
 
 procedure TSubmissionPool.TriggerTestingFinished(ASubmission: TTestSubmission);
@@ -819,7 +867,7 @@ begin
   if not ASubmission.Finished then
     ASubmission.Finish(True);
   FList.Remove(ASubmission);
-  FreeAndNil(ASubmission);
+  Queue.FreeSubmission(ASubmission);
 end;
 
 constructor TSubmissionPool.Create(AQueue: TSubmissionQueue; AMaxPoolSize: integer);
@@ -930,12 +978,22 @@ end;
 
 function TTestSubmission.GetUnpackedFileName: string;
 begin
-  Result := Problem.UnpackedFileName;
+  with Problem do
+    try
+      Result := UnpackedFileName;
+    finally
+      Free;
+    end;
 end;
 
 function TTestSubmission.GetPropsFileName: string;
 begin
-  Result := Problem.PropsFileName;
+  with Problem do
+    try
+      Result := PropsFileName;
+    finally
+      Free;
+    end;
 end;
 
 procedure TTestSubmission.Prepare;
@@ -1046,6 +1104,7 @@ end;
 
 constructor TBaseSubmission.Create(AManager: TSubmissionManager; AID: integer);
 begin
+  inherited Create;
   FID := AID;
   FManager := AManager;
   FStorage := AManager.Storage;

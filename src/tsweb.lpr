@@ -85,7 +85,8 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   tswebmanagers,
   submissioninfo,
   tswebsubmissionfeatures,
-  tswebsubmissionelements;
+  tswebsubmissionelements,
+  objectshredder;
 
 {$ifdef Windows}
 var
@@ -107,7 +108,7 @@ begin
   RegisterFileLocation('data', Config.Location_DataDir);
 
   Application.Title := 'Tester Web';
-  Application.OnIdle := @Scheduler.IdleEventHandler;
+  Application.OnIdle := @IdleMessenger.OnIdle;
   Application.DefaultModuleName := 'main';
   OnServerTerminate := @Application.Terminate;
   Application.Initialize;

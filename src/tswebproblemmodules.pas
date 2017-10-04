@@ -27,7 +27,8 @@ interface
 uses
   SysUtils, tswebmodules, tswebeditablemodules, fphttp, htmlpages, problems,
   editableobjects, tswebpagesbase, tswebproblempages, webstrconsts, HTTPDefs,
-  webmodules, downloadhandlers, tsmiscwebmodules, tswebmanagers;
+  webmodules, downloadhandlers, tsmiscwebmodules, tswebmanagers, submissions,
+  submissionlanguages;
 
 type
 
@@ -110,20 +111,30 @@ type
 
   TProblemTestBaseWebModule = class(TEditablePostWebModule)
   protected
+    function GetTestableProblem: TTestableProblem; virtual; abstract;
     function Inside: boolean; override;
     function HookClass: TEditableModuleHookClass; override;
+    procedure DoHandlePost(ARequest: TRequest); override;
+    function CanRedirect: boolean; override;
+    function RedirectLocation: string; override;
   end;
 
   { TProblemTestWebModule }
 
   TProblemTestWebModule = class(TProblemTestBaseWebModule)
   protected
+    function GetTestableProblem: TTestableProblem; override;
     function DoCreatePage: THtmlPage; override;
   end;
 
 implementation
 
 { TProblemTestWebModule }
+
+function TProblemTestWebModule.GetTestableProblem: TTestableProblem;
+begin
+  Result := Hook.EditableObject as TTestableProblem;
+end;
 
 function TProblemTestWebModule.DoCreatePage: THtmlPage;
 begin
@@ -140,6 +151,52 @@ end;
 function TProblemTestBaseWebModule.HookClass: TEditableModuleHookClass;
 begin
   Result := TProblemModuleHook;
+end;
+
+procedure TProblemTestBaseWebModule.DoHandlePost(ARequest: TRequest);
+var
+  Language: TSubmissionLanguage;
+  FileName: string;
+  I: integer;
+  TestProblem: TTestableProblem;
+  TestTransaction: TTestProblemTransaction;
+begin
+  Language := StrToLanguage(ARequest.ContentFields.Values['sol-lang']);
+  FileName := '';
+  // find the solution file
+  with ARequest.Files do
+    for I := 0 to Count - 1 do
+      if Files[I].FieldName = 'sol-file' then
+      begin
+        if LowerCase(ExtractFileExt(Files[I].FileName)) <> LanguageExts[Language] then
+          raise ESubmissionValidate.CreateFmt(SSubmissionExtensionExpected, [LanguageExts[Language]]);
+        FileName := Files[I].LocalFileName;
+      end;
+  // if solution file was not found - raise an error
+  if FileName = '' then
+    raise ESubmissionValidate.Create(SNoSubmissionFile);
+  // create and run the submission
+  TestProblem := GetTestableProblem;
+  try
+    TestTransaction := TestProblem.CreateTestTransaction(User);
+    try
+      SubmissionManager.CreateSubmission(TestTransaction, Language, FileName);
+    finally
+      FreeAndNil(TestTransaction);
+    end;
+  finally
+    FreeAndNil(TestProblem);
+  end;
+end;
+
+function TProblemTestBaseWebModule.CanRedirect: boolean;
+begin
+  Result := True;
+end;
+
+function TProblemTestBaseWebModule.RedirectLocation: string;
+begin
+  Result := Request.URI;
 end;
 
 { TProblemDownloadWebModule }

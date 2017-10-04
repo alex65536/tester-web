@@ -37,7 +37,7 @@ const
     ('.pas', '.dpr', '.c', '.cpp', '.cpp');
 
   LanguageInnerExts: array [TSubmissionLanguage] of string =
-    ('.ts-pascal', '.ts-delphi', '.ts-c', '.ts-c++', '.ts-c++11');
+    ('.pas', '.dpr', '.c', '.cxx', '.cpp');
 
   LanguageCompilers: array [TSubmissionLanguage] of TCompilerClass = (
     TFreePascalCompiler,

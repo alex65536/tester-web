@@ -32,6 +32,7 @@ type
   TTesterWebVerdict = (
     wvUnknown,
     wvTestFailed,
+    wvWaiting,
     wvCompiling,
     wvRunning,
     wvFinishing
@@ -41,6 +42,7 @@ const
   STesterWebVerdicts: array [TTesterWebVerdict] of string = (
     SVerdictUnknown,
     SVerdictTestFailed,
+    SVerdictWaiting,
     SVerdictCompiling,
     SVerdictRunning,
     SVerdictFinishing
@@ -157,7 +159,12 @@ begin
   if Submission.Results = nil then
   begin
     ATestCase := -1;
-    AVerdictKind := TesterWebVerdictToStr(wvUnknown);
+    if not Submission.Finished then
+      AVerdictKind := TesterWebVerdictToStr(wvWaiting)
+    else if Submission.Success then
+      AVerdictKind := TesterWebVerdictToStr(wvUnknown)
+    else
+      AVerdictKind := TesterWebVerdictToStr(wvTestFailed);
     Exit;
   end;
   if (not Submission.Finished) or (not Submission.Success) then

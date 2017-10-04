@@ -118,7 +118,7 @@ type
 
   TProblem = class(TEditableObject)
   private
-    function GetFileName(const Dir, Ext: string; MustExist: boolean): string;
+    function GetFileName(const Dir, Ext: string; MustExist, IsDir: boolean): string;
   protected
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
     function ArchiveFileName(MustExist: boolean): string;
@@ -195,24 +195,32 @@ begin
   inherited Create(AName, AManager);
 end;
 
-function TProblem.GetFileName(const Dir, Ext: string; MustExist: boolean): string;
+function TProblem.GetFileName(const Dir, Ext: string; MustExist, IsDir: boolean): string;
 var
   Path: string;
+  Exists: boolean;
 begin
   Path := AppendPathDelim(ExpandInternalDirLocation(Dir));
   Result := Path + Format('problem%d%s', [ID, Ext]);
-  if MustExist and (not FileExistsUTF8(Result)) then
-    Result := '';
+  if MustExist then
+  begin
+    if IsDir then
+      Exists := DirectoryExistsUTF8(Result)
+    else
+      Exists := FileExistsUTF8(Result);
+    if not Exists then
+      Result := '';
+  end;
 end;
 
 function TProblem.ArchiveFileName(MustExist: boolean): string;
 begin
-  Result := GetFileName('archives', SArchiveExt, MustExist);
+  Result := GetFileName('archives', SArchiveExt, MustExist, False);
 end;
 
 function TProblem.UnpackedFileName(MustExist: boolean): string;
 begin
-  Result := GetFileName('problems', '', MustExist);
+  Result := GetFileName('problems', '', MustExist, True);
 end;
 
 function TProblem.StatementsFileName(MustExist: boolean): string;
@@ -223,7 +231,7 @@ begin
   if FileType = stNone then
     Result := ''
   else
-    Result := GetFileName('statements', SFileTypesByExt[FileType], MustExist);
+    Result := GetFileName('statements', SFileTypesByExt[FileType], MustExist, False);
 end;
 
 function TProblem.StatementsFileType: TProblemStatementsType;
@@ -240,7 +248,7 @@ var
   PropsFile: string;
 begin
   Result := UnpackedFileName(True);
-  PropsFile := Storage.ReadString('propsFile', '');
+  PropsFile := Storage.ReadString(FullKeyName('propsFile'), '');
   if (Result = '') or (PropsFile = '') then
     Exit('');
   Result := AppendPathDelim(Result) + PropsFile;
