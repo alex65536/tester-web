@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, submissionlanguages, users, datastorages, problems,
   testresults, jsonsaver, tswebobservers, filemanager, fgl, editableobjects,
-  webstrconsts, tswebutils, serverconfig, LazFileUtils, tswebdirectories;
+  webstrconsts, tswebutils, serverconfig, LazFileUtils, tswebdirectories, math;
 
 type
   ESubmissionAction = class(EUserAction);
@@ -66,7 +66,12 @@ type
     function CreateObject(const AName: string): TEditableObject; override;
   end;
 
-  TIdList = specialize TFPGList<integer>;
+  { TIdList }
+
+  TIdList = class(specialize TFPGList<integer>)
+  public
+    procedure Sort(Reversed: boolean);
+  end;
 
   TSubmissionManager = class;
 
@@ -283,6 +288,26 @@ type
   end;
 
 implementation
+
+function IdComparePlain(const AID1, AID2: integer): integer;
+begin
+  Result := CompareValue(AID1, AID2);
+end;
+
+function IdCompareReversed(const AID1, AID2: integer): integer;
+begin
+  Result := -CompareValue(AID1, AID2);
+end;
+
+{ TIdList }
+
+procedure TIdList.Sort(Reversed: boolean);
+begin
+  if Reversed then
+    inherited Sort(@IdCompareReversed)
+  else
+    inherited Sort(@IdComparePlain);
+end;
 
 { TTestSubmissionList }
 

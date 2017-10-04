@@ -96,6 +96,7 @@ procedure TSubmissionItemList.DoFillList;
 var
   AID: integer;
 begin
+  SubmissionList.Sort(True);
   for AID in SubmissionList do
     List.Add(TSubmissionItem.Create(Parent, SubmissionManager.GetSubmission(AID, Transaction)));
 end;
