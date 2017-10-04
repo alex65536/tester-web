@@ -158,6 +158,7 @@ begin
     ItemsAsText['submissionAuthorLink'] := Parent.GenerateUserLink(Info.OwnerName);
     ItemsAsText['submissionLanguage'] := Info.Language;
     ItemsAsText['submissionVerdict'] := Info.VerdictStr;
+    ItemsAsText['submissionVerdictKind'] := Info.VerdictKind;
     ItemsAsText['submissionTest'] := TestIdToStr(Info.TestCase);
     ItemsAsText['submissionTime'] := ProblemTimeToStr(Info.Time);
     ItemsAsText['submissionMemory'] := ProblemMemoryToStr(Info.Memory);
