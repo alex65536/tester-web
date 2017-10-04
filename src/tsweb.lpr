@@ -85,7 +85,8 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   tswebmanagers,
   submissioninfo,
   tswebsubmissionfeatures,
-  tswebsubmissionelements;
+  tswebsubmissionelements,
+  objectshredder;
 
 {$ifdef Windows}
 var
