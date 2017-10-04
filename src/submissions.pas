@@ -381,7 +381,7 @@ begin
   end;
   // remove from storage
   Storage.DeleteVariable(OwnerSectionName(SubmissionOwnerID(AID)) + '.' + Id2Str(AID));
-  Storage.DeleteVariable(OwnerSectionName(SubmissionProblemID(AID)) + '.' +  Id2Str(AID));
+  Storage.DeleteVariable(ProblemSectionName(SubmissionProblemID(AID)) + '.' + Id2Str(AID));
   Storage.DeletePath(SubmissionSectionName(AID));
 end;
 
@@ -394,6 +394,7 @@ begin
   try
     for ID in List do
       DeleteSubmission(ID);
+    Storage.DeletePath(OwnerSectionName(AInfo.ID));
   finally
     FreeAndNil(List);
   end;
@@ -408,6 +409,7 @@ begin
   try
     for ID in List do
       DeleteSubmission(ID);
+    Storage.DeletePath(ProblemSectionName(AProblem.ID));
   finally
     FreeAndNil(List);
   end;

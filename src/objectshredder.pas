@@ -78,8 +78,8 @@ end;
 
 destructor TObjectShredder.Destroy;
 begin
-  Shred;
   IdleMessenger.Unsubscribe(Self);
+  Shred;
   FreeAndNil(FList);
   inherited Destroy;
 end;

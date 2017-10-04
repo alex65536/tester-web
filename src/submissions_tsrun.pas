@@ -32,6 +32,8 @@ uses
 type
   ETsRunSubmission = class(Exception);
 
+  ETsRunThread = class(Exception);
+
   { TTsRunThread }
 
   TTsRunThread = class(TThread)
@@ -243,7 +245,7 @@ end;
 
 procedure TTsRunThread.InternalExecute;
 begin
-  // clean old results if exist
+  // clean old results (if exist)
   TryDeleteFile(FResFile);
   // add parameters
   FProcess.Executable := FTsRunExe;
@@ -280,8 +282,8 @@ begin
   inherited Create(True, DefaultStackSize);
   FProcess := nil;
   FTsRunExe := Config.Location_TsRunExe;
-  FTestDirName := 'tsweb-' + RandomFileName(12);
-  FTimeout := 300;
+  FTestDirName := 'tsweb-' + RandomFileName(16);
+  FTimeout := 30;
   FreeOnTerminate := True;
 end;
 
