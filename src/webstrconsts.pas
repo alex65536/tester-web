@@ -257,6 +257,8 @@ resourcestring
   SSubmissionHeaderScore = 'Score';
   SNoSubmissionFile = 'No file specified!';
   SSubmissionExtensionExpected = 'File expected to have extension "%s"';
+  STsRunNonZeroExitcode = 'TsRun exited with exitcode = %d';
+  SStringCannotBeEmpty = 'String %s cannot be empty!';
 
 implementation
 

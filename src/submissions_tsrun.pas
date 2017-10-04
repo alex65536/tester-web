@@ -181,7 +181,7 @@ procedure TTsRunTestSubmission.ThreadTerminate(Sender: TObject);
 var
   FinishSuccess: boolean;
 begin
-  FinishSuccess := FThread.ExitCode = 0;
+  FinishSuccess := FThread.FatalException = nil;
   FThread.OnTerminate := nil;
   FThread := nil; // it will be freed automatically!
   if FFinishTrigger then
@@ -244,7 +244,20 @@ begin
 end;
 
 procedure TTsRunThread.InternalExecute;
+
+  procedure CheckForNotEmpty(const StrName, StrValue: string);
+  begin
+    if StrValue = '' then
+      raise ETsRunThread.CreateFmt(SStringCannotBeEmpty, [StrName]);
+  end;
+
 begin
+  // validate
+  CheckForNotEmpty('ProblemWorkDir', FProblemWorkDir);
+  CheckForNotEmpty('ProblemPropsFile', FProblemPropsFile);
+  CheckForNotEmpty('TestSrc', FTestSrc);
+  CheckForNotEmpty('ResFile', FResFile);
+  CheckForNotEmpty('TestDirName', FTestDirName);
   // clean old results (if exist)
   TryDeleteFile(FResFile);
   // add parameters
@@ -275,6 +288,9 @@ begin
     FExitCode := FProcess.ExitStatus;
   // cleanup working directory
   TryDeleteDir(AppendPathDelim(GetTempDir) + FTestDirName);
+  // raise exception if non-zero exitcode
+  if FExitCode <> 0 then
+    raise ETsRunThread.CreateFmt(STsRunNonZeroExitcode, [FExitCode]);
 end;
 
 constructor TTsRunThread.Create;
