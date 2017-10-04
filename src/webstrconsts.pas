@@ -236,6 +236,7 @@ resourcestring
   SVerdictUnknown = 'Unknown';
   SVerdictTestFailed = 'Testing failed';
   SVerdictRunning = 'Running...';
+  SVerdictWaiting = 'Waiting...';
   SVerdictCompiling = 'Compiling...';
   SVerdictFinishing = 'Finishing...';
   SProblemStatementsCaption = 'Statements:';
