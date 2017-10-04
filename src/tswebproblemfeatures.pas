@@ -203,7 +203,7 @@ end;
 
 function TProblemSubmissionsButtonFeature.Enabled: boolean;
 begin
-  Result := EditableObject.GetAccessRights(User as TEditorUser) in AccessCanReadSet;
+  Result := EditableObject.GetAccessRights(User as TEditorUser) in AccessCanWriteSet;
 end;
 
 function TProblemSubmissionsButtonFeature.PagePartDir: string;
