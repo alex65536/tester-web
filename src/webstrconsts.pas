@@ -259,6 +259,8 @@ resourcestring
   SSubmissionExtensionExpected = 'File expected to have extension "%s"';
   STsRunNonZeroExitcode = 'TsRun exited with exitcode = %d';
   SStringCannotBeEmpty = 'String %s cannot be empty!';
+  SProblemSubmissionsText = 'Submissions';
+  SProblemRejudgeBtn = 'Rejudge';
 
 implementation
 

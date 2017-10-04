@@ -44,6 +44,7 @@ type
   public
     function CanWriteData: boolean; override;
     function CanTestProblem: boolean; virtual;
+    function CanRejudge: boolean; virtual;
     function CanReadSubmissions(AOwner: TUserInfo): boolean; virtual;
   end;
 
@@ -256,6 +257,8 @@ type
     procedure HandleUserDeleting(AInfo: TUserInfo); virtual;
     procedure HandleProblemDeleting(AProblem: TTestableProblem); virtual;
     procedure ResumeCreateSubmission(AID: integer); virtual;
+    procedure InternalRejudgeSubmission(AID: integer); virtual;
+    procedure ValidateCanRejudge(ATransaction: TTestProblemTransaction); virtual;
     function SubmissionOwnerID(AID: integer): integer;
     function SubmissionProblemID(AID: integer): integer;
     function StrListToIdList(AList: TStringList): TIdList;
@@ -282,6 +285,9 @@ type
     function ListAvailable(ATransaction: TTestProblemTransaction): TIdList;
     function ListAvailable(ATransaction: TTestProblemTransaction;
       AProblem: TTestableProblem): TIdList;
+    procedure RejudgeSubmission(ATransaction: TTestProblemTransaction; AID: integer);
+    procedure RejudgeSubmissions(ATransaction: TTestProblemTransaction;
+      AProblem: TTestableProblem);
     procedure AfterConstruction; override;
     constructor Create;
     destructor Destroy; override;
@@ -340,6 +346,11 @@ end;
 function TTestProblemTransaction.CanTestProblem: boolean;
 begin
   Result := CanReadData;
+end;
+
+function TTestProblemTransaction.CanRejudge: boolean;
+begin
+  Result := AccessLevel in AccessCanWriteSet;
 end;
 
 function TTestProblemTransaction.CanReadSubmissions(AOwner: TUserInfo): boolean;
@@ -443,6 +454,18 @@ end;
 procedure TSubmissionManager.ResumeCreateSubmission(AID: integer);
 begin
   Queue.AddSubmission(DoCreateTestSubmission(AID));
+end;
+
+procedure TSubmissionManager.InternalRejudgeSubmission(AID: integer);
+begin
+  Queue.DeleteSubmission(AID);
+  ResumeCreateSubmission(AID);
+end;
+
+procedure TSubmissionManager.ValidateCanRejudge(ATransaction: TTestProblemTransaction);
+begin
+  if not ATransaction.CanRejudge then
+    raise ESubmissionAccessDenied.Create(SAccessDenied);
 end;
 
 function TSubmissionManager.SubmissionOwnerID(AID: integer): integer;
@@ -634,6 +657,29 @@ begin
   Result := Filter(ListByProblem(AProblem), ATransaction, @AvailableFilter);
 end;
 
+procedure TSubmissionManager.RejudgeSubmission(ATransaction: TTestProblemTransaction;
+  AID: integer);
+begin
+  ValidateCanRejudge(ATransaction);
+  InternalRejudgeSubmission(AID);
+end;
+
+procedure TSubmissionManager.RejudgeSubmissions(ATransaction: TTestProblemTransaction;
+  AProblem: TTestableProblem);
+var
+  List: TIdList;
+  ID: integer;
+begin
+  ValidateCanRejudge(ATransaction);
+  List := ListAvailable(ATransaction, AProblem);
+  try
+    for ID in List do
+      InternalRejudgeSubmission(ID);
+  finally
+    FreeAndNil(List);
+  end;
+end;
+
 procedure TSubmissionManager.AfterConstruction;
 begin
   inherited AfterConstruction;
@@ -777,6 +823,7 @@ end;
 
 procedure TSubmissionQueue.AddSubmission(ASubmission: TTestSubmission);
 begin
+  ASubmission.Prepare;
   FList.Add(ASubmission);
   TriggerAddToPool;
 end;
@@ -862,11 +909,11 @@ end;
 
 procedure TSubmissionPool.TriggerTestingFinished(ASubmission: TTestSubmission);
 begin
-  Broadcast(TSubmissionTestedMessage.Create.AddSubmission(ASubmission)
-    .AddSender(Self).Lock);
   if not ASubmission.Finished then
     ASubmission.Finish(True);
   FList.Remove(ASubmission);
+  Broadcast(TSubmissionTestedMessage.Create.AddSubmission(ASubmission)
+    .AddSender(Self).Lock);
   Queue.FreeSubmission(ASubmission);
 end;
 
@@ -886,7 +933,6 @@ begin
   if FList.Count >= MaxPoolSize then
     Exit(False);
   Result := True;
-  ASubmission.Prepare;
   FList.Add(ASubmission);
   DoAdd(ASubmission);
 end;
@@ -999,6 +1045,7 @@ end;
 procedure TTestSubmission.Prepare;
 begin
   Unfinish;
+  TryDeleteFile(ResultsFileName);
 end;
 
 procedure TTestSubmission.UpdateSubmitTime;

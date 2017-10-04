@@ -71,7 +71,6 @@ type
     procedure ThreadTerminate(Sender: TObject);
   protected
     property Thread: TTsRunThread read FThread;
-    procedure Prepare; override;
     {%H-}constructor Create(AManager: TSubmissionManager; AID: integer);
   public
     procedure StartTesting; virtual;
@@ -191,9 +190,8 @@ begin
   end;
 end;
 
-procedure TTsRunTestSubmission.Prepare;
+procedure TTsRunTestSubmission.StartTesting;
 begin
-  inherited Prepare;
   if FThread <> nil then
     raise ETsRunSubmission.Create(SThreadAlreadyAssigned);
   FThread := TTsRunThread.Create;
@@ -206,10 +204,6 @@ begin
     TestSrc := FileName;
     ResFile := ResultsFileName;
   end;
-end;
-
-procedure TTsRunTestSubmission.StartTesting;
-begin
   FThread.Start;
 end;
 
@@ -258,8 +252,6 @@ begin
   CheckForNotEmpty('TestSrc', FTestSrc);
   CheckForNotEmpty('ResFile', FResFile);
   CheckForNotEmpty('TestDirName', FTestDirName);
-  // clean old results (if exist)
-  TryDeleteFile(FResFile);
   // add parameters
   FProcess.Executable := FTsRunExe;
   with FProcess.Parameters do

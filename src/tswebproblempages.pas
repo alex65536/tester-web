@@ -104,7 +104,22 @@ type
     procedure AddFeatures; override;
   end;
 
+  { TProblemSubmissionsPage }
+
+  TProblemSubmissionsPage = class(TProblemPostHtmlPage)
+  protected
+    procedure AddFeatures; override;
+  end;
+
 implementation
+
+{ TProblemSubmissionsPage }
+
+procedure TProblemSubmissionsPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TProblemSubmissionsFeature);
+end;
 
 { TProblemTestPage }
 

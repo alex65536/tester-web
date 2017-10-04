@@ -68,6 +68,7 @@ var
   SubmissionIds: TIdList;
   List: TSubmissionItemList;
 begin
+  // TODO : Wrap this into try .. except!
   SubmissionIds := SubmissionManager.ListByOwner(User, EditableObject as TTestableProblem);
   List := TSubmissionItemList.Create(Parent, SubmissionIds, Transaction);
   try

@@ -127,7 +127,63 @@ type
     function DoCreatePage: THtmlPage; override;
   end;
 
+  { TProblemSubmissionsWebModule }
+
+  TProblemSubmissionsWebModule = class(TEditableObjectPostWebModule)
+  protected
+    function Inside: boolean; override;
+    function HookClass: TEditableModuleHookClass; override;
+    function DoCreatePage: THtmlPage; override;
+    function CanRedirect: boolean; override;
+    function RedirectLocation: string; override;
+    procedure DoInsideHandlePost(ARequest: TRequest); override;
+  end;
+
 implementation
+
+{ TProblemSubmissionsWebModule }
+
+function TProblemSubmissionsWebModule.Inside: boolean;
+begin
+  Result := True;
+end;
+
+function TProblemSubmissionsWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TProblemModuleHook;
+end;
+
+function TProblemSubmissionsWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemSubmissionsPage.Create;
+end;
+
+function TProblemSubmissionsWebModule.CanRedirect: boolean;
+begin
+  Result := True;
+end;
+
+function TProblemSubmissionsWebModule.RedirectLocation: string;
+begin
+  Result := Request.URI;
+end;
+
+procedure TProblemSubmissionsWebModule.DoInsideHandlePost(ARequest: TRequest);
+var
+  TestProblem: TTestableProblem;
+  TestTransaction: TTestProblemTransaction;
+begin
+  if ARequest.ContentFields.Values['query'] = 'rejudge' then
+  begin
+    TestProblem := EditableObject as TTestableProblem;
+    TestTransaction := TestProblem.CreateTestTransaction(User);
+    try
+      SubmissionManager.RejudgeSubmissions(TestTransaction, TestProblem);
+    finally
+      FreeAndNil(TestTransaction);
+    end;
+  end;
+end;
 
 { TProblemTestWebModule }
 
@@ -386,6 +442,7 @@ initialization
   RegisterHTTPModule('problem-edit', TProblemEditWebModule, True);
   RegisterHTTPModule('problem-download', TProblemDownloadWebModule, True);
   RegisterHTTPModule('problem-test', TProblemTestWebModule, True);
+  RegisterHTTPModule('problem-submissions', TProblemSubmissionsWebModule, True);
 
 end.
 
