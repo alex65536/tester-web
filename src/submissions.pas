@@ -24,6 +24,8 @@ unit submissions;
 
 interface
 
+// TODO : Rebuild the architecture, do not authentificate everything by transaction !!!
+
 uses
   Classes, SysUtils, submissionlanguages, users, datastorages, problems,
   testresults, jsonsaver, tswebobservers, filemanager, fgl, editableobjects,

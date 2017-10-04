@@ -154,7 +154,6 @@ var
   List: TSubmissionItemList;
 begin
   // load list
-  // TODO : Wrap this into try .. except!
   Problem := EditableObject as TTestableProblem;
   SubmissionIds := SubmissionManager.ListAvailable(Transaction, Problem);
   List := TSubmissionItemList.Create(Parent, SubmissionIds, Transaction);
