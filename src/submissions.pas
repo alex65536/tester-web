@@ -24,8 +24,6 @@ unit submissions;
 
 interface
 
-// TODO : Rebuild the architecture, do not authentificate everything by transaction !!!
-
 uses
   Classes, SysUtils, submissionlanguages, users, datastorages, problems,
   testresults, jsonsaver, tswebobservers, filemanager, fgl, editableobjects,
@@ -40,82 +38,12 @@ type
   TSubmissionManager = class;
   TTestableProblem = class;
   TTestableProblemManager = class;
-  TViewSubmission = class;
 
   { TIdList }
 
   TIdList = class(specialize TFPGList<integer>)
   public
     procedure Sort(Reversed: boolean);
-  end;
-
-  { TProblemSubmissionSession }
-
-  TProblemSubmissionSession = class(TEditableCustomSession)
-  private
-    function GetManager: TTestableProblemManager;
-    function GetSubmissionManager: TSubmissionManager;
-  protected
-    procedure ValidateSubmission(AID: integer);
-    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
-  public
-    property Manager: TTestableProblemManager read GetManager;
-    property SubmissionManager: TSubmissionManager read GetSubmissionManager;
-
-    function CanReadSubmission(AID: integer): boolean;
-    function CanReadSubmission(AProblem: TTestableProblem;
-      AOwner: TUserInfo): boolean; virtual;
-    function CanRejudgeSubmission(AProblem: TTestableProblem): boolean; virtual;
-    function CanRejudgeSubmission(AID: integer): boolean;
-
-    function GetSubmission(AID: integer): TViewSubmission;
-
-    function ListByOwner: TIdList;
-    function ListByOwner(AProblem: TTestableProblem): TIdList;
-    function ListAvailable: TIdList;
-    function ListAvailable(AProblem: TTestableProblem): TIdList;
-
-    procedure RejudgeSubmission(AID: integer);
-    procedure RejudgeSubmissions(AProblem: TTestableProblem);
-  end;
-
-  { TTestProblemTransaction }
-
-  TTestProblemTransaction = class(TProblemTransaction)
-  private
-    FSubmissionSession: TProblemSubmissionSession;
-  protected
-    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
-      AObject: TEditableObject);
-  public
-    property SubmissionSession: TProblemSubmissionSession read FSubmissionSession;
-    function CanWriteData: boolean; override;
-    function CanTestProblem: boolean; virtual;
-    function CanRejudge: boolean;
-    function CanReadSubmission(AOwner: TUserInfo): boolean;
-    procedure CreateSubmission(ALanguage: TSubmissionLanguage; const AFileName: string);
-    destructor Destroy; override;
-  end;
-
-  { TTestableProblem }
-
-  TTestableProblem = class(TProblem)
-  protected
-    function UnpackedFileName: string; overload;
-    function PropsFileName: string;
-    {%H-}constructor Create(const AName: string; AManager: TEditableManager);
-  public
-    function CreateTestTransaction(AUser: TUser): TTestProblemTransaction; virtual;
-  end;
-
-  { TTestableProblemManager }
-
-  TTestableProblemManager = class(TProblemManager)
-  protected
-    function CreateObject(const AName: string): TEditableObject; override;
-  public
-    function SubmissionManager: TSubmissionManager; virtual; abstract;
-    function CreateSubmissionSession(AUser: TUser): TProblemSubmissionSession; virtual;
   end;
 
   { TBaseSubmission }
@@ -325,6 +253,75 @@ type
     destructor Destroy; override;
   end;
 
+  { TProblemSubmissionSession }
+
+  TProblemSubmissionSession = class(TEditableCustomSession)
+  private
+    function GetManager: TTestableProblemManager;
+    function GetSubmissionManager: TSubmissionManager;
+  protected
+    procedure ValidateSubmission(AID: integer);
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
+  public
+    property Manager: TTestableProblemManager read GetManager;
+    property SubmissionManager: TSubmissionManager read GetSubmissionManager;
+
+    function CanReadSubmission(AID: integer): boolean;
+    function CanReadSubmission(AProblem: TTestableProblem;
+      AOwner: TUserInfo): boolean; virtual;
+    function CanRejudgeSubmission(AProblem: TTestableProblem): boolean; virtual;
+    function CanRejudgeSubmission(AID: integer): boolean;
+
+    function GetSubmission(AID: integer): TViewSubmission;
+
+    function ListByOwner: TIdList;
+    function ListByOwner(AProblem: TTestableProblem): TIdList;
+    function ListAvailable: TIdList;
+    function ListAvailable(AProblem: TTestableProblem): TIdList;
+
+    procedure RejudgeSubmission(AID: integer);
+    procedure RejudgeSubmissions(AProblem: TTestableProblem);
+  end;
+
+  { TTestProblemTransaction }
+
+  TTestProblemTransaction = class(TProblemTransaction)
+  private
+    FSubmissionSession: TProblemSubmissionSession;
+  protected
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
+      AObject: TEditableObject);
+  public
+    property SubmissionSession: TProblemSubmissionSession read FSubmissionSession;
+    function CanWriteData: boolean; override;
+    function CanTestProblem: boolean; virtual;
+    function CanRejudge: boolean;
+    function CanReadSubmission(AOwner: TUserInfo): boolean;
+    procedure CreateSubmission(ALanguage: TSubmissionLanguage; const AFileName: string);
+    destructor Destroy; override;
+  end;
+
+  { TTestableProblem }
+
+  TTestableProblem = class(TProblem)
+  protected
+    function UnpackedFileName: string; overload;
+    function PropsFileName: string;
+    {%H-}constructor Create(const AName: string; AManager: TEditableManager);
+  public
+    function CreateTestTransaction(AUser: TUser): TTestProblemTransaction; virtual;
+  end;
+
+  { TTestableProblemManager }
+
+  TTestableProblemManager = class(TProblemManager)
+  protected
+    function CreateObject(const AName: string): TEditableObject; override;
+  public
+    function SubmissionManager: TSubmissionManager; virtual; abstract;
+    function CreateSubmissionSession(AUser: TUser): TProblemSubmissionSession; virtual;
+  end;
+
 implementation
 
 function IdComparePlain(const AID1, AID2: integer): integer;
@@ -473,16 +470,6 @@ begin
   end;
 end;
 
-{ TIdList }
-
-procedure TIdList.Sort(Reversed: boolean);
-begin
-  if Reversed then
-    inherited Sort(@IdCompareReversed)
-  else
-    inherited Sort(@IdComparePlain);
-end;
-
 { TTestProblemTransaction }
 
 constructor TTestProblemTransaction.Create(AManager: TEditableManager;
@@ -526,6 +513,16 @@ destructor TTestProblemTransaction.Destroy;
 begin
   FreeAndNil(FSubmissionSession);
   inherited Destroy;
+end;
+
+{ TIdList }
+
+procedure TIdList.Sort(Reversed: boolean);
+begin
+  if Reversed then
+    inherited Sort(@IdCompareReversed)
+  else
+    inherited Sort(@IdComparePlain);
 end;
 
 { TTestSubmissionList }
