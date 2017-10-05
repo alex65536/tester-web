@@ -33,15 +33,15 @@
     <RequiredPackages Count="7">
       <Item1>
         <PackageName Value="ts_testerbase"/>
-        <DefaultFilename Value="../../tester/src/ts_testerbase/ts_testerbase.lpk"/>
+        <DefaultFilename Value="../tester/src/ts_testerbase/ts_testerbase.lpk"/>
       </Item1>
       <Item2>
         <PackageName Value="ts_timerlib"/>
-        <DefaultFilename Value="../../tester/timerlib/src/ts_timerlib.lpk"/>
+        <DefaultFilename Value="../tester/timerlib/src/ts_timerlib.lpk"/>
       </Item2>
       <Item3>
         <PackageName Value="ts_testerutil"/>
-        <DefaultFilename Value="../../tester/src/ts_testerutil/ts_testerutil.lpk"/>
+        <DefaultFilename Value="../tester/src/ts_testerutil/ts_testerutil.lpk"/>
       </Item3>
       <Item4>
         <PackageName Value="hash_3rdparty"/>

@@ -1,0 +1,3 @@
+[submodule "tester"]
+	path = tester
+	url = https://github.com/alex65536/tester
