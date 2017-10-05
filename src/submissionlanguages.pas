@@ -36,7 +36,7 @@ const
   LanguageExts: array [TSubmissionLanguage] of string =
     ('.pas', '.dpr', '.c', '.cpp', '.cpp');
 
-  LanguageInnerExts: array [TSubmissionLanguage] of string =
+  LanguageInternalExts: array [TSubmissionLanguage] of string =
     ('.pas', '.dpr', '.c', '.cxx', '.cpp');
 
   LanguageCompilers: array [TSubmissionLanguage] of TCompilerClass = (
@@ -83,7 +83,7 @@ var
 begin
   for L in TSubmissionLanguage do
   begin
-    RegisterCompiler(LanguageInnerExts[L], LanguageCompilers[L]);
+    RegisterCompiler(LanguageInternalExts[L], LanguageCompilers[L]);
     Compiler := LanguageCompilers[L].Create;
     try
       FFullCompilerNames[L] := Compiler.CompilerFullName;

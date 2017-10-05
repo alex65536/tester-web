@@ -35,10 +35,15 @@ type
 
   TSubmissionTransactionPageFeature = class(TEditableTransactionPageFeature)
   private
+    FSession: TProblemSubmissionSession;
     function GetTransaction: TTestProblemTransaction;
   protected
     property Transaction: TTestProblemTransaction read GetTransaction;
+    property Session: TProblemSubmissionSession read FSession;
     function CreateTransaction: TEditableTransaction; override;
+    function CreateSubmissionSession: TProblemSubmissionSession; virtual;
+    procedure BeforeSatisfy; override;
+    procedure AfterSatisfy; override;
   end;
 
   { TSubmitPageFeature }
@@ -68,8 +73,8 @@ var
   SubmissionIds: TIdList;
   List: TSubmissionItemList;
 begin
-  SubmissionIds := SubmissionManager.ListByOwner(User, EditableObject as TTestableProblem);
-  List := TSubmissionItemList.Create(Parent, SubmissionIds, Transaction);
+  SubmissionIds := Session.ListByOwner(EditableObject as TTestableProblem);
+  List := TSubmissionItemList.Create(Parent, SubmissionIds, Session);
   try
     Parent.AddElementPagePart('problemSubmissionList', List);
   finally
@@ -91,6 +96,7 @@ procedure TSubmitPageFeature.InternalSatisfy;
 var
   List: TSubmissionLanguageItemList;
 begin
+  // fill variables
   with Parent.Variables do
   begin
     ItemsAsText['problemSubmitSolution'] := SProblemSubmitSolution;
@@ -125,6 +131,23 @@ end;
 function TSubmissionTransactionPageFeature.CreateTransaction: TEditableTransaction;
 begin
   Result := (EditableObject as TTestableProblem).CreateTestTransaction(User);
+end;
+
+function TSubmissionTransactionPageFeature.CreateSubmissionSession: TProblemSubmissionSession;
+begin
+  Result := ProblemManager.CreateSubmissionSession(User);
+end;
+
+procedure TSubmissionTransactionPageFeature.BeforeSatisfy;
+begin
+  inherited BeforeSatisfy;
+  FSession := CreateSubmissionSession;
+end;
+
+procedure TSubmissionTransactionPageFeature.AfterSatisfy;
+begin
+  FreeAndNil(FSession);
+  inherited AfterSatisfy;
 end;
 
 end.

@@ -13,15 +13,15 @@ type
 
   TTsWebProblemManager = class(TTestableProblemManager)
   public
+    function SubmissionManager: TSubmissionManager; override;
     constructor Create;
   end;
 
   { TTsWebSubmissionManager }
 
   TTsWebSubmissionManager = class(TTsRunSubmissionManager)
-  protected
-    function GetProblemManager: TTestableProblemManager; override;
   public
+    function ProblemManager: TTestableProblemManager; override;
     constructor Create;
   end;
 
@@ -50,6 +50,11 @@ end;
 
 { TTsWebProblemManager }
 
+function TTsWebProblemManager.SubmissionManager: TSubmissionManager;
+begin
+  Result := tswebmanagers.SubmissionManager;
+end;
+
 constructor TTsWebProblemManager.Create;
 begin
   inherited Create;
@@ -58,7 +63,7 @@ end;
 
 { TTsWebSubmissionManager }
 
-function TTsWebSubmissionManager.GetProblemManager: TTestableProblemManager;
+function TTsWebSubmissionManager.ProblemManager: TTestableProblemManager;
 begin
   Result := tswebmanagers.ProblemManager;
 end;

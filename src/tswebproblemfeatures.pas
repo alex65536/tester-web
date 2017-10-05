@@ -155,8 +155,8 @@ var
 begin
   // load list
   Problem := EditableObject as TTestableProblem;
-  SubmissionIds := SubmissionManager.ListAvailable(Transaction, Problem);
-  List := TSubmissionItemList.Create(Parent, SubmissionIds, Transaction);
+  SubmissionIds := Session.ListAvailable(Problem);
+  List := TSubmissionItemList.Create(Parent, SubmissionIds, Session);
   try
     Parent.AddElementPagePart('problemSubmissionList', List);
   finally
