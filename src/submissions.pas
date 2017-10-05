@@ -106,11 +106,11 @@ type
   private
     FResults: TTestedProblem;
   protected
-    procedure LoadResults; virtual;
     procedure HandleSelfDeletion; virtual;
     {%H-}constructor Create(AManager: TSubmissionManager; AID: integer);
   public
     property Results: TTestedProblem read FResults;
+    procedure LoadResults; virtual;
     destructor Destroy; override;
   end;
 
@@ -150,7 +150,6 @@ type
     property Storage: TAbstractDataStorage read FStorage;
     procedure DoAdd(ASubmission: TTestSubmission); virtual; abstract;
     procedure DoDelete(ASubmission: TTestSubmission); virtual; abstract;
-    procedure InternalDelete(ASubmission: TTestSubmission);
     procedure InternalDeleteAndFree(ASubmission: TTestSubmission);
     procedure TriggerTestingFinished(ASubmission: TTestSubmission);
     {%H-}constructor Create(AQueue: TSubmissionQueue; AMaxPoolSize: integer = 0);
@@ -288,18 +287,15 @@ type
 
   TTestProblemTransaction = class(TProblemTransaction)
   private
-    FSubmissionSession: TProblemSubmissionSession;
+    function GetSubmissionManager: TSubmissionManager;
   protected
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
   public
-    property SubmissionSession: TProblemSubmissionSession read FSubmissionSession;
+    property SubmissionManager: TSubmissionManager read GetSubmissionManager;
     function CanWriteData: boolean; override;
     function CanTestProblem: boolean; virtual;
-    function CanRejudge: boolean;
-    function CanReadSubmission(AOwner: TUserInfo): boolean;
     procedure CreateSubmission(ALanguage: TSubmissionLanguage; const AFileName: string);
-    destructor Destroy; override;
   end;
 
   { TTestableProblem }
@@ -384,6 +380,8 @@ function TProblemSubmissionSession.CanReadSubmission(AProblem: TTestableProblem;
 var
   UserAccessLevel: TEditableAccessRights;
 begin
+  if not (User is TEditorUser) then
+    Exit(False);
   UserAccessLevel := Manager.GetAccessRights(AProblem.Name, User.Info);
   Result := True;
   if (UserAccessLevel in AccessCanReadSet) and (AOwner.ID = User.ID) then
@@ -393,11 +391,12 @@ begin
   Result := False;
 end;
 
-function TProblemSubmissionSession.CanRejudgeSubmission(
-  AProblem: TTestableProblem): boolean;
+function TProblemSubmissionSession.CanRejudgeSubmission(AProblem: TTestableProblem): boolean;
 var
   UserAccessLevel: TEditableAccessRights;
 begin
+  if not (User is TEditorUser) then
+    Exit(False);
   UserAccessLevel := Manager.GetAccessRights(AProblem.Name, User.Info);
   Result := UserAccessLevel in AccessCanWriteSet;
 end;
@@ -452,6 +451,7 @@ begin
   ValidateSubmission(AID);
   if not CanRejudgeSubmission(AID) then
     raise ESubmissionAccessDenied.Create(SAccessDenied);
+  SubmissionManager.RejudgeSubmission(AID);
 end;
 
 procedure TProblemSubmissionSession.RejudgeSubmissions(AProblem: TTestableProblem);
@@ -472,11 +472,15 @@ end;
 
 { TTestProblemTransaction }
 
+function TTestProblemTransaction.GetSubmissionManager: TSubmissionManager;
+begin
+  Result := (Manager as TTestableProblemManager).SubmissionManager;
+end;
+
 constructor TTestProblemTransaction.Create(AManager: TEditableManager;
   AUser: TUser; AObject: TEditableObject);
 begin
   inherited Create(AManager, AUser, AObject);
-  FSubmissionSession := (Manager as TTestableProblemManager).CreateSubmissionSession(User);
 end;
 
 function TTestProblemTransaction.CanWriteData: boolean;
@@ -489,29 +493,15 @@ begin
   Result := AccessLevel in AccessCanReadSet;
 end;
 
-function TTestProblemTransaction.CanRejudge: boolean;
-begin
-  Result := SubmissionSession.CanRejudgeSubmission(Problem as TTestableProblem);
-end;
-
-function TTestProblemTransaction.CanReadSubmission(AOwner: TUserInfo): boolean;
-begin
-  Result := SubmissionSession.CanReadSubmission(Problem as TTestableProblem, AOwner);
-end;
-
 procedure TTestProblemTransaction.CreateSubmission(ALanguage: TSubmissionLanguage;
   const AFileName: string);
 begin
   if not CanTestProblem then
     raise ESubmissionAccessDenied.Create(SAccessDenied);
-  with SubmissionSession.SubmissionManager do
+  if FileSizeUTF8(AFileName) > MaxSrcLimit * 1024 then
+    raise ESubmissionValidate.CreateFmt(SSubmissionTooBig, [MaxSrcLimit]);
+  with SubmissionManager do
     CreateSubmission(User, Problem as TTestableProblem, ALanguage, AFileName);
-end;
-
-destructor TTestProblemTransaction.Destroy;
-begin
-  FreeAndNil(FSubmissionSession);
-  inherited Destroy;
 end;
 
 { TIdList }
@@ -584,14 +574,14 @@ var
 begin
   // ask the queue to delete
   Queue.DeleteSubmission(AID);
-  // delete files using HandleDeletion
+  // call HandleSelfDeletion
   Submission := DoCreateViewSubmission(AID);
   try
     Submission.HandleSelfDeletion;
   finally
     FreeAndNil(Submission);
   end;
-  // remove from storage
+  // remove from the storage
   Storage.DeleteVariable(OwnerSectionName(SubmissionOwnerID(AID)) + '.' + Id2Str(AID));
   Storage.DeleteVariable(ProblemSectionName(SubmissionProblemID(AID)) +
     '.' + Id2Str(AID));
@@ -739,7 +729,7 @@ begin
   ID := NextID;
   Submission := DoCreateTestSubmission(ID);
   try
-    // fill owner & Aproblem
+    // fill owner & problem
     Storage.WriteInteger(SubmissionSectionName(ID) + '.ownerId', AUser.ID);
     Storage.WriteBool(OwnerSectionName(AUser.ID) + '.' + Id2Str(ID), True);
     Storage.WriteInteger(SubmissionSectionName(ID) + '.problemId', AProblem.ID);
@@ -867,12 +857,12 @@ var
 begin
   // remove old section
   Storage.DeletePath('queue');
-  // append submissions (from queue)
-  for I := 0 to SubmissionCount - 1 do
-    Storage.WriteBool(SubmissionNode(Submissions[I]), True);
   // append submissions (from pool)
   for I := 0 to Pool.SubmissionCount - 1 do
     Storage.WriteBool(SubmissionNode(Pool.Submissions[I]), True);
+  // append submissions (from queue)
+  for I := 0 to SubmissionCount - 1 do
+    Storage.WriteBool(SubmissionNode(Submissions[I]), True);
 end;
 
 procedure TSubmissionQueue.DoDestroySubmission(ASubmission: TTestSubmission);
@@ -950,6 +940,7 @@ begin
     FList.Delete(FList.Count - 1);
     FreeSubmission(Submission);
   end;
+  while TriggerAddToPool do;
 end;
 
 procedure TSubmissionQueue.BeforeDestruction;
@@ -967,14 +958,14 @@ end;
 
 destructor TSubmissionQueue.Destroy;
 begin
-  if Pool <> nil then
-    Pool.Unsubscribe(Self);
   if Storage <> nil then
     Storage.FPODetachObserver(Self);
+  if Pool <> nil then
+    Pool.Unsubscribe(Self);
   if FList <> nil then
     Clear;
-  FreeAndNil(FList);
   FreeAndNil(FPool);
+  FreeAndNil(FList);
   inherited Destroy;
 end;
 
@@ -990,17 +981,12 @@ begin
   Result := FList[I];
 end;
 
-procedure TSubmissionPool.InternalDelete(ASubmission: TTestSubmission);
+procedure TSubmissionPool.InternalDeleteAndFree(ASubmission: TTestSubmission);
 begin
   FList.Remove(ASubmission);
   DoDelete(ASubmission);
-end;
-
-procedure TSubmissionPool.InternalDeleteAndFree(ASubmission: TTestSubmission);
-begin
   Broadcast(TSubmissionDeletingPoolMessage.Create.AddSubmission(ASubmission)
     .AddSender(Self).Lock);
-  InternalDelete(ASubmission);
   Queue.FreeSubmission(ASubmission);
 end;
 
@@ -1172,7 +1158,7 @@ end;
 
 function TBaseSubmission.GetFileName: string;
 begin
-  Result := AppendPathDelim(FilesLocation) + IntToStr(ID) + LanguageInnerExts[Language];
+  Result := AppendPathDelim(FilesLocation) + IntToStr(ID) + LanguageInternalExts[Language];
 end;
 
 function TBaseSubmission.GetFinished: boolean;

@@ -35,11 +35,15 @@ type
 
   TSubmissionTransactionPageFeature = class(TEditableTransactionPageFeature)
   private
+    FSession: TProblemSubmissionSession;
     function GetTransaction: TTestProblemTransaction;
   protected
     property Transaction: TTestProblemTransaction read GetTransaction;
-    function Session: TProblemSubmissionSession;
+    property Session: TProblemSubmissionSession read FSession;
     function CreateTransaction: TEditableTransaction; override;
+    function CreateSubmissionSession: TProblemSubmissionSession; virtual;
+    procedure BeforeSatisfy; override;
+    procedure AfterSatisfy; override;
   end;
 
   { TSubmitPageFeature }
@@ -124,14 +128,26 @@ begin
   Result := (inherited Transaction) as TTestProblemTransaction;
 end;
 
-function TSubmissionTransactionPageFeature.Session: TProblemSubmissionSession;
-begin
-  Result := Transaction.SubmissionSession;
-end;
-
 function TSubmissionTransactionPageFeature.CreateTransaction: TEditableTransaction;
 begin
   Result := (EditableObject as TTestableProblem).CreateTestTransaction(User);
+end;
+
+function TSubmissionTransactionPageFeature.CreateSubmissionSession: TProblemSubmissionSession;
+begin
+  Result := ProblemManager.CreateSubmissionSession(User);
+end;
+
+procedure TSubmissionTransactionPageFeature.BeforeSatisfy;
+begin
+  inherited BeforeSatisfy;
+  FSession := CreateSubmissionSession;
+end;
+
+procedure TSubmissionTransactionPageFeature.AfterSatisfy;
+begin
+  FreeAndNil(FSession);
+  inherited AfterSatisfy;
 end;
 
 end.
