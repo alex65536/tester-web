@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, submissionlanguages, users, datastorages, problems,
   testresults, jsonsaver, tswebobservers, filemanager, fgl, editableobjects,
-  webstrconsts, tswebutils, serverconfig, LazFileUtils, tswebdirectories, math;
+  webstrconsts, tswebutils, serverconfig, LazFileUtils, tswebdirectories, Math;
 
 type
   ESubmissionAction = class(EUserAction);
@@ -234,7 +234,8 @@ type
     function ListByOwner(AInfo: TUserInfo): TIdList;
     function ListByProblem(AProblem: TTestableProblem): TIdList;
 
-    function Filter(AList: TIdList; AObject: TObject; AFilter: TSubmissionFilter): TIdList;
+    function Filter(AList: TIdList; AObject: TObject;
+      AFilter: TSubmissionFilter): TIdList;
     function ProblemFilter(AID: integer; AObject: TObject): boolean;
     function AvailableFilter(AID: integer; AObject: TObject): boolean;
 
@@ -352,8 +353,7 @@ begin
     raise ESubmissionNotExist.Create(SSubmissionDoesNotExist);
 end;
 
-constructor TProblemSubmissionSession.Create(AManager: TEditableManager;
-  AUser: TUser);
+constructor TProblemSubmissionSession.Create(AManager: TEditableManager; AUser: TUser);
 begin
   inherited Create(AManager, AUser);
 end;
@@ -496,8 +496,7 @@ end;
 
 function TTestProblemTransaction.CanReadSubmission(AOwner: TUserInfo): boolean;
 begin
-  Result := SubmissionSession.CanReadSubmission(Problem as TTestableProblem,
-    AOwner);
+  Result := SubmissionSession.CanReadSubmission(Problem as TTestableProblem, AOwner);
 end;
 
 procedure TTestProblemTransaction.CreateSubmission(ALanguage: TSubmissionLanguage;
@@ -594,7 +593,8 @@ begin
   end;
   // remove from storage
   Storage.DeleteVariable(OwnerSectionName(SubmissionOwnerID(AID)) + '.' + Id2Str(AID));
-  Storage.DeleteVariable(ProblemSectionName(SubmissionProblemID(AID)) + '.' + Id2Str(AID));
+  Storage.DeleteVariable(ProblemSectionName(SubmissionProblemID(AID)) +
+    '.' + Id2Str(AID));
   Storage.DeletePath(SubmissionSectionName(AID));
 end;
 
@@ -730,8 +730,8 @@ begin
     HandleProblemDeleting((AMessage as TEditableDeletingMessage).EditableObject as TTestableProblem);
 end;
 
-procedure TSubmissionManager.CreateSubmission(AUser: TUser; AProblem: TTestableProblem;
-  ALanguage: TSubmissionLanguage; const AFileName: string);
+procedure TSubmissionManager.CreateSubmission(AUser: TUser;
+  AProblem: TTestableProblem; ALanguage: TSubmissionLanguage; const AFileName: string);
 var
   ID: integer;
   Submission: TTestSubmission;
@@ -1295,8 +1295,7 @@ begin
   Result := inherited PropsFileName;
 end;
 
-constructor TTestableProblem.Create(const AName: string;
-  AManager: TEditableManager);
+constructor TTestableProblem.Create(const AName: string; AManager: TEditableManager);
 begin
   inherited Create(AName, AManager);
 end;
