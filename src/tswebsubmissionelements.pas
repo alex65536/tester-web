@@ -75,16 +75,16 @@ type
   TSubmissionItemList = class(TTesterHtmlListedPageElement)
   private
     FSubmissionList: TIdList;
-    FTransaction: TTestProblemTransaction;
+    FSession: TProblemSubmissionSession;
   protected
     procedure DoFillList;
     procedure DoFillVariables; override;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
-    property Transaction: TTestProblemTransaction read FTransaction;
+    property Session: TProblemSubmissionSession read FSession;
     property SubmissionList: TIdList read FSubmissionList;
     constructor Create(AParent: THtmlPage; ASubmissionList: TIdList;
-      ATransaction: TTestProblemTransaction);
+      ASession: TProblemSubmissionSession);
     destructor Destroy; override;
   end;
 
@@ -98,7 +98,7 @@ var
 begin
   SubmissionList.Sort(True);
   for AID in SubmissionList do
-    List.Add(TSubmissionItem.Create(Parent, SubmissionManager.GetSubmission(AID, Transaction)));
+    List.Add(TSubmissionItem.Create(Parent, Session.GetSubmission(AID)));
 end;
 
 procedure TSubmissionItemList.DoFillVariables;
@@ -124,11 +124,11 @@ begin
 end;
 
 constructor TSubmissionItemList.Create(AParent: THtmlPage;
-  ASubmissionList: TIdList; ATransaction: TTestProblemTransaction);
+  ASubmissionList: TIdList; ASession: TProblemSubmissionSession);
 begin
   inherited Create(AParent);
   FSubmissionList := ASubmissionList;
-  FTransaction := ATransaction;
+  FSession := ASession;
   DoFillList;
 end;
 

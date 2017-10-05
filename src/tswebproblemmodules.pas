@@ -171,16 +171,16 @@ end;
 procedure TProblemSubmissionsWebModule.DoInsideHandlePost(ARequest: TRequest);
 var
   TestProblem: TTestableProblem;
-  TestTransaction: TTestProblemTransaction;
+  SubmissionSession: TProblemSubmissionSession;
 begin
   if ARequest.ContentFields.Values['query'] = 'rejudge' then
   begin
     TestProblem := EditableObject as TTestableProblem;
-    TestTransaction := TestProblem.CreateTestTransaction(User);
+    SubmissionSession := ProblemManager.CreateSubmissionSession(User);
     try
-      SubmissionManager.RejudgeSubmissions(TestTransaction, TestProblem);
+      SubmissionSession.RejudgeSubmissions(TestProblem);
     finally
-      FreeAndNil(TestTransaction);
+      FreeAndNil(SubmissionSession);
     end;
   end;
 end;
@@ -236,7 +236,7 @@ begin
   try
     TestTransaction := TestProblem.CreateTestTransaction(User);
     try
-      SubmissionManager.CreateSubmission(TestTransaction, Language, FileName);
+      TestTransaction.CreateSubmission(Language, FileName);
     finally
       FreeAndNil(TestTransaction);
     end;

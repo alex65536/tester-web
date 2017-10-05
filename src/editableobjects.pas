@@ -222,6 +222,7 @@ type
     function ObjectNameToId(const AName: string): integer;
     function ObjectExists(const AName: string): boolean;
     function GetObject(const AName: string): TEditableObject;
+    function GetObject(AID: integer): TEditableObject;
     function ListAllAvailableObjects: TStringList;
     function ListAvailableObjects(AUser: TEditorUser): TStringList;
     function GetAccessRights(const AObject: string;
@@ -515,6 +516,11 @@ begin
   if not ObjectExists(AName) then
     raise EEditableNotExist.CreateFmt(SObjectDoesNotExist, [ObjectTypeName, AName]);
   Result := CreateObject(AName);
+end;
+
+function TEditableManager.GetObject(AID: integer): TEditableObject;
+begin
+  Result := GetObject(IdToObjectName(AID));
 end;
 
 function TEditableManager.ListAllAvailableObjects: TStringList;

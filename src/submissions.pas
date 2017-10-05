@@ -37,17 +37,64 @@ type
   ESubmissionAccessDenied = class(ESubmissionAction);
   ESubmissionNotExist = class(ESubmissionAction);
 
+  TSubmissionManager = class;
+  TTestableProblem = class;
+  TTestableProblemManager = class;
+  TViewSubmission = class;
+
+  { TIdList }
+
+  TIdList = class(specialize TFPGList<integer>)
+  public
+    procedure Sort(Reversed: boolean);
+  end;
+
+  { TProblemSubmissionSession }
+
+  TProblemSubmissionSession = class(TEditableCustomSession)
+  private
+    function GetManager: TTestableProblemManager;
+    function GetSubmissionManager: TSubmissionManager;
+  protected
+    procedure ValidateSubmission(AID: integer);
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
+  public
+    property Manager: TTestableProblemManager read GetManager;
+    property SubmissionManager: TSubmissionManager read GetSubmissionManager;
+
+    function CanReadSubmission(AID: integer): boolean;
+    function CanReadSubmission(AProblem: TTestableProblem;
+      AOwner: TUserInfo): boolean; virtual;
+    function CanRejudgeSubmission(AProblem: TTestableProblem): boolean; virtual;
+    function CanRejudgeSubmission(AID: integer): boolean;
+
+    function GetSubmission(AID: integer): TViewSubmission;
+
+    function ListByOwner: TIdList;
+    function ListByOwner(AProblem: TTestableProblem): TIdList;
+    function ListAvailable: TIdList;
+    function ListAvailable(AProblem: TTestableProblem): TIdList;
+
+    procedure RejudgeSubmission(AID: integer);
+    procedure RejudgeSubmissions(AProblem: TTestableProblem);
+  end;
+
   { TTestProblemTransaction }
 
   TTestProblemTransaction = class(TProblemTransaction)
+  private
+    FSubmissionSession: TProblemSubmissionSession;
   protected
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
   public
+    property SubmissionSession: TProblemSubmissionSession read FSubmissionSession;
     function CanWriteData: boolean; override;
     function CanTestProblem: boolean; virtual;
-    function CanRejudge: boolean; virtual;
-    function CanReadSubmissions(AOwner: TUserInfo): boolean; virtual;
+    function CanRejudge: boolean;
+    function CanReadSubmission(AOwner: TUserInfo): boolean;
+    procedure CreateSubmission(ALanguage: TSubmissionLanguage; const AFileName: string);
+    destructor Destroy; override;
   end;
 
   { TTestableProblem }
@@ -58,8 +105,7 @@ type
     function PropsFileName: string;
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
   public
-    function CreateTestTransaction(AUser: TUser): TTestProblemTransaction;
-      virtual;
+    function CreateTestTransaction(AUser: TUser): TTestProblemTransaction; virtual;
   end;
 
   { TTestableProblemManager }
@@ -67,16 +113,10 @@ type
   TTestableProblemManager = class(TProblemManager)
   protected
     function CreateObject(const AName: string): TEditableObject; override;
-  end;
-
-  { TIdList }
-
-  TIdList = class(specialize TFPGList<integer>)
   public
-    procedure Sort(Reversed: boolean);
+    function SubmissionManager: TSubmissionManager; virtual; abstract;
+    function CreateSubmissionSession(AUser: TUser): TProblemSubmissionSession; virtual;
   end;
-
-  TSubmissionManager = class;
 
   { TBaseSubmission }
 
@@ -251,7 +291,6 @@ type
     function OwnerSectionName(AID: integer): string;
     function ProblemSectionName(AID: integer): string;
     function CreateStorage: TAbstractDataStorage; virtual;
-    function GetProblemManager: TTestableProblemManager; virtual; abstract;
     function CreateQueue: TSubmissionQueue; virtual; abstract;
     function DoCreateTestSubmission(AID: integer): TTestSubmission; virtual;
     function DoCreateViewSubmission(AID: integer): TViewSubmission; virtual;
@@ -259,8 +298,6 @@ type
     procedure HandleUserDeleting(AInfo: TUserInfo); virtual;
     procedure HandleProblemDeleting(AProblem: TTestableProblem); virtual;
     procedure ResumeCreateSubmission(AID: integer); virtual;
-    procedure InternalRejudgeSubmission(AID: integer); virtual;
-    procedure ValidateCanRejudge(ATransaction: TTestProblemTransaction); virtual;
     function SubmissionOwnerID(AID: integer): integer;
     function SubmissionProblemID(AID: integer): integer;
     function StrListToIdList(AList: TStringList): TIdList;
@@ -273,23 +310,16 @@ type
     function ProblemFilter(AID: integer; AObject: TObject): boolean;
     function AvailableFilter(AID: integer; AObject: TObject): boolean;
 
-    function CanAccessSubmission(AID: integer; ATransaction: TTestProblemTransaction): boolean;
+    procedure CreateSubmission(AUser: TUser; AProblem: TTestableProblem;
+      ALanguage: TSubmissionLanguage; const AFileName: string);
+    function GetSubmission(AID: integer): TViewSubmission;
+    procedure RejudgeSubmission(AID: integer); virtual;
+
     procedure MessageReceived(AMessage: TAuthorMessage);
   public
-    property ProblemManager: TTestableProblemManager read GetProblemManager;
+    function ProblemManager: TTestableProblemManager; virtual; abstract;
     property Queue: TSubmissionQueue read FQueue;
-    procedure CreateSubmission(ATransaction: TTestProblemTransaction;
-      ALanguage: TSubmissionLanguage; const AFileName: string);
-    function GetSubmission(AID: integer; ATransaction: TTestProblemTransaction): TViewSubmission;
     function SubmissionExists(AID: integer): boolean;
-    function ListByOwner(AUser: TUser): TIdList;
-    function ListByOwner(AUser: TUser; AProblem: TTestableProblem): TIdList;
-    function ListAvailable(ATransaction: TTestProblemTransaction): TIdList;
-    function ListAvailable(ATransaction: TTestProblemTransaction;
-      AProblem: TTestableProblem): TIdList;
-    procedure RejudgeSubmission(ATransaction: TTestProblemTransaction; AID: integer);
-    procedure RejudgeSubmissions(ATransaction: TTestProblemTransaction;
-      AProblem: TTestableProblem);
     procedure AfterConstruction; override;
     constructor Create;
     destructor Destroy; override;
@@ -307,6 +337,142 @@ begin
   Result := -CompareValue(AID1, AID2);
 end;
 
+{ TProblemSubmissionSession }
+
+function TProblemSubmissionSession.GetManager: TTestableProblemManager;
+begin
+  Result := (inherited Manager) as TTestableProblemManager;
+end;
+
+function TProblemSubmissionSession.GetSubmissionManager: TSubmissionManager;
+begin
+  Result := Manager.SubmissionManager;
+end;
+
+procedure TProblemSubmissionSession.ValidateSubmission(AID: integer);
+begin
+  if not SubmissionManager.SubmissionExists(AID) then
+    raise ESubmissionNotExist.Create(SSubmissionDoesNotExist);
+end;
+
+constructor TProblemSubmissionSession.Create(AManager: TEditableManager;
+  AUser: TUser);
+begin
+  inherited Create(AManager, AUser);
+end;
+
+function TProblemSubmissionSession.CanReadSubmission(AID: integer): boolean;
+var
+  UserID, ProblemID: integer;
+  Problem: TTestableProblem;
+  Info: TUserInfo;
+begin
+  UserID := SubmissionManager.SubmissionOwnerID(AID);
+  ProblemID := SubmissionManager.SubmissionProblemID(AID);
+  Problem := Manager.GetObject(ProblemID) as TTestableProblem;
+  try
+    Info := UserManager.GetUserInfo(UserID);
+    try
+      Result := CanReadSubmission(Problem, Info);
+    finally
+      FreeAndNil(Info);
+    end;
+  finally
+    FreeAndNil(Problem);
+  end;
+end;
+
+function TProblemSubmissionSession.CanReadSubmission(AProblem: TTestableProblem;
+  AOwner: TUserInfo): boolean;
+var
+  UserAccessLevel: TEditableAccessRights;
+begin
+  UserAccessLevel := Manager.GetAccessRights(AProblem.Name, User.Info);
+  Result := True;
+  if (UserAccessLevel in AccessCanReadSet) and (AOwner.ID = User.ID) then
+    Exit;
+  if UserAccessLevel in AccessCanWriteSet then
+    Exit;
+  Result := False;
+end;
+
+function TProblemSubmissionSession.CanRejudgeSubmission(
+  AProblem: TTestableProblem): boolean;
+var
+  UserAccessLevel: TEditableAccessRights;
+begin
+  UserAccessLevel := Manager.GetAccessRights(AProblem.Name, User.Info);
+  Result := UserAccessLevel in AccessCanWriteSet;
+end;
+
+function TProblemSubmissionSession.CanRejudgeSubmission(AID: integer): boolean;
+var
+  ProblemID: integer;
+  Problem: TTestableProblem;
+begin
+  ProblemID := SubmissionManager.SubmissionProblemID(AID);
+  Problem := Manager.GetObject(ProblemID) as TTestableProblem;
+  try
+    Result := CanRejudgeSubmission(Problem);
+  finally
+    FreeAndNil(Problem);
+  end;
+end;
+
+function TProblemSubmissionSession.GetSubmission(AID: integer): TViewSubmission;
+begin
+  ValidateSubmission(AID);
+  if not CanReadSubmission(AID) then
+    raise ESubmissionAccessDenied.Create(SAccessDenied);
+  Result := SubmissionManager.GetSubmission(AID);
+end;
+
+function TProblemSubmissionSession.ListByOwner: TIdList;
+begin
+  Result := SubmissionManager.ListByOwner(User.Info);
+end;
+
+function TProblemSubmissionSession.ListByOwner(AProblem: TTestableProblem): TIdList;
+begin
+  with SubmissionManager do
+    Result := Filter(ListByOwner(User.Info), AProblem, @ProblemFilter);
+end;
+
+function TProblemSubmissionSession.ListAvailable: TIdList;
+begin
+  with SubmissionManager do
+    Result := Filter(ListAll, Self, @AvailableFilter);
+end;
+
+function TProblemSubmissionSession.ListAvailable(AProblem: TTestableProblem): TIdList;
+begin
+  with SubmissionManager do
+    Result := Filter(ListByProblem(AProblem), Self, @AvailableFilter);
+end;
+
+procedure TProblemSubmissionSession.RejudgeSubmission(AID: integer);
+begin
+  ValidateSubmission(AID);
+  if not CanRejudgeSubmission(AID) then
+    raise ESubmissionAccessDenied.Create(SAccessDenied);
+end;
+
+procedure TProblemSubmissionSession.RejudgeSubmissions(AProblem: TTestableProblem);
+var
+  List: TIdList;
+  ID: integer;
+begin
+  if not CanRejudgeSubmission(AProblem) then
+    raise ESubmissionAccessDenied.Create(SAccessDenied);
+  List := ListAvailable(AProblem);
+  try
+    for ID in List do
+      SubmissionManager.RejudgeSubmission(ID);
+  finally
+    FreeAndNil(List);
+  end;
+end;
+
 { TIdList }
 
 procedure TIdList.Sort(Reversed: boolean);
@@ -315,6 +481,51 @@ begin
     inherited Sort(@IdCompareReversed)
   else
     inherited Sort(@IdComparePlain);
+end;
+
+{ TTestProblemTransaction }
+
+constructor TTestProblemTransaction.Create(AManager: TEditableManager;
+  AUser: TUser; AObject: TEditableObject);
+begin
+  inherited Create(AManager, AUser, AObject);
+  FSubmissionSession := (Manager as TTestableProblemManager).CreateSubmissionSession(User);
+end;
+
+function TTestProblemTransaction.CanWriteData: boolean;
+begin
+  Result := False;
+end;
+
+function TTestProblemTransaction.CanTestProblem: boolean;
+begin
+  Result := AccessLevel in AccessCanReadSet;
+end;
+
+function TTestProblemTransaction.CanRejudge: boolean;
+begin
+  Result := SubmissionSession.CanRejudgeSubmission(Problem as TTestableProblem);
+end;
+
+function TTestProblemTransaction.CanReadSubmission(AOwner: TUserInfo): boolean;
+begin
+  Result := SubmissionSession.CanReadSubmission(Problem as TTestableProblem,
+    AOwner);
+end;
+
+procedure TTestProblemTransaction.CreateSubmission(ALanguage: TSubmissionLanguage;
+  const AFileName: string);
+begin
+  if not CanTestProblem then
+    raise ESubmissionAccessDenied.Create(SAccessDenied);
+  with SubmissionSession.SubmissionManager do
+    CreateSubmission(User, Problem as TTestableProblem, ALanguage, AFileName);
+end;
+
+destructor TTestProblemTransaction.Destroy;
+begin
+  FreeAndNil(FSubmissionSession);
+  inherited Destroy;
 end;
 
 { TTestSubmissionList }
@@ -330,39 +541,6 @@ begin
       Result := Items[I];
       Exit;
     end;
-end;
-
-{ TTestProblemTransaction }
-
-constructor TTestProblemTransaction.Create(AManager: TEditableManager;
-  AUser: TUser; AObject: TEditableObject);
-begin
-  inherited Create(AManager, AUser, AObject);
-end;
-
-function TTestProblemTransaction.CanWriteData: boolean;
-begin
-  Result := False;
-end;
-
-function TTestProblemTransaction.CanTestProblem: boolean;
-begin
-  Result := CanReadData;
-end;
-
-function TTestProblemTransaction.CanRejudge: boolean;
-begin
-  Result := AccessLevel in AccessCanWriteSet;
-end;
-
-function TTestProblemTransaction.CanReadSubmissions(AOwner: TUserInfo): boolean;
-begin
-  Result := True;
-  if CanReadData and (AOwner.ID = User.ID) then
-    Exit;
-  if AccessLevel in AccessCanWriteSet then
-    Exit;
-  Result := False;
 end;
 
 { TSubmissionManager }
@@ -458,18 +636,6 @@ begin
   Queue.AddSubmission(DoCreateTestSubmission(AID));
 end;
 
-procedure TSubmissionManager.InternalRejudgeSubmission(AID: integer);
-begin
-  Queue.DeleteSubmission(AID);
-  ResumeCreateSubmission(AID);
-end;
-
-procedure TSubmissionManager.ValidateCanRejudge(ATransaction: TTestProblemTransaction);
-begin
-  if not ATransaction.CanRejudge then
-    raise ESubmissionAccessDenied.Create(SAccessDenied);
-end;
-
 function TSubmissionManager.SubmissionOwnerID(AID: integer): integer;
 begin
   Result := Storage.ReadInteger(SubmissionSectionName(AID) + '.ownerId', -1);
@@ -556,20 +722,7 @@ end;
 
 function TSubmissionManager.AvailableFilter(AID: integer; AObject: TObject): boolean;
 begin
-  Result := CanAccessSubmission(AID, (AObject as TTestProblemTransaction));
-end;
-
-function TSubmissionManager.CanAccessSubmission(AID: integer;
-  ATransaction: TTestProblemTransaction): boolean;
-var
-  Info: TUserInfo;
-begin
-  Info := UserManager.GetUserInfo(SubmissionOwnerID(AID));
-  try
-    Result := ATransaction.CanReadSubmissions(Info);
-  finally
-    FreeAndNil(Info);
-  end;
+  Result := (AObject as TProblemSubmissionSession).CanReadSubmission(AID);
 end;
 
 procedure TSubmissionManager.MessageReceived(AMessage: TAuthorMessage);
@@ -580,30 +733,20 @@ begin
     HandleProblemDeleting((AMessage as TEditableDeletingMessage).EditableObject as TTestableProblem);
 end;
 
-procedure TSubmissionManager.CreateSubmission(ATransaction: TTestProblemTransaction;
+procedure TSubmissionManager.CreateSubmission(AUser: TUser; AProblem: TTestableProblem;
   ALanguage: TSubmissionLanguage; const AFileName: string);
 var
   ID: integer;
-  User: TUser;
-  Problem: TTestableProblem;
   Submission: TTestSubmission;
 begin
-  if not ATransaction.CanTestProblem then
-    raise ESubmissionAccessDenied.Create(SAccessDenied);
-  if FileSizeUTF8(AFileName) > ATransaction.MaxSrcLimit * 1024 then
-    raise ESubmissionValidate.CreateFmt(SSubmissionTooBig, [ATransaction.MaxSrcLimit]);
-  // determine data
-  Problem := ATransaction.Problem as TTestableProblem;
-  User := ATransaction.User;
   ID := NextID;
-  // create submission
   Submission := DoCreateTestSubmission(ID);
   try
-    // fill owner & problem
-    Storage.WriteInteger(SubmissionSectionName(ID) + '.ownerId', User.ID);
-    Storage.WriteBool(OwnerSectionName(User.ID) + '.' + Id2Str(ID), True);
-    Storage.WriteInteger(SubmissionSectionName(ID) + '.problemId', Problem.ID);
-    Storage.WriteBool(ProblemSectionName(Problem.ID) + '.' + Id2Str(ID), True);
+    // fill owner & Aproblem
+    Storage.WriteInteger(SubmissionSectionName(ID) + '.ownerId', AUser.ID);
+    Storage.WriteBool(OwnerSectionName(AUser.ID) + '.' + Id2Str(ID), True);
+    Storage.WriteInteger(SubmissionSectionName(ID) + '.problemId', AProblem.ID);
+    Storage.WriteBool(ProblemSectionName(AProblem.ID) + '.' + Id2Str(ID), True);
     // prepare submission for adding to queue
     Submission.UpdateSubmitTime;
     Submission.AddFile(ALanguage, AFileName);
@@ -615,15 +758,8 @@ begin
   end;
 end;
 
-function TSubmissionManager.GetSubmission(AID: integer;
-  ATransaction: TTestProblemTransaction): TViewSubmission;
+function TSubmissionManager.GetSubmission(AID: integer): TViewSubmission;
 begin
-  // check for validness
-  if not SubmissionExists(AID) then
-    raise ESubmissionNotExist.CreateFmt(SSubmissionDoesNotExist, [AID]);
-  if not CanAccessSubmission(AID, ATransaction) then
-    raise ESubmissionAccessDenied.Create(SAccessDenied);
-  // create submission instance
   Result := DoCreateViewSubmission(AID);
   try
     Result.LoadResults;
@@ -633,53 +769,15 @@ begin
   end;
 end;
 
+procedure TSubmissionManager.RejudgeSubmission(AID: integer);
+begin
+  Queue.DeleteSubmission(AID);
+  ResumeCreateSubmission(AID);
+end;
+
 function TSubmissionManager.SubmissionExists(AID: integer): boolean;
 begin
   Result := Storage.VariableExists(SubmissionSectionName(AID) + '.ownerId');
-end;
-
-function TSubmissionManager.ListByOwner(AUser: TUser): TIdList;
-begin
-  Result := ListByOwner(AUser.Info);
-end;
-
-function TSubmissionManager.ListByOwner(AUser: TUser; AProblem: TTestableProblem): TIdList;
-begin
-  Result := Filter(ListByOwner(AUser), AProblem, @ProblemFilter);
-end;
-
-function TSubmissionManager.ListAvailable(ATransaction: TTestProblemTransaction): TIdList;
-begin
-  Result := Filter(ListAll, ATransaction, @AvailableFilter);
-end;
-
-function TSubmissionManager.ListAvailable(ATransaction: TTestProblemTransaction;
-  AProblem: TTestableProblem): TIdList;
-begin
-  Result := Filter(ListByProblem(AProblem), ATransaction, @AvailableFilter);
-end;
-
-procedure TSubmissionManager.RejudgeSubmission(ATransaction: TTestProblemTransaction;
-  AID: integer);
-begin
-  ValidateCanRejudge(ATransaction);
-  InternalRejudgeSubmission(AID);
-end;
-
-procedure TSubmissionManager.RejudgeSubmissions(ATransaction: TTestProblemTransaction;
-  AProblem: TTestableProblem);
-var
-  List: TIdList;
-  ID: integer;
-begin
-  ValidateCanRejudge(ATransaction);
-  List := ListAvailable(ATransaction, AProblem);
-  try
-    for ID in List do
-      InternalRejudgeSubmission(ID);
-  finally
-    FreeAndNil(List);
-  end;
 end;
 
 procedure TSubmissionManager.AfterConstruction;
@@ -1181,6 +1279,11 @@ end;
 function TTestableProblemManager.CreateObject(const AName: string): TEditableObject;
 begin
   Result := TTestableProblem.Create(AName, Self);
+end;
+
+function TTestableProblemManager.CreateSubmissionSession(AUser: TUser): TProblemSubmissionSession;
+begin
+  Result := TProblemSubmissionSession.Create(Self, AUser);
 end;
 
 { TTestableProblem }

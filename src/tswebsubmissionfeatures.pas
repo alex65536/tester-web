@@ -38,6 +38,7 @@ type
     function GetTransaction: TTestProblemTransaction;
   protected
     property Transaction: TTestProblemTransaction read GetTransaction;
+    function Session: TProblemSubmissionSession;
     function CreateTransaction: TEditableTransaction; override;
   end;
 
@@ -68,8 +69,8 @@ var
   SubmissionIds: TIdList;
   List: TSubmissionItemList;
 begin
-  SubmissionIds := SubmissionManager.ListByOwner(User, EditableObject as TTestableProblem);
-  List := TSubmissionItemList.Create(Parent, SubmissionIds, Transaction);
+  SubmissionIds := Session.ListByOwner(EditableObject as TTestableProblem);
+  List := TSubmissionItemList.Create(Parent, SubmissionIds, Session);
   try
     Parent.AddElementPagePart('problemSubmissionList', List);
   finally
@@ -91,6 +92,7 @@ procedure TSubmitPageFeature.InternalSatisfy;
 var
   List: TSubmissionLanguageItemList;
 begin
+  // fill variables
   with Parent.Variables do
   begin
     ItemsAsText['problemSubmitSolution'] := SProblemSubmitSolution;
@@ -120,6 +122,11 @@ end;
 function TSubmissionTransactionPageFeature.GetTransaction: TTestProblemTransaction;
 begin
   Result := (inherited Transaction) as TTestProblemTransaction;
+end;
+
+function TSubmissionTransactionPageFeature.Session: TProblemSubmissionSession;
+begin
+  Result := Transaction.SubmissionSession;
 end;
 
 function TSubmissionTransactionPageFeature.CreateTransaction: TEditableTransaction;
