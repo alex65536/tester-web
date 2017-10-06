@@ -261,6 +261,18 @@ resourcestring
   SStringCannotBeEmpty = 'String %s cannot be empty!';
   SProblemSubmissionsText = 'Submissions';
   SProblemRejudgeBtn = 'Rejudge';
+  STestIdHeader = 'Test #';
+  STestVerdictHeader = 'Verdict';
+  STestTimeHeader = 'Time';
+  STestMemoryHeader = 'Memory';
+  STestScoreHeader = 'Score';
+  SCompileVerdictCaption = 'Compilation verdict:';
+  SSubmissionEmptySection = 'No information available!';
+  SSubmissionCompileHeader = 'Compilation results';
+  SSubmissionTestHeader = 'Testing results';
+  SSubmissionSourceHeader = 'Source code';
+  SCompileOutputCaption = 'Compiler output:';
+  SSubmissionPageCaption = 'Submission #%d';
 
 implementation
 

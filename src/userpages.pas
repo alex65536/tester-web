@@ -49,6 +49,7 @@ implementation
 procedure TUserPage.DoUpdateRequest;
 begin
   inherited DoUpdateRequest;
+  FreeAndNil(FUser);
   FUser := UserManager.LoadUserFromSession(Session);
 end;
 

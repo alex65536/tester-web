@@ -346,7 +346,7 @@ end;
 procedure TProblemSubmissionSession.ValidateSubmission(AID: integer);
 begin
   if not SubmissionManager.SubmissionExists(AID) then
-    raise ESubmissionNotExist.Create(SSubmissionDoesNotExist);
+    raise ESubmissionNotExist.CreateFmt(SSubmissionDoesNotExist, [AID]);
 end;
 
 constructor TProblemSubmissionSession.Create(AManager: TEditableManager; AUser: TUser);

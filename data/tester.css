@@ -466,7 +466,9 @@ td.a-delete-wrapper {
 	background-color: white;
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
+	max-height: 100pt;
 	margin-top: 0;
+	overflow: auto;
 }
 .compiler-output h4 {
 	font-size: 13pt;
@@ -476,6 +478,7 @@ td.a-delete-wrapper {
 .compiler-output pre {
 	font-size: 10.5pt;
 	margin: 0;
+	white-space: pre-wrap;
 }
 
 
@@ -483,6 +486,11 @@ td.a-delete-wrapper {
 	background-color: white;
 	font-size: 14pt;
 	padding: 2pt 0;
+}
+table.source-view-inner {
+	overflow: auto;
+	table-layout: fixed;
+	width: 100%;
 }
 .source-view div {
 	margin-top: 0 !important;
@@ -492,4 +500,6 @@ td.a-delete-wrapper {
 	font-size: 10.5pt;
 	margin: 0;
 	padding: 3pt 4pt;
+	width: 100%;
+	white-space: pre-wrap;
 }

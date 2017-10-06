@@ -27,9 +27,20 @@ interface
 uses
   Classes, SysUtils, submissionlanguages, tswebpagesbase, htmlpages,
   htmlpreprocess, submissions, submissioninfo, strverdicts, webstrconsts,
-  strconsts, tswebmanagers;
+  strconsts, tswebmanagers, testresults;
 
 type
+
+  {$interfaces CORBA}
+
+  { IViewSubmissionPage }
+
+  IViewSubmissionPage = interface
+    ['{DD46AD42-06E6-45B5-8957-C991ABFB8ED7}']
+    function Submission: TViewSubmission;
+    function SubmissionSession: TProblemSubmissionSession;
+  end;
+  {$interfaces COM}
 
   { TSubmissionLanguageItem }
 
@@ -88,7 +99,97 @@ type
     destructor Destroy; override;
   end;
 
+  { TSubmissionTestItem }
+
+  TSubmissionTestItem = class(TTesterHtmlPageElement)
+  private
+    FTestResult: TTestResult;
+  protected
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property TestResult: TTestResult read FTestResult;
+    constructor Create(AParent: THtmlPage; ATestResult: TTestResult);
+  end;
+
+  { TSubmissionTestItemList }
+
+  TSubmissionTestItemList = class(TTesterHtmlListedPageElement)
+  private
+    FResults: TTestedProblem;
+  protected
+    procedure FillList;
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Results: TTestedProblem read FResults;
+    constructor Create(AParent: THtmlPage; AResults: TTestedProblem);
+  end;
+
 implementation
+
+{ TSubmissionTestItemList }
+
+procedure TSubmissionTestItemList.FillList;
+var
+  I: integer;
+begin
+  for I := 0 to FResults.TestResultsCount - 1 do
+    List.Add(TSubmissionTestItem.Create(Parent, FResults.TestResults[I]));
+end;
+
+procedure TSubmissionTestItemList.DoFillVariables;
+begin
+  with Storage do
+  begin
+    ItemsAsText['testIdHeader'] := STestIdHeader;
+    ItemsAsText['testVerdictHeader'] := STestVerdictHeader;
+    ItemsAsText['testTimeHeader'] := STestTimeHeader;
+    ItemsAsText['testMemoryHeader'] := STestMemoryHeader;
+    ItemsAsText['testScoreHeader'] := STestScoreHeader;
+  end;
+  AddListToVariable('submissionTestTableItems');
+end;
+
+procedure TSubmissionTestItemList.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('submissions', 'submissionTestTable'));
+end;
+
+constructor TSubmissionTestItemList.Create(AParent: THtmlPage;
+  AResults: TTestedProblem);
+begin
+  inherited Create(AParent);
+  FResults := AResults;
+  FillList;
+end;
+
+{ TSubmissionTestItem }
+
+procedure TSubmissionTestItem.DoFillVariables;
+begin
+  with Storage do
+  begin
+    ItemsAsText['testId'] := IntToStr(TestResult.Index + 1);
+    ItemsAsText['testVerdict'] := STestVerdicts[TestResult.Verdict];
+    ItemsAsText['testVerdictKind'] := TestVerdictToStr(TestResult.Verdict);
+    ItemsAsText['testTime'] := ProblemTimeToStrEx(TestResult.Time);
+    ItemsAsText['testMemory'] := ProblemMemoryToStrEx(TestResult.Memory);
+    ItemsAsText['testScore'] := Format(SScoreFmt, [TestResult.Score]);
+  end;
+end;
+
+procedure TSubmissionTestItem.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('submissions', 'submissionTestTableItem'));
+end;
+
+constructor TSubmissionTestItem.Create(AParent: THtmlPage;
+  ATestResult: TTestResult);
+begin
+  inherited Create(AParent);
+  FTestResult := ATestResult;
+end;
 
 { TSubmissionItemList }
 
