@@ -27,7 +27,8 @@ interface
 uses
   Classes, SysUtils, submissionlanguages, users, datastorages, problems,
   testresults, jsonsaver, tswebobservers, filemanager, fgl, editableobjects,
-  webstrconsts, tswebutils, serverconfig, LazFileUtils, tswebdirectories, Math;
+  webstrconsts, tswebutils, serverconfig, LazFileUtils, tswebdirectories, Math,
+  submissioninfo, testerprimitives;
 
 type
   ESubmissionAction = class(EUserAction);
@@ -68,7 +69,11 @@ type
     function FilesLocation: string; virtual;
     function SectionName: string;
     function FullKeyName(const Key: string): string;
+    function ResultsSectionName: string;
     function DoLoadResults: TTestedProblem;
+    procedure CacheResults(AResults: TTestedProblem);
+    procedure CacheResults;
+    procedure UncacheResults;
     {%H-}constructor Create(AManager: TSubmissionManager; AID: integer);
   public
     property Manager: TSubmissionManager read FManager;
@@ -107,11 +112,23 @@ type
   private
     FResults: TTestedProblem;
     FResultsLoaded: boolean;
+    function GetMemory: TProblemMemory;
     function GetResults: TTestedProblem;
+    function GetScore: double;
+    function GetTestCase: integer;
+    function GetTime: TProblemTime;
+    function GetVerdictKind: string;
   protected
     procedure HandleSelfDeletion; virtual;
+    function NeedsResultCaching: boolean;
+    procedure CacheResults; overload;
     {%H-}constructor Create(AManager: TSubmissionManager; AID: integer);
   public
+    property VerdictKind: string read GetVerdictKind;
+    property TestCase: integer read GetTestCase;
+    property Time: TProblemTime read GetTime;
+    property Memory: TProblemMemory read GetMemory;
+    property Score: double read GetScore;
     property Results: TTestedProblem read GetResults;
     destructor Destroy; override;
   end;
@@ -1069,10 +1086,49 @@ begin
   Result := FResults;
 end;
 
+function TViewSubmission.GetMemory: TProblemMemory;
+begin
+  Result := Storage.ReadInteger(ResultsSectionName + '.memory', 0);
+end;
+
+function TViewSubmission.GetScore: double;
+begin
+  Result := Storage.ReadFloat(ResultsSectionName + '.score', 0.0);
+end;
+
+function TViewSubmission.GetTestCase: integer;
+begin
+  Result := Storage.ReadInteger(ResultsSectionName + '.testCase', -1);
+end;
+
+function TViewSubmission.GetTime: TProblemTime;
+begin
+  Result := Storage.ReadInteger(ResultsSectionName + '.time', 0);
+end;
+
+function TViewSubmission.GetVerdictKind: string;
+begin
+  Result := Storage.ReadString(ResultsSectionName + '.verdictKind',
+    TesterWebVerdictToStr(wvUnknown));
+end;
+
 procedure TViewSubmission.HandleSelfDeletion;
 begin
   TryDeleteFile(FileName);
   TryDeleteFile(ResultsFileName);
+end;
+
+function TViewSubmission.NeedsResultCaching: boolean;
+begin
+  if Finished then
+    Result := not Storage.VariableExists(ResultsSectionName + '.cached')
+  else
+    Result := True;
+end;
+
+procedure TViewSubmission.CacheResults;
+begin
+  CacheResults(Results);
 end;
 
 constructor TViewSubmission.Create(AManager: TSubmissionManager; AID: integer);
@@ -1080,6 +1136,8 @@ begin
   inherited Create(AManager, AID);
   FResults := nil;
   FResultsLoaded := False;
+  if NeedsResultCaching then
+    CacheResults;
 end;
 
 destructor TViewSubmission.Destroy;
@@ -1125,10 +1183,12 @@ procedure TTestSubmission.Finish(ASuccess: boolean);
 begin
   Storage.WriteBool(FullKeyName('finished'), True);
   Storage.WriteBool(FullKeyName('success'), ASuccess);
+  CacheResults;
 end;
 
 procedure TTestSubmission.Unfinish;
 begin
+  UncacheResults;
   Storage.WriteBool(FullKeyName('finished'), False);
   Storage.DeleteVariable(FullKeyName('success'));
 end;
@@ -1217,6 +1277,11 @@ begin
   Result := SectionName + '.' + Key;
 end;
 
+function TBaseSubmission.ResultsSectionName: string;
+begin
+  Result := FullKeyName('results');
+end;
+
 function TBaseSubmission.DoLoadResults: TTestedProblem;
 var
   S: string;
@@ -1238,6 +1303,46 @@ begin
     FreeAndNil(Result);
     raise;
   end;
+end;
+
+procedure TBaseSubmission.CacheResults(AResults: TTestedProblem);
+var
+  Info: TSubmissionInfo;
+begin
+  Info := TSubmissionInfo.Create;
+  try
+    // retrieve info
+    Info.Results := AResults;
+    Info.Finished := Finished;
+    Info.Success := Success;
+    Info.RetrieveInfo;
+    // add it into storage
+    Storage.WriteString(ResultsSectionName + '.verdictKind', Info.VerdictKind);
+    Storage.WriteInteger(ResultsSectionName + '.testCase', Info.TestCase);
+    Storage.WriteInteger(ResultsSectionName + '.time', Info.Time);
+    Storage.WriteInteger(ResultsSectionName + '.memory', Info.Memory);
+    Storage.WriteFloat(ResultsSectionName + '.score', Info.Score);
+    Storage.WriteBool(ResultsSectionName + '.cached', True);
+  finally
+    FreeAndNil(Info);
+  end;
+end;
+
+procedure TBaseSubmission.CacheResults;
+var
+  Results: TTestedProblem;
+begin
+  Results := DoLoadResults;
+  try
+    CacheResults(Results);
+  finally
+    FreeAndNil(Results);
+  end;
+end;
+
+procedure TBaseSubmission.UncacheResults;
+begin
+  Storage.DeletePath(ResultsSectionName);
 end;
 
 constructor TBaseSubmission.Create(AManager: TSubmissionManager; AID: integer);

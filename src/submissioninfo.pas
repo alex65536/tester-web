@@ -76,7 +76,7 @@ type
     property Memory: TProblemMemory read FMemory;
     property Score: double read FScore;
 
-    procedure RetreiveInfo;
+    procedure RetrieveInfo;
   end;
 
 function CompilerVerdictToStr(AVerdict: TCompilerVerdict): string;
@@ -218,7 +218,7 @@ begin
   end;
 end;
 
-procedure TSubmissionInfo.RetreiveInfo;
+procedure TSubmissionInfo.RetrieveInfo;
 begin
   GetVerdictTestCase(FVerdictKind, FTestCase);
   GetTimeMemoryScore(FTime, FMemory, FScore);

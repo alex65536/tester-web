@@ -68,14 +68,12 @@ type
 
   TSubmissionItem = class(TTesterHtmlPageElement)
   private
-    FInfo: TSubmissionInfo;
     FSubmission: TViewSubmission;
   protected
     procedure DoFillVariables; override;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
     property Submission: TViewSubmission read FSubmission;
-    property Info: TSubmissionInfo read FInfo;
     constructor Create(AParent: THtmlPage; ASubmission: TViewSubmission);
     destructor Destroy; override;
   end;
@@ -257,12 +255,12 @@ begin
     ItemsAsText['submissionSubmitTime'] := FormatDateTime(SPreferredDateTimeFormat, Submission.SubmitTime);
     ItemsAsText['submissionAuthorLink'] := Parent.GenerateUserLink(Submission.OwnerName);
     ItemsAsText['submissionLanguage'] := LanguageFullCompilerNames(Submission.Language);
-    ItemsAsText['submissionVerdict'] := VerdictKindToStr(Info.VerdictKind);
-    ItemsAsText['submissionVerdictKind'] := Info.VerdictKind;
-    ItemsAsText['submissionTest'] := TestIdToStr(Info.TestCase);
-    ItemsAsText['submissionTime'] := ProblemTimeToStr(Info.Time);
-    ItemsAsText['submissionMemory'] := ProblemMemoryToStr(Info.Memory);
-    ItemsAsText['submissionScore'] := Format(SScoreFmt, [Info.Score]);
+    ItemsAsText['submissionVerdict'] := VerdictKindToStr(Submission.VerdictKind);
+    ItemsAsText['submissionVerdictKind'] := Submission.VerdictKind;
+    ItemsAsText['submissionTest'] := TestIdToStr(Submission.TestCase);
+    ItemsAsText['submissionTime'] := ProblemTimeToStr(Submission.Time);
+    ItemsAsText['submissionMemory'] := ProblemMemoryToStr(Submission.Memory);
+    ItemsAsText['submissionScore'] := Format(SScoreFmt, [Submission.Score]);
   end;
 end;
 
@@ -275,16 +273,10 @@ constructor TSubmissionItem.Create(AParent: THtmlPage; ASubmission: TViewSubmiss
 begin
   inherited Create(AParent);
   FSubmission := ASubmission;
-  FInfo := TSubmissionInfo.Create;
-  FInfo.Results := FSubmission.Results;
-  FInfo.Finished := FSubmission.Finished;
-  FInfo.Success := FSubmission.Success;
-  FInfo.RetreiveInfo;
 end;
 
 destructor TSubmissionItem.Destroy;
 begin
-  FreeAndNil(FInfo);
   FreeAndNil(FSubmission);
   inherited Destroy;
 end;
