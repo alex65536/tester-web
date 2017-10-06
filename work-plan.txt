@@ -7,9 +7,9 @@
 [V] 15.09.2017 Add profiles
 [V] 16.09.2017 Add settings
 [V] 16.09.2017 Make simple site with user log in/log out/see others info
-[*] Create problem uploading
+[V] 26.09.2017 Create problem system
+[V] 06.10.2017 Create submission system
 [*] Create contest system
-[*] Make contest uploading system
-[*] Make online (or offline?) contest editor
-[*] Add testing environment for users
+[*] Make contest editor
+[*] Add contest participation
 [*] Add standings
