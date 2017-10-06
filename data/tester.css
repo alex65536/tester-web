@@ -452,6 +452,9 @@ td.a-delete-wrapper {
 	border-top-style: none;
 	margin-top: 0;
 }
+.submission-section.empty {
+	font-style: italic;
+}
 
 
 .submission-section.compile {
@@ -465,7 +468,7 @@ td.a-delete-wrapper {
 	border-top-right-radius: 0;
 	margin-top: 0;
 }
-.compiler-output h1 {
+.compiler-output h4 {
 	font-size: 13pt;
 	margin: 0;
 	margin-bottom: 8pt;
