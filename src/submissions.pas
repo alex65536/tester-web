@@ -106,12 +106,13 @@ type
   TViewSubmission = class(TBaseSubmission)
   private
     FResults: TTestedProblem;
+    FResultsLoaded: boolean;
+    function GetResults: TTestedProblem;
   protected
     procedure HandleSelfDeletion; virtual;
     {%H-}constructor Create(AManager: TSubmissionManager; AID: integer);
   public
-    property Results: TTestedProblem read FResults;
-    procedure LoadResults;
+    property Results: TTestedProblem read GetResults;
     destructor Destroy; override;
   end;
 
@@ -751,12 +752,6 @@ end;
 function TSubmissionManager.GetSubmission(AID: integer): TViewSubmission;
 begin
   Result := DoCreateViewSubmission(AID);
-  try
-    Result.LoadResults;
-  except
-    FreeAndNil(Result);
-    raise;
-  end;
 end;
 
 procedure TSubmissionManager.RejudgeSubmission(AID: integer);
@@ -1064,10 +1059,14 @@ end;
 
 { TViewSubmission }
 
-procedure TViewSubmission.LoadResults;
+function TViewSubmission.GetResults: TTestedProblem;
 begin
-  FreeAndNil(FResults);
-  FResults := DoLoadResults;
+  if not FResultsLoaded then
+  begin
+    FResults := DoLoadResults;
+    FResultsLoaded := True;
+  end;
+  Result := FResults;
 end;
 
 procedure TViewSubmission.HandleSelfDeletion;
@@ -1080,6 +1079,7 @@ constructor TViewSubmission.Create(AManager: TSubmissionManager; AID: integer);
 begin
   inherited Create(AManager, AID);
   FResults := nil;
+  FResultsLoaded := False;
 end;
 
 destructor TViewSubmission.Destroy;
