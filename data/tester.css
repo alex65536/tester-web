@@ -503,3 +503,8 @@ table.source-view-inner {
 	width: 100%;
 	white-space: pre-wrap;
 }
+
+
+.back-btn {
+	display: none;
+}

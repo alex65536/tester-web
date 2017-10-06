@@ -110,6 +110,8 @@ type
   { TProblemTestBaseWebModule }
 
   TProblemTestBaseWebModule = class(TEditablePostWebModule)
+  private
+    FID: integer;
   protected
     function GetTestableProblem: TTestableProblem; virtual; abstract;
     function Inside: boolean; override;
@@ -117,6 +119,8 @@ type
     procedure DoHandlePost(ARequest: TRequest); override;
     function CanRedirect: boolean; override;
     function RedirectLocation: string; override;
+    procedure DoBeforeRequest; override;
+    procedure DoAfterRequest; override;
   end;
 
   { TProblemTestWebModule }
@@ -236,7 +240,7 @@ begin
   try
     TestTransaction := TestProblem.CreateTestTransaction(User);
     try
-      TestTransaction.CreateSubmission(Language, FileName);
+      FID := TestTransaction.CreateSubmission(Language, FileName);
     finally
       FreeAndNil(TestTransaction);
     end;
@@ -247,12 +251,24 @@ end;
 
 function TProblemTestBaseWebModule.CanRedirect: boolean;
 begin
-  Result := True;
+  Result := FID >= 0;
 end;
 
 function TProblemTestBaseWebModule.RedirectLocation: string;
 begin
-  Result := Request.URI;
+  Result := Format('%s/submissions?id=%d', [DocumentRoot, FID]);
+end;
+
+procedure TProblemTestBaseWebModule.DoBeforeRequest;
+begin
+  inherited DoBeforeRequest;
+  FID := -1;
+end;
+
+procedure TProblemTestBaseWebModule.DoAfterRequest;
+begin
+  FID := -1;
+  inherited DoAfterRequest;
 end;
 
 { TProblemDownloadWebModule }

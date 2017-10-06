@@ -124,6 +124,9 @@ type
 
 implementation
 
+uses
+  tswebproblemfeatures;
+
 { TSyntaxHighlighterJsPageFeature }
 
 procedure TSyntaxHighlighterJsPageFeature.Satisfy;
@@ -154,6 +157,9 @@ begin
     ItemsAsText['submissionCompileHeader'] := SSubmissionCompileHeader;
     ItemsAsText['submissionTestHeader'] := SSubmissionTestHeader;
     ItemsAsText['submissionSourceHeader'] := SSubmissionSourceHeader;
+    // add rejudge button (if we can rejudge)
+    if Session.CanRejudgeSubmission(Submission.ID) then
+      ItemsAsText['problemCanRejudgeForm'] := '~+#problemRejudgeForm;';
   end;
   // add refresh header (if not finished)
   if not Submission.Finished then
@@ -169,6 +175,7 @@ begin
   ADependencies.Add(TSubmissionTestInnerPageFeature);
   ADependencies.Add(TSubmissionSourceInnerPageFeature);
   ADependencies.Add(TSyntaxHighlighterJsPageFeature);
+  ADependencies.Add(TProblemRejudgeFormFeature);
 end;
 
 { TSubmissionSourceInnerPageFeature }

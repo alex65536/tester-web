@@ -238,8 +238,8 @@ type
     function ProblemFilter(AID: integer; AObject: TObject): boolean;
     function AvailableFilter(AID: integer; AObject: TObject): boolean;
 
-    procedure CreateSubmission(AUser: TUser; AProblem: TTestableProblem;
-      ALanguage: TSubmissionLanguage; const AFileName: string);
+    function CreateSubmission(AUser: TUser; AProblem: TTestableProblem;
+      ALanguage: TSubmissionLanguage; const AFileName: string): integer;
     function GetSubmission(AID: integer): TViewSubmission;
     procedure RejudgeSubmission(AID: integer); virtual;
 
@@ -295,7 +295,7 @@ type
     property SubmissionManager: TSubmissionManager read GetSubmissionManager;
     function CanWriteData: boolean; override;
     function CanTestProblem: boolean; virtual;
-    procedure CreateSubmission(ALanguage: TSubmissionLanguage; const AFileName: string);
+    function CreateSubmission(ALanguage: TSubmissionLanguage; const AFileName: string): integer;
   end;
 
   { TTestableProblem }
@@ -493,15 +493,15 @@ begin
   Result := AccessLevel in AccessCanReadSet;
 end;
 
-procedure TTestProblemTransaction.CreateSubmission(ALanguage: TSubmissionLanguage;
-  const AFileName: string);
+function TTestProblemTransaction.CreateSubmission(ALanguage: TSubmissionLanguage;
+  const AFileName: string): integer;
 begin
   if not CanTestProblem then
     raise ESubmissionAccessDenied.Create(SAccessDenied);
   if FileSizeUTF8(AFileName) > MaxSrcLimit * 1024 then
     raise ESubmissionValidate.CreateFmt(SSubmissionTooBig, [MaxSrcLimit]);
   with SubmissionManager do
-    CreateSubmission(User, Problem as TTestableProblem, ALanguage, AFileName);
+    Result := CreateSubmission(User, Problem as TTestableProblem, ALanguage, AFileName);
 end;
 
 { TIdList }
@@ -720,8 +720,8 @@ begin
     HandleProblemDeleting((AMessage as TEditableDeletingMessage).EditableObject as TTestableProblem);
 end;
 
-procedure TSubmissionManager.CreateSubmission(AUser: TUser;
-  AProblem: TTestableProblem; ALanguage: TSubmissionLanguage; const AFileName: string);
+function TSubmissionManager.CreateSubmission(AUser: TUser; AProblem: TTestableProblem;
+  ALanguage: TSubmissionLanguage; const AFileName: string): integer;
 var
   ID: integer;
   Submission: TTestSubmission;
@@ -739,6 +739,8 @@ begin
     Submission.AddFile(ALanguage, AFileName);
     // add to queue
     Queue.AddSubmission(Submission);
+    // return ID of the result
+    Result := ID;
   except
     FreeAndNil(Submission);
     raise;

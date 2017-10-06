@@ -26,62 +26,89 @@ interface
 
 uses
   SysUtils, tswebsubmissionelements, tswebsubmissionfeatures, submissions,
-  tswebmodules, tswebpages, tswebmanagers, webmodules, fphttp, navbars,
-  htmlpages, htmlpreprocess, webstrconsts;
+  tswebmodules, tswebpages, tswebmanagers, fphttp, navbars, htmlpages,
+  htmlpreprocess, webstrconsts, tswebfeatures, tsmiscwebmodules, HTTPDefs;
 
 type
 
   { TSubmissionHtmlPage }
 
-  TSubmissionHtmlPage = class(TDefaultHtmlPage, IViewSubmissionPage)
+  TSubmissionHtmlPage = class(TPostHtmlPage, IViewSubmissionPage)
   private
     FSubmission: TViewSubmission;
     FSubmissionSession: TProblemSubmissionSession;
   protected
-    procedure DoUpdateRequest; override;
     procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
   public
     function Submission: TViewSubmission;
     function SubmissionSession: TProblemSubmissionSession;
     function CreateNavBar: TNavBar; override;
     procedure AddFeatures; override;
-    destructor Destroy; override;
+    constructor Create(ASubmission: TViewSubmission;
+      ASubmissionSession: TProblemSubmissionSession); overload;
+    procedure AfterConstruction; override;
   end;
 
   { TSubmissionViewWebModule }
 
-  TSubmissionViewWebModule = class(THtmlPageWebModule)
+  TSubmissionViewWebModule = class(TPostUserWebModule)
+  private
+    FSubmission: TViewSubmission;
+    FSubmissionSession: TProblemSubmissionSession;
   protected
+    property Submission: TViewSubmission read FSubmission;
+    property SubmissionSession: TProblemSubmissionSession read FSubmissionSession;
+    procedure DoHandlePost(ARequest: TRequest); override;
+    function CanRedirect: boolean; override;
+    function RedirectLocation: string; override;
     function DoCreatePage: THtmlPage; override;
+    procedure DoSessionCreated; override;
+    procedure DoAfterRequest; override;
   end;
 
 implementation
 
 { TSubmissionViewWebModule }
 
-function TSubmissionViewWebModule.DoCreatePage: THtmlPage;
+procedure TSubmissionViewWebModule.DoHandlePost(ARequest: TRequest);
 begin
-  Result := TSubmissionHtmlPage.Create;
+  if ARequest.ContentFields.Values['query'] = 'rejudge' then
+    SubmissionSession.RejudgeSubmission(Submission.ID);
 end;
 
-{ TSubmissionHtmlPage }
+function TSubmissionViewWebModule.CanRedirect: boolean;
+begin
+  Result := True;
+end;
 
-procedure TSubmissionHtmlPage.DoUpdateRequest;
+function TSubmissionViewWebModule.RedirectLocation: string;
+begin
+  Result := Request.URI;
+end;
+
+function TSubmissionViewWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TSubmissionHtmlPage.Create(Submission, SubmissionSession);
+end;
+
+procedure TSubmissionViewWebModule.DoSessionCreated;
 var
   SubmissionID: integer;
 begin
-  inherited DoUpdateRequest;
-  // free old submission & session
-  FreeAndNil(FSubmission);
-  FreeAndNil(FSubmissionSession);
-  // get submission ID
+  inherited DoSessionCreated;
   SubmissionID := StrToInt(Request.QueryFields.Values['id']);
-  // get new submission & session
   FSubmissionSession := ProblemManager.CreateSubmissionSession(User);
   FSubmission := SubmissionSession.GetSubmission(SubmissionID);
-  // fill the title
-  Title := Format(SSubmissionPageCaption, [SubmissionID]);
 end;
+
+procedure TSubmissionViewWebModule.DoAfterRequest;
+begin
+  FreeAndNil(FSubmission);
+  FreeAndNil(FSubmissionSession);
+  inherited DoAfterRequest;
+end;
+
+{ TSubmissionHtmlPage }
 
 procedure TSubmissionHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
 begin
@@ -107,13 +134,21 @@ procedure TSubmissionHtmlPage.AddFeatures;
 begin
   inherited AddFeatures;
   AddFeature(TSubmissionViewPageFeature);
+  AddFeature(TUserBarFeature);
 end;
 
-destructor TSubmissionHtmlPage.Destroy;
+constructor TSubmissionHtmlPage.Create(ASubmission: TViewSubmission;
+  ASubmissionSession: TProblemSubmissionSession);
 begin
-  FreeAndNil(FSubmission);
-  FreeAndNil(FSubmissionSession);
-  inherited Destroy;
+  inherited Create;
+  FSubmission := ASubmission;
+  FSubmissionSession := ASubmissionSession;
+end;
+
+procedure TSubmissionHtmlPage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Title := Format(SSubmissionPageCaption, [Submission.ID]);
 end;
 
 initialization
