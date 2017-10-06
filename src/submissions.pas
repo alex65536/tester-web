@@ -68,6 +68,7 @@ type
     function FilesLocation: string; virtual;
     function SectionName: string;
     function FullKeyName(const Key: string): string;
+    function DoLoadResults: TTestedProblem;
     {%H-}constructor Create(AManager: TSubmissionManager; AID: integer);
   public
     property Manager: TSubmissionManager read FManager;
@@ -94,8 +95,8 @@ type
     function GetPropsFileName: string;
     procedure Prepare; virtual;
     procedure UpdateSubmitTime;
-    procedure Finish(ASuccess: boolean);
-    procedure Unfinish;
+    procedure Finish(ASuccess: boolean); virtual;
+    procedure Unfinish; virtual;
   public
     procedure AddFile(ALanguage: TSubmissionLanguage; const AFile: string);
   end;
@@ -110,7 +111,7 @@ type
     {%H-}constructor Create(AManager: TSubmissionManager; AID: integer);
   public
     property Results: TTestedProblem read FResults;
-    procedure LoadResults; virtual;
+    procedure LoadResults;
     destructor Destroy; override;
   end;
 
@@ -1064,27 +1065,9 @@ end;
 { TViewSubmission }
 
 procedure TViewSubmission.LoadResults;
-var
-  FileStream: TFileStream;
-  S: string;
 begin
   FreeAndNil(FResults);
-  if not FileExistsUTF8(ResultsFileName) then
-    Exit;
-  FResults := TTestedProblem.Create;
-  try
-    FileStream := WaitForFile(ResultsFileName, fmOpenRead or fmShareExclusive);
-    try
-      SetLength(S, FileStream.Size);
-      FileStream.Read(S[1], FileStream.Size);
-      LoadTestedProblemFromJSONStr(S, Results);
-    finally
-      FreeAndNil(FileStream);
-    end;
-  except
-    FreeAndNil(FResults);
-    raise;
-  end;
+  FResults := DoLoadResults;
 end;
 
 procedure TViewSubmission.HandleSelfDeletion;
@@ -1232,6 +1215,29 @@ end;
 function TBaseSubmission.FullKeyName(const Key: string): string;
 begin
   Result := SectionName + '.' + Key;
+end;
+
+function TBaseSubmission.DoLoadResults: TTestedProblem;
+var
+  S: string;
+  FileStream: TFileStream;
+begin
+  if not FileExistsUTF8(ResultsFileName) then
+    Exit(nil);
+  Result := TTestedProblem.Create;
+  try
+    FileStream := WaitForFile(ResultsFileName, fmOpenRead or fmShareExclusive);
+    try
+      SetLength(S, FileStream.Size);
+      FileStream.Read(S[1], FileStream.Size);
+      LoadTestedProblemFromJSONStr(S, Result);
+    finally
+      FreeAndNil(FileStream);
+    end;
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
 end;
 
 constructor TBaseSubmission.Create(AManager: TSubmissionManager; AID: integer);
