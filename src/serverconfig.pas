@@ -209,8 +209,8 @@ end;
 
 function TTesterServerConfig.GetLocation_TsRunExe: string;
 begin
-  Result := FStorage.ReadString('location.tsRunExe', '..' + PathDelim + '..' +
-    PathDelim + 'tester' + PathDelim + 'tsrun' + PathDelim + 'tsrun' + ExeExt);
+  Result := FStorage.ReadString('location.tsRunExe', '..' + PathDelim + 'tester' +
+    PathDelim + 'tsrun' + PathDelim + 'tsrun' + ExeExt);
 end;
 
 function TTesterServerConfig.GetOwner_DefaultFirstName: string;

@@ -27,7 +27,11 @@ interface
 uses
   Classes, SysUtils, submissions, tswebeditablefeatures, editableobjects,
   tswebfeatures, htmlpages, webstrconsts, tswebsubmissionelements,
-  tswebmanagers;
+  tswebmanagers, submissioninfo, strverdicts, LazFileUtils, submissionlanguages;
+
+const
+  LanguageBrushNames: array [TSubmissionLanguage] of string =
+    ('delphi', 'delphi', 'cpp', 'cpp', 'cpp');
 
 type
 
@@ -64,7 +68,213 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TSubmissionViewBasePageFeature }
+
+  TSubmissionViewBasePageFeature = class(TTesterPageFeature)
+  public
+    function Submission: TViewSubmission;
+    function Session: TProblemSubmissionSession;
+  end;
+
+  { TSubmissionEmptyInnerPageFeature }
+
+  TSubmissionEmptyInnerPageFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+  end;
+
+  { TSubmissionCompileInnerPageFeature }
+
+  TSubmissionCompileInnerPageFeature = class(TSubmissionViewBasePageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TSubmissionTestInnerPageFeature }
+
+  TSubmissionTestInnerPageFeature = class(TSubmissionViewBasePageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TSubmissionSourceInnerPageFeature }
+
+  TSubmissionSourceInnerPageFeature = class(TSubmissionViewBasePageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TSubmissionViewPageFeature }
+
+  TSubmissionViewPageFeature = class(TSubmissionViewBasePageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TSyntaxHighlighterJsPageFeature }
+
+  TSyntaxHighlighterJsPageFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+  end;
+
 implementation
+
+uses
+  tswebproblemfeatures;
+
+{ TSyntaxHighlighterJsPageFeature }
+
+procedure TSyntaxHighlighterJsPageFeature.Satisfy;
+begin
+  LoadPagePart('', 'syntaxHighlighterJsFiles');
+end;
+
+{ TSubmissionViewPageFeature }
+
+procedure TSubmissionViewPageFeature.Satisfy;
+var
+  IdList: TIdList;
+  BriefTable: TSubmissionItemList;
+begin
+  // fill brief table
+  IdList := TIdList.Create;
+  IdList.Add(Submission.ID);
+  BriefTable := TSubmissionItemList.Create(Parent, IdList, Session);
+  try
+    Parent.AddElementPagePart('submissionBriefTable', BriefTable);
+  finally
+    FreeAndNil(BriefTable);
+  end;
+  // fill variables
+  with Parent.Variables do
+  begin
+    ItemsAsText['refreshDuration'] := '2';
+    ItemsAsText['submissionCompileHeader'] := SSubmissionCompileHeader;
+    ItemsAsText['submissionTestHeader'] := SSubmissionTestHeader;
+    ItemsAsText['submissionSourceHeader'] := SSubmissionSourceHeader;
+    // add rejudge button (if we can rejudge)
+    if Session.CanRejudgeSubmission(Submission.ID) then
+      ItemsAsText['problemCanRejudgeForm'] := '~+#problemRejudgeForm;';
+  end;
+  // add refresh header (if not finished)
+  if not Submission.Finished then
+    LoadPagePart('', 'refreshHeader');
+  // load page part
+  LoadPagePart('submissions', 'submissionView');
+end;
+
+procedure TSubmissionViewPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TSubmissionCompileInnerPageFeature);
+  ADependencies.Add(TSubmissionTestInnerPageFeature);
+  ADependencies.Add(TSubmissionSourceInnerPageFeature);
+  ADependencies.Add(TSyntaxHighlighterJsPageFeature);
+  ADependencies.Add(TProblemRejudgeFormFeature);
+end;
+
+{ TSubmissionSourceInnerPageFeature }
+
+procedure TSubmissionSourceInnerPageFeature.Satisfy;
+begin
+  if not FileExistsUTF8(Submission.FileName) then
+  begin
+    Parent.Variables.ItemsAsText['submissionTestInner'] := '~#+submissionEmptyInner;';
+    Exit;
+  end;
+  with Parent.Variables do
+  begin
+    SetFromFile('sourceCode', Submission.FileName);
+    ItemsAsText['sourceBrushName'] := LanguageBrushNames[Submission.Language];
+  end;
+  LoadPagePart('submissions', 'submissionSourceInner');
+end;
+
+procedure TSubmissionSourceInnerPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TSubmissionEmptyInnerPageFeature);
+end;
+
+{ TSubmissionEmptyInnerPageFeature }
+
+procedure TSubmissionEmptyInnerPageFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['submissionEmptySection'] := SSubmissionEmptySection;
+  end;
+  LoadPagePart('submissions', 'submissionEmptyInner');
+end;
+
+{ TSubmissionTestInnerPageFeature }
+
+procedure TSubmissionTestInnerPageFeature.Satisfy;
+var
+  List: TSubmissionTestItemList;
+begin
+  if Submission.Results = nil then
+  begin
+    Parent.Variables.ItemsAsText['submissionTestInner'] := '~#+submissionEmptyInner;';
+    Exit;
+  end;
+  List := TSubmissionTestItemList.Create(Parent, Submission.Results);
+  try
+    Parent.AddElementPagePart('submissionTestTable', List);
+  finally
+    FreeAndNil(List);
+  end;
+  LoadPagePart('submissions', 'submissionTestInner');
+end;
+
+procedure TSubmissionTestInnerPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TSubmissionEmptyInnerPageFeature);
+end;
+
+{ TSubmissionCompileInnerPageFeature }
+
+procedure TSubmissionCompileInnerPageFeature.Satisfy;
+begin
+  if Submission.Results = nil then
+  begin
+    Parent.Variables.ItemsAsText['submissionCompileInner'] := '~#+submissionEmptyInner;';
+    Exit;
+  end;
+  with Parent.Variables, Submission.Results do
+  begin
+    ItemsAsText['compileVerdictCaption'] := SCompileVerdictCaption;
+    ItemsAsText['compileVerdictKind'] := CompilerVerdictToStr(CompileVerdict);
+    ItemsAsText['compileVerdict'] := SCompilerVerdicts[CompileVerdict];
+    ItemsAsText['compileOutputCaption'] := SCompileOutputCaption;
+    ItemsAsText['compileOutput'] := CompilerOutput;
+  end;
+  LoadPagePart('submissions', 'submissionCompileInner');
+end;
+
+procedure TSubmissionCompileInnerPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TSubmissionEmptyInnerPageFeature);
+end;
+
+{ TSubmissionViewBasePageFeature }
+
+function TSubmissionViewBasePageFeature.Submission: TViewSubmission;
+begin
+  Result := (Parent as IViewSubmissionPage).Submission;
+end;
+
+function TSubmissionViewBasePageFeature.Session: TProblemSubmissionSession;
+begin
+  Result := (Parent as IViewSubmissionPage).SubmissionSession;
+end;
 
 { TSubmitFooterPageFeature }
 
