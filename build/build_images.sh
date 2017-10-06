@@ -1,4 +1,7 @@
 #!/bin/bash
+# Builds images from SVG (inkscape required)
+
+cd "../images"
 
 function build_one {
 	inkscape "$1.svg" -e "$1.png" -w "$2"

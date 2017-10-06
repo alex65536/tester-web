@@ -27,7 +27,8 @@ interface
 uses
   SysUtils, tswebmodules, tswebeditablemodules, fphttp, htmlpages, problems,
   editableobjects, tswebpagesbase, tswebproblempages, webstrconsts, HTTPDefs,
-  webmodules, downloadhandlers, tsmiscwebmodules;
+  webmodules, downloadhandlers, tsmiscwebmodules, tswebmanagers, submissions,
+  submissionlanguages;
 
 type
 
@@ -106,7 +107,169 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TProblemTestBaseWebModule }
+
+  TProblemTestBaseWebModule = class(TEditablePostWebModule)
+  private
+    FID: integer;
+  protected
+    function GetTestableProblem: TTestableProblem; virtual; abstract;
+    function Inside: boolean; override;
+    function HookClass: TEditableModuleHookClass; override;
+    procedure DoHandlePost(ARequest: TRequest); override;
+    function CanRedirect: boolean; override;
+    function RedirectLocation: string; override;
+    procedure DoBeforeRequest; override;
+    procedure DoAfterRequest; override;
+  end;
+
+  { TProblemTestWebModule }
+
+  TProblemTestWebModule = class(TProblemTestBaseWebModule)
+  protected
+    function GetTestableProblem: TTestableProblem; override;
+    function DoCreatePage: THtmlPage; override;
+  end;
+
+  { TProblemSubmissionsWebModule }
+
+  TProblemSubmissionsWebModule = class(TEditableObjectPostWebModule)
+  protected
+    function Inside: boolean; override;
+    function HookClass: TEditableModuleHookClass; override;
+    function DoCreatePage: THtmlPage; override;
+    function CanRedirect: boolean; override;
+    function RedirectLocation: string; override;
+    procedure DoInsideHandlePost(ARequest: TRequest); override;
+  end;
+
 implementation
+
+{ TProblemSubmissionsWebModule }
+
+function TProblemSubmissionsWebModule.Inside: boolean;
+begin
+  Result := True;
+end;
+
+function TProblemSubmissionsWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TProblemModuleHook;
+end;
+
+function TProblemSubmissionsWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemSubmissionsPage.Create;
+end;
+
+function TProblemSubmissionsWebModule.CanRedirect: boolean;
+begin
+  Result := True;
+end;
+
+function TProblemSubmissionsWebModule.RedirectLocation: string;
+begin
+  Result := Request.URI;
+end;
+
+procedure TProblemSubmissionsWebModule.DoInsideHandlePost(ARequest: TRequest);
+var
+  TestProblem: TTestableProblem;
+  SubmissionSession: TProblemSubmissionSession;
+begin
+  if ARequest.ContentFields.Values['query'] = 'rejudge' then
+  begin
+    TestProblem := EditableObject as TTestableProblem;
+    SubmissionSession := ProblemManager.CreateSubmissionSession(User);
+    try
+      SubmissionSession.RejudgeSubmissions(TestProblem);
+    finally
+      FreeAndNil(SubmissionSession);
+    end;
+  end;
+end;
+
+{ TProblemTestWebModule }
+
+function TProblemTestWebModule.GetTestableProblem: TTestableProblem;
+begin
+  Result := Hook.EditableObject as TTestableProblem;
+end;
+
+function TProblemTestWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemTestPage.Create;
+end;
+
+{ TProblemTestBaseWebModule }
+
+function TProblemTestBaseWebModule.Inside: boolean;
+begin
+  Result := True;
+end;
+
+function TProblemTestBaseWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TProblemModuleHook;
+end;
+
+procedure TProblemTestBaseWebModule.DoHandlePost(ARequest: TRequest);
+var
+  Language: TSubmissionLanguage;
+  FileName: string;
+  I: integer;
+  TestProblem: TTestableProblem;
+  TestTransaction: TTestProblemTransaction;
+begin
+  Language := StrToLanguage(ARequest.ContentFields.Values['sol-lang']);
+  FileName := '';
+  // find the solution file
+  with ARequest.Files do
+    for I := 0 to Count - 1 do
+      if Files[I].FieldName = 'sol-file' then
+      begin
+        if LowerCase(ExtractFileExt(Files[I].FileName)) <> LanguageExts[Language] then
+          raise ESubmissionValidate.CreateFmt(SSubmissionExtensionExpected, [LanguageExts[Language]]);
+        FileName := Files[I].LocalFileName;
+      end;
+  // if solution file was not found - raise an error
+  if FileName = '' then
+    raise ESubmissionValidate.Create(SNoSubmissionFile);
+  // create and run the submission
+  TestProblem := GetTestableProblem;
+  try
+    TestTransaction := TestProblem.CreateTestTransaction(User);
+    try
+      FID := TestTransaction.CreateSubmission(Language, FileName);
+    finally
+      FreeAndNil(TestTransaction);
+    end;
+  finally
+    FreeAndNil(TestProblem);
+  end;
+end;
+
+function TProblemTestBaseWebModule.CanRedirect: boolean;
+begin
+  Result := FID >= 0;
+end;
+
+function TProblemTestBaseWebModule.RedirectLocation: string;
+begin
+  Result := Format('%s/submissions?id=%d', [DocumentRoot, FID]);
+end;
+
+procedure TProblemTestBaseWebModule.DoBeforeRequest;
+begin
+  inherited DoBeforeRequest;
+  FID := -1;
+end;
+
+procedure TProblemTestBaseWebModule.DoAfterRequest;
+begin
+  FID := -1;
+  inherited DoAfterRequest;
+end;
 
 { TProblemDownloadWebModule }
 
@@ -294,6 +457,8 @@ initialization
   RegisterHTTPModule('problem-view', TProblemViewWebModule, True);
   RegisterHTTPModule('problem-edit', TProblemEditWebModule, True);
   RegisterHTTPModule('problem-download', TProblemDownloadWebModule, True);
+  RegisterHTTPModule('problem-test', TProblemTestWebModule, True);
+  RegisterHTTPModule('problem-submissions', TProblemSubmissionsWebModule, True);
 
 end.
 

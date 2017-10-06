@@ -1,0 +1,6 @@
+[submodule "tester"]
+	path = tester
+	url = https://github.com/alex65536/tester
+[submodule "third-party/syntaxhighlighter"]
+	path = third-party/syntaxhighlighter
+	url = https://github.com/syntaxhighlighter/syntaxhighlighter

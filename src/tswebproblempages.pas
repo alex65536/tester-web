@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, tswebmodules, tswebeditablefeatures, tswebeditablemodules,
   webstrconsts, problems, editableobjects, navbars, tswebpagesbase, tswebpages,
-  htmlpreprocess, tswebeditableelements, tswebproblemfeatures;
+  htmlpreprocess, tswebeditableelements, tswebproblemfeatures, tswebmanagers;
 
 type
 
@@ -97,7 +97,37 @@ type
     procedure AddFeatures; override;
   end;
 
+  { TProblemTestPage }
+
+  TProblemTestPage = class(TProblemPostHtmlPage)
+  protected
+    procedure AddFeatures; override;
+  end;
+
+  { TProblemSubmissionsPage }
+
+  TProblemSubmissionsPage = class(TProblemPostHtmlPage)
+  protected
+    procedure AddFeatures; override;
+  end;
+
 implementation
+
+{ TProblemSubmissionsPage }
+
+procedure TProblemSubmissionsPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TProblemSubmissionsFeature);
+end;
+
+{ TProblemTestPage }
+
+procedure TProblemTestPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TProblemTestFeature);
+end;
 
 { TProblemEditPage }
 
@@ -120,7 +150,7 @@ end;
 procedure TProblemAccessPage.AddFeatures;
 begin
   inherited AddFeatures;
-  AddFeature(TEditableManageAccessFeature);
+  AddFeature(TProblemManageAccessFeature);
 end;
 
 { TProblemCreateNewPage }

@@ -451,7 +451,7 @@ end;
 
 procedure TDefaultNavBar.DoCreateElements;
 begin
-  AddElement('Main Page', '~documentRoot;/index');
+  AddElement('Main Page', '~documentRoot;/main');
   AddElement('Page 1', '~documentRoot;/page1');
   AddElement('Page 2', '~documentRoot;/page2');
   AddElement(SProblemList, '~documentRoot;/problems');
@@ -470,7 +470,7 @@ begin
 end;
 
 initialization
-  RegisterHTTPModule('index', TIndexWebModule, True);
+  RegisterHTTPModule('main', TIndexWebModule, True);
   RegisterHTTPModule('page1', TPage1WebModule, True);
   RegisterHTTPModule('page2', TPage2WebModule, True);
   RegisterHTTPModule('login', TLoginWebModule, True);

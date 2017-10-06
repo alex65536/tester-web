@@ -25,14 +25,15 @@ unit commitscheduler;
 interface
 
 uses
-  Classes, SysUtils, datastorages, fgl, dateutils, serverconfig;
+  Classes, SysUtils, datastorages, fgl, dateutils, serverconfig, tswebobservers,
+  serverevents;
 
 type
   TDataStorageList = specialize TFPGObjectList<TAbstractDataStorage>;
 
   { TCommitScheduler }
 
-  TCommitScheduler = class(IFPObserver)
+  TCommitScheduler = class(TObject, IFPObserver, IMessageSubscriber)
   private
     FCommitIntervalSeconds: integer;
     FStorages: TDataStorageList;
@@ -42,13 +43,13 @@ type
       {%H-}Data: Pointer);
     procedure CommitAll;
     function CanCommit: boolean; virtual;
+    procedure MessageReceived(AMessage: TAuthorMessage);
   public
     property CommitIntervalSeconds: integer read FCommitIntervalSeconds
       write FCommitIntervalSeconds;
     procedure AttachStorage(AStorage: TAbstractDataStorage);
     procedure DetachStorage(AStorage: TAbstractDataStorage);
     procedure CheckCommit;
-    procedure IdleEventHandler(Sender: TObject);
     constructor Create;
     destructor Destroy; override;
   end;
@@ -100,6 +101,12 @@ begin
   Result := CompareDateTime(CurTime, CommitTime) >= 0;
 end;
 
+procedure TCommitScheduler.MessageReceived(AMessage: TAuthorMessage);
+begin
+  if AMessage is TIdleMessage then
+    CheckCommit;
+end;
+
 procedure TCommitScheduler.AttachStorage(AStorage: TAbstractDataStorage);
 begin
   FStorages.Add(AStorage);
@@ -118,13 +125,9 @@ begin
     CommitAll;
 end;
 
-procedure TCommitScheduler.IdleEventHandler(Sender: TObject);
-begin
-  CheckCommit;
-end;
-
 constructor TCommitScheduler.Create;
 begin
+  IdleMessenger.Subscribe(Self);
   FStorages := TDataStorageList.Create(False);
   FCommitIntervalSeconds := Config.Storages_CommitIntervalSeconds;
   FLastCommitTime := Now;
@@ -137,6 +140,8 @@ begin
   for I := 0 to FStorages.Count - 1 do
     FStorages[I].FPODetachObserver(Self);
   FreeAndNil(FStorages);
+  IdleMessenger.Unsubscribe(Self);
+  inherited Destroy;
 end;
 
 initialization

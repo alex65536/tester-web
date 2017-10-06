@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, HTTPDefs, datastorages, tswebcrypto, typinfo, webstrconsts,
-  serverconfig, commitscheduler, tswebobservers;
+  serverconfig, commitscheduler, tswebobservers, tswebutils;
 
 type
   EUserAction = class(Exception);
@@ -393,7 +393,7 @@ end;
 
 function TUserManager.GetIdKey(AID: integer): string;
 begin
-  Result := Format('ids.id%d', [AID]);
+  Result := 'ids.' + Id2Str(AID);
 end;
 
 function TUserManager.IdToUsername(AID: integer): string;

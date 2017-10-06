@@ -89,6 +89,13 @@ type
     procedure Satisfy; override;
   end;
 
+  { TContentFooterFeature }
+
+  TContentFooterFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+  end;
+
   { TUserBarFeature }
 
   TUserBarFeature = class(TTesterPageFeature)
@@ -111,6 +118,13 @@ type
   end;
 
 implementation
+
+{ TContentFooterFeature }
+
+procedure TContentFooterFeature.Satisfy;
+begin
+  LoadPagePart('', 'contentFooter');
+end;
 
 { TContentHeaderFeature }
 

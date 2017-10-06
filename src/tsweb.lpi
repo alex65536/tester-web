@@ -30,22 +30,34 @@
         <LaunchingApplication Use="True"/>
       </local>
     </RunParams>
-    <RequiredPackages Count="4">
+    <RequiredPackages Count="7">
       <Item1>
-        <PackageName Value="hash_3rdparty"/>
-        <DefaultFilename Value="../third-party/hash/hash_3rdparty.lpk"/>
+        <PackageName Value="ts_testerbase"/>
+        <DefaultFilename Value="../tester/src/ts_testerbase/ts_testerbase.lpk"/>
       </Item1>
       <Item2>
-        <PackageName Value="LazUtils"/>
+        <PackageName Value="ts_timerlib"/>
+        <DefaultFilename Value="../tester/timerlib/src/ts_timerlib.lpk"/>
       </Item2>
       <Item3>
-        <PackageName Value="WebLaz"/>
+        <PackageName Value="ts_testerutil"/>
+        <DefaultFilename Value="../tester/src/ts_testerutil/ts_testerutil.lpk"/>
       </Item3>
       <Item4>
-        <PackageName Value="FCL"/>
+        <PackageName Value="hash_3rdparty"/>
+        <DefaultFilename Value="../third-party/hash/hash_3rdparty.lpk"/>
       </Item4>
+      <Item5>
+        <PackageName Value="LazUtils"/>
+      </Item5>
+      <Item6>
+        <PackageName Value="WebLaz"/>
+      </Item6>
+      <Item7>
+        <PackageName Value="FCL"/>
+      </Item7>
     </RequiredPackages>
-    <Units Count="42">
+    <Units Count="55">
       <Unit0>
         <Filename Value="tsweb.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -214,6 +226,58 @@
         <Filename Value="webstrutils.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit41>
+      <Unit42>
+        <Filename Value="submissionlanguages.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit42>
+      <Unit43>
+        <Filename Value="threadedhttpapp.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit43>
+      <Unit44>
+        <Filename Value="errorpages.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit44>
+      <Unit45>
+        <Filename Value="tsweberrorpages.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit45>
+      <Unit46>
+        <Filename Value="submissions.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit46>
+      <Unit47>
+        <Filename Value="tswebutils.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit47>
+      <Unit48>
+        <Filename Value="submissions_tsrun.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit48>
+      <Unit49>
+        <Filename Value="tswebmanagers.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit49>
+      <Unit50>
+        <Filename Value="submissioninfo.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit50>
+      <Unit51>
+        <Filename Value="tswebsubmissionfeatures.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit51>
+      <Unit52>
+        <Filename Value="tswebsubmissionelements.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit52>
+      <Unit53>
+        <Filename Value="objectshredder.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit53>
+      <Unit54>
+        <Filename Value="tswebsubmissionmodules.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit54>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -225,6 +289,11 @@
       <IncludeFiles Value="$(ProjOutDir)"/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
+    <CodeGeneration>
+      <Checks>
+        <StackChecks Value="True"/>
+      </Checks>
+    </CodeGeneration>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

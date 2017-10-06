@@ -4,12 +4,15 @@
 		<meta charset="utf-8">
 		<meta name="author" content="Alexander Kernozhitsky">
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+~C!		~?#+refreshHeader;
 		<link rel="stylesheet" href="~dataRoot;/tester.css" type="text/css">
+		<link rel="stylesheet" href="~dataRoot;/verdicts.css" type="text/css">
 		<script>
 			fileTooBigAlertHead = '~\fileTooBigAlertHead;';
 			fileTooBigAlertTail = '~\fileTooBigAlertTail;';
 		</script>
 		<script type="text/javascript" src="~dataRoot;/tester.js"></script>
+~C!		~?#+syntaxHighlighterJsFiles;
 		<title>~+title;</title>
 	</head>
 	<body>
@@ -18,10 +21,11 @@
 ~C!			~?#+nav;
 			<td class="content-cell">
 				<table class="box content-table">
-					~?#+contentHeader;
+~C!					~?#+contentHeader;
 					<tr><td class="content">
 						~#+content;
 					</td></tr>
+~C!					~?#+contentFooter;
 				</table>
 			</td>
 		</tr></table>

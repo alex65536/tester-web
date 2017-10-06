@@ -29,6 +29,7 @@ uses
 
 procedure TrulyRandomSequence(Len: integer; out Bytes: TByteDynArray);
 function RandomSequenceBase64(Len: integer): string;
+function RandomFileName(Len: integer): string;
 function BytesToBase64(const Bytes: TByteDynArray; Len: integer): string;
 
 function GenSalt: string;
@@ -70,6 +71,12 @@ begin
   TrulyRandomSequence(ArrLen, Bytes);
   // push into string
   Result := Copy(BytesToBase64(Bytes, ArrLen), 1, Len);
+end;
+
+function RandomFileName(Len: integer): string;
+begin
+  Result := RandomSequenceBase64(Len);
+  Result := Result.Replace('+', '_').Replace('/', '-');
 end;
 
 function BytesToBase64(const Bytes: TByteDynArray; Len: integer): string;

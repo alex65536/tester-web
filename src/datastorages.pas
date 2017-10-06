@@ -30,6 +30,10 @@ uses
   Classes, SysUtils, IniFiles, LazFileUtils, Laz2_DOM, Laz2_XMLRead,
   Laz2_XMLWrite, AvgLvlTree, escaping, tswebdirectories;
 
+const
+  // action codes for ooCustom in data storages
+  DS_CODE_COMMITING: PtrUInt = 42;
+
 type
 
   { TAbstractDataStorage }
@@ -56,7 +60,7 @@ type
     procedure WriteString(const Path: string; const Value: string); virtual;
     procedure WriteBool(const Path: string; Value: boolean); virtual;
     procedure WriteFloat(const Path: string; Value: double); virtual;
-    procedure Commit; virtual; abstract;
+    procedure Commit; virtual;
     procedure Reload; virtual;
     constructor Create(const AStoragePath: string);
     procedure AfterConstruction; override;
@@ -351,6 +355,7 @@ end;
 
 procedure TXmlDataStorage.Commit;
 begin
+  inherited Commit;
   WriteXMLFile(FDocument, GetFileName);
 end;
 
@@ -699,6 +704,7 @@ end;
 
 procedure TIniDataStorage.Commit;
 begin
+  inherited Commit;
   RemoveEmptySections;
   FIniFile.UpdateFile;
   FStream.SaveToFile(GetFileName);
@@ -763,6 +769,11 @@ end;
 procedure TAbstractDataStorage.WriteFloat(const Path: string; Value: double);
 begin
   FPONotifyObservers(Self, ooChange, @Path);
+end;
+
+procedure TAbstractDataStorage.Commit;
+begin
+  FPONotifyObservers(Self, ooCustom, Pointer(DS_CODE_COMMITING));
 end;
 
 procedure TAbstractDataStorage.Reload;

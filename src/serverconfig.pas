@@ -27,6 +27,13 @@ interface
 uses
   serverevents, Classes, SysUtils, datastorages, webstrconsts;
 
+const
+  {$IfDef Windows}
+  ExeExt = '.exe';
+  {$Else}
+  ExeExt = '';
+  {$EndIf}
+
 type
 
   { TTesterServerConfig }
@@ -49,15 +56,19 @@ type
     function GetFiles_MaxUnpackedArchiveSize: integer;
     function GetLocation_DataDir: string;
     function GetLocation_TemplatesDir: string;
+    function GetLocation_TsRunExe: string;
     function GetOwner_DefaultFirstName: string;
     function GetOwner_DefaultLastName: string;
     function GetOwner_DefaultPassword: string;
     function GetOwner_DefaultUsername: string;
     function GetProblem_DefaultPropsFile: string;
+    function GetServer_Address: string;
+    function GetServer_Port: integer;
     function GetSession_AliveTimeMinutes: integer;
     function GetSession_IDLength: integer;
     function GetSession_TokenLength: integer;
     function GetStorages_CommitIntervalSeconds: integer;
+    function GetTesting_MaxPoolSize: integer;
   protected
     procedure FPOObservedChanged(ASender: TObject; Operation: TFPObservedOperation;
       Data: Pointer);
@@ -76,6 +87,7 @@ type
     // data & templates location
     property Location_DataDir: string read GetLocation_DataDir;
     property Location_TemplatesDir: string read GetLocation_TemplatesDir;
+    property Location_TsRunExe: string read GetLocation_TsRunExe;
 
     // session parameters
     property Session_IDLength: integer read GetSession_IDLength;
@@ -105,6 +117,13 @@ type
 
     // problem default settings
     property Problem_DefaultPropsFile: string read GetProblem_DefaultPropsFile;
+
+    // server settings
+    property Server_Address: string read GetServer_Address;
+    property Server_Port: integer read GetServer_Port;
+
+    // testing options
+    property Testing_MaxPoolSize: integer read GetTesting_MaxPoolSize;
 
     constructor Create;
     procedure Reload;
@@ -188,6 +207,12 @@ begin
   Result := FStorage.ReadString('location.templatesDir', '..' + PathDelim + 'templates');
 end;
 
+function TTesterServerConfig.GetLocation_TsRunExe: string;
+begin
+  Result := FStorage.ReadString('location.tsRunExe', '..' + PathDelim + 'tester' +
+    PathDelim + 'tsrun' + PathDelim + 'tsrun' + ExeExt);
+end;
+
 function TTesterServerConfig.GetOwner_DefaultFirstName: string;
 begin
   Result := FStorage.ReadString('owner.defaults.firstName', 'Admin');
@@ -215,6 +240,16 @@ begin
   Result := FStorage.ReadString('problem.defaultPropsFile', 'props.json');
 end;
 
+function TTesterServerConfig.GetServer_Address: string;
+begin
+  Result := FStorage.ReadString('server.address', '');
+end;
+
+function TTesterServerConfig.GetServer_Port: integer;
+begin
+  Result := FStorage.ReadInteger('server.port', 8080);
+end;
+
 function TTesterServerConfig.GetSession_AliveTimeMinutes: integer;
 begin
   Result := FStorage.ReadInteger('session.aliveTimeMinutes', 60);
@@ -235,11 +270,16 @@ begin
   Result := FStorage.ReadInteger('storages.commitIntervalSeconds', 30);
 end;
 
+function TTesterServerConfig.GetTesting_MaxPoolSize: integer;
+begin
+  Result := FStorage.ReadInteger('testing.maxPoolSize', 2);
+end;
+
 procedure TTesterServerConfig.FPOObservedChanged(ASender: TObject;
   Operation: TFPObservedOperation; Data: Pointer);
 begin
   ASender := ASender; // to prevent hints
-  if not (Operation in [ooAddItem, ooDeleteItem, ooChange]) then
+  if not (Operation in [ooAddItem, ooDeleteItem, ooChange, ooCustom]) then
     Exit;
   if FConstructing then
     Exit;
@@ -265,6 +305,7 @@ begin
 
     WriteString('location.dataDir', Location_DataDir);
     WriteString('location.templatesDir', Location_TemplatesDir);
+    WriteString('location.tsRunExe', GetLocation_TsRunExe);
 
     WriteString('owner.defaults.notice', SOwnerParamsNotice);
     WriteString('owner.defaults.firstName', Owner_DefaultFirstName);
@@ -280,6 +321,11 @@ begin
     WriteInteger('files.maxUnpackedArchiveSize', Files_MaxUnpackedArchiveSize);
 
     WriteString('problem.defaultPropsFile', Problem_DefaultPropsFile);
+
+    WriteString('server.address', Server_Address);
+    WriteInteger('server.port', Server_Port);
+
+    WriteInteger('testing.maxPoolSize', Testing_MaxPoolSize);
   end;
 end;
 

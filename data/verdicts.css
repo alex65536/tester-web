@@ -1,0 +1,32 @@
+.verdict {
+	font-weight: bold;
+}
+.verdict-wvUnknown, .verdict-wvTestFailed, .verdict-cvCompileFail,
+.verdict-veRunFail, .verdict-veCheckError, .verdict-veSkipped {
+	color: black;
+}
+.verdict-wvWaiting, .verdict-wvCompiling, .verdict-wvRunning, 
+.verdict-wvFinishing, .verdict-cvWaiting, .verdict-veWaiting {
+	color: gray;
+}
+.verdict-cvSuccess, .verdict-veAccepted {
+	color: green;
+}
+.verdict-cvCompilationError, .verdict-veWrongAnswer {
+	color: red;
+}
+.verdict-vePresentationError {
+	color: maroon;
+}
+.verdict-veRuntimeError {
+	color: purple;
+}
+.verdict-veTimeLimit {
+	color: blue;
+}
+.verdict-veIdlenessLimit {
+	color: teal;
+}
+.verdict-veMemoryLimit {
+	color: navy;
+}

@@ -234,7 +234,7 @@ begin
     try
       DoHandlePost(ARequest);
       // if no exception, we send redirect and don't render that page
-      if CanRedirect then
+      if (CanRedirect) and (FError = '') then
       begin
         AResponse.Location := RedirectLocation;
         AResponse.Code := 303;

@@ -26,7 +26,8 @@ interface
 
 uses
   SysUtils, Classes, tswebeditablefeatures, webstrconsts, htmlpages,
-  tswebfeatures, serverconfig, problems, webstrutils;
+  tswebfeatures, serverconfig, problems, webstrutils, editableobjects,
+  tswebsubmissionfeatures, submissions, tswebmanagers, tswebsubmissionelements;
 
 type
 
@@ -54,6 +55,14 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TProblemManageAccessFeature }
+
+  TProblemManageAccessFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
   { TProblemEditFeature }
 
   TProblemEditFeature = class(TEditableTransactionPageFeature)
@@ -72,7 +81,260 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TProblemTestInnerFeature }
+
+  TProblemTestInnerFeature = class(TSubmissionTransactionPageFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TProblemTestFeature }
+
+  TProblemTestFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TProblemTestButtonFeature }
+
+  TProblemTestButtonFeature = class(TEditableNavButtonFeature)
+  protected
+    function Enabled: boolean; override;
+    function PagePartDir: string; override;
+    function PagePartName: string; override;
+    procedure InternalSatisfy; override;
+  end;
+
+  { TProblemSubmissionsButtonFeature }
+
+  TProblemSubmissionsButtonFeature = class(TEditableNavButtonFeature)
+  protected
+    function Enabled: boolean; override;
+    function PagePartDir: string; override;
+    function PagePartName: string; override;
+    procedure InternalSatisfy; override;
+  end;
+
+  { TProblemButtonsFeature }
+
+  TProblemButtonsFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TProblemRejudgeFormFeature }
+
+  TProblemRejudgeFormFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TProblemSubmissionsFeature }
+
+  TProblemSubmissionsFeature = class(TSubmissionTransactionPageFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TProblemSubmissionsFeature }
+
+procedure TProblemSubmissionsFeature.InternalSatisfy;
+var
+  Problem: TTestableProblem;
+  SubmissionIds: TIdList;
+  List: TSubmissionItemList;
+begin
+  // load list
+  Problem := EditableObject as TTestableProblem;
+  SubmissionIds := Session.ListAvailable(Problem);
+  List := TSubmissionItemList.Create(Parent, SubmissionIds, Session);
+  try
+    Parent.AddElementPagePart('problemSubmissionList', List);
+  finally
+    FreeAndNil(List);
+  end;
+  // fill variables
+  with Parent.Variables do
+  begin
+    ItemsAsText['contentHeaderText'] := SProblemSubmissionsText;
+  end;
+  // load page part
+  LoadPagePart('problem', 'problemSubmissions', 'content');
+end;
+
+procedure TProblemSubmissionsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableObjectBaseFeature);
+  ADependencies.Add(TEditablePageTitleFeature);
+  ADependencies.Add(TContentFeature);
+  ADependencies.Add(TProblemRejudgeFormFeature);
+  ADependencies.Add(TProblemButtonsFeature);
+end;
+
+{ TProblemRejudgeFormFeature }
+
+procedure TProblemRejudgeFormFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['problemRejudgeBtn'] := SProblemRejudgeBtn;
+  end;
+  LoadPagePart('problem', 'problemRejudgeForm');
+end;
+
+procedure TProblemRejudgeFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TPostDataFeature);
+end;
+
+{ TProblemSubmissionsButtonFeature }
+
+function TProblemSubmissionsButtonFeature.Enabled: boolean;
+begin
+  Result := EditableObject.GetAccessRights(User as TEditorUser) in AccessCanWriteSet;
+end;
+
+function TProblemSubmissionsButtonFeature.PagePartDir: string;
+begin
+  Result := 'problem';
+end;
+
+function TProblemSubmissionsButtonFeature.PagePartName: string;
+begin
+  Result := 'problemSubmissionsBtn';
+end;
+
+procedure TProblemSubmissionsButtonFeature.InternalSatisfy;
+begin
+  inherited InternalSatisfy;
+  Parent.Variables.ItemsAsText['editableReserved2Btn'] := '~+#problemSubmissionsBtn;';
+end;
+
+{ TProblemManageAccessFeature }
+
+procedure TProblemManageAccessFeature.Satisfy;
+begin
+  // do nothing
+end;
+
+procedure TProblemManageAccessFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TProblemButtonsFeature);
+  ADependencies.Add(TEditableManageAccessFeature);
+end;
+
+{ TProblemButtonsFeature }
+
+procedure TProblemButtonsFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['problemTestText'] := SProblemTestText;
+    ItemsAsText['problemSubmissionsText'] := SProblemSubmissionsText;
+  end;
+end;
+
+procedure TProblemButtonsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableButtonsFeature);
+  ADependencies.Add(TProblemTestButtonFeature);
+  ADependencies.Add(TProblemSubmissionsButtonFeature);
+end;
+
+{ TProblemTestButtonFeature }
+
+function TProblemTestButtonFeature.Enabled: boolean;
+begin
+  Result := EditableObject.GetAccessRights(User as TEditorUser) in AccessCanReadSet;
+end;
+
+function TProblemTestButtonFeature.PagePartDir: string;
+begin
+  Result := 'problem';
+end;
+
+function TProblemTestButtonFeature.PagePartName: string;
+begin
+  Result := 'problemTestBtn';
+end;
+
+procedure TProblemTestButtonFeature.InternalSatisfy;
+begin
+  inherited InternalSatisfy;
+  Parent.Variables.ItemsAsText['editableReserved1Btn'] := '~+#problemTestBtn;';
+end;
+
+{ TProblemTestFeature }
+
+procedure TProblemTestFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['contentHeaderText'] := SProblemTestText;
+  end;
+  LoadPagePart('problem', 'problemTest', 'content');
+end;
+
+procedure TProblemTestFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TProblemBaseFeature);
+  ADependencies.Add(TEditableObjectBaseFeature);
+  ADependencies.Add(TContentFeature);
+  ADependencies.Add(TProblemTestInnerFeature);
+  ADependencies.Add(TEditablePageTitleFeature);
+  ADependencies.Add(TProblemButtonsFeature);
+end;
+
+{ TProblemTestInnerFeature }
+
+procedure TProblemTestInnerFeature.InternalSatisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['problemTitle'] := Transaction.Title;
+    case Transaction.StatementsType of
+      stNone:
+      begin
+        ItemsAsText['problemNoStatementsCaption'] := SProblemNoStatementsCaption;
+        LoadPagePart('problem', 'problemNoStatements', 'problemStatements');
+      end;
+      stHtml:
+      begin
+        SetFromFile('problemStatementsInner', Transaction.StatementsFileName);
+        LoadPagePart('problem', 'problemStatementsHtml', 'problemStatements');
+      end
+      else
+      begin
+        ItemsAsText['objectStatementsExt'] := SFileTypesByExt[Transaction.StatementsType];
+        ItemsAsText['problemStatementsDownload'] :=
+          Format(SDownloadPrompt, [FileSizeStr(Transaction.StatementsFileName)]);
+        ItemsAsText['problemStatementsCaption'] := SProblemStatementsCaption;
+        LoadPagePart('problem', 'problemStatementsDownload', 'problemStatements');
+      end;
+    end;
+  end;
+  LoadPagePart('problem', 'problemTestInner');
+end;
+
+procedure TProblemTestInnerFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TSubmitFooterPageFeature);
+end;
 
 { TProblemViewFeature }
 
@@ -85,8 +347,8 @@ begin
       ItemsAsText['archiveDownloadLink'] := SNone
     else
     begin
-      ItemsAsText['archiveDownloadPrompt'] := Format(SDownloadPrompt,
-        [FileSizeStr(ArchiveFileName)]);
+      ItemsAsText['archiveDownloadPrompt'] :=
+        Format(SDownloadPrompt, [FileSizeStr(ArchiveFileName)]);
       LoadPagePart('problem', 'problemViewLink', 'archiveDownloadLink');
     end;
     // statements type
@@ -97,8 +359,8 @@ begin
     else
     begin
       ItemsAsText['objectStatementsExt'] := SFileTypesByExt[StatementsType];
-      ItemsAsText['statementsDownloadPrompt'] := Format(SDownloadPrompt,
-        [FileSizeStr(StatementsFileName)]);
+      ItemsAsText['statementsDownloadPrompt'] :=
+        Format(SDownloadPrompt, [FileSizeStr(StatementsFileName)]);
       LoadPagePart('problem', 'problemViewLink', 'statementsDownloadLink');
     end;
     // max source file size
@@ -112,6 +374,7 @@ begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TProblemEditViewBaseFeature);
   ADependencies.Add(TEditableViewFeature);
+  ADependencies.Add(TProblemButtonsFeature);
 end;
 
 { TProblemEditViewBaseFeature }
@@ -159,6 +422,7 @@ begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TProblemEditViewBaseFeature);
   ADependencies.Add(TEditableEditFeature);
+  ADependencies.Add(TProblemButtonsFeature);
 end;
 
 { TProblemCreateFormFeature }

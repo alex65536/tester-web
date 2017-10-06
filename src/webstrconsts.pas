@@ -194,6 +194,7 @@ resourcestring
   SFilesNotice = 'NOTE: All sizes are listed in KBytes!';
   SArchiveTooBig = 'Archive size must not exceed %d KBytes.';
   SStatementsTooBig = 'Statements size must not exceed %d KBytes.';
+  SSubmissionTooBig = 'File size must not exceed %d KBytes.';
   SUnpackedTooBig = 'Unpacked archive size must not exceed %d KBytes.';
   SBadArchive = 'Bad archive!';
   SCouldNotCopyFile = 'Could not copy file "%s" to "%s"!';
@@ -201,7 +202,7 @@ resourcestring
   SCouldNotDeleteFile = 'Could not delete file "%s"!';
   SCouldNotDeleteDir = 'Could not delete directory "%s"!';
   SCouldNotUnpack = 'Could not unpack archive!';
-  SErrorsWhileDeleting = 'Errors while deleting problem "%s".';
+  SErrorsWhileDeletingProblem = 'Errors while deleting problem "%s".';
   SMaxSrcSize = 'Max submission file size must be between %d and %d KBytes!';
   SProblemArchiveKey = 'Archive:';
   SProblemStatementsKey = 'Statements:';
@@ -222,6 +223,56 @@ resourcestring
   SFileSizeKBytes = '%.1f KB';
   SFileSizeMBytes = '%.1f MB';
   SObjectEditSuccessful = 'Edited successfully.';
+  SUnknownSubmissionLanguage = 'Unknown submission language: "%s"!';
+  SErrorTitle = 'Error!';
+  SErrorMsg = 'Error %s : "%s".';
+  SErrorStackTrace = 'Stack trace:';
+  SServerRunning = 'Server is running, cannot change %s!';
+  SInvalidIDStr = 'Invalid ID string "%s"';
+  SFileOpenTimeout = 'Opening file "%s" timed out.';
+  SSubmissionDoesNotExist = 'Submission %d doesn''t exist!';
+  SThreadAlreadyAssigned = 'A thread is already assigned to the submission. ' +
+    'Maybe the submission is already running?';
+  SVerdictUnknown = 'Unknown';
+  SVerdictTestFailed = 'Testing failed';
+  SVerdictRunning = 'Running...';
+  SVerdictWaiting = 'Waiting...';
+  SVerdictCompiling = 'Compiling...';
+  SVerdictFinishing = 'Finishing...';
+  SProblemStatementsCaption = 'Statements:';
+  SProblemNoStatementsCaption = 'No statements available';
+  SProblemTestText = 'Test problem';
+  SProblemSubmitSolution = 'Submit solution:';
+  SProblemLanguage = 'Language:';
+  SProblemSubmitText = 'Submit';
+  SProblemFile = 'File:';
+  SSubmissionHeaderId = 'ID';
+  SSubmissionHeaderSubmitTime = 'Submit time';
+  SSubmissionHeaderAuthor = 'Author';
+  SSubmissionHeaderLanguage = 'Language';
+  SSubmissionHeaderVerdict = 'Verdict';
+  SSubmissionHeaderTest = 'Test';
+  SSubmissionHeaderTime = 'Time';
+  SSubmissionHeaderMemory = 'Memory';
+  SSubmissionHeaderScore = 'Score';
+  SNoSubmissionFile = 'No file specified!';
+  SSubmissionExtensionExpected = 'File expected to have extension "%s"';
+  STsRunNonZeroExitcode = 'TsRun exited with exitcode = %d';
+  SStringCannotBeEmpty = 'String %s cannot be empty!';
+  SProblemSubmissionsText = 'Submissions';
+  SProblemRejudgeBtn = 'Rejudge';
+  STestIdHeader = 'Test #';
+  STestVerdictHeader = 'Verdict';
+  STestTimeHeader = 'Time';
+  STestMemoryHeader = 'Memory';
+  STestScoreHeader = 'Score';
+  SCompileVerdictCaption = 'Compilation verdict:';
+  SSubmissionEmptySection = 'No information available!';
+  SSubmissionCompileHeader = 'Compilation results';
+  SSubmissionTestHeader = 'Testing results';
+  SSubmissionSourceHeader = 'Source code';
+  SCompileOutputCaption = 'Compiler output:';
+  SSubmissionPageCaption = 'Submission #%d';
 
 implementation
 

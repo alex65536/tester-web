@@ -123,6 +123,14 @@ table.content-table {
 	padding: 5pt 1pt;
 	text-align: center;
 }
+.content-footer {
+	background-color: #7CE6AB;
+	border-top-color: #1CA757;
+	border-top-style: ridge;
+	border-top-width: 2pt;
+	padding: 2pt;
+	padding-bottom: 10pt;
+}
 
 
 table.center-wrapper {
@@ -305,6 +313,9 @@ img.profile-role {
 }
 
 
+.styled-table-wrapper {
+	padding-right: 10pt;
+}
 table.styled {
 	border-spacing: 0;
 	border-radius: 5pt;
@@ -338,6 +349,9 @@ table.styled th {
 table.styled th.narrow {
 	width: 1pt;
 }
+table.styled td.nowrap {
+	white-space: nowrap;
+}
 
 
 table.access-table th.id {
@@ -360,4 +374,137 @@ td.a-delete-wrapper {
 	padding-left: 10pt;
 	text-align: left;
 	vertical-align: middle;
+}
+
+
+.error-msg {
+	color: red;
+	font-size: 14pt;
+	font-weight: bold;
+	text-align: center;
+}
+.error-stack-trace-header {
+	font-size: 14pt;
+	font-weight: bold;
+}
+.error-stack-trace {
+	padding-left: 20pt;
+	padding-top: 5pt;
+}
+
+
+.problem-title {
+	font-size: 24pt;
+	font-weight: bold;
+	text-align: center;
+}
+.problem-statements {
+}
+.problem-no-statements {
+	font-style: italic;
+}
+.problem-submit {
+	background-color: #E3FFF0;
+	font-size: 11pt;
+	margin: 5pt;
+}
+.problem-submit-header {
+	font-size: 12pt;
+	font-weight: bold;
+	margin-right: 5pt;
+}
+.problem-submit-item {
+	background-color: white;
+	border-style: ridge;
+	border-width: 1pt;
+	border-color: #1CA757;
+	border-radius: 2pt;
+	display: inline-block;
+	margin-right: 7pt;
+	padding: 2pt;
+	padding-left: 5pt;
+	white-space: nowrap;
+}
+.problem-submit-input {
+	font-size: inherit;
+}
+.problem-submit-btn {
+	font-size: 12pt;
+	margin-left: 0;
+	margin-right: 2pt;
+}
+
+
+.submission-section-header {
+	background-color: #47BD7B;
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+	color: white;
+	font-size: 15pt;
+	font-weight: bold;
+	padding: 2pt 4pt;
+	text-align: center;
+}
+.submission-section {
+	background-color: #B6F3D1;
+	border-top-left-radius: 0 !important;
+	border-top-right-radius: 0 !important;
+	border-top-style: none;
+	margin-top: 0;
+}
+.submission-section.empty {
+	font-style: italic;
+}
+
+
+.submission-section.compile {
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+	border-bottom-style: none;
+}
+.compiler-output {
+	background-color: white;
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+	max-height: 100pt;
+	margin-top: 0;
+	overflow: auto;
+}
+.compiler-output h4 {
+	font-size: 13pt;
+	margin: 0;
+	margin-bottom: 8pt;
+}
+.compiler-output pre {
+	font-size: 10.5pt;
+	margin: 0;
+	white-space: pre-wrap;
+}
+
+
+.source-view {
+	background-color: white;
+	font-size: 14pt;
+	padding: 2pt 0;
+}
+table.source-view-inner {
+	overflow: auto;
+	table-layout: fixed;
+	width: 100%;
+}
+.source-view div {
+	margin-top: 0 !important;
+	margin-bottom: 0 !important;
+}
+.source-view pre {
+	font-size: 10.5pt;
+	margin: 0;
+	padding: 3pt 4pt;
+	width: 100%;
+	white-space: pre-wrap;
+}
+
+
+.back-btn {
+	display: none;
 }

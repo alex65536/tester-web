@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, editableobjects, datastorages, webstrconsts, TypInfo,
   tswebdirectories, filemanager, archivemanager, FileUtil, LazFileUtils,
-  serverconfig;
+  serverconfig, users;
 
 type
   TProblemStatementsType = (stNone, stHtml, stPdf, stDoc, stDocx);
@@ -67,23 +67,28 @@ type
 
   TProblemAccessSession = class(TEditableObjectAccessSession)
   protected
-    {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser;
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
   end;
 
-  { TProblemTransaction }
+  { TBaseProblemTransaction }
 
-  TProblemTransaction = class(TEditableTransaction)
+  TBaseProblemTransaction = class(TEditableTransaction)
   private
     FArchiveFileName: string;
     FMaxSrcLimit: integer;
+    FPropsFileName: string;
     FStatementsFileName: string;
     FStatementsType: TProblemStatementsType;
+    FUnpackedFileName: string;
     function GetProblem: TProblem;
   protected
+    property ArchiveFileName: string read FArchiveFileName write FArchiveFileName;
+    property UnpackedFileName: string read FUnpackedFileName;
+    property PropsFileName: string read FPropsFileName;
     procedure DoCommit; override;
     procedure DoReload; override;
-    {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser;
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
   public
     property Problem: TProblem read GetProblem;
@@ -91,23 +96,29 @@ type
       FStatementsType;
     property StatementsFileName: string read FStatementsFileName write
       FStatementsFileName;
-    property ArchiveFileName: string read FArchiveFileName write FArchiveFileName;
     property MaxSrcLimit: integer read FMaxSrcLimit write FMaxSrcLimit;
     procedure Validate; override;
+  end;
+
+  { TProblemTransaction }
+
+  TProblemTransaction = class(TBaseProblemTransaction)
+  public
+    property ArchiveFileName;
   end;
 
   { TProblemManagerSession }
 
   TProblemManagerSession = class(TEditableManagerSession)
   protected
-    {%H-}constructor Create(AManager: TEditableManager; AUser: TEditorUser);
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
   end;
 
   { TProblem }
 
   TProblem = class(TEditableObject)
   private
-    function GetFileName(const Dir, Ext: string; MustExist: boolean): string;
+    function GetFileName(const Dir, Ext: string; MustExist, IsDir: boolean): string;
   protected
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
     function ArchiveFileName(MustExist: boolean): string;
@@ -115,14 +126,15 @@ type
     function StatementsFileName(MustExist: boolean): string;
     function StatementsFileType: TProblemStatementsType;
     function PropsFileName: string;
-    procedure WaitForFiles;
     procedure HandleSelfDeletion; override;
   public
-    function CreateAccessSession(AUser: TEditorUser): TEditableObjectAccessSession;
+    function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession;
       override;
-    function CreateTransaction(AUser: TEditorUser): TEditableTransaction;
+    function CreateTransaction(AUser: TUser): TEditableTransaction;
       override;
   end;
+
+  { TProblemManager }
 
   TProblemManager = class(TEditableManager)
   protected
@@ -130,26 +142,14 @@ type
     function CreateStorage: TAbstractDataStorage; override;
     function CreateObject(const AName: string): TEditableObject; override;
   public
-    function CreateManagerSession(AUser: TEditorUser): TEditableManagerSession;
+    function CreateManagerSession(AUser: TUser): TEditableManagerSession;
       override;
   end;
-
-function ProblemManager: TProblemManager;
 
 function StatementsTypeToStr(AType: TProblemStatementsType): string;
 function StrToStatementsType(const S: string): TProblemStatementsType;
 
 implementation
-
-var
-  FManager: TProblemManager = nil;
-
-function ProblemManager: TProblemManager;
-begin
-  if FManager = nil then
-    FManager := TProblemManager.Create;
-  Result := FManager;
-end;
 
 function StatementsTypeToStr(AType: TProblemStatementsType): string;
 begin
@@ -183,7 +183,7 @@ begin
   Result := TProblem.Create(AName, Self);
 end;
 
-function TProblemManager.CreateManagerSession(AUser: TEditorUser): TEditableManagerSession;
+function TProblemManager.CreateManagerSession(AUser: TUser): TEditableManagerSession;
 begin
   Result := TProblemManagerSession.Create(Self, AUser);
 end;
@@ -195,24 +195,32 @@ begin
   inherited Create(AName, AManager);
 end;
 
-function TProblem.GetFileName(const Dir, Ext: string; MustExist: boolean): string;
+function TProblem.GetFileName(const Dir, Ext: string; MustExist, IsDir: boolean): string;
 var
   Path: string;
+  Exists: boolean;
 begin
   Path := AppendPathDelim(ExpandInternalDirLocation(Dir));
   Result := Path + Format('problem%d%s', [ID, Ext]);
-  if MustExist and (not FileExistsUTF8(Result)) then
-    Result := '';
+  if MustExist then
+  begin
+    if IsDir then
+      Exists := DirectoryExistsUTF8(Result)
+    else
+      Exists := FileExistsUTF8(Result);
+    if not Exists then
+      Result := '';
+  end;
 end;
 
 function TProblem.ArchiveFileName(MustExist: boolean): string;
 begin
-  Result := GetFileName('archives', SArchiveExt, MustExist);
+  Result := GetFileName('archives', SArchiveExt, MustExist, False);
 end;
 
 function TProblem.UnpackedFileName(MustExist: boolean): string;
 begin
-  Result := GetFileName('problems', '', MustExist);
+  Result := GetFileName('problems', '', MustExist, True);
 end;
 
 function TProblem.StatementsFileName(MustExist: boolean): string;
@@ -223,7 +231,7 @@ begin
   if FileType = stNone then
     Result := ''
   else
-    Result := GetFileName('statements', SFileTypesByExt[FileType], MustExist);
+    Result := GetFileName('statements', SFileTypesByExt[FileType], MustExist, False);
 end;
 
 function TProblem.StatementsFileType: TProblemStatementsType;
@@ -240,15 +248,10 @@ var
   PropsFile: string;
 begin
   Result := UnpackedFileName(True);
-  PropsFile := Storage.ReadString('propsFile', '');
+  PropsFile := Storage.ReadString(FullKeyName('propsFile'), '');
   if (Result = '') or (PropsFile = '') then
     Exit('');
   Result := AppendPathDelim(Result) + PropsFile;
-end;
-
-procedure TProblem.WaitForFiles;
-begin
-  // This will be used later, when the problem testing will be added
 end;
 
 procedure TProblem.HandleSelfDeletion;
@@ -256,21 +259,20 @@ var
   Success: boolean;
 begin
   inherited HandleSelfDeletion;
-  WaitForFiles;
   Success := True;
   Success := Success and TryDeleteFile(StatementsFileName(True));
   Success := Success and TryDeleteFile(ArchiveFileName(True));
   Success := Success and TryDeleteDir(UnpackedFileName(True));
   if not Success then
-    raise EEditableAction.CreateFmt(SErrorsWhileDeleting, [Name]);
+    raise EEditableAction.CreateFmt(SErrorsWhileDeletingProblem, [Name]);
 end;
 
-function TProblem.CreateAccessSession(AUser: TEditorUser): TEditableObjectAccessSession;
+function TProblem.CreateAccessSession(AUser: TUser): TEditableObjectAccessSession;
 begin
   Result := TProblemAccessSession.Create(Manager, AUser, Self);
 end;
 
-function TProblem.CreateTransaction(AUser: TEditorUser): TEditableTransaction;
+function TProblem.CreateTransaction(AUser: TUser): TEditableTransaction;
 begin
   Result := TProblemTransaction.Create(Manager, AUser, Self);
 end;
@@ -278,7 +280,7 @@ end;
 { TProblemManagerSession }
 
 constructor TProblemManagerSession.Create(AManager: TEditableManager;
-  AUser: TEditorUser);
+  AUser: TUser);
 begin
   inherited Create(AManager, AUser);
 end;
@@ -286,19 +288,19 @@ end;
 { TProblemAccessSession }
 
 constructor TProblemAccessSession.Create(AManager: TEditableManager;
-  AUser: TEditorUser; AObject: TEditableObject);
+  AUser: TUser; AObject: TEditableObject);
 begin
   inherited Create(AManager, AUser, AObject);
 end;
 
-{ TProblemTransaction }
+{ TBaseProblemTransaction }
 
-function TProblemTransaction.GetProblem: TProblem;
+function TBaseProblemTransaction.GetProblem: TProblem;
 begin
   Result := EditableObject as TProblem;
 end;
 
-procedure TProblemTransaction.DoCommit;
+procedure TBaseProblemTransaction.DoCommit;
 begin
   inherited DoCommit;
   try
@@ -327,22 +329,24 @@ begin
   end;
 end;
 
-procedure TProblemTransaction.DoReload;
+procedure TBaseProblemTransaction.DoReload;
 begin
   inherited DoReload;
   FArchiveFileName := Problem.ArchiveFileName(True);
+  FUnpackedFileName := Problem.UnpackedFileName(True);
   FStatementsFileName := Problem.StatementsFileName(True);
   FStatementsType := Problem.StatementsFileType;
   FMaxSrcLimit := Storage.ReadInteger(FullKeyName('maxSrc'), Config.Files_DefaultSrcSize);
+  FPropsFileName := Problem.PropsFileName;
 end;
 
-constructor TProblemTransaction.Create(AManager: TEditableManager;
-  AUser: TEditorUser; AObject: TEditableObject);
+constructor TBaseProblemTransaction.Create(AManager: TEditableManager;
+  AUser: TUser; AObject: TEditableObject);
 begin
   inherited Create(AManager, AUser, AObject);
 end;
 
-procedure TProblemTransaction.Validate;
+procedure TBaseProblemTransaction.Validate;
 begin
   inherited Validate;
   try
@@ -363,8 +367,5 @@ begin
       raise;
   end;
 end;
-
-finalization
-  FreeAndNil(FManager);
 
 end.
