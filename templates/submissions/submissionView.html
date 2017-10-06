@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en_UK">
+	<head>
+		<meta charset="utf-8">
+		<meta name="author" content="Alexander Kernozhitsky">
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+		<!-- meta http-equiv="refresh" content="3" -->
+		<link rel="stylesheet" href="~dataRoot;/tester.css" type="text/css">
+		<link rel="stylesheet" href="~dataRoot;/verdicts.css" type="text/css">
+		<script>
+			fileTooBigAlertHead = 'File size must not exceed ';
+			fileTooBigAlertTail = ' KBytes.';
+		</script>
+		<script type="text/javascript" src="~dataRoot;/tester.js"></script>
+		<script type="text/javascript" src="~dataRoot;/syntaxhighlighter.min.js"></script>
+		<link rel="stylesheet" href="~dataRoot;/theme.css" type="text/css">
+		<title>Куфический Дирхем: Submissions</title>
+	</head>
+	<body>
+		<table class="container">
+			<tr>
+				<td rowspan="2" class="box logo-box">
+					<a href="/">
+						<img src="~dataRoot;/logoWithText.png" alt="Tester Web logo" class="logo">
+					</a>
+				</td>
+				<td class="box header">
+					Куфический Дирхем
+				</td>
+			</tr>
+			<tr>
+				<td class="box userbar">
+					You are logged in as <a href="/profile?user=admin" class="role role-owner">admin</a>.
+					<a class="action" href="/profile">View profile</a>
+					<a class="action" href="/logout">Log out</a>
+				</td>
+			</tr>
+		</table>
+		<table class="container"><tr>
+			<td class="box nav">
+				<ul>
+					<li><a href="/main">Main Page</a></li>
+					<li><a href="/page1">Page 1</a></li>
+					<li><a href="/page2">Page 2</a></li>
+					<li><a href="/problems">Problems List</a></li>
+				</ul>
+			</td>
+			<td class="content-cell">
+				<table class="box content-table">
+					<tr><td class="content">
+						<p>
+							<a class="styled-btn">Back</a>
+						</p>
+						<div class="styled-table-wrapper">
+							<table class="box styled">
+								<tr>
+									<th class="narrow">ID</th>
+									<th>Submit time</th>
+									<th>Author</th>
+									<th>Language</th>
+									<th>Verdict</th>
+									<th class="narrow">Test</th>
+									<th class="narrow">Time</th>
+									<th class="narrow">Memory</th>
+									<th class="narrow">Score</th>
+								</tr>
+								<tr>
+									<td>
+										<a href="/submissions?id=30">30</a>
+									</td>
+									<td>05.10.2017 20:07:50</td>
+									<td>
+										<a href="/profile?user=rms" class="role role-editor">rms</a>
+									</td>
+									<td>C++11 (g++ 5.4.1)</td>
+									<td>
+										<span class="verdict verdict-wvWaiting">Waiting...</span>
+									</td>
+									<td>-</td>
+									<td class="nowrap">0.00 s</td>
+									<td class="nowrap">0.00 MB</td>
+									<td>0.00</td>
+								</tr>
+							</table>
+						</div>
+						<div class="box submission-section-header">
+							Compile
+						</div>
+						<div class="box submission-section compile">
+							Verdict: 
+							<span class="verdict verdict-cvSuccess">
+								Compilation successful
+							</span>
+						</div>
+						<div class="box compiler-output">
+							<h1>
+								Compiler output:
+							</h1>
+<pre>
+GNU FPC v. 3.4.1
+Compiled successfully
+</pre>
+						</div>
+						<div class="box submission-section-header">
+							Test
+						</div>
+						<div class="styled-table-wrapper">
+							<table class="box styled submission-section">
+								<tr>
+									<th>Test</th>
+									<th>Verdict</th>
+									<th>Time</th>
+									<th>Memory</th>
+									<th>Score</th>
+								</tr>
+								<tr>
+									<td>1</td>
+									<td>
+										<span class="verdict verdict-veAccepted">
+											Accepted
+										</span>
+									</td>
+									<td>0.2 s</td>
+									<td>1.44 MB</td>
+									<td>20.00</td>
+								</tr>
+								<tr>
+									<td>2</td>
+									<td>
+										<span class="verdict verdict-veAccepted">
+											Accepted
+										</span>
+									</td>
+									<td>0.2 s</td>
+									<td>1.44 MB</td>
+									<td>20.00</td>
+								</tr>
+								<tr>
+									<td>3</td>
+									<td>
+										<span class="verdict verdict-veAccepted">
+											Accepted
+										</span>
+									</td>
+									<td>0.2 s</td>
+									<td>1.44 MB</td>
+									<td>20.00</td>
+								</tr>
+								<tr>
+									<td>4</td>
+									<td>
+										<span class="verdict verdict-veAccepted">
+											Accepted
+										</span>
+									</td>
+									<td>0.2 s</td>
+									<td>1.44 MB</td>
+									<td>20.00</td>
+								</tr>
+							</table>
+						</div>
+						
+						<div class="box submission-section-header">
+							Source code
+						</div>
+						<div class="box submission-section source-view">
+<pre class="brush: cpp">
+#include &lt;iostream&gt;
+
+using namespace std;
+
+int main() {
+	int a, b;
+	cin &gt;&gt; a &gt;&gt; b;
+	cout &lt;&lt; a + b &lt;&lt; endl;
+	return 0;
+}
+</pre>
+						</div>
+					</td></tr>
+				</table>
+			</td>
+		</tr></table>
+		<div class="box footer">
+			Copyright &copy; 2017 Alexander Kernozhitsky
+			<br>
+			Tester Web is licensed under the terms of <a href="https://github.com/alex65536/tester-web/blob/master/LICENSE">GNU GPL</a> version 2 or any later version.
+			<br>
+			Sources are available on <a href="https://github.com/alex65536/tester-web">Github</a>.
+		</div>
+	</body>
+</html>
