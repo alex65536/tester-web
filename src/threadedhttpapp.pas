@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, CustApp, custhttpapp, HTTPDefs, serverconfig, errorpages,
-  webstrconsts;
+  webstrconsts, dateutils;
 
 type
   EThreadedHttpApplication = class(Exception);
@@ -239,12 +239,16 @@ end;
 
 procedure TThreadedHttpHandler.HandleRequest(ARequest: TRequest;
   AResponse: TResponse);
+var
+  Time: TDateTime;
 begin
   FRequest := ARequest;
   FResponse := AResponse;
+  Time := Now;
   try
     FThread.Synchronize(@InternalRequestHandler);
   finally
+    WriteLn('Request processed in ', MilliSecondsBetween(Time, Now), ' ms.');
     FRequest := nil;
     FResponse := nil;
   end;

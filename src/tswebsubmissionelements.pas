@@ -25,9 +25,8 @@ unit tswebsubmissionelements;
 interface
 
 uses
-  Classes, SysUtils, submissionlanguages, tswebpagesbase, htmlpages,
-  htmlpreprocess, submissions, submissioninfo, strverdicts, webstrconsts,
-  strconsts, tswebmanagers, testresults;
+  SysUtils, submissionlanguages, tswebpagesbase, htmlpages, htmlpreprocess,
+  submissions, submissioninfo, strverdicts, webstrconsts, strconsts, testresults;
 
 type
 
@@ -254,11 +253,11 @@ procedure TSubmissionItem.DoFillVariables;
 begin
   with Storage do
   begin
-    ItemsAsText['submissionId'] := IntToStr(Info.ID);
-    ItemsAsText['submissionSubmitTime'] := FormatDateTime(SPreferredDateTimeFormat, Info.SubmitTime);
-    ItemsAsText['submissionAuthorLink'] := Parent.GenerateUserLink(Info.OwnerName);
-    ItemsAsText['submissionLanguage'] := Info.Language;
-    ItemsAsText['submissionVerdict'] := Info.VerdictStr;
+    ItemsAsText['submissionId'] := IntToStr(Submission.ID);
+    ItemsAsText['submissionSubmitTime'] := FormatDateTime(SPreferredDateTimeFormat, Submission.SubmitTime);
+    ItemsAsText['submissionAuthorLink'] := Parent.GenerateUserLink(Submission.OwnerName);
+    ItemsAsText['submissionLanguage'] := LanguageFullCompilerNames(Submission.Language);
+    ItemsAsText['submissionVerdict'] := VerdictKindToStr(Info.VerdictKind);
     ItemsAsText['submissionVerdictKind'] := Info.VerdictKind;
     ItemsAsText['submissionTest'] := TestIdToStr(Info.TestCase);
     ItemsAsText['submissionTime'] := ProblemTimeToStr(Info.Time);
@@ -276,7 +275,11 @@ constructor TSubmissionItem.Create(AParent: THtmlPage; ASubmission: TViewSubmiss
 begin
   inherited Create(AParent);
   FSubmission := ASubmission;
-  FInfo := TSubmissionInfo.Create(ASubmission);
+  FInfo := TSubmissionInfo.Create;
+  FInfo.Results := FSubmission.Results;
+  FInfo.Finished := FSubmission.Finished;
+  FInfo.Success := FSubmission.Success;
+  FInfo.RetreiveInfo;
 end;
 
 destructor TSubmissionItem.Destroy;

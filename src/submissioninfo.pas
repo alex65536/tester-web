@@ -25,8 +25,8 @@ unit submissioninfo;
 interface
 
 uses
-  SysUtils, webstrconsts, submissions, testerprimitives, typinfo, problemstats,
-  submissionlanguages, strverdicts;
+  SysUtils, webstrconsts, testerprimitives, typinfo, problemstats, strverdicts,
+  testresults;
 
 type
   TTesterWebVerdict = (
@@ -54,38 +54,36 @@ type
 
   TSubmissionInfo = class
   private
-    FSubmission: TViewSubmission;
-    FID: integer;
-    FSubmitTime: TDateTime;
-    FOwnerName: string;
-    FLanguage: string;
+    FResults: TTestedProblem;
+    FFinished: boolean;
+    FSuccess: boolean;
     FVerdictKind: string;
     FTestCase: integer;
     FTime: TProblemTime;
     FMemory: TProblemMemory;
     FScore: double;
-    function GetVerdictStr: string;
     procedure GetVerdictTestCase(out AVerdictKind: string; out ATestCase: integer);
     procedure GetTimeMemoryScore(out ATime: TProblemTime; out AMemory: TProblemMemory;
       out AScore: double);
   public
-    property Submission: TViewSubmission read FSubmission;
-    property ID: integer read FID;
-    property SubmitTime: TDateTime read FSubmitTime;
-    property OwnerName: string read FOwnerName;
-    property Language: string read FLanguage;
+    property Results: TTestedProblem read FResults write FResults;
+    property Finished: boolean read FFinished write FFinished;
+    property Success: boolean read FSuccess write FSuccess;
+
     property VerdictKind: string read FVerdictKind;
-    property VerdictStr: string read GetVerdictStr;
     property TestCase: integer read FTestCase; // -1 if no test case
     property Time: TProblemTime read FTime;
     property Memory: TProblemMemory read FMemory;
     property Score: double read FScore;
-    constructor Create(ASubmission: TViewSubmission);
+
+    procedure RetreiveInfo;
   end;
 
 function CompilerVerdictToStr(AVerdict: TCompilerVerdict): string;
 function TestVerdictToStr(AVerdict: TTestVerdict): string;
 function TesterWebVerdictToStr(AVerdict: TTesterWebVerdict): string;
+
+function VerdictKindToStr(const AVerdictKind: string): string;
 
 implementation
 
@@ -104,6 +102,27 @@ begin
   Result := GetEnumName(TypeInfo(TTesterWebVerdict), Ord(AVerdict));
 end;
 
+function VerdictKindToStr(const AVerdictKind: string): string;
+var
+  C: TCompilerVerdict;
+  V: TTestVerdict;
+  W: TTesterWebVerdict;
+begin
+  Result := '';
+  // check for compile verdicts
+  for C in TCompilerVerdict do
+    if CompilerVerdictToStr(C) = AVerdictKind then
+      Exit(SCompilerVerdicts[C]);
+  // check for run verdicts
+  for V in TTestVerdict do
+    if TestVerdictToStr(V) = AVerdictKind then
+      Exit(STestVerdicts[V]);
+  // check for tsWeb verdicts
+  for W in TTesterWebVerdict do
+    if TesterWebVerdictToStr(W) = AVerdictKind then
+      Exit(STesterWebVerdicts[W]);
+end;
+
 { TSubmissionInfo }
 
 procedure TSubmissionInfo.GetVerdictTestCase(out AVerdictKind: string; out
@@ -113,7 +132,7 @@ procedure TSubmissionInfo.GetVerdictTestCase(out AVerdictKind: string; out
   var
     I: integer;
   begin
-    with Submission.Results do
+    with Results do
     begin
       ATestCase := -1;
       // check for compile errors
@@ -136,7 +155,7 @@ procedure TSubmissionInfo.GetVerdictTestCase(out AVerdictKind: string; out
   var
     I: integer;
   begin
-    with Submission.Results do
+    with Results do
     begin
       ATestCase := -1;
       // check if compiled
@@ -156,21 +175,21 @@ procedure TSubmissionInfo.GetVerdictTestCase(out AVerdictKind: string; out
   end;
 
 begin
-  if Submission.Results = nil then
+  if Results = nil then
   begin
     ATestCase := -1;
-    if not Submission.Finished then
+    if not Finished then
       AVerdictKind := TesterWebVerdictToStr(wvWaiting)
-    else if Submission.Success then
+    else if Success then
       AVerdictKind := TesterWebVerdictToStr(wvUnknown)
     else
       AVerdictKind := TesterWebVerdictToStr(wvTestFailed);
     Exit;
   end;
-  if (not Submission.Finished) or (not Submission.Success) then
+  if (not Finished) or (not Success) then
   begin
     AVerdictKind := ProcessUnfinished(ATestCase);
-    if not Submission.Success then
+    if not Success then
       AVerdictKind := TesterWebVerdictToStr(wvTestFailed);
   end
   else
@@ -185,48 +204,22 @@ begin
   ATime := 0;
   AMemory := 0;
   AScore := 0.0;
-  if Submission.Results = nil then
+  if Results = nil then
     Exit;
-  Stats := TProblemStats.Create(Submission.Results);
+  Stats := TProblemStats.Create(Results);
   try
     if Stats.CanCountTime then
       ATime := Stats.MaxTime;
     if Stats.CanCountMemory then
       AMemory := Stats.MaxMemory;
-    AScore := Submission.Results.TotalScore;
+    AScore := Results.TotalScore;
   finally
     FreeAndNil(Stats);
   end;
 end;
 
-function TSubmissionInfo.GetVerdictStr: string;
-var
-  C: TCompilerVerdict;
-  V: TTestVerdict;
-  W: TTesterWebVerdict;
+procedure TSubmissionInfo.RetreiveInfo;
 begin
-  Result := '';
-  // check for compile verdicts
-  for C in TCompilerVerdict do
-    if CompilerVerdictToStr(C) = FVerdictKind then
-      Exit(SCompilerVerdicts[C]);
-  // check for run verdicts
-  for V in TTestVerdict do
-    if TestVerdictToStr(V) = FVerdictKind then
-      Exit(STestVerdicts[V]);
-  // check for tsWeb verdicts
-  for W in TTesterWebVerdict do
-    if TesterWebVerdictToStr(W) = FVerdictKind then
-      Exit(STesterWebVerdicts[W]);
-end;
-
-constructor TSubmissionInfo.Create(ASubmission: TViewSubmission);
-begin
-  FSubmission := ASubmission;
-  FID := Submission.ID;
-  FSubmitTime := Submission.SubmitTime;
-  FOwnerName := Submission.OwnerName;
-  FLanguage := LanguageFullCompilerNames(Submission.Language);
   GetVerdictTestCase(FVerdictKind, FTestCase);
   GetTimeMemoryScore(FTime, FMemory, FScore);
 end;
