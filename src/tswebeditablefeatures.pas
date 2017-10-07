@@ -143,6 +143,14 @@ type
     function PagePartName: string; override;
   end;
 
+  { TEditableSettingsButtonFeature }
+
+  TEditableSettingsButtonFeature = class(TEditableNavButtonFeature)
+  protected
+    function Enabled: boolean; override;
+    function PagePartName: string; override;
+  end;
+
   { TEditableButtonsFeature }
 
   TEditableButtonsFeature = class(TTesterPageFeature)
@@ -185,7 +193,92 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TEditableSettingsFeature }
+
+  TEditableSettingsFeature = class(TEditableObjectBaseFeature)
+  public
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TEditableCloneFormFeature }
+
+  TEditableCloneFormFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TEditableCloneFormFeature }
+
+procedure TEditableCloneFormFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['editableCloneName'] := SEditableCloneName;
+    ItemsAsText['editableCloneNamePrompt'] := SEditableCloneNamePrompt;
+    ItemsAsText['editableCloneBtn'] := SEditableCloneBtn;
+  end;
+  LoadPagePart('editable', 'editableCloneForm', '');
+end;
+
+procedure TEditableCloneFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TPostDataFeature);
+end;
+
+{ TEditableSettingsFeature }
+
+procedure TEditableSettingsFeature.InternalSatisfy;
+var
+  ManagerSession: TEditableManagerSession;
+begin
+  inherited InternalSatisfy;
+  // add base variables
+  with Parent.Variables do
+  begin
+    ItemsAsText['contentHeaderText'] := SEditableSettingsText;
+    ItemsAsText['objectNodeName'] := EditableObject.Name;
+  end;
+  // add deletion button
+  ManagerSession := EditableObject.Manager.CreateManagerSession(User);
+  try
+    if ManagerSession.CanDeleteObject(EditableObject.Name) then
+      LoadPagePart('editable', 'editableADeleteEnabled', 'editableDeleteBtn')
+    else
+      LoadPagePart('editable', 'editableADeleteDisabled', 'editableDeleteBtn');
+  finally
+    FreeAndNil(ManagerSession);
+  end;
+  // load contents
+  LoadPagePart('editable', 'editableSettings', 'content');
+end;
+
+procedure TEditableSettingsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableBaseFeature);
+  ADependencies.Add(TEditableButtonsFeature);
+  ADependencies.Add(TContentFeature);
+  ADependencies.Add(TEditablePageTitleFeature);
+  ADependencies.Add(TEditableCloneFormFeature);
+end;
+
+{ TEditableSettingsButtonFeature }
+
+function TEditableSettingsButtonFeature.Enabled: boolean;
+begin
+  Result := EditableObject.GetAccessRights(User as TEditorUser) in AccessCanReadSet;
+end;
+
+function TEditableSettingsButtonFeature.PagePartName: string;
+begin
+  Result := 'editableSettingsBtn';
+end;
 
 { TEditableEditFeature }
 
@@ -296,6 +389,7 @@ begin
     ItemsAsText['editableViewText'] := SEditableViewText;
     ItemsAsText['editableEditText'] := SEditableEditText;
     ItemsAsText['editableAccessText'] := SEditableAccessText;
+    ItemsAsText['editableSettingsText'] := SEditableSettingsText;
   end;
 end;
 
@@ -305,6 +399,7 @@ begin
   ADependencies.Add(TEditableViewButtonFeature);
   ADependencies.Add(TEditableEditButtonFeature);
   ADependencies.Add(TEditableAccessButtonFeature);
+  ADependencies.Add(TEditableSettingsButtonFeature);
 end;
 
 { TEditableAccessButtonFeature }

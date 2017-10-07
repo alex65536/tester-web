@@ -78,6 +78,7 @@ type
     FArchiveFileName: string;
     FMaxSrcLimit: integer;
     FPropsFileName: string;
+    FPropsFullFileName: string;
     FStatementsFileName: string;
     FStatementsType: TProblemStatementsType;
     FUnpackedFileName: string;
@@ -85,9 +86,11 @@ type
   protected
     property ArchiveFileName: string read FArchiveFileName write FArchiveFileName;
     property UnpackedFileName: string read FUnpackedFileName;
-    property PropsFileName: string read FPropsFileName;
+    property PropsFullFileName: string read FPropsFullFileName;
+    property PropsFileName: string read FPropsFileName write FPropsFileName;
     procedure DoCommit; override;
     procedure DoReload; override;
+    procedure DoClone(ADest: TEditableTransaction); override;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
   public
@@ -125,7 +128,7 @@ type
     function UnpackedFileName(MustExist: boolean): string;
     function StatementsFileName(MustExist: boolean): string;
     function StatementsFileType: TProblemStatementsType;
-    function PropsFileName: string;
+    function PropsFullFileName: string;
     procedure HandleSelfDeletion; override;
   public
     function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession;
@@ -243,7 +246,7 @@ begin
     DefaultValue));
 end;
 
-function TProblem.PropsFileName: string;
+function TProblem.PropsFullFileName: string;
 var
   PropsFile: string;
 begin
@@ -308,16 +311,16 @@ begin
     if FArchiveFileName <> Problem.ArchiveFileName(True) then
     begin
       TryDeleteFile(Problem.ArchiveFileName(True), True);
+      Storage.WriteString(FullKeyName('propsFile'), FPropsFileName);
       UnpackArchive(FArchiveFileName, Problem.UnpackedFileName(False), True);
-      MoveReplaceFile(FArchiveFileName, Problem.ArchiveFileName(False));
-      Storage.WriteString(FullKeyName('propsFile'), Config.Problem_DefaultPropsFile);
+      CopyReplaceFile(FArchiveFileName, Problem.ArchiveFileName(False));
     end;
     // statements
     if FStatementsFileName <> Problem.StatementsFileName(True) then
     begin
       TryDeleteFile(Problem.StatementsFileName(True), True);
       Storage.WriteString(FullKeyName('statementType'), StatementsTypeToStr(FStatementsType));
-      MoveReplaceFile(FStatementsFileName, Problem.StatementsFileName(False));
+      CopyReplaceFile(FStatementsFileName, Problem.StatementsFileName(False));
     end;
     // max submission limit
     Storage.WriteInteger(FullKeyName('maxSrc'), FMaxSrcLimit);
@@ -337,7 +340,21 @@ begin
   FStatementsFileName := Problem.StatementsFileName(True);
   FStatementsType := Problem.StatementsFileType;
   FMaxSrcLimit := Storage.ReadInteger(FullKeyName('maxSrc'), Config.Files_DefaultSrcSize);
-  FPropsFileName := Problem.PropsFileName;
+  FPropsFileName := Storage.ReadString(FullKeyName('propsFile'), Config.Problem_DefaultPropsFile);
+  FPropsFullFileName := Problem.PropsFullFileName;
+end;
+
+procedure TBaseProblemTransaction.DoClone(ADest: TEditableTransaction);
+begin
+  inherited DoClone(ADest);
+  with ADest as TBaseProblemTransaction do
+  begin
+    ArchiveFileName := Self.ArchiveFileName;
+    StatementsFileName := Self.StatementsFileName;
+    StatementsType := Self.StatementsType;
+    MaxSrcLimit := Self.MaxSrcLimit;
+    PropsFileName := Self.PropsFileName;
+  end;
 end;
 
 constructor TBaseProblemTransaction.Create(AManager: TEditableManager;
@@ -352,7 +369,7 @@ begin
   try
     // archive
     if FArchiveFileName <> Problem.ArchiveFileName(True) then
-      ValidateArchive(FArchiveFileName, Config.Problem_DefaultPropsFile);
+      ValidateArchive(FArchiveFileName, FPropsFileName);
     // statements file
     if FStatementsFileName <> Problem.StatementsFileName(True) then
       ValidateFileSize(FStatementsFileName, Config.Files_MaxStatementsSize,

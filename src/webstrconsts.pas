@@ -273,6 +273,14 @@ resourcestring
   SSubmissionSourceHeader = 'Source code';
   SCompileOutputCaption = 'Compiler output:';
   SSubmissionPageCaption = 'Submission #%d';
+  SEditableSettingsText = 'Settings';
+  SEditableCloneName = 'New name:';
+  SEditableCloneNamePrompt = 'Enter new object name';
+  SEditableCloneBtn = 'Clone';
+  SProblemCloneNamePrompt = 'Enter new problem name';
+  SProblemCloneObject = 'Clone problem:';
+  SProblemDeleteObject = 'Delete problem:';
+  SSuccessfulClone = 'Cloned successfully.';
 
 implementation
 
