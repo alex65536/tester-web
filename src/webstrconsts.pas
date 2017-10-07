@@ -273,6 +273,7 @@ resourcestring
   SSubmissionSourceHeader = 'Source code';
   SCompileOutputCaption = 'Compiler output:';
   SSubmissionPageCaption = 'Submission #%d';
+  SEditableSettingsText = 'Settings';
 
 implementation
 

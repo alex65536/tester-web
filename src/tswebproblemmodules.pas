@@ -143,7 +143,27 @@ type
     procedure DoInsideHandlePost(ARequest: TRequest); override;
   end;
 
+  { TProblemSettingsWebModule }
+
+  TProblemSettingsWebModule = class(TEditableSettingsWebModule)
+  protected
+    function DoCreatePage: THtmlPage; override;
+    function HookClass: TEditableModuleHookClass; override;
+  end;
+
 implementation
+
+{ TProblemSettingsWebModule }
+
+function TProblemSettingsWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TProblemSettingsPage.Create;
+end;
+
+function TProblemSettingsWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TProblemModuleHook;
+end;
 
 { TProblemSubmissionsWebModule }
 
@@ -459,6 +479,7 @@ initialization
   RegisterHTTPModule('problem-download', TProblemDownloadWebModule, True);
   RegisterHTTPModule('problem-test', TProblemTestWebModule, True);
   RegisterHTTPModule('problem-submissions', TProblemSubmissionsWebModule, True);
+  RegisterHTTPModule('problem-settings', TProblemSettingsWebModule, True);
 
 end.
 

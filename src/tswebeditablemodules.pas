@@ -150,6 +150,13 @@ type
     procedure DoInsideHandlePost({%H-}ARequest: TRequest); override;
   end;
 
+  { TEditableSettingsWebModule }
+
+  TEditableSettingsWebModule = class(TEditablePageWebModule)
+  protected
+    function Inside: boolean; override;
+  end;
+
 function EditableObjectNameFromRequest(ARequest: TRequest): string;
 function EditableObjectFromRequest(ARequest: TRequest;
   AManager: TEditableManager): TEditableObject;
@@ -165,6 +172,13 @@ function EditableObjectFromRequest(ARequest: TRequest;
   AManager: TEditableManager): TEditableObject;
 begin
   Result := AManager.GetObject(EditableObjectNameFromRequest(ARequest));
+end;
+
+{ TEditableSettingsWebModule }
+
+function TEditableSettingsWebModule.Inside: boolean;
+begin
+  Result := True;
 end;
 
 { TEditableObjectPostWebModule }

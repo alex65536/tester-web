@@ -143,6 +143,14 @@ type
     function PagePartName: string; override;
   end;
 
+  { TEditableSettingsButtonFeature }
+
+  TEditableSettingsButtonFeature = class(TEditableNavButtonFeature)
+  protected
+    function Enabled: boolean; override;
+    function PagePartName: string; override;
+  end;
+
   { TEditableButtonsFeature }
 
   TEditableButtonsFeature = class(TTesterPageFeature)
@@ -185,7 +193,48 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TEditableSettingsFeature }
+
+  TEditableSettingsFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TEditableSettingsFeature }
+
+procedure TEditableSettingsFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['contentHeaderText'] := SEditableSettingsText;
+  end;
+  // TODO : Fill it with the contents !!!
+  LoadPagePart('editable', 'editableSettings', 'content');
+end;
+
+procedure TEditableSettingsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableBaseFeature);
+  ADependencies.Add(TEditableButtonsFeature);
+  ADependencies.Add(TContentFeature);
+  ADependencies.Add(TEditablePageTitleFeature);
+end;
+
+{ TEditableSettingsButtonFeature }
+
+function TEditableSettingsButtonFeature.Enabled: boolean;
+begin
+  Result := EditableObject.GetAccessRights(User as TEditorUser) in AccessCanReadSet;
+end;
+
+function TEditableSettingsButtonFeature.PagePartName: string;
+begin
+  Result := 'editableSettingsBtn';
+end;
 
 { TEditableEditFeature }
 
@@ -296,6 +345,7 @@ begin
     ItemsAsText['editableViewText'] := SEditableViewText;
     ItemsAsText['editableEditText'] := SEditableEditText;
     ItemsAsText['editableAccessText'] := SEditableAccessText;
+    ItemsAsText['editableSettingsText'] := SEditableSettingsText;
   end;
 end;
 
@@ -305,6 +355,7 @@ begin
   ADependencies.Add(TEditableViewButtonFeature);
   ADependencies.Add(TEditableEditButtonFeature);
   ADependencies.Add(TEditableAccessButtonFeature);
+  ADependencies.Add(TEditableSettingsButtonFeature);
 end;
 
 { TEditableAccessButtonFeature }

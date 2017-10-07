@@ -111,7 +111,22 @@ type
     procedure AddFeatures; override;
   end;
 
+  { TProblemSettingsPage }
+
+  TProblemSettingsPage = class(TProblemHtmlPage)
+  protected
+    procedure AddFeatures; override;
+  end;
+
 implementation
+
+{ TProblemSettingsPage }
+
+procedure TProblemSettingsPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TProblemSettingsFeature);
+end;
 
 { TProblemSubmissionsPage }
 

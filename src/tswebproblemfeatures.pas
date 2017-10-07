@@ -143,7 +143,29 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TProblemSettingsFeature }
+
+  TProblemSettingsFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TProblemSettingsFeature }
+
+procedure TProblemSettingsFeature.Satisfy;
+begin
+  // do nothing
+end;
+
+procedure TProblemSettingsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TProblemButtonsFeature);
+  ADependencies.Add(TEditableSettingsFeature);
+end;
 
 { TProblemSubmissionsFeature }
 
@@ -454,6 +476,7 @@ begin
     ItemsAsText['editableViewRef'] := 'problem-view';
     ItemsAsText['editableEditRef'] := 'problem-edit';
     ItemsAsText['editableAccessRef'] := 'problem-access';
+    ItemsAsText['editableSettingsRef'] := 'problem-settings';
   end;
 end;
 
