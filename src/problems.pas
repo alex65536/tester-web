@@ -77,6 +77,7 @@ type
   private
     FArchiveFileName: string;
     FMaxSrcLimit: integer;
+    FPropsFileName: string;
     FPropsFullFileName: string;
     FStatementsFileName: string;
     FStatementsType: TProblemStatementsType;
@@ -86,9 +87,7 @@ type
     property ArchiveFileName: string read FArchiveFileName write FArchiveFileName;
     property UnpackedFileName: string read FUnpackedFileName;
     property PropsFullFileName: string read FPropsFullFileName;
-
-    // TODO : Deal with PropsFileName (clone it also!)
-
+    property PropsFileName: string read FPropsFileName write FPropsFileName;
     procedure DoCommit; override;
     procedure DoReload; override;
     procedure DoClone(ADest: TEditableTransaction); override;
@@ -314,7 +313,7 @@ begin
       TryDeleteFile(Problem.ArchiveFileName(True), True);
       UnpackArchive(FArchiveFileName, Problem.UnpackedFileName(False), True);
       MoveReplaceFile(FArchiveFileName, Problem.ArchiveFileName(False));
-      Storage.WriteString(FullKeyName('propsFile'), Config.Problem_DefaultPropsFile);
+      Storage.WriteString(FullKeyName('propsFile'), FPropsFileName);
     end;
     // statements
     if FStatementsFileName <> Problem.StatementsFileName(True) then
@@ -341,6 +340,7 @@ begin
   FStatementsFileName := Problem.StatementsFileName(True);
   FStatementsType := Problem.StatementsFileType;
   FMaxSrcLimit := Storage.ReadInteger(FullKeyName('maxSrc'), Config.Files_DefaultSrcSize);
+  FPropsFileName := Storage.ReadString(FullKeyName('propsFile'), Config.Problem_DefaultPropsFile);
   FPropsFullFileName := Problem.PropsFullFileName;
 end;
 
@@ -353,6 +353,7 @@ begin
     StatementsFileName := Self.StatementsFileName;
     StatementsType := Self.StatementsType;
     MaxSrcLimit := Self.MaxSrcLimit;
+    PropsFileName := Self.PropsFileName;
   end;
 end;
 
@@ -368,7 +369,7 @@ begin
   try
     // archive
     if FArchiveFileName <> Problem.ArchiveFileName(True) then
-      ValidateArchive(FArchiveFileName, Config.Problem_DefaultPropsFile);
+      ValidateArchive(FArchiveFileName, FPropsFileName);
     // statements file
     if FStatementsFileName <> Problem.StatementsFileName(True) then
       ValidateFileSize(FStatementsFileName, Config.Files_MaxStatementsSize,
