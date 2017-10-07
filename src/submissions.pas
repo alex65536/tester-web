@@ -322,7 +322,7 @@ type
   TTestableProblem = class(TProblem)
   protected
     function UnpackedFileName: string; overload;
-    function PropsFileName: string;
+    function PropsFullFileName: string;
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
   public
     function CreateTestTransaction(AUser: TUser): TTestProblemTransaction; virtual;
@@ -1162,7 +1162,7 @@ function TTestSubmission.GetPropsFileName: string;
 begin
   with Problem do
     try
-      Result := PropsFileName;
+      Result := PropsFullFileName;
     finally
       Free;
     end;
@@ -1389,9 +1389,9 @@ begin
   Result := UnpackedFileName(True);
 end;
 
-function TTestableProblem.PropsFileName: string;
+function TTestableProblem.PropsFullFileName: string;
 begin
-  Result := inherited PropsFileName;
+  Result := inherited PropsFullFileName;
 end;
 
 constructor TTestableProblem.Create(const AName: string; AManager: TEditableManager);

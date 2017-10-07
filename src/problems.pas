@@ -77,7 +77,7 @@ type
   private
     FArchiveFileName: string;
     FMaxSrcLimit: integer;
-    FPropsFileName: string;
+    FPropsFullFileName: string;
     FStatementsFileName: string;
     FStatementsType: TProblemStatementsType;
     FUnpackedFileName: string;
@@ -85,7 +85,7 @@ type
   protected
     property ArchiveFileName: string read FArchiveFileName write FArchiveFileName;
     property UnpackedFileName: string read FUnpackedFileName;
-    property PropsFileName: string read FPropsFileName;
+    property PropsFullFileName: string read FPropsFullFileName;
 
     // TODO : Deal with PropsFileName (clone it also!)
 
@@ -129,7 +129,7 @@ type
     function UnpackedFileName(MustExist: boolean): string;
     function StatementsFileName(MustExist: boolean): string;
     function StatementsFileType: TProblemStatementsType;
-    function PropsFileName: string;
+    function PropsFullFileName: string;
     procedure HandleSelfDeletion; override;
   public
     function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession;
@@ -247,7 +247,7 @@ begin
     DefaultValue));
 end;
 
-function TProblem.PropsFileName: string;
+function TProblem.PropsFullFileName: string;
 var
   PropsFile: string;
 begin
@@ -341,7 +341,7 @@ begin
   FStatementsFileName := Problem.StatementsFileName(True);
   FStatementsType := Problem.StatementsFileType;
   FMaxSrcLimit := Storage.ReadInteger(FullKeyName('maxSrc'), Config.Files_DefaultSrcSize);
-  FPropsFileName := Problem.PropsFileName;
+  FPropsFullFileName := Problem.PropsFullFileName;
 end;
 
 procedure TBaseProblemTransaction.DoClone(ADest: TEditableTransaction);
