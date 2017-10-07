@@ -113,7 +113,7 @@ type
 
   { TProblemSettingsPage }
 
-  TProblemSettingsPage = class(TProblemHtmlPage)
+  TProblemSettingsPage = class(TProblemPostHtmlPage)
   protected
     procedure AddFeatures; override;
   end;

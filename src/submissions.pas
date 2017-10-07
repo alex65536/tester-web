@@ -509,7 +509,7 @@ end;
 
 function TTestProblemTransaction.CanTestProblem: boolean;
 begin
-  Result := AccessLevel in AccessCanReadSet;
+  Result := CanReadData;
 end;
 
 function TTestProblemTransaction.CreateSubmission(ALanguage: TSubmissionLanguage;

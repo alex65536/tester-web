@@ -157,12 +157,18 @@ implementation
 
 procedure TProblemSettingsFeature.Satisfy;
 begin
-  // do nothing
+  with Parent.Variables do
+  begin
+    ItemsAsText['editableCloneNamePrompt'] := SProblemCloneNamePrompt;
+    ItemsAsText['editableCloneObject'] := SProblemCloneObject;
+    ItemsAsText['editableDeleteObject'] := SProblemDeleteObject;
+  end;
 end;
 
 procedure TProblemSettingsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
+  ADependencies.Add(TEditableCloneFormFeature);
   ADependencies.Add(TProblemButtonsFeature);
   ADependencies.Add(TEditableSettingsFeature);
 end;

@@ -195,7 +195,16 @@ type
 
   { TEditableSettingsFeature }
 
-  TEditableSettingsFeature = class(TTesterPageFeature)
+  TEditableSettingsFeature = class(TEditableObjectBaseFeature)
+  public
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TEditableCloneFormFeature }
+
+  TEditableCloneFormFeature = class(TTesterPageFeature)
   public
     procedure Satisfy; override;
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
@@ -203,15 +212,49 @@ type
 
 implementation
 
-{ TEditableSettingsFeature }
+{ TEditableCloneFormFeature }
 
-procedure TEditableSettingsFeature.Satisfy;
+procedure TEditableCloneFormFeature.Satisfy;
 begin
   with Parent.Variables do
   begin
-    ItemsAsText['contentHeaderText'] := SEditableSettingsText;
+    ItemsAsText['editableCloneName'] := SEditableCloneName;
+    ItemsAsText['editableCloneNamePrompt'] := SEditableCloneNamePrompt;
+    ItemsAsText['editableCloneBtn'] := SEditableCloneBtn;
   end;
-  // TODO : Fill it with the contents !!!
+  LoadPagePart('editable', 'editableCloneForm', '');
+end;
+
+procedure TEditableCloneFormFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TPostDataFeature);
+end;
+
+{ TEditableSettingsFeature }
+
+procedure TEditableSettingsFeature.InternalSatisfy;
+var
+  ManagerSession: TEditableManagerSession;
+begin
+  inherited InternalSatisfy;
+  // add base variables
+  with Parent.Variables do
+  begin
+    ItemsAsText['contentHeaderText'] := SEditableSettingsText;
+    ItemsAsText['objectNodeName'] := EditableObject.Name;
+  end;
+  // add deletion button
+  ManagerSession := EditableObject.Manager.CreateManagerSession(User);
+  try
+    if ManagerSession.CanDeleteObject(EditableObject.Name) then
+      LoadPagePart('editable', 'editableADeleteEnabled', 'editableDeleteBtn')
+    else
+      LoadPagePart('editable', 'editableADeleteDisabled', 'editableDeleteBtn');
+  finally
+    FreeAndNil(ManagerSession);
+  end;
+  // load contents
   LoadPagePart('editable', 'editableSettings', 'content');
 end;
 
@@ -222,6 +265,7 @@ begin
   ADependencies.Add(TEditableButtonsFeature);
   ADependencies.Add(TContentFeature);
   ADependencies.Add(TEditablePageTitleFeature);
+  ADependencies.Add(TEditableCloneFormFeature);
 end;
 
 { TEditableSettingsButtonFeature }

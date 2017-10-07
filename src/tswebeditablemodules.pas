@@ -152,9 +152,10 @@ type
 
   { TEditableSettingsWebModule }
 
-  TEditableSettingsWebModule = class(TEditablePageWebModule)
+  TEditableSettingsWebModule = class(TEditableObjectPostWebModule)
   protected
     function Inside: boolean; override;
+    procedure DoInsideHandlePost(ARequest: TRequest); override;
   end;
 
 function EditableObjectNameFromRequest(ARequest: TRequest): string;
@@ -179,6 +180,24 @@ end;
 function TEditableSettingsWebModule.Inside: boolean;
 begin
   Result := True;
+end;
+
+procedure TEditableSettingsWebModule.DoInsideHandlePost(ARequest: TRequest);
+var
+  NewName: string;
+  ManagerSession: TEditableManagerSession;
+begin
+  if ARequest.ContentFields.Values['query'] = 'clone' then
+  begin
+    NewName := ARequest.ContentFields.Values['new-name'];
+    ManagerSession := Manager.CreateManagerSession(User);
+    try
+      ManagerSession.CloneObject(EditableObject, NewName);
+      Success := SSuccessfulClone;
+    finally
+      FreeAndNil(ManagerSession);
+    end;
+  end;
 end;
 
 { TEditableObjectPostWebModule }

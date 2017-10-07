@@ -153,6 +153,9 @@ table.center-wrapper {
 .center-align {
 	text-align: center;
 }
+.inline-element {
+	display: inline;
+}
 
 
 .styled-btn {
