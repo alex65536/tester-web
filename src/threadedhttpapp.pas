@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, CustApp, custhttpapp, HTTPDefs, serverconfig, errorpages,
-  webstrconsts, dateutils;
+  webstrconsts, dateutils, tswebpagesbase, htmlpreprocess;
 
 type
   EThreadedHttpApplication = class(Exception);
@@ -245,9 +245,13 @@ begin
   FRequest := ARequest;
   FResponse := AResponse;
   Time := Now;
+  __CleanNsecTimer;
+  __PrprNsecTimer := 0;
   try
     FThread.Synchronize(@InternalRequestHandler);
   finally
+    WriteLn('Template load time (in nsec): ', __NsecTimer);
+    WriteLn('Preprocess time (in nsec): ', __PrprNsecTimer);
     WriteLn('Request "', FRequest.Method, ' ', FRequest.URI, '" processed in ',
       MilliSecondsBetween(Time, Now), ' ms.');
     FRequest := nil;

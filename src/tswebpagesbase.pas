@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, userpages, htmlpreprocess, LazFileUtils, serverconfig,
-  users, htmlpages;
+  users, htmlpages, dateutils, Unix, Linux;
 
 type
 
@@ -90,6 +90,11 @@ function GetTemplateLocation(const ALocation, AName: string): string;
 procedure LoadTemplateStrings(AStrings: TIndentTaggedStrings; const ALocation,
   AName: string);
 
+procedure __CleanNsecTimer;
+
+var
+  __NsecTimer: int64 = 0;
+
 implementation
 
 function GetTemplateLocation(const ALocation, AName: string): string;
@@ -102,8 +107,24 @@ end;
 
 procedure LoadTemplateStrings(AStrings: TIndentTaggedStrings; const ALocation,
   AName: string);
+var
+  time: timespec;
+  WasTime, NewTime: int64;
 begin
+  clock_gettime(CLOCK_MONOTONIC, @time);
+  WasTime := time.tv_sec * int64(1000000000) + time.tv_nsec;
+
   AStrings.LoadFromFile(GetTemplateLocation(ALocation, AName));
+
+  clock_gettime(CLOCK_MONOTONIC, @time);
+  NewTime := time.tv_sec * int64(1000000000) + time.tv_nsec;
+
+  Inc(__NsecTimer, NewTime - WasTime);
+end;
+
+procedure __CleanNsecTimer;
+begin
+  __NsecTimer := 0;
 end;
 
 { TTesterHtmlListedPageElement }

@@ -25,7 +25,7 @@ unit htmlpreprocess;
 interface
 
 uses
-  Classes, SysUtils, AvgLvlTree, FGL, webstrconsts, escaping;
+  Classes, SysUtils, AvgLvlTree, FGL, webstrconsts, escaping, Unix, Linux;
 
 {
   HTML preprocessor syntax:
@@ -201,6 +201,9 @@ type
     constructor Create;
     destructor Destroy; override;
   end;
+
+var
+  __PrprNsecTimer: int64 = 0;
 
 implementation
 
@@ -643,8 +646,13 @@ end;
 procedure THtmlPreprocessor.Preprocess(Source, Target: TIndentTaggedStrings;
   Clear: boolean);
 var
+  time: timespec;
+  WasTime, NewTime: int64;
   VarState: TVariableState;
 begin
+  clock_gettime(CLOCK_MONOTONIC, @time);
+  WasTime := time.tv_sec * int64(1000000000) + time.tv_nsec;
+
   VarState := TVariableState.Create;
   try
     if Clear then
@@ -652,6 +660,11 @@ begin
     InternalPreprocessor(Source, Target, VarState);
   finally
     FreeAndNil(VarState);
+
+    clock_gettime(CLOCK_MONOTONIC, @time);
+    NewTime := time.tv_sec * int64(1000000000) + time.tv_nsec;
+
+    Inc(__PrprNsecTimer, NewTime - WasTime);
   end;
 end;
 
