@@ -38,7 +38,7 @@ const
   EditorsSet = [urEditor, urAdmin, urOwner];
 
   SAccessRightsNames: array [TEditableAccessRights] of string = (
-    '(none)',
+    SNone,
     SObjectAccessRead,
     SObjectAccessWrite,
     SObjectAccessOwner
@@ -115,6 +115,7 @@ type
   protected
     procedure DoCommit; virtual;
     procedure DoReload; virtual;
+    procedure DoClone(ADest: TEditableTransaction); virtual;
   public
     property Title: string read FTitle write FTitle;
     property LastModifyTime: TDateTime read FLastModifyTime;
@@ -129,11 +130,17 @@ type
   { TEditableManagerSession }
 
   TEditableManagerSession = class(TEditableCustomSession)
+  protected
+    function InternalCanCloneObject({%H-}AObject: TEditableObject): boolean; virtual;
   public
     function CanCreateNewObject: boolean; virtual;
     function CanDeleteObject(const AName: string): boolean; virtual;
+    function CanCloneObject(AObject: TEditableObject): boolean;
+    function CanCloneObject(const AName: string): boolean;
     function CreateNewObject(const AName, ATitle: string): TEditableObject;
     procedure DeleteObject(const AName: string);
+    procedure CloneObject(AObject: TEditableObject; const ANewName: string);
+    procedure CloneObject(const AName, ANewName: string);
     function ListAvailableObjects: TStringList;
     procedure AfterConstruction; override;
   end;
@@ -780,6 +787,11 @@ end;
 
 { TEditableManagerSession }
 
+function TEditableManagerSession.InternalCanCloneObject(AObject: TEditableObject): boolean;
+begin
+  Result := CanCreateNewObject;
+end;
+
 function TEditableManagerSession.CanCreateNewObject: boolean;
 begin
   Result := User is TEditorUser;
@@ -789,6 +801,40 @@ function TEditableManagerSession.CanDeleteObject(const AName: string): boolean;
 begin
   Result := (Manager.GetAccessRights(AName, User.Info) = erOwner) and
     (User is TEditorUser);
+end;
+
+function TEditableManagerSession.CanCloneObject(AObject: TEditableObject): boolean;
+var
+  Transaction: TEditableTransaction;
+begin
+  if not InternalCanCloneObject(AObject) then
+    Exit(False);
+  try
+    Transaction := AObject.CreateTransaction(User);
+    try
+      Result := Transaction.CanReadData;
+    finally
+      FreeAndNil(Transaction);
+    end;
+  except
+    Result := False;
+  end;
+end;
+
+function TEditableManagerSession.CanCloneObject(const AName: string): boolean;
+var
+  EditableObject: TEditableObject;
+begin
+  try
+    EditableObject := Manager.GetObject(AName);
+    try
+      Result := CanCloneObject(EditableObject);
+    finally
+      FreeAndNil(EditableObject);
+    end;
+  except
+    Result := False;
+  end;
 end;
 
 function TEditableManagerSession.CreateNewObject(const AName, ATitle: string): TEditableObject;
@@ -803,6 +849,47 @@ begin
   if not CanDeleteObject(AName) then
     raise EEditableAccessDenied.Create(SAccessDenied);
   Manager.DeleteObject(AName);
+end;
+
+procedure TEditableManagerSession.CloneObject(AObject: TEditableObject;
+  const ANewName: string);
+var
+  OldTransaction, NewTransaction: TEditableTransaction;
+  NewObject: TEditableObject;
+begin
+  // validate
+  if not InternalCanCloneObject(AObject) then
+    raise EEditableAccessDenied.Create(SAccessDenied);
+  // clone
+  OldTransaction := AObject.CreateTransaction(User);
+  try
+    NewObject := Manager.CreateNewObject(User as TEditorUser, ANewName, OldTransaction.Title);
+    try
+      NewTransaction := NewObject.CreateTransaction(User);
+      try
+        OldTransaction.DoClone(NewTransaction);
+        NewTransaction.Commit;
+      finally
+        FreeAndNil(NewTransaction);
+      end;
+    finally
+      FreeAndNil(NewObject);
+    end;
+  finally
+    FreeAndNil(OldTransaction);
+  end;
+end;
+
+procedure TEditableManagerSession.CloneObject(const AName, ANewName: string);
+var
+  EditableObject: TEditableObject;
+begin
+  EditableObject := Manager.GetObject(AName);
+  try
+    CloneObject(EditableObject, ANewName);
+  finally
+    FreeAndNil(EditableObject);
+  end;
 end;
 
 function TEditableManagerSession.ListAvailableObjects: TStringList;
@@ -830,6 +917,14 @@ procedure TEditableTransaction.DoReload;
 begin
   FTitle := Storage.ReadString(FullKeyName('title'), '');
   FLastModifyTime := Storage.ReadFloat(FullKeyName('lastModified'), 0.0);
+end;
+
+procedure TEditableTransaction.DoClone(ADest: TEditableTransaction);
+begin
+  with ADest do
+  begin
+    Title := Self.Title;
+  end;
 end;
 
 function TEditableTransaction.CanReadData: boolean;

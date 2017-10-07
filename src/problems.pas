@@ -86,8 +86,12 @@ type
     property ArchiveFileName: string read FArchiveFileName write FArchiveFileName;
     property UnpackedFileName: string read FUnpackedFileName;
     property PropsFileName: string read FPropsFileName;
+
+    // TODO : Deal with PropsFileName (clone it also!)
+
     procedure DoCommit; override;
     procedure DoReload; override;
+    procedure DoClone(ADest: TEditableTransaction); override;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
   public
@@ -338,6 +342,18 @@ begin
   FStatementsType := Problem.StatementsFileType;
   FMaxSrcLimit := Storage.ReadInteger(FullKeyName('maxSrc'), Config.Files_DefaultSrcSize);
   FPropsFileName := Problem.PropsFileName;
+end;
+
+procedure TBaseProblemTransaction.DoClone(ADest: TEditableTransaction);
+begin
+  inherited DoClone(ADest);
+  with ADest as TBaseProblemTransaction do
+  begin
+    ArchiveFileName := Self.ArchiveFileName;
+    StatementsFileName := Self.StatementsFileName;
+    StatementsType := Self.StatementsType;
+    MaxSrcLimit := Self.MaxSrcLimit;
+  end;
 end;
 
 constructor TBaseProblemTransaction.Create(AManager: TEditableManager;
