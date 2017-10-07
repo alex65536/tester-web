@@ -311,16 +311,16 @@ begin
     if FArchiveFileName <> Problem.ArchiveFileName(True) then
     begin
       TryDeleteFile(Problem.ArchiveFileName(True), True);
-      UnpackArchive(FArchiveFileName, Problem.UnpackedFileName(False), True);
-      MoveReplaceFile(FArchiveFileName, Problem.ArchiveFileName(False));
       Storage.WriteString(FullKeyName('propsFile'), FPropsFileName);
+      UnpackArchive(FArchiveFileName, Problem.UnpackedFileName(False), True);
+      CopyReplaceFile(FArchiveFileName, Problem.ArchiveFileName(False));
     end;
     // statements
     if FStatementsFileName <> Problem.StatementsFileName(True) then
     begin
       TryDeleteFile(Problem.StatementsFileName(True), True);
       Storage.WriteString(FullKeyName('statementType'), StatementsTypeToStr(FStatementsType));
-      MoveReplaceFile(FStatementsFileName, Problem.StatementsFileName(False));
+      CopyReplaceFile(FStatementsFileName, Problem.StatementsFileName(False));
     end;
     // max submission limit
     Storage.WriteInteger(FullKeyName('maxSrc'), FMaxSrcLimit);
