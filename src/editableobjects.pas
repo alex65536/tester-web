@@ -974,7 +974,7 @@ end;
 
 function TEditableObjectAccessSession.CanAddUser: boolean;
 begin
-  Result := AccessLevel in AccessCanWriteSet;
+  Result := AccessLevel in AccessCanReadSet;
 end;
 
 function TEditableObjectAccessSession.CanDeleteUser(Target: TUserInfo): boolean;
