@@ -72,7 +72,7 @@ end;
 
 procedure TTesterErrorPage.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('', 'skeleton'));
+  LoadTemplateStrings(Strings, '', 'skeleton');
 end;
 
 procedure TTesterErrorPage.Clear;

@@ -136,6 +136,7 @@ var
   Role: TUserRole;
   CanChange: boolean;
   Options: TIndentTaggedStrings;
+  OptionInner: TIndentTaggedStrings;
 begin
   User := (Parent as TUserPage).User;
   if User = nil then
@@ -169,7 +170,13 @@ begin
           else
             ItemsAsText['profileNewUserRoleSelected'] := '';
         end;
-        Options.Add(Parent.Preprocessor.PreprocessFile(TemplateLocation('profile', 'profileChangeRoleOption')));
+        OptionInner := TIndentTaggedStrings.Create;
+        try
+          LoadTemplateStrings(OptionInner, 'profile', 'profileChangeRoleOption');
+          Options.Add(Parent.Preprocessor.Preprocess(OptionInner));
+        finally
+          FreeAndNil(OptionInner);
+        end;
       end;
     Parent.PageParts.SetItemAsStrings('profileRoleOptions', Options);
   finally

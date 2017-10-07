@@ -51,7 +51,7 @@ implementation
 
 procedure TTesterNavBar.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('', 'nav'));
+  LoadTemplateStrings(Strings, '', 'nav');
 end;
 
 function TTesterNavBar.DoCreateElement(AParent: THtmlPage): TNavBarElement;
@@ -69,7 +69,7 @@ end;
 
 procedure TTesterNavBarElement.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('', 'navItem'));
+  LoadTemplateStrings(Strings, '', 'navItem');
 end;
 
 end.

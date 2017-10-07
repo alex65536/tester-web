@@ -305,10 +305,18 @@ end;
 
 procedure TTesterPageFeature.LoadPagePart(const ALocation, AName: string;
   AVarName: string);
+var
+  Strings: TIndentTaggedStrings;
 begin
   if AVarName = '' then
     AVarName := AName;
-  Parent.PageParts.SetFromFile(AVarName, TemplateLocation(ALocation, AName));
+  Strings := TIndentTaggedStrings.Create;
+  try
+    LoadTemplateStrings(Strings, ALocation, AName);
+    Parent.PageParts.SetItemAsStrings(AVarName, Strings);
+  finally
+    FreeAndNil(Strings);
+  end;
 end;
 
 procedure TTesterPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);

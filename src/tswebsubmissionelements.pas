@@ -150,7 +150,7 @@ end;
 
 procedure TSubmissionTestItemList.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('submissions', 'submissionTestTable'));
+  LoadTemplateStrings(Strings, 'submissions', 'submissionTestTable');
 end;
 
 constructor TSubmissionTestItemList.Create(AParent: THtmlPage;
@@ -178,7 +178,7 @@ end;
 
 procedure TSubmissionTestItem.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('submissions', 'submissionTestTableItem'));
+  LoadTemplateStrings(Strings, 'submissions', 'submissionTestTableItem');
 end;
 
 constructor TSubmissionTestItem.Create(AParent: THtmlPage;
@@ -218,7 +218,7 @@ end;
 
 procedure TSubmissionItemList.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('problem', 'problemSubmissionList'));
+  LoadTemplateStrings(Strings, 'problem', 'problemSubmissionList');
 end;
 
 constructor TSubmissionItemList.Create(AParent: THtmlPage;
@@ -266,7 +266,7 @@ end;
 
 procedure TSubmissionItem.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('problem', 'problemSubmissionListItem'));
+  LoadTemplateStrings(Strings, 'problem', 'problemSubmissionListItem');
 end;
 
 constructor TSubmissionItem.Create(AParent: THtmlPage; ASubmission: TViewSubmission);
@@ -290,7 +290,7 @@ end;
 
 procedure TSubmissionLanguageItemList.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('problem', 'problemLanguageList'));
+  LoadTemplateStrings(Strings, 'problem', 'problemLanguageList');
 end;
 
 constructor TSubmissionLanguageItemList.Create(AParent: THtmlPage);
@@ -312,7 +312,7 @@ end;
 
 procedure TSubmissionLanguageItem.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('problem', 'problemLanguageOption'));
+  LoadTemplateStrings(Strings, 'problem', 'problemLanguageOption');
 end;
 
 constructor TSubmissionLanguageItem.Create(AParent: THtmlPage; ALanguage: TSubmissionLanguage);

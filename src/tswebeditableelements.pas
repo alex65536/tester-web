@@ -155,7 +155,7 @@ end;
 
 procedure TEditableAccessNodeList.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('editable', 'editableAccessTable'));
+  LoadTemplateStrings(Strings, 'editable', 'editableAccessTable');
 end;
 
 constructor TEditableAccessNodeList.Create(AParent: THtmlPage;
@@ -183,6 +183,20 @@ procedure TEditableAccessNode.DoFillVariables;
 var
   DeleteBtnLocation: string;
   TargetRights: TEditableAccessRights;
+
+  procedure SetVarFromFile(const AVarName, ALocation, AName: string);
+  var
+    Strings: TIndentTaggedStrings;
+  begin
+    Strings := TIndentTaggedStrings.Create;
+    try
+      LoadTemplateStrings(Strings, ALocation, AName);
+      Storage.SetItemAsStrings(AVarName, Strings);
+    finally
+      FreeAndNil(Strings);
+    end;
+  end;
+
 begin
   with Storage do
   begin
@@ -195,15 +209,13 @@ begin
     if List.Count > 1 then
     begin
       AddListToVariable('objectNodeEditRightsOptions');
-      SetFromFile('objectNodeRightsEdit', TemplateLocation('editable',
-        'editableEditRights'));
+      SetVarFromFile('objectNodeRightsEdit', 'editable', 'editableEditRights');
     end
     else
     begin
       TargetRights := Session.EditableObject.GetAccessRights(Target);
       ItemsAsText['objectUserRights'] := SAccessRightsNames[TargetRights];
-      SetFromFile('objectNodeRightsEdit', TemplateLocation('editable',
-        'editableViewRights'));
+      SetVarFromFile('objectNodeRightsEdit', 'editable', 'editableViewRights');
     end;
     List.Clear;
     // fill "delete" column
@@ -211,13 +223,13 @@ begin
       DeleteBtnLocation := 'editableDeleteUserEnabled'
     else
       DeleteBtnLocation := 'editableDeleteUserDisabled';
-    SetFromFile('objectNodeDelete', TemplateLocation('editable', DeleteBtnLocation));
+    SetVarFromFile('objectNodeDelete', 'editable', DeleteBtnLocation);
   end;
 end;
 
 procedure TEditableAccessNode.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('editable', 'editableAccessNode'));
+  LoadTemplateStrings(Strings, 'editable', 'editableAccessNode');
 end;
 
 constructor TEditableAccessNode.Create(AParent: THtmlPage;
@@ -252,7 +264,7 @@ end;
 
 procedure TEditableAccessRightsOption.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('editable', 'editableEditRightsOption'));
+  LoadTemplateStrings(Strings, 'editable', 'editableEditRightsOption');
 end;
 
 constructor TEditableAccessRightsOption.Create(AParent: THtmlPage;
@@ -289,7 +301,7 @@ end;
 
 procedure TEditableObjList.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('editable', 'editableObjListTable'));
+  LoadTemplateStrings(Strings, 'editable', 'editableObjListTable');
 end;
 
 constructor TEditableObjList.Create(AParent: THtmlPage; AManager: TEditableManager);
@@ -303,6 +315,7 @@ end;
 procedure TEditableObjListNode.DoFillVariables;
 var
   DeleteNodeName: string;
+  Strings: TIndentTaggedStrings;
 begin
   with Storage, FEditableObject do
   begin
@@ -317,13 +330,19 @@ begin
       DeleteNodeName := 'editableADeleteEnabled'
     else
       DeleteNodeName := 'editableADeleteDisabled';
-    SetFromFile('objectNodeDelete', TemplateLocation('editable', DeleteNodeName));
+    Strings := TIndentTaggedStrings.Create;
+    try
+      LoadTemplateStrings(Strings, 'editable', DeleteNodeName);
+      SetItemAsStrings('objectNodeDelete', Strings);
+    finally
+      FreeAndNil(Strings);
+    end;
   end;
 end;
 
 procedure TEditableObjListNode.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('editable', 'editableObjListNode'));
+  LoadTemplateStrings(Strings, 'editable', 'editableObjListNode');
 end;
 
 constructor TEditableObjListNode.Create(AParent: THtmlPage; AObject: TEditableObject);

@@ -86,16 +86,24 @@ var
   DocumentRoot: string = '';
   DataRoot: string = '/data';
 
-function TemplateLocation(const ALocation, AName: string): string;
+function GetTemplateLocation(const ALocation, AName: string): string;
+procedure LoadTemplateStrings(AStrings: TIndentTaggedStrings; const ALocation,
+  AName: string);
 
 implementation
 
-function TemplateLocation(const ALocation, AName: string): string;
+function GetTemplateLocation(const ALocation, AName: string): string;
 var
   Dir: string;
 begin
   Dir := AppendPathDelim(Config.Location_TemplatesDir) + ALocation;
   Result := AppendPathDelim(Dir) + AName + '.html';
+end;
+
+procedure LoadTemplateStrings(AStrings: TIndentTaggedStrings; const ALocation,
+  AName: string);
+begin
+  AStrings.LoadFromFile(GetTemplateLocation(ALocation, AName));
 end;
 
 { TTesterHtmlListedPageElement }
@@ -123,12 +131,13 @@ end;
 
 procedure TTesterHtmlPage.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-  Strings.LoadFromFile(TemplateLocation('', 'skeleton'));
+  LoadTemplateStrings(Strings, '', 'skeleton');
 end;
 
 function TTesterHtmlPage.GenerateUserLink(AInfo: TUserInfo): string;
 var
   Storage: TTreeVariableStorage;
+  Strings: TIndentTaggedStrings;
 begin
   Storage := TTreeVariableStorage.Create(Preprocessor.Storages);
   try
@@ -138,7 +147,13 @@ begin
       ItemsAsText['linkUserName'] := AInfo.Username;
       ItemsAsText['linkUserRoleLower'] := UserRoleToStr(AInfo.Role).Substring(2).ToLower;
     end;
-    Result := Preprocessor.PreprocessFile(TemplateLocation('', 'userNameLink'));
+    Strings := TIndentTaggedStrings.Create;
+    try
+      LoadTemplateStrings(Strings, '', 'userNameLink');
+      Result := Preprocessor.Preprocess(Strings);
+    finally
+      FreeAndNil(Strings);
+    end;
   finally
     FreeAndNil(Storage);
   end;
