@@ -848,6 +848,7 @@ procedure TEditableManagerSession.DeleteObject(const AName: string);
 begin
   if not CanDeleteObject(AName) then
     raise EEditableAccessDenied.Create(SAccessDenied);
+  User.NeedsAuthentification;
   Manager.DeleteObject(AName);
 end;
 
@@ -908,7 +909,6 @@ end;
 
 procedure TEditableTransaction.DoCommit;
 begin
-  ValidateObjectTitle(FTitle);
   Storage.WriteString(FullKeyName('title'), FTitle);
   EditableObject.UpdateModifyTime;
 end;
@@ -939,7 +939,7 @@ end;
 
 procedure TEditableTransaction.Validate;
 begin
-  // do nothing
+  ValidateObjectTitle(FTitle);
 end;
 
 procedure TEditableTransaction.Commit;
