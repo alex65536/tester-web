@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, CustApp, custhttpapp, HTTPDefs, serverconfig, errorpages,
-  webstrconsts, dateutils, tswebpagesbase, htmlpreprocess;
+  webstrconsts, dateutils, tswebpagesbase, htmlpreprocess, datastorages;
 
 type
   EThreadedHttpApplication = class(Exception);
@@ -248,12 +248,17 @@ begin
   __CleanNsecTimer;
   __PrprNsecTimer := 0;
   __CreateKtr := 0;
+  __XmlDsReadNsecTimer := 0;
   try
     FThread.Synchronize(@InternalRequestHandler);
   finally
-    WriteLn('Template load time (in nsec): ', __NsecTimer);
-    WriteLn('Preprocess time (in nsec): ', __PrprNsecTimer);
-    WriteLn('IndentTaggedStrings were created ', __CreateKtr, ' times');
+    if __PrprNsecTimer <> 0 then
+    begin
+      WriteLn('Data request time (in nsec): ', __XmlDsReadNsecTimer);
+      WriteLn('Template load time (in nsec): ', __NsecTimer);
+      WriteLn('Preprocess time (in nsec): ', __PrprNsecTimer);
+      WriteLn('IndentTaggedStrings were created ', __CreateKtr, ' times');
+    end;
     WriteLn('Request "', FRequest.Method, ' ', FRequest.URI, '" processed in ',
       MilliSecondsBetween(Time, Now), ' ms.');
     FRequest := nil;

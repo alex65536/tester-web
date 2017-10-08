@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, IniFiles, LazFileUtils, Laz2_DOM, Laz2_XMLRead,
-  Laz2_XMLWrite, AvgLvlTree, escaping, tswebdirectories;
+  Laz2_XMLWrite, AvgLvlTree, escaping, tswebdirectories, Unix, Linux;
 
 const
   // action codes for ooCustom in data storages
@@ -148,6 +148,9 @@ type
     constructor Create(const AStoragePath: string);
     destructor Destroy; override;
   end;
+
+var
+  __XmlDsReadNsecTimer: int64 = 0;
 
 implementation
 
@@ -291,12 +294,22 @@ end;
 function TXmlDataStorage.ReadString(const Path: string; const Default: string): string;
 var
   Elem: TDOMElement;
+  time: timespec;
+  WasTime, NewTime: int64;
 begin
+  clock_gettime(CLOCK_MONOTONIC, @time);
+  WasTime := time.tv_sec * int64(1000000000) + time.tv_nsec;
+
   Elem := FindNode(Path);
   if (Elem = nil) or (not Elem.HasAttribute(ValueAttr)) then
     Result := Default
   else
     Result := Elem.GetAttribute(ValueAttr);
+
+  clock_gettime(CLOCK_MONOTONIC, @time);
+  NewTime := time.tv_sec * int64(1000000000) + time.tv_nsec;
+
+  Inc(__XmlDsReadNsecTimer, NewTime - WasTime);
 end;
 
 function TXmlDataStorage.ReadBool(const Path: string; Default: boolean): boolean;
