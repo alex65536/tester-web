@@ -168,7 +168,6 @@ end;
 procedure TProblemSettingsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
-  ADependencies.Add(TEditableCloneFormFeature);
   ADependencies.Add(TProblemButtonsFeature);
   ADependencies.Add(TEditableSettingsFeature);
 end;
