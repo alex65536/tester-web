@@ -281,6 +281,7 @@ resourcestring
   SProblemCloneObject = 'Clone problem:';
   SProblemDeleteObject = 'Delete problem:';
   SSuccessfulClone = 'Cloned successfully.';
+  SContestTypeName = 'Contest';
 
 implementation
 

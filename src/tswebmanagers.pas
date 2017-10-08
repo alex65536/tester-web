@@ -5,7 +5,8 @@ unit tswebmanagers;
 interface
 
 uses
-  Classes, SysUtils, submissions, submissions_tsrun, problems, commitscheduler;
+  Classes, SysUtils, submissions, submissions_tsrun, problems, commitscheduler,
+  contests;
 
 type
 
@@ -25,27 +26,45 @@ type
     constructor Create;
   end;
 
+  { TTsWebContestManager }
+
+  TTsWebContestManager = class(TContestManager)
+  public
+    constructor Create;
+  end;
+
 function ProblemManager: TTsWebProblemManager;
 function SubmissionManager: TTsWebSubmissionManager;
+function ContestManager: TTsWebContestManager;
 
 implementation
 
 var
   FProblemManager: TTsWebProblemManager = nil;
   FSubmissionManager: TTsWebSubmissionManager = nil;
+  FContestManager: TTsWebContestManager = nil;
 
 function ProblemManager: TTsWebProblemManager;
 begin
-  if FProblemManager = nil then
-    FProblemManager := TTsWebProblemManager.Create;
   Result := FProblemManager;
 end;
 
 function SubmissionManager: TTsWebSubmissionManager;
 begin
-  if FSubmissionManager = nil then
-    FSubmissionManager := TTsWebSubmissionManager.Create;
   Result := FSubmissionManager;
+end;
+
+function ContestManager: TTsWebContestManager;
+begin
+  Result := FContestManager;
+end;
+
+{ TTsWebContestManager }
+
+constructor TTsWebContestManager.Create;
+begin
+  inherited Create;
+  Scheduler.AttachStorage(Storage);
 end;
 
 { TTsWebProblemManager }
@@ -75,10 +94,12 @@ begin
 end;
 
 initialization
-  ProblemManager;
-  SubmissionManager;
+  FProblemManager := TTsWebProblemManager.Create;
+  FSubmissionManager := TTsWebSubmissionManager.Create;
+  FContestManager := TTsWebContestManager.Create;
 
 finalization
+  FreeAndNil(FContestManager);
   FreeAndNil(FSubmissionManager);
   FreeAndNil(FProblemManager);
 
