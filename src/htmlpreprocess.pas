@@ -507,6 +507,14 @@ var
   AppendText: boolean;
   CheckEmpty: boolean;
 begin
+  // optimization here: if there is no "~" characters, just push the line as-is.
+  if S.CountChar('~') = 0 then
+  begin
+    Target.EnableIndents := Indent;
+    Target.AppendSingleLineText(S, True);
+    Exit;
+  end;
+
   // initialize
   RawText := False;
   AppendText := True;
