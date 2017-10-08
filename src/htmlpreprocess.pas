@@ -477,6 +477,16 @@ var
     LocalStorage.SetItemAsText(VarName, Content);
   end;
 
+  procedure AppendSimpleText(const S: string; var Pos: integer);
+  var
+    WasPos: integer;
+  begin
+    WasPos := Pos;
+    while (Pos <= Length(S)) and (S[Pos] <> '~') do
+      Inc(Pos);
+    Line.AppendSingleLineText(Copy(S, WasPos, Pos - WasPos), False);
+  end;
+
   function IsLineEmpty: boolean;
   var
     I: integer;
@@ -576,10 +586,7 @@ begin
           ParseAndAppendVariable(Copy(S, WasPos, Pos - WasPos));
         end
         else
-        begin
-          Line.AppendSingleLineText(S[Pos], False);
-          Inc(Pos);
-        end;
+          AppendSimpleText(S, Pos);
       end;
     end;
 
