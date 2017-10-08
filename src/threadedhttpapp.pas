@@ -247,11 +247,13 @@ begin
   Time := Now;
   __CleanNsecTimer;
   __PrprNsecTimer := 0;
+  __CreateKtr := 0;
   try
     FThread.Synchronize(@InternalRequestHandler);
   finally
     WriteLn('Template load time (in nsec): ', __NsecTimer);
     WriteLn('Preprocess time (in nsec): ', __PrprNsecTimer);
+    WriteLn('IndentTaggedStrings were created ', __CreateKtr, ' times');
     WriteLn('Request "', FRequest.Method, ' ', FRequest.URI, '" processed in ',
       MilliSecondsBetween(Time, Now), ' ms.');
     FRequest := nil;

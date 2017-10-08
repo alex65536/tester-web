@@ -204,6 +204,7 @@ type
 
 var
   __PrprNsecTimer: int64 = 0;
+  __CreateKtr: integer = 0;
 
 implementation
 
@@ -918,6 +919,7 @@ begin
   SkipLastLineBreak := True;
   FEnableIndents := True;
   FSetRawTextMode := False;
+  Inc(__CreateKtr);
 end;
 
 end.
