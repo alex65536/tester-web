@@ -282,6 +282,14 @@ resourcestring
   SProblemDeleteObject = 'Delete problem:';
   SSuccessfulClone = 'Cloned successfully.';
   SContestTypeName = 'Contest';
+  SContestCreatePrompt = 'Enter name and title for your new contest.';
+  SContestCreateNamePrompt = 'Enter contest name';
+  SContestCreateTitlePrompt = 'Enter contest title';
+  SContestCloneNamePrompt = 'Enter new contest name';
+  SContestCloneObject = 'Clone contest:';
+  SContestDeleteObject = 'Delete contest:';
+  SContestList = 'Contests List';
+  SContestCreateNew = 'Create New Contest';
 
 implementation
 

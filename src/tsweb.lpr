@@ -88,7 +88,11 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   tswebsubmissionelements,
   objectshredder,
   tswebsubmissionmodules,
-  contests;
+  contests,
+  tswebcontestfeatures,
+  tswebcontestpages,
+  tswebcontestmodules,
+  tswebeditablepages;
 
 {$ifdef Windows}
 var
