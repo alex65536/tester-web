@@ -103,9 +103,9 @@ procedure TContestSettingsFeature.Satisfy;
 begin
   with Parent.Variables do
   begin
-    ItemsAsText['editableCloneNamePrompt'] := SProblemCloneNamePrompt;
-    ItemsAsText['editableCloneObject'] := SProblemCloneObject;
-    ItemsAsText['editableDeleteObject'] := SProblemDeleteObject;
+    ItemsAsText['editableCloneNamePrompt'] := SContestCloneNamePrompt;
+    ItemsAsText['editableCloneObject'] := SContestCloneObject;
+    ItemsAsText['editableDeleteObject'] := SContestDeleteObject;
   end;
 end;
 
@@ -148,7 +148,10 @@ end;
 
 procedure TContestEditFeature.InternalSatisfy;
 begin
-  // do nothing
+  with Parent.Variables do
+  begin
+    ItemsAsText['objectEditSubmit'] := SContestEditSubmit;
+  end;
 end;
 
 procedure TContestEditFeature.DependsOn(ADependencies: THtmlPageFeatureList);

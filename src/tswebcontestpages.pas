@@ -40,7 +40,7 @@ type
 
   { TContestPostHtmlPage }
 
-  TContestPostHtmlPage = class(TEditableHtmlPage)
+  TContestPostHtmlPage = class(TEditablePostHtmlPage)
   protected
     function DoGetManager: TEditableManager; override;
     procedure AddFeatures; override;
@@ -163,7 +163,7 @@ end;
 procedure TContestListPage.AfterConstruction;
 begin
   inherited AfterConstruction;
-  Title := SProblemList;
+  Title := SContestList;
 end;
 
 { TContestPostHtmlPage }

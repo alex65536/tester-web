@@ -290,6 +290,7 @@ resourcestring
   SContestDeleteObject = 'Delete contest:';
   SContestList = 'Contests List';
   SContestCreateNew = 'Create New Contest';
+  SContestEditSubmit = 'Edit contest';
 
 implementation
 
