@@ -455,6 +455,7 @@ begin
   AddElement('Page 1', '~documentRoot;/page1');
   AddElement('Page 2', '~documentRoot;/page2');
   AddElement(SProblemList, '~documentRoot;/problems');
+  AddElement(SContestList, '~documentRoot;/contests');
 end;
 
 { TSimpleHtmlPage }

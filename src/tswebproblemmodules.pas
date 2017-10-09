@@ -27,8 +27,8 @@ interface
 uses
   SysUtils, tswebmodules, tswebeditablemodules, fphttp, htmlpages, problems,
   editableobjects, tswebpagesbase, tswebproblempages, webstrconsts, HTTPDefs,
-  webmodules, downloadhandlers, tsmiscwebmodules, tswebmanagers, submissions,
-  submissionlanguages;
+  downloadhandlers, tsmiscwebmodules, tswebmanagers, submissionlanguages,
+  submissions;
 
 type
 

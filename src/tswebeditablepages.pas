@@ -25,9 +25,9 @@ unit tswebeditablepages;
 interface
 
 uses
-  Classes, SysUtils, htmlpages, tswebpages, tswebmodules, tswebeditableelements,
-  editableobjects, tswebeditablemodules, tswebeditablefeatures, tswebpagesbase,
-  navbars, htmlpreprocess;
+  SysUtils, tswebpages, tswebmodules, tswebeditableelements, editableobjects,
+  tswebeditablemodules, tswebeditablefeatures, tswebpagesbase, navbars,
+  htmlpreprocess;
 
 type
 

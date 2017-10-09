@@ -25,9 +25,9 @@ unit tswebproblemfeatures;
 interface
 
 uses
-  SysUtils, Classes, tswebeditablefeatures, webstrconsts, htmlpages,
-  tswebfeatures, serverconfig, problems, webstrutils, editableobjects,
-  tswebsubmissionfeatures, submissions, tswebmanagers, tswebsubmissionelements;
+  SysUtils, tswebeditablefeatures, webstrconsts, htmlpages, tswebfeatures,
+  serverconfig, problems, webstrutils, editableobjects, tswebsubmissionfeatures,
+  submissions, tswebsubmissionelements;
 
 type
 
