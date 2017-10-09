@@ -25,7 +25,7 @@ unit tswebcontestfeatures;
 interface
 
 uses
-  Classes, SysUtils, tswebfeatures, tswebeditablefeatures, htmlpages, webstrconsts;
+  tswebfeatures, tswebeditablefeatures, htmlpages, webstrconsts;
 
 type
 
