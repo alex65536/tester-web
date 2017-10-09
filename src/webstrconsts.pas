@@ -291,6 +291,8 @@ resourcestring
   SContestList = 'Contests List';
   SContestCreateNew = 'Create New Contest';
   SContestEditSubmit = 'Edit contest';
+  SRequestShowFormat = '%s Request %s %s from %s done in %d ms.';
+  SRequestDateTimeFormat = 'hh:mm:ss.zzzz';
 
 implementation
 
