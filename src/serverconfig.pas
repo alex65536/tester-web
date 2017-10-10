@@ -50,6 +50,7 @@ type
     function GetCrypto_SCrypt_R: integer;
     function GetCrypto_SCrypt_P: integer;
     function GetFiles_DefaultSrcSize: integer;
+    function GetFiles_MaxArchiveFileCount: integer;
     function GetFiles_MaxArchiveSize: integer;
     function GetFiles_MaxSrcSize: integer;
     function GetFiles_MaxStatementsSize: integer;
@@ -110,6 +111,7 @@ type
 
     // files default settings (all sizes are in KBytes!)
     property Files_MaxArchiveSize: integer read GetFiles_MaxArchiveSize;
+    property Files_MaxArchiveFileCount: integer read GetFiles_MaxArchiveFileCount;
     property Files_MaxUnpackedArchiveSize: integer read GetFiles_MaxUnpackedArchiveSize;
     property Files_MaxStatementsSize: integer read GetFiles_MaxStatementsSize;
     property Files_MaxSrcSize: integer read GetFiles_MaxSrcSize;
@@ -175,6 +177,11 @@ end;
 function TTesterServerConfig.GetFiles_DefaultSrcSize: integer;
 begin
   Result := FStorage.ReadInteger('files.defaultSrcSize', 64);
+end;
+
+function TTesterServerConfig.GetFiles_MaxArchiveFileCount: integer;
+begin
+  Result := FStorage.ReadInteger('files.maxArchiveFileCount', 2048);
 end;
 
 function TTesterServerConfig.GetFiles_MaxArchiveSize: integer;
@@ -315,6 +322,7 @@ begin
 
     WriteString('files.notice', SFilesNotice);
     WriteInteger('files.maxArchiveSize', Files_MaxArchiveSize);
+    WriteInteger('files.maxArchiveFileCount', GetFiles_MaxArchiveFileCount);
     WriteInteger('files.maxSrcSize', Files_MaxSrcSize);
     WriteInteger('files.defaultSrcSize', Files_DefaultSrcSize);
     WriteInteger('files.maxStatementsSize', Files_MaxStatementsSize);

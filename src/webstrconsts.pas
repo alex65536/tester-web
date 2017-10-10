@@ -293,6 +293,7 @@ resourcestring
   SContestEditSubmit = 'Edit contest';
   SRequestShowFormat = '%s Request %s %s from %s done in %d ms.';
   SRequestDateTimeFormat = 'hh:mm:ss.zzzz';
+  SArchiveTooManyFiles = 'Archive may not contain more than %d files.';
 
 implementation
 
