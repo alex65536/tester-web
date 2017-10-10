@@ -294,6 +294,8 @@ resourcestring
   SRequestShowFormat = '%s Request %s %s from %s done in %d ms.';
   SRequestDateTimeFormat = 'hh:mm:ss.zzzz';
   SArchiveTooManyFiles = 'Archive may not contain more than %d files.';
+  SParticipantAlreadyAdded = 'Participant "%s" is already added!';
+  SParticipantAlreadyDeleted = 'Participant "%s" is not added!';
 
 implementation
 

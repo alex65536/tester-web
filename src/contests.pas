@@ -29,10 +29,16 @@ unit contests;
 interface
 
 uses
-  Classes, SysUtils, editableobjects, webstrconsts, datastorages, users;
+  Classes, SysUtils, editableobjects, webstrconsts, datastorages, users,
+  tswebutils;
 
 type
+  EContestAction = class(EEditableAction);
+  EContestValidate = class(EEditableValidate);
+  EContestAccessDenied = class(EEditableAccessDenied);
+
   TContest = class;
+  TContestManager = class;
 
   { TContestAccessSession }
 
@@ -55,6 +61,24 @@ type
     procedure Validate; override;
   end;
 
+  { TContestParticipantSession }
+
+  TContestParticipantSession = class(TEditableObjectSession)
+  private
+    FContest: TContest;
+  protected
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
+      AObject: TEditableObject);
+  public
+    property Contest: TContest read FContest;
+    function CanAddParticipant: boolean; virtual;
+    function CanDeleteParticipant: boolean; virtual;
+    function CanListParticipants: boolean; virtual;
+    procedure AddParticipant(AInfo: TUserInfo);
+    procedure DeleteParticipant(AInfo: TUserInfo);
+    function ListParticipants: TStringList;
+  end;
+
   { TContestTransaction }
 
   TContestTransaction = class(TBaseContestTransaction)
@@ -68,14 +92,30 @@ type
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
   end;
 
+  { TContest }
+
   TContest = class(TEditableObject)
+  private
+    function GetManager: TContestManager;
   protected
+    function ParticipantsSectionName: string;
+    function ParticipantsFullKeyName(ParticipantID: integer): string;
+    procedure AddParticipant(AInfo: TUserInfo);
+    procedure DoAddParticipant(AInfo: TUserInfo);
+    procedure DeleteParticipant(AInfo: TUserInfo);
+    procedure DoDeleteParticipant(AInfo: TUserInfo);
+    function ListParticipants: TStringList;
     procedure HandleSelfDeletion; override;
+    procedure HandleUserDeleting(AInfo: TUserInfo); override;
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
   public
+    property Manager: TContestManager read GetManager;
     function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession; override;
+    function CreateParticipantSession(AUser: TUser): TContestParticipantSession; virtual;
     function CreateTransaction(AUser: TUser): TEditableTransaction; override;
   end;
+
+  { TContestManager }
 
   TContestManager = class(TEditableManager)
   protected
@@ -87,6 +127,51 @@ type
   end;
 
 implementation
+
+{ TContestParticipantSession }
+
+constructor TContestParticipantSession.Create(AManager: TEditableManager;
+  AUser: TUser; AObject: TEditableObject);
+begin
+  inherited Create(AManager, AUser, AObject);
+  FContest := AObject as TContest;
+end;
+
+function TContestParticipantSession.CanAddParticipant: boolean;
+begin
+  Result := AccessLevel in AccessCanWriteSet;
+end;
+
+function TContestParticipantSession.CanDeleteParticipant: boolean;
+begin
+  Result := AccessLevel in AccessCanWriteSet;
+end;
+
+function TContestParticipantSession.CanListParticipants: boolean;
+begin
+  Result := AccessLevel in AccessCanReadSet;
+end;
+
+procedure TContestParticipantSession.AddParticipant(AInfo: TUserInfo);
+begin
+  if not CanAddParticipant then
+    raise EContestAccessDenied.Create(SAccessDenied);
+  Contest.AddParticipant(AInfo);
+end;
+
+procedure TContestParticipantSession.DeleteParticipant(AInfo: TUserInfo);
+begin
+  if not CanDeleteParticipant then
+    raise EContestAccessDenied.Create(SAccessDenied);
+  Contest.DeleteParticipant(AInfo);
+end;
+
+function TContestParticipantSession.ListParticipants: TStringList;
+begin
+  if not CanListParticipants then
+    raise EContestAccessDenied.Create(SAccessDenied);
+  Result := Contest.ListParticipants;
+end;
 
 { TContestManager }
 
@@ -112,11 +197,77 @@ end;
 
 { TContest }
 
+function TContest.GetManager: TContestManager;
+begin
+  Result := (inherited Manager) as TContestManager;
+end;
+
+function TContest.ParticipantsSectionName: string;
+begin
+  Result := FullKeyName('participants');
+end;
+
+function TContest.ParticipantsFullKeyName(ParticipantID: integer): string;
+begin
+  Result := ParticipantsSectionName + '.' + Id2Str(ParticipantID);
+end;
+
+procedure TContest.AddParticipant(AInfo: TUserInfo);
+begin
+  if Storage.VariableExists(ParticipantsFullKeyName(AInfo.ID)) then
+    raise EContestValidate.CreateFmt(SParticipantAlreadyAdded, [AInfo.Username]);
+  DoAddParticipant(AInfo);
+end;
+
+procedure TContest.DoAddParticipant(AInfo: TUserInfo);
+begin
+  Storage.WriteBool(ParticipantsFullKeyName(AInfo.ID), True);
+end;
+
+procedure TContest.DeleteParticipant(AInfo: TUserInfo);
+begin
+  if not Storage.VariableExists(ParticipantsFullKeyName(AInfo.ID)) then
+    raise EContestValidate.CreateFmt(SParticipantAlreadyDeleted, [AInfo.Username]);
+  DoDeleteParticipant(AInfo);
+end;
+
+procedure TContest.DoDeleteParticipant(AInfo: TUserInfo);
+begin
+  Storage.DeleteVariable(ParticipantsFullKeyName(AInfo.ID));
+end;
+
+function TContest.ListParticipants: TStringList;
+var
+  Keys: TStringList;
+  Key: string;
+begin
+  Result := TStringList.Create;
+  try
+    Keys := Storage.GetChildElements(ParticipantsSectionName);
+    try
+      if Keys <> nil then
+        for Key in Keys do
+          Result.Add(UserManager.IdToUsername(Str2Id(Key)));
+    finally
+      FreeAndNil(Keys);
+    end;
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
+end;
+
 procedure TContest.HandleSelfDeletion;
 begin
   inherited HandleSelfDeletion;
   // to be implemented later ...
   // TODO : Implement it, make "later" come :)
+end;
+
+procedure TContest.HandleUserDeleting(AInfo: TUserInfo);
+begin
+  inherited HandleUserDeleting(AInfo);
+  DoDeleteParticipant(AInfo);
 end;
 
 constructor TContest.Create(const AName: string; AManager: TEditableManager);
@@ -127,6 +278,11 @@ end;
 function TContest.CreateAccessSession(AUser: TUser): TEditableObjectAccessSession;
 begin
   Result := TContestAccessSession.Create(Manager, AUser, Self);
+end;
+
+function TContest.CreateParticipantSession(AUser: TUser): TContestParticipantSession;
+begin
+  Result := TContestParticipantSession.Create(Manager, AUser, Self);
 end;
 
 function TContest.CreateTransaction(AUser: TUser): TEditableTransaction;
