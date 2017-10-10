@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, datastorages, serverconfig, fphttp, HTTPDefs, webstrconsts,
-  DateUtils, commitscheduler;
+  DateUtils, commitscheduler, tswebpagesbase;
 
 type
 
@@ -315,7 +315,7 @@ begin
   else
   begin
     C.Value := FSessionID;
-    C.Path := SessionCookiePath;
+    C.Path := DocumentRoot + '/';
   end;
 end;
 
