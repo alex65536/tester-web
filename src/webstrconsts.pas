@@ -300,6 +300,8 @@ resourcestring
   SParticipantNameHeader = 'User';
   SParticipantDeleteHeader = 'Delete';
   SContestParticipantsText = 'Participants';
+  SNoSuchScoringPolicy = 'No such scoring policy!';
+  SContestDurationInterval = 'Contest duration must be between %d and %d minutes!';
 
 implementation
 

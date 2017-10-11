@@ -44,6 +44,7 @@ type
   private
     FConstructing: boolean;
     FStorage: TAbstractDataStorage;
+    function GetContest_MaxDurationMinutes: integer;
     function GetCrypto_HashLen: integer;
     function GetCrypto_SaltLen: integer;
     function GetCrypto_SCrypt_LogN: integer;
@@ -127,6 +128,9 @@ type
     // testing options
     property Testing_MaxPoolSize: integer read GetTesting_MaxPoolSize;
 
+    // contest options
+    property Contest_MaxDurationMinutes: integer read GetContest_MaxDurationMinutes;
+
     constructor Create;
     procedure Reload;
     destructor Destroy; override;
@@ -157,6 +161,11 @@ end;
 function TTesterServerConfig.GetCrypto_HashLen: integer;
 begin
   Result := FStorage.ReadInteger('crypto.hashLen', 64);
+end;
+
+function TTesterServerConfig.GetContest_MaxDurationMinutes: integer;
+begin
+  Result := FStorage.ReadInteger('contest.maxDurationMinutes', 10080);
 end;
 
 function TTesterServerConfig.GetCrypto_SCrypt_LogN: integer;
@@ -334,6 +343,8 @@ begin
     WriteInteger('server.port', Server_Port);
 
     WriteInteger('testing.maxPoolSize', Testing_MaxPoolSize);
+
+    WriteInteger('contest.maxDurationMinutes', GetContest_MaxDurationMinutes);
   end;
 end;
 

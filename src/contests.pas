@@ -24,13 +24,13 @@ unit contests;
 // It only inherits contest and its sessions from editable object.
 // TODO : Implement contest system !!!
 
-{$mode objfpc}{$H+}
+{$mode objfpc}{$H+}{$M+}
 
 interface
 
 uses
   Classes, SysUtils, editableobjects, webstrconsts, datastorages, users,
-  tswebutils;
+  tswebutils, dateutils, typinfo, serverconfig;
 
 type
   EContestAction = class(EEditableAction);
@@ -39,6 +39,9 @@ type
 
   TContest = class;
   TContestManager = class;
+
+  TContestStatus = (csNotStarted, csRunning, csUpsolve);
+  TContestScoringPolicy = (spMaxScore, spLastScore);
 
   { TContestAccessSession }
 
@@ -82,7 +85,25 @@ type
   { TContestTransaction }
 
   TContestTransaction = class(TBaseContestTransaction)
+  private
+    FAllowUpsolving: boolean;
+    FDurationMinutes: integer;
+    FScoringPolicy: TContestScoringPolicy;
+    FStartTime: TDateTime;
+    function GetEndTime: TDateTime;
+    function GetStatus: TContestStatus;
+  protected
+    procedure DoReload; override;
+    procedure DoCommit; override;
+    procedure DoClone(ADest: TEditableTransaction); override;
   public
+    property StartTime: TDateTime read FStartTime write FStartTime;
+    property EndTime: TDateTime read GetEndTime;
+    property Status: TContestStatus read GetStatus;
+    property DurationMinutes: integer read FDurationMinutes write FDurationMinutes;
+    property ScoringPolicy: TContestScoringPolicy read FScoringPolicy write FScoringPolicy;
+    property AllowUpsolving: boolean read FAllowUpsolving write FAllowUpsolving;
+    procedure Validate; override;
   end;
 
   { TContestManagerSession }
@@ -106,6 +127,10 @@ type
     procedure DoDeleteParticipant(AInfo: TUserInfo);
     function HasParticipant(AInfo: TUserInfo): boolean;
     function ListParticipants: TStringList;
+    function ContestStartTime: TDateTime;
+    function ContestDurationMinutes: integer;
+    function ContestEndTime: TDateTime;
+    function ContestStatus: TContestStatus;
     procedure HandleSelfDeletion; override;
     procedure HandleUserDeleting(AInfo: TUserInfo); override;
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
@@ -123,11 +148,80 @@ type
     function ObjectTypeName: string; override;
     function CreateObject(const AName: string): TEditableObject; override;
     function CreateStorage: TAbstractDataStorage; override;
+    procedure DoCreateNewObject(AObject: TEditableObject); override;
   public
     function CreateManagerSession(AUser: TUser): TEditableManagerSession; override;
   end;
 
+function ScoringPolicyToStr(APolicy: TContestScoringPolicy): string;
+function StrToScoringPolicy(const S: string): TContestScoringPolicy;
+
 implementation
+
+function ScoringPolicyToStr(APolicy: TContestScoringPolicy): string;
+begin
+  Result := GetEnumName(TypeInfo(APolicy), Ord(APolicy));
+end;
+
+function StrToScoringPolicy(const S: string): TContestScoringPolicy;
+var
+  P: TContestScoringPolicy;
+begin
+  for P in TContestScoringPolicy do
+    if ScoringPolicyToStr(P) = S then
+      Exit(P);
+  raise EConvertError.Create(SNoSuchScoringPolicy);
+end;
+
+{ TContestTransaction }
+
+function TContestTransaction.GetEndTime: TDateTime;
+begin
+  Result := (EditableObject as TContest).ContestEndTime;
+end;
+
+function TContestTransaction.GetStatus: TContestStatus;
+begin
+  Result := (EditableObject as TContest).ContestStatus;
+end;
+
+procedure TContestTransaction.DoReload;
+begin
+  inherited DoReload;
+  FStartTime := Storage.ReadFloat(FullKeyName('startTime'), Now);
+  FDurationMinutes := Storage.ReadInteger(FullKeyName('durationMinutes'), 0);
+  FScoringPolicy := StrToScoringPolicy(Storage.ReadString(FullKeyName('scoringPolicy'),
+    ScoringPolicyToStr(spMaxScore)));
+  FAllowUpsolving := Storage.ReadBool('allowUpsolving', True);
+end;
+
+procedure TContestTransaction.DoCommit;
+begin
+  inherited DoCommit;
+  Storage.WriteFloat(FullKeyName('startTime'), FStartTime);
+  Storage.WriteInteger(FullKeyName('durationMinutes'), FDurationMinutes);
+  Storage.WriteString(FullKeyName('scoringPolicy'), ScoringPolicyToStr(FScoringPolicy));
+  Storage.WriteBool(FullKeyName('allowUpsolving'), FAllowUpsolving);
+end;
+
+procedure TContestTransaction.DoClone(ADest: TEditableTransaction);
+begin
+  inherited DoClone(ADest);
+  with ADest as TContestTransaction do
+  begin
+    StartTime := Self.StartTime;
+    DurationMinutes := Self.DurationMinutes;
+    ScoringPolicy := Self.ScoringPolicy;
+    AllowUpsolving := Self.AllowUpsolving;
+  end;
+end;
+
+procedure TContestTransaction.Validate;
+begin
+  inherited Validate;
+  if (FDurationMinutes < 0) or (FDurationMinutes > Config.Contest_MaxDurationMinutes) then
+    raise EContestValidate.CreateFmt(SContestDurationInterval, [0, Config.Contest_MaxDurationMinutes]);
+end;
 
 { TContestParticipantSession }
 
@@ -189,6 +283,12 @@ end;
 function TContestManager.CreateStorage: TAbstractDataStorage;
 begin
   Result := TXmlDataStorage.Create('contests');
+end;
+
+procedure TContestManager.DoCreateNewObject(AObject: TEditableObject);
+begin
+  inherited DoCreateNewObject(AObject);
+  (AObject as TContest).ContestStartTime; // we write start time to storage
 end;
 
 function TContestManager.CreateManagerSession(AUser: TUser): TEditableManagerSession;
@@ -263,6 +363,34 @@ begin
     FreeAndNil(Result);
     raise;
   end;
+end;
+
+function TContest.ContestStartTime: TDateTime;
+begin
+  Result := Storage.ReadFloat(FullKeyName('startTime'), Now);
+end;
+
+function TContest.ContestDurationMinutes: integer;
+begin
+  Result := Storage.ReadInteger(FullKeyName('durationMinutes'), 0);
+end;
+
+function TContest.ContestEndTime: TDateTime;
+begin
+  Result := IncMinute(ContestStartTime, ContestDurationMinutes);
+end;
+
+function TContest.ContestStatus: TContestStatus;
+var
+  CurTime: TDateTime;
+begin
+  CurTime := Now;
+  if CompareDateTime(CurTime, ContestStartTime) <= 0 then
+    Result := csNotStarted
+  else if CompareDateTime(CurTime, ContestEndTime) < 0 then
+    Result := csRunning
+  else
+    Result := csUpsolve;
 end;
 
 procedure TContest.HandleSelfDeletion;
