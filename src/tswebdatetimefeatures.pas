@@ -28,6 +28,12 @@ uses
   Classes, SysUtils, htmlpages, tswebpagesbase, tswebfeatures, webstrconsts,
   htmlpreprocess, dateutils;
 
+const
+  SMonths: array [1 .. 12] of string = (
+    SMonth1, SMonth2, SMonth3, SMonth4, SMonth5, SMonth6,
+    SMonth7, SMonth8, SMonth9, SMonth10, SMonth11, SMonth12
+  );
+
 type
   {$interfaces CORBA}
 

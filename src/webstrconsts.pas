@@ -111,6 +111,8 @@ resourcestring
   SProfileRegisterTimeKey = 'Registered at:';
   SProfileLoginTimeLey = 'Last visit at:';
   SPreferredDateTimeFormat = 'dd.mm.yyyy hh:nn:ss';
+  SPreferredDateFormat = 'dd.mm.yyyy';
+  SPreferredTimeFormat = 'hh:nn:ss';
   SProfileChangeRoleKey = 'Change role:';
   SProfileDoChangeRole = 'Change';
   SUsernameEmpty = 'Username must be non-empty!';
@@ -314,12 +316,16 @@ resourcestring
   SMonth10 = 'October';
   SMonth11 = 'November';
   SMonth12 = 'December';
-
-const
-  SMonths: array [1 .. 12] of string = (
-    SMonth1, SMonth2, SMonth3, SMonth4, SMonth5, SMonth6,
-    SMonth7, SMonth8, SMonth9, SMonth10, SMonth11, SMonth12
-  );
+  SYes = 'Yes';
+  SNo = 'No';
+  SContestStartDateKey = 'Start date:';
+  SContestStartTimeKey = 'Start time:';
+  SContestDurationKey = 'Duration:';
+  SContestScoringPolicyKey = 'Scoring policy:';
+  SContestAllowUpsolvingKey = 'Allow upsolving?';
+  SDurationMinutes = 'minutes';
+  SScoringPolicyMaxScore = 'Use submission with maximum score';
+  SScoringPolicyLastScore = 'Use last submission';
 
 implementation
 

@@ -28,6 +28,14 @@ uses
   SysUtils, Classes, tswebfeatures, tswebeditablefeatures, htmlpages,
   webstrconsts, contests, tswebcontestelements;
 
+const
+  SContestScoringPolicies: array [TContestScoringPolicy] of string = (
+    SScoringPolicyMaxScore,
+    SScoringPolicyLastScore
+  );
+
+  SYesNo: array [boolean] of string = (SNo, SYes);
+
 type
 
   { TContestBaseFeature }
@@ -233,8 +241,22 @@ end;
 { TContestViewFeature }
 
 procedure TContestViewFeature.InternalSatisfy;
+var
+  ContestTransaction: TContestTransaction;
 begin
-  // do nothing
+  ContestTransaction := Transaction as TContestTransaction;
+  with Parent.Variables do
+  begin
+    ItemsAsText['contestStartDateValue'] := FormatDateTime(SPreferredDateFormat,
+      ContestTransaction.StartTime);
+    ItemsAsText['contestStartTimeValue'] := FormatDateTime(SPreferredTimeFormat,
+      ContestTransaction.StartTime);
+   ItemsAsText['contestDurationValue'] := IntToStr(ContestTransaction.DurationMinutes);
+   ItemsAsText['contestScoringPolicyValue'] :=
+     SContestScoringPolicies[ContestTransaction.ScoringPolicy];
+   ItemsAsText['contestAllowUpsolvingValue'] := SYesNo[ContestTransaction.AllowUpsolving];
+  end;
+  LoadPagePart('contest', 'contestView', 'objectViewContent');
 end;
 
 procedure TContestViewFeature.DependsOn(ADependencies: THtmlPageFeatureList);
@@ -281,7 +303,15 @@ end;
 
 procedure TContestEditViewBaseFeature.Satisfy;
 begin
-  // do nothing
+  with Parent.Variables do
+  begin
+    ItemsAsText['contestStartDateKey'] := SContestStartDateKey;
+    ItemsAsText['contestStartTimeKey'] := SContestStartTimeKey;
+    ItemsAsText['contestDurationKey'] := SContestDurationKey;
+    ItemsAsText['contestScoringPolicyKey'] := SContestScoringPolicyKey;
+    ItemsAsText['contestAllowUpsolvingKey'] := SContestAllowUpsolvingKey;
+    ItemsAsText['durationMinutes'] := SDurationMinutes;
+  end;
 end;
 
 procedure TContestEditViewBaseFeature.DependsOn(ADependencies: THtmlPageFeatureList);

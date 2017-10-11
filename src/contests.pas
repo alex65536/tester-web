@@ -20,9 +20,7 @@
 }
 unit contests;
 
-// Currently this unit is just a template.
-// It only inherits contest and its sessions from editable object.
-// TODO : Implement contest system !!!
+// TODO : Finish implementing contest system !!!
 
 {$mode objfpc}{$H+}{$M+}
 
@@ -192,7 +190,7 @@ begin
   FDurationMinutes := Storage.ReadInteger(FullKeyName('durationMinutes'), 0);
   FScoringPolicy := StrToScoringPolicy(Storage.ReadString(FullKeyName('scoringPolicy'),
     ScoringPolicyToStr(spMaxScore)));
-  FAllowUpsolving := Storage.ReadBool('allowUpsolving', True);
+  FAllowUpsolving := Storage.ReadBool(FullKeyName('allowUpsolving'), True);
 end;
 
 procedure TContestTransaction.DoCommit;
