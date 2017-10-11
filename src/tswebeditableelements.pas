@@ -190,6 +190,11 @@ begin
     ItemsAsText['objectNodeUser'] := Parent.GenerateUserLink(Target);
     ItemsAsText['objectNodeAccessChange'] := SObjectNodeAccessChange;
     ItemsAsText['objectNodeUsername'] := Target.Username;
+
+    ItemsAsText['deleteTargetType'] := 'user';
+    ItemsAsText['deleteTarget'] := Target.Username;
+    ItemsAsText['deleteQuery'] := 'delete-user';
+
     // fill "edit rights" column
     FillList;
     if List.Count > 1 then
@@ -208,9 +213,9 @@ begin
     List.Clear;
     // fill "delete" column
     if Session.CanDeleteUser(Target) then
-      DeleteBtnLocation := 'editableDeleteUserEnabled'
+      DeleteBtnLocation := 'editableDeleteEnabled'
     else
-      DeleteBtnLocation := 'editableDeleteUserDisabled';
+      DeleteBtnLocation := 'editableDeleteDisabled';
     SetFromFile('objectNodeDelete', TemplateLocation('editable', DeleteBtnLocation));
   end;
 end;

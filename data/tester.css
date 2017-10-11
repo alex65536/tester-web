@@ -357,7 +357,7 @@ table.styled td.nowrap {
 }
 
 
-table.access-table th.id {
+table.access-table th.id, table.participants-table th.id {
 	padding-left: 1em;
 	padding-right: 1em;
 	width: 1pt;
@@ -505,9 +505,4 @@ table.source-view-inner {
 	padding: 3pt 4pt;
 	width: 100%;
 	white-space: pre-wrap;
-}
-
-
-.back-btn {
-	display: none;
 }
