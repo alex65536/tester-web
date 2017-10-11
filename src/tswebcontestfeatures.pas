@@ -25,7 +25,8 @@ unit tswebcontestfeatures;
 interface
 
 uses
-  tswebfeatures, tswebeditablefeatures, htmlpages, webstrconsts;
+  SysUtils, Classes, tswebfeatures, tswebeditablefeatures, htmlpages,
+  webstrconsts, contests, tswebcontestelements;
 
 type
 
@@ -79,6 +80,30 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TContestParticipantFeature }
+
+  TContestParticipantFeature = class(TEditableObjectFeature)
+  private
+    FSession: TContestParticipantSession;
+  protected
+    property Session: TContestParticipantSession read FSession;
+    procedure BeforeSatisfy; override;
+    procedure InternalSatisfy; override;
+    procedure AfterSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
+  { TContestParticipantButtonFeature }
+
+  TContestParticipantButtonFeature = class(TEditableNavButtonFeature)
+  protected
+    function Enabled: boolean; override;
+    function PagePartDir: string; override;
+    function PagePartName: string; override;
+    procedure InternalSatisfy; override;
+  end;
+
   { TContestButtonsFeature }
 
   TContestButtonsFeature = class(TTesterPageFeature)
@@ -96,6 +121,78 @@ type
   end;
 
 implementation
+
+{ TContestParticipantFeature }
+
+procedure TContestParticipantFeature.BeforeSatisfy;
+begin
+  inherited BeforeSatisfy;
+  FSession := (EditableObject as TContest).CreateParticipantSession(User);
+end;
+
+procedure TContestParticipantFeature.InternalSatisfy;
+var
+  Table: TContestParticipantTable;
+begin
+  // add variables
+  with Parent.Variables do
+  begin
+    ItemsAsText['objectAddUser'] := SObjectAddUser;
+    ItemsAsText['objectAddUserPrompt'] := SObjectAddUserPrompt;
+    ItemsAsText['objectAddUserBtn'] := SObjectAddUserBtn;
+    ItemsAsText['contentHeaderText'] := SContestParticipantsText;
+  end;
+  // add "add user" form
+  if Session.CanAddParticipant then
+    LoadPagePart('editable', 'editableAccessAdd', 'contestParticipantAdd');
+  // add participant table
+  Table := TContestParticipantTable.Create(Parent, Session);
+  try
+    Parent.AddElementPagePart('contestParticipantsTable', Table);
+  finally
+    FreeAndNil(Table);
+  end;
+  // load page
+  LoadPagePart('contest', 'contestParticipants', 'content');
+end;
+
+procedure TContestParticipantFeature.AfterSatisfy;
+begin
+  FreeAndNil(FSession);
+  inherited AfterSatisfy;
+end;
+
+procedure TContestParticipantFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TPostDataFeature);
+  ADependencies.Add(TContentFeature);
+  ADependencies.Add(TContestButtonsFeature);
+  ADependencies.Add(TEditablePageTitleFeature);
+end;
+
+{ TContestParticipantButtonFeature }
+
+function TContestParticipantButtonFeature.Enabled: boolean;
+begin
+  Result := True;
+end;
+
+function TContestParticipantButtonFeature.PagePartDir: string;
+begin
+  Result := 'contest';
+end;
+
+function TContestParticipantButtonFeature.PagePartName: string;
+begin
+  Result := 'contestParticipantsBtn';
+end;
+
+procedure TContestParticipantButtonFeature.InternalSatisfy;
+begin
+  inherited InternalSatisfy;
+  Parent.Variables.ItemsAsText['editableReserved1Btn'] := '~+#contestParticipantsBtn;';
+end;
 
 { TContestSettingsFeature }
 
@@ -120,12 +217,16 @@ end;
 
 procedure TContestButtonsFeature.Satisfy;
 begin
-  // do nothing
+  with Parent.Variables do
+  begin
+    ItemsAsText['contestParticipantsText'] := SContestParticipantsText;
+  end;
 end;
 
 procedure TContestButtonsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
+  ADependencies.Add(TContestParticipantButtonFeature);
   ADependencies.Add(TEditableButtonsFeature);
 end;
 
@@ -219,6 +320,7 @@ begin
     ItemsAsText['editableEditRef'] := 'contest-edit';
     ItemsAsText['editableAccessRef'] := 'contest-access';
     ItemsAsText['editableSettingsRef'] := 'contest-settings';
+    ItemsAsText['contestParticipantsRef'] := 'contest-participants';
   end;
 end;
 

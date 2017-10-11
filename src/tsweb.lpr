@@ -92,7 +92,8 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   tswebcontestfeatures,
   tswebcontestpages,
   tswebcontestmodules,
-  tswebeditablepages;
+  tswebeditablepages,
+  tswebcontestelements;
 
 {$ifdef Windows}
 var

@@ -296,6 +296,10 @@ resourcestring
   SArchiveTooManyFiles = 'Archive may not contain more than %d files.';
   SParticipantAlreadyAdded = 'Participant "%s" is already added!';
   SParticipantAlreadyDeleted = 'Participant "%s" is not added!';
+  SParticipantIndexHeader = '#';
+  SParticipantNameHeader = 'User';
+  SParticipantDeleteHeader = 'Delete';
+  SContestParticipantsText = 'Participants';
 
 implementation
 

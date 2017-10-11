@@ -26,7 +26,8 @@ interface
 
 uses
   Classes, SysUtils, tswebpagesbase, tswebmodules, tswebeditablemodules,
-  fphttp, tswebcontestpages, tswebmanagers, editableobjects, htmlpages;
+  fphttp, tswebcontestpages, tswebmanagers, editableobjects, htmlpages,
+  contests, HTTPDefs, users;
 
 type
 
@@ -95,7 +96,53 @@ type
     function HookClass: TEditableModuleHookClass; override;
   end;
 
+  { TContestParticipantsWebModule }
+
+  TContestParticipantsWebModule = class(TEditableObjectPostWebModule)
+  protected
+    procedure DoInsideHandlePost(ARequest: TRequest); override;
+    function DoCreatePage: THtmlPage; override;
+    function HookClass: TEditableModuleHookClass; override;
+  end;
+
 implementation
+
+{ TContestParticipantsWebModule }
+
+procedure TContestParticipantsWebModule.DoInsideHandlePost(ARequest: TRequest);
+var
+  PartSession: TContestParticipantSession;
+  QueryType: string;
+  Username: string;
+  Info: TUserInfo;
+begin
+  PartSession := (EditableObject as TContest).CreateParticipantSession(User);
+  try
+    QueryType := ARequest.ContentFields.Values['query'];
+    Username := ARequest.ContentFields.Values['user'];
+    Info := UserManager.GetUserInfo(Username);
+    try
+      if QueryType = 'add-user' then
+        PartSession.AddParticipant(Info)
+      else if QueryType = 'delete-user' then
+        PartSession.DeleteParticipant(Info);
+    finally
+      FreeAndNil(Info);
+    end;
+  finally
+    FreeAndNil(PartSession);
+  end;
+end;
+
+function TContestParticipantsWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TContestParticipantPage.Create;
+end;
+
+function TContestParticipantsWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TContestModuleHook;
+end;
 
 { TContestSettingsWebModule }
 
@@ -207,6 +254,7 @@ initialization
   RegisterHTTPModule('contest-view', TContestViewWebModule, True);
   RegisterHTTPModule('contest-edit', TContestEditWebModule, True);
   RegisterHTTPModule('contest-settings', TContestSettingsWebModule, True);
+  RegisterHTTPModule('contest-participants', TContestParticipantsWebModule, True);
 
 end.
 
