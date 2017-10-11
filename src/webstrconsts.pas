@@ -302,6 +302,24 @@ resourcestring
   SContestParticipantsText = 'Participants';
   SNoSuchScoringPolicy = 'No such scoring policy!';
   SContestDurationInterval = 'Contest duration must be between %d and %d minutes!';
+  SMonth1 = 'January';
+  SMonth2 = 'February';
+  SMonth3 = 'March';
+  SMonth4 = 'April';
+  SMonth5 = 'May';
+  SMonth6 = 'June';
+  SMonth7 = 'July';
+  SMonth8 = 'August';
+  SMonth9 = 'September';
+  SMonth10 = 'October';
+  SMonth11 = 'November';
+  SMonth12 = 'December';
+
+const
+  SMonths: array [1 .. 12] of string = (
+    SMonth1, SMonth2, SMonth3, SMonth4, SMonth5, SMonth6,
+    SMonth7, SMonth8, SMonth9, SMonth10, SMonth11, SMonth12
+  );
 
 implementation
 

@@ -506,3 +506,17 @@ table.source-view-inner {
 	width: 100%;
 	white-space: pre-wrap;
 }
+
+
+input[type=number].d-1 {
+	width: 6ch;
+}
+input[type=number].d-2 {
+	width: 7ch;
+}
+input[type=number].d-3 {
+	width: 8ch;
+}
+input[type=number].d-4 {
+	width: 9ch;
+}
