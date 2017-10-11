@@ -104,6 +104,7 @@ type
     procedure DoAddParticipant(AInfo: TUserInfo);
     procedure DeleteParticipant(AInfo: TUserInfo);
     procedure DoDeleteParticipant(AInfo: TUserInfo);
+    function HasParticipant(AInfo: TUserInfo): boolean;
     function ListParticipants: TStringList;
     procedure HandleSelfDeletion; override;
     procedure HandleUserDeleting(AInfo: TUserInfo); override;
@@ -214,9 +215,10 @@ end;
 
 procedure TContest.AddParticipant(AInfo: TUserInfo);
 begin
-  if Storage.VariableExists(ParticipantsFullKeyName(AInfo.ID)) then
+  if HasParticipant(AInfo) then
     raise EContestValidate.CreateFmt(SParticipantAlreadyAdded, [AInfo.Username]);
   DoAddParticipant(AInfo);
+  UpdateModifyTime;
 end;
 
 procedure TContest.DoAddParticipant(AInfo: TUserInfo);
@@ -226,14 +228,20 @@ end;
 
 procedure TContest.DeleteParticipant(AInfo: TUserInfo);
 begin
-  if not Storage.VariableExists(ParticipantsFullKeyName(AInfo.ID)) then
+  if not HasParticipant(AInfo) then
     raise EContestValidate.CreateFmt(SParticipantAlreadyDeleted, [AInfo.Username]);
   DoDeleteParticipant(AInfo);
+  UpdateModifyTime;
 end;
 
 procedure TContest.DoDeleteParticipant(AInfo: TUserInfo);
 begin
   Storage.DeleteVariable(ParticipantsFullKeyName(AInfo.ID));
+end;
+
+function TContest.HasParticipant(AInfo: TUserInfo): boolean;
+begin
+  Result := Storage.VariableExists(ParticipantsFullKeyName(AInfo.ID));
 end;
 
 function TContest.ListParticipants: TStringList;
