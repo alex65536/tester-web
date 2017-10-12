@@ -107,12 +107,49 @@ type
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
   end;
 
+  { TContestProblemList }
+
+  TContestProblemList = class
+  private
+    FContest: TContest;
+    FStorage: TAbstractDataStorage;
+    function ProblemIndexToId(AIndex: integer): integer;
+    procedure AddProblemToList(AIndex: integer; const AProblemName: string);
+  protected
+    property Storage: TAbstractDataStorage read FStorage;
+    function ProblemsSectionName: string;
+    function ProblemsByIdSectionName: string;
+    function ProblemByIdKeyName(AProblemID: integer): string;
+    function ProblemsByIndexSectionName: string;
+    function ProblemByIndexKeyName(AIndex: integer): string;
+    function ProblemCountKeyName: string;
+    function GetProblemList: TStringList;
+    procedure SetProblemList(AValue: TStringList);
+    function GetProblemCount: integer;
+    {%H-}constructor Create(AContest: TContest);
+  public
+    property Contest: TContest read FContest;
+    property ProblemList: TStringList read GetProblemList write SetProblemList;
+    property ProblemCount: integer read GetProblemCount;
+    function ProblemIndex(AProblem: TContestProblem): integer;
+    function HasProblem(AProblem: TContestProblem): boolean;
+    function GetProblem(AIndex: integer): TContestProblem;
+    function IsProblemListValid(AValue: TStringList): boolean;
+    constructor Create;
+  end;
+
   { TContest }
 
   TContest = class(TBaseContest)
   private
+    FProblemList: TContestProblemList;
     function GetManager: TContestManager;
   protected
+    property Storage;
+    property ProblemList: TContestProblemList read FProblemList;
+    procedure SetToProblem(AProblem: TContestProblem);
+    function DoCreateProblemList: TContestProblemList; virtual;
+    function ProblemsSectionName: string;
     function ParticipantsSectionName: string;
     function ParticipantsFullKeyName(ParticipantID: integer): string;
     procedure AddParticipant(AInfo: TUserInfo);
@@ -139,6 +176,7 @@ type
     function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession; override;
     function CreateParticipantSession(AUser: TUser): TContestParticipantSession; virtual;
     function CreateTransaction(AUser: TUser): TEditableTransaction; override;
+    destructor Destroy; override;
   end;
 
   { TContestManager }
@@ -173,6 +211,135 @@ begin
     if ScoringPolicyToStr(P) = S then
       Exit(P);
   raise EConvertError.Create(SNoSuchScoringPolicy);
+end;
+
+{ TContestProblemList }
+
+function TContestProblemList.ProblemIndexToId(AIndex: integer): integer;
+begin
+  Result := Storage.ReadInteger(ProblemByIndexKeyName(AIndex), -1);
+end;
+
+procedure TContestProblemList.AddProblemToList(AIndex: integer;
+  const AProblemName: string);
+var
+  ProblemID: integer;
+begin
+  ProblemID := Contest.ProblemManager.ObjectNameToId(AProblemName);
+  Storage.WriteInteger(ProblemByIdKeyName(ProblemID), AIndex);
+  Storage.WriteInteger(ProblemByIndexKeyName(AIndex), ProblemID);
+end;
+
+function TContestProblemList.ProblemsSectionName: string;
+begin
+  Result := Contest.ProblemsSectionName;
+end;
+
+function TContestProblemList.ProblemsByIdSectionName: string;
+begin
+  Result := ProblemsSectionName + '.byId';
+end;
+
+function TContestProblemList.ProblemByIdKeyName(AProblemID: integer): string;
+begin
+  Result := ProblemsByIdSectionName + '.' + Id2Str(AProblemID);
+end;
+
+function TContestProblemList.ProblemsByIndexSectionName: string;
+begin
+  Result := ProblemsSectionName + '.byIndex';
+end;
+
+function TContestProblemList.ProblemByIndexKeyName(AIndex: integer): string;
+begin
+  Result := ProblemsByIndexSectionName + '.' + IntToStr(AIndex);
+end;
+
+function TContestProblemList.ProblemCountKeyName: string;
+begin
+  Result := ProblemsSectionName + '.count';
+end;
+
+function TContestProblemList.GetProblemList: TStringList;
+var
+  I: integer;
+begin
+  Result := TStringList.Create;
+  try
+    for I := 0 to ProblemCount - 1 do
+      Result.Add(Contest.ProblemManager.IdToObjectName(ProblemIndexToId(I)));
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
+end;
+
+procedure TContestProblemList.SetProblemList(AValue: TStringList);
+var
+  I: integer;
+begin
+  // validate new list
+  if not IsProblemListValid(AValue) then
+    raise EContestValidate.Create(SProblemListNotValid);
+  // delete old values
+  Storage.DeletePath(ProblemsByIdSectionName);
+  Storage.DeletePath(ProblemsByIndexSectionName);
+  // add new ones
+  Storage.WriteInteger(ProblemCountKeyName, AValue.Count);
+  for I := 0 to AValue.Count - 1 do
+    AddProblemToList(I, AValue[I]);
+end;
+
+function TContestProblemList.GetProblemCount: integer;
+begin
+  Result := Storage.ReadInteger(ProblemCountKeyName, 0);
+end;
+
+constructor TContestProblemList.Create(AContest: TContest);
+begin
+  inherited Create;
+  FContest := AContest;
+  FStorage := AContest.Storage;
+end;
+
+function TContestProblemList.ProblemIndex(AProblem: TContestProblem): integer;
+begin
+  Result := Storage.ReadInteger(ProblemByIdKeyName(AProblem.ID), -1);
+end;
+
+function TContestProblemList.HasProblem(AProblem: TContestProblem): boolean;
+begin
+  Result := ProblemIndex(AProblem) >= 0;
+end;
+
+function TContestProblemList.GetProblem(AIndex: integer): TContestProblem;
+begin
+  if (AIndex < 0) or (AIndex >= ProblemCount) then
+    raise EContestValidate.Create(SOutOfBounds, [AIndex]);
+  Result := Contest.ProblemManager.GetObject(ProblemByIndexKeyName(AIndex)) as TContestProblem;
+  try
+    Contest.SetToProblem(Result);
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
+end;
+
+function TContestProblemList.IsProblemListValid(AValue: TStringList): boolean;
+var
+  I: integer;
+begin
+  Result := False;
+  for I := 0 to AValue.Count - 1 do
+    if not Contest.ProblemManager.ObjectExists(AValue[I]) then
+      Exit;
+  Result := True;
+end;
+
+constructor TContestProblemList.Create;
+begin
+  // we don't want the contest problem list to be created publicly!
+  raise EInvalidOperation.CreateFmt(SCreationPublic, [ClassName]);
 end;
 
 { TBaseContestTransaction }
@@ -311,6 +478,21 @@ begin
   Result := (inherited Manager) as TContestManager;
 end;
 
+procedure TContest.SetToProblem(AProblem: TContestProblem);
+begin
+  inherited SetToProblem(AProblem);
+end;
+
+function TContest.DoCreateProblemList: TContestProblemList;
+begin
+  Result := TContestProblemList.Create(Self);
+end;
+
+function TContest.ProblemsSectionName: string;
+begin
+  Result := FullKeyName('problems');
+end;
+
 function TContest.ParticipantsSectionName: string;
 begin
   Result := FullKeyName('participants');
@@ -439,8 +621,22 @@ begin
 end;
 
 procedure TContest.HandleProblemDeleting(AProblem: TContestProblem);
+var
+  ProblemNames: TStringList;
+  ProblemIndex: integer;
 begin
-  // TODO : Implement HandleProblemDeleting !!!
+  if ProblemList.HasProblem(AProblem) then
+  begin
+    ProblemNames := ProblemList.ProblemList;
+    try
+      ProblemIndex := ProblemNames.IndexOf(AProblem.Name);
+      if ProblemIndex >= 0 then
+        ProblemNames.Delete(ProblemIndex);
+      ProblemList.ProblemList := ProblemNames;
+    finally
+      FreeAndNil(ProblemNames);
+    end;
+  end;
 end;
 
 procedure TContest.MessageReceived(AMessage: TAuthorMessage);
@@ -455,6 +651,7 @@ end;
 constructor TContest.Create(const AName: string; AManager: TEditableManager);
 begin
   inherited Create(AName, AManager);
+  FProblemList := DoCreateProblemList;
 end;
 
 function TContest.ProblemManager: TContestProblemManager;
@@ -475,6 +672,12 @@ end;
 function TContest.CreateTransaction(AUser: TUser): TEditableTransaction;
 begin
   Result := TContestTransaction.Create(Manager, AUser, Self);
+end;
+
+destructor TContest.Destroy;
+begin
+  FreeAndNil(FProblemList);
+  inherited Destroy;
 end;
 
 { TContestManagerSession }

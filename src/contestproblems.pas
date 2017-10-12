@@ -29,11 +29,13 @@ uses
   tswebobservers, webstrconsts;
 
 type
+  TContestProblem = class;
 
   { TBaseContest }
 
   TBaseContest = class(TEditableObject)
   protected
+    procedure SetToProblem(AProblem: TContestProblem);
     function HasParticipant(AInfo: TUserInfo): boolean; virtual; abstract;
     function ParticipantCanSubmit(AInfo: TUserInfo): boolean; virtual; abstract;
     function ParticipantCanView(AInfo: TUserInfo): boolean; virtual; abstract;
@@ -120,6 +122,13 @@ type
   end;
 
 implementation
+
+{ TBaseContest }
+
+procedure TBaseContest.SetToProblem(AProblem: TContestProblem);
+begin
+  AProblem.SetContest(Self.ID);
+end;
 
 { TContestSubmissionManager }
 
