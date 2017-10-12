@@ -240,7 +240,10 @@ type
     function CreateQueue: TSubmissionQueue; virtual; abstract;
     function DoCreateTestSubmission(AID: integer): TTestSubmission; virtual;
     function DoCreateViewSubmission(AID: integer): TViewSubmission; virtual;
-    procedure DeleteSubmission(AID: integer); virtual;
+    procedure DoInternalCreateSubmission(ASubmission: TTestSubmission;
+      AProblem: TProblem; AUser: TUser); virtual;
+    procedure DeleteSubmission(AID: integer);
+    procedure DoDeleteSubmission(AID: integer); virtual;
     procedure HandleUserDeleting(AInfo: TUserInfo); virtual;
     procedure HandleProblemDeleting(AProblem: TTestableProblem); virtual;
     procedure ResumeCreateSubmission(AID: integer); virtual;
@@ -587,6 +590,18 @@ begin
   Result := TViewSubmission.Create(Self, AID);
 end;
 
+procedure TSubmissionManager.DoInternalCreateSubmission(ASubmission: TTestSubmission;
+  AProblem: TProblem; AUser: TUser);
+var
+  ID: integer;
+begin
+  ID := ASubmission.ID;
+  Storage.WriteInteger(SubmissionSectionName(ID) + '.ownerId', AUser.ID);
+  Storage.WriteBool(OwnerSectionName(AUser.ID) + '.' + Id2Str(ID), True);
+  Storage.WriteInteger(SubmissionSectionName(ID) + '.problemId', AProblem.ID);
+  Storage.WriteBool(ProblemSectionName(AProblem.ID) + '.' + Id2Str(ID), True);
+end;
+
 procedure TSubmissionManager.DeleteSubmission(AID: integer);
 var
   Submission: TViewSubmission;
@@ -600,11 +615,17 @@ begin
   finally
     FreeAndNil(Submission);
   end;
+  // do internal deletion
+  DoDeleteSubmission(AID);
   // remove from the storage
+  Storage.DeletePath(SubmissionSectionName(AID));
+end;
+
+procedure TSubmissionManager.DoDeleteSubmission(AID: integer);
+begin
   Storage.DeleteVariable(OwnerSectionName(SubmissionOwnerID(AID)) + '.' + Id2Str(AID));
   Storage.DeleteVariable(ProblemSectionName(SubmissionProblemID(AID)) +
     '.' + Id2Str(AID));
-  Storage.DeletePath(SubmissionSectionName(AID));
 end;
 
 procedure TSubmissionManager.HandleUserDeleting(AInfo: TUserInfo);
@@ -748,11 +769,8 @@ begin
   ID := NextID;
   Submission := DoCreateTestSubmission(ID);
   try
-    // fill owner & problem
-    Storage.WriteInteger(SubmissionSectionName(ID) + '.ownerId', AUser.ID);
-    Storage.WriteBool(OwnerSectionName(AUser.ID) + '.' + Id2Str(ID), True);
-    Storage.WriteInteger(SubmissionSectionName(ID) + '.problemId', AProblem.ID);
-    Storage.WriteBool(ProblemSectionName(AProblem.ID) + '.' + Id2Str(ID), True);
+    // internal submission creation
+    DoInternalCreateSubmission(Submission, AProblem, AUser);
     // prepare submission for adding to queue
     Submission.UpdateSubmitTime;
     Submission.AddFile(ALanguage, AFileName);
