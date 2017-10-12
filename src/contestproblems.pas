@@ -63,10 +63,10 @@ type
 
   TContestTestProblemTransaction = class(TTestProblemTransaction)
   protected
-    function Contest: TBaseContest;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
   public
+    function Contest: TBaseContest;
     function CanTestProblem: boolean; override;
     function CanReadData: boolean; override;
   end;
@@ -76,7 +76,6 @@ type
   TContestProblem = class(TTestableProblem)
   private
     FContest: TBaseContest;
-    function GetContestId: integer;
     function GetContestManager: TBaseContestManager;
   protected
     procedure SetContest(AID: integer);
@@ -85,7 +84,6 @@ type
   public
     property ContestManager: TBaseContestManager read GetContestManager;
     property Contest: TBaseContest read FContest;
-    property ContestId: integer read GetContestId;
     function CreateTestTransaction(AUser: TUser): TTestProblemTransaction;
       override;
     destructor Destroy; override;
@@ -112,6 +110,9 @@ type
     procedure HandleContestDeleting(AContest: TBaseContest); virtual;
     function ListByContest(AContest: TBaseContest): TIdList;
     procedure MessageReceived(AMessage: TAuthorMessage); override;
+    procedure DoInternalCreateSubmission(ASubmission: TTestSubmission;
+      AProblem: TProblem; AUser: TUser); override;
+    procedure DoDeleteSubmission(AID: integer); override;
   public
     function ContestManager: TBaseContestManager; virtual; abstract;
     function ContestFilter(AID: integer; AObject: TObject): boolean;
@@ -178,6 +179,32 @@ begin
     inherited MessageReceived(AMessage);
 end;
 
+procedure TContestSubmissionManager.DoInternalCreateSubmission(
+  ASubmission: TTestSubmission; AProblem: TProblem; AUser: TUser);
+var
+  Contest: TBaseContest;
+  ID: integer;
+begin
+  inherited DoInternalCreateSubmission(ASubmission, AProblem, AUser);
+  Contest := (AProblem as TContestProblem).Contest;
+  ID := ASubmission.ID;
+  if Contest <> nil then
+  begin
+    Storage.WriteInteger(SubmissionSectionName(ID) + '.contestId', Contest.ID);
+    Storage.WriteBool(ContestSectionName(Contest.ID) + '.' + Id2Str(ID), True);
+  end;
+end;
+
+procedure TContestSubmissionManager.DoDeleteSubmission(AID: integer);
+var
+  ContestID: integer;
+begin
+  ContestID := SubmissionContestID(AID);
+  if ContestID >= 0 then
+    Storage.DeleteVariable(ContestSectionName(ContestID) + '.' + Id2Str(AID));
+  inherited DoDeleteSubmission(AID);
+end;
+
 constructor TContestSubmissionManager.Create;
 begin
   inherited Create;
@@ -220,14 +247,6 @@ begin
   if FContest <> nil then
     raise EEditableValidate.Create(SContestAlreadySet);
   FContest := ContestManager.GetObject(AName) as TBaseContest;
-end;
-
-function TContestProblem.GetContestId: integer;
-begin
-  if FContest = nil then
-    Result := -1
-  else
-    Result := FContest.ID;
 end;
 
 constructor TContestProblem.Create(const AName: string;
@@ -284,7 +303,6 @@ end;
 function TContestProblemSubmissionSession.DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
 var
   ContestID: integer;
-  Contest: TBaseContest;
   ContestSubmitMgr: TContestSubmissionManager;
 begin
   Result := inherited DoCreateProblemFromSubmission(AID);
@@ -337,7 +355,7 @@ end;
 function TContestProblemSubmissionSession.ListByContest(AContest: TBaseContest): TIdList;
 begin
   with SubmissionManager do
-    Filter(ListByContest(AContest), Self, @AvailableFilter);
+    Result := Filter(ListByContest(AContest), Self, @AvailableFilter);
 end;
 
 end.
