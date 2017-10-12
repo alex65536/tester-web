@@ -5,24 +5,25 @@ unit tswebmanagers;
 interface
 
 uses
-  Classes, SysUtils, submissions, submissions_tsrun, problems, commitscheduler,
-  contests;
+  SysUtils, submissions, submissions_tsrun, commitscheduler, contests, contestproblems;
 
 type
 
   { TTsWebProblemManager }
 
-  TTsWebProblemManager = class(TTestableProblemManager)
+  TTsWebProblemManager = class(TContestProblemManager)
   public
     function SubmissionManager: TSubmissionManager; override;
+    function ContestManager: TBaseContestManager; override;
     constructor Create;
   end;
 
   { TTsWebSubmissionManager }
 
-  TTsWebSubmissionManager = class(TTsRunSubmissionManager)
+  TTsWebSubmissionManager = class(TTsRunContestSubmissionManager)
   public
     function ProblemManager: TTestableProblemManager; override;
+    function ContestManager: TBaseContestManager; override;
     constructor Create;
   end;
 
@@ -74,6 +75,11 @@ begin
   Result := tswebmanagers.SubmissionManager;
 end;
 
+function TTsWebProblemManager.ContestManager: TBaseContestManager;
+begin
+  Result := tswebmanagers.ContestManager;
+end;
+
 constructor TTsWebProblemManager.Create;
 begin
   inherited Create;
@@ -87,6 +93,11 @@ begin
   Result := tswebmanagers.ProblemManager;
 end;
 
+function TTsWebSubmissionManager.ContestManager: TBaseContestManager;
+begin
+  Result := tswebmanagers.ContestManager;
+end;
+
 constructor TTsWebSubmissionManager.Create;
 begin
   inherited Create;
@@ -95,12 +106,12 @@ end;
 
 initialization
   FProblemManager := TTsWebProblemManager.Create;
-  FSubmissionManager := TTsWebSubmissionManager.Create;
   FContestManager := TTsWebContestManager.Create;
+  FSubmissionManager := TTsWebSubmissionManager.Create;
 
 finalization
-  FreeAndNil(FContestManager);
   FreeAndNil(FSubmissionManager);
+  FreeAndNil(FContestManager);
   FreeAndNil(FProblemManager);
 
 end.
