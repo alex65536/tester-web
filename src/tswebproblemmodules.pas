@@ -140,7 +140,7 @@ type
     function DoCreatePage: THtmlPage; override;
     function CanRedirect: boolean; override;
     function RedirectLocation: string; override;
-    procedure DoInsideHandlePost(ARequest: TRequest); override;
+    procedure DoHandlePost(ARequest: TRequest); override;
   end;
 
   { TProblemSettingsWebModule }
@@ -192,7 +192,7 @@ begin
   Result := Request.URI;
 end;
 
-procedure TProblemSubmissionsWebModule.DoInsideHandlePost(ARequest: TRequest);
+procedure TProblemSubmissionsWebModule.DoHandlePost(ARequest: TRequest);
 var
   TestProblem: TTestableProblem;
   SubmissionSession: TProblemSubmissionSession;

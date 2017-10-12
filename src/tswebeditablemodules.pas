@@ -98,8 +98,8 @@ type
   protected
     property EditableObject: TEditableObject read FEditableObject;
     function Inside: boolean; override;
-    procedure DoInsideHandlePost(ARequest: TRequest); virtual; abstract;
-    procedure DoHandlePost(ARequest: TRequest); override;
+    procedure DoSessionCreated; override;
+    procedure DoAfterRequest; override;
   end;
 
   { TEditableObjListWebModule }
@@ -132,7 +132,7 @@ type
 
   TEditableAccessWebModule = class(TEditableObjectPostWebModule)
   protected
-    procedure DoInsideHandlePost(ARequest: TRequest); override;
+    procedure DoHandlePost(ARequest: TRequest); override;
   end;
 
   { TEditableViewWebModule }
@@ -147,7 +147,7 @@ type
   TEditableEditWebModule = class(TEditableObjectPostWebModule)
   protected
     procedure DoInsideEdit(ATransaction: TEditableTransaction); virtual;
-    procedure DoInsideHandlePost({%H-}ARequest: TRequest); override;
+    procedure DoHandlePost({%H-}ARequest: TRequest); override;
   end;
 
   { TEditableSettingsWebModule }
@@ -155,7 +155,7 @@ type
   TEditableSettingsWebModule = class(TEditableObjectPostWebModule)
   protected
     function Inside: boolean; override;
-    procedure DoInsideHandlePost(ARequest: TRequest); override;
+    procedure DoHandlePost(ARequest: TRequest); override;
   end;
 
 function EditableObjectNameFromRequest(ARequest: TRequest): string;
@@ -182,7 +182,7 @@ begin
   Result := True;
 end;
 
-procedure TEditableSettingsWebModule.DoInsideHandlePost(ARequest: TRequest);
+procedure TEditableSettingsWebModule.DoHandlePost(ARequest: TRequest);
 var
   NewName: string;
   ManagerSession: TEditableManagerSession;
@@ -207,14 +207,16 @@ begin
   Result := True;
 end;
 
-procedure TEditableObjectPostWebModule.DoHandlePost(ARequest: TRequest);
+procedure TEditableObjectPostWebModule.DoSessionCreated;
 begin
+  inherited DoSessionCreated;
   FEditableObject := Hook.EditableObject;
-  try
-    DoInsideHandlePost(ARequest);
-  finally
-    FreeAndNil(FEditableObject);
-  end;
+end;
+
+procedure TEditableObjectPostWebModule.DoAfterRequest;
+begin
+  FreeAndNil(FEditableObject);
+  inherited DoAfterRequest;
 end;
 
 { TEditableEditWebModule }
@@ -224,7 +226,7 @@ begin
   ATransaction.Title := Request.ContentFields.Values['title'];
 end;
 
-procedure TEditableEditWebModule.DoInsideHandlePost(ARequest: TRequest);
+procedure TEditableEditWebModule.DoHandlePost(ARequest: TRequest);
 var
   Transaction: TEditableTransaction;
 begin
@@ -247,7 +249,7 @@ end;
 
 { TEditableAccessWebModule }
 
-procedure TEditableAccessWebModule.DoInsideHandlePost(ARequest: TRequest);
+procedure TEditableAccessWebModule.DoHandlePost(ARequest: TRequest);
 var
   AccessSession: TEditableObjectAccessSession;
   Target: TUserInfo;
