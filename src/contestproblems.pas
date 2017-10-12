@@ -160,7 +160,8 @@ begin
   end;
 end;
 
-function TContestSubmissionManager.ContestFilter(AID: integer; AObject: TObject): boolean;
+function TContestSubmissionManager.ContestFilter(AID: integer;
+  AObject: TObject): boolean;
 begin
   Result := SubmissionContestID(AID) = (AObject as TBaseContest).ID;
 end;
@@ -243,8 +244,7 @@ begin
   FContest := ContestManager.GetObject(AName) as TBaseContest;
 end;
 
-constructor TContestProblem.Create(const AName: string;
-  AManager: TEditableManager);
+constructor TContestProblem.Create(const AName: string; AManager: TEditableManager);
 begin
   inherited Create(AName, AManager);
   FContest := nil;
@@ -353,4 +353,3 @@ begin
 end;
 
 end.
-
