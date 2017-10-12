@@ -26,7 +26,8 @@ interface
 
 uses
   SysUtils, Classes, tswebfeatures, tswebeditablefeatures, htmlpages,
-  webstrconsts, contests, tswebcontestelements;
+  webstrconsts, contests, tswebcontestelements, tswebdatetimefeatures,
+  serverconfig;
 
 const
   SContestScoringPolicies: array [TContestScoringPolicy] of string = (
@@ -270,11 +271,23 @@ end;
 { TContestEditFeature }
 
 procedure TContestEditFeature.InternalSatisfy;
+var
+  ContestTransaction: TContestTransaction;
 begin
+  ContestTransaction := Transaction as TContestTransaction;
   with Parent.Variables do
   begin
     ItemsAsText['objectEditSubmit'] := SContestEditSubmit;
+    ItemsAsText['contestDurationMax'] := IntToStr(Config.Contest_MaxDurationMinutes);
+    ItemsAsText['contestDurationValue'] := IntToStr(ContestTransaction.DurationMinutes);
+    ItemsAsText['spMaxScoreStr'] := SScoringPolicyMaxScore;
+    ItemsAsText['spLastScoreStr'] := SScoringPolicyLastScore;
+    ItemsAsText[ScoringPolicyToStr(ContestTransaction.ScoringPolicy) + 'Sel'] :=
+      ' selected';
+    if ContestTransaction.AllowUpsolving then
+      ItemsAsText['allowUpsolvingChecked'] := ' checked';
   end;
+  LoadPagePart('contest', 'contestEdit', 'objectEditContent');
 end;
 
 procedure TContestEditFeature.DependsOn(ADependencies: THtmlPageFeatureList);
@@ -283,6 +296,8 @@ begin
   ADependencies.Add(TContestEditViewBaseFeature);
   ADependencies.Add(TEditableEditFeature);
   ADependencies.Add(TContestButtonsFeature);
+  ADependencies.Add(TDateEditFeature);
+  ADependencies.Add(TTimeEditFeature);
 end;
 
 { TContestManageAccessFeature }

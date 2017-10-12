@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, tswebeditablefeatures, webstrconsts, editableobjects,
-  tswebcontestfeatures, tswebeditablepages, tswebmanagers;
+  tswebcontestfeatures, tswebeditablepages, tswebmanagers, tswebdatetimefeatures;
 
 type
 
@@ -82,9 +82,14 @@ type
 
   { TContestEditPage }
 
-  TContestEditPage = class(TContestPostHtmlPage)
+  TContestEditPage = class(TContestPostHtmlPage, IDateTimePage)
+  private
+    FDateTime: TDateTime;
   protected
+    function GetDateTime: TDateTime;
     procedure AddFeatures; override;
+  public
+    property DateTime: TDateTime read FDateTime write FDateTime;
   end;
 
   { TContestSettingsPage }
@@ -120,6 +125,11 @@ begin
 end;
 
 { TContestEditPage }
+
+function TContestEditPage.GetDateTime: TDateTime;
+begin
+  Result := FDateTime;
+end;
 
 procedure TContestEditPage.AddFeatures;
 begin

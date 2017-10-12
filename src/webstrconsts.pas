@@ -326,6 +326,8 @@ resourcestring
   SDurationMinutes = 'minutes';
   SScoringPolicyMaxScore = 'Use submission with maximum score';
   SScoringPolicyLastScore = 'Use last submission';
+  SWordToStrError = '"%s" is an invalid integer or it doesn''t fit the interval [%d .. %d]';
+  SInvalidDate = '"%.2d.%.2d.%.4d %.2d:%.2d:%.2d" is an invalid date!';
 
 implementation
 

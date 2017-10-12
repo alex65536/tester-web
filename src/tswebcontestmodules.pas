@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, tswebpagesbase, tswebmodules, tswebeditablemodules,
   fphttp, tswebcontestpages, tswebmanagers, editableobjects, htmlpages,
-  contests, HTTPDefs, users;
+  contests, HTTPDefs, users, webstrconsts, dateutils;
 
 type
 
@@ -85,6 +85,7 @@ type
   protected
     procedure DoInsideEdit(ATransaction: TEditableTransaction); override;
     function DoCreatePage: THtmlPage; override;
+    procedure DoPageAfterConstruction(APage: THtmlPage); override;
     function HookClass: TEditableModuleHookClass; override;
   end;
 
@@ -100,7 +101,7 @@ type
 
   TContestParticipantsWebModule = class(TEditableObjectPostWebModule)
   protected
-    procedure DoInsideHandlePost(ARequest: TRequest); override;
+    procedure DoHandlePost(ARequest: TRequest); override;
     function DoCreatePage: THtmlPage; override;
     function HookClass: TEditableModuleHookClass; override;
   end;
@@ -109,7 +110,7 @@ implementation
 
 { TContestParticipantsWebModule }
 
-procedure TContestParticipantsWebModule.DoInsideHandlePost(ARequest: TRequest);
+procedure TContestParticipantsWebModule.DoHandlePost(ARequest: TRequest);
 var
   PartSession: TContestParticipantSession;
   QueryType: string;
@@ -159,14 +160,57 @@ end;
 { TContestEditWebModule }
 
 procedure TContestEditWebModule.DoInsideEdit(ATransaction: TEditableTransaction);
+
+  function WordToStr(const S: string): word;
+  var
+    Code: integer;
+  begin
+    Val(S, Result, Code);
+    if Code <> 0 then
+      raise EContestValidate.CreateFmt(SWordToStrError, [S, Low(word), High(word)]);
+  end;
+
+var
+  Day, Month, Year: word;
+  Hour, Minute, Second: word;
+  ContestTransaction: TContestTransaction;
 begin
   inherited DoInsideEdit(ATransaction);
-  // TODO : Implement DoInsideEdit !!!
+  ContestTransaction := ATransaction as TContestTransaction;
+  with Request.ContentFields do
+  begin
+    Day := WordToStr(Values['date-day']);
+    Month := WordToStr(Values['date-month'].Substring(1));
+    Year := WordToStr(Values['date-year']);
+    Hour := WordToStr(Values['time-hour']);
+    Minute := WordToStr(Values['time-minute']);
+    Second := WordToStr(Values['time-second']);
+    if not IsValidDateTime(Year, Month, Day, Hour, Minute, Second, 0) then
+      raise EContestValidate.CreateFmt(SInvalidDate, [Day, Month, Year, Hour, Minute, Second]);
+    ContestTransaction.StartTime := EncodeDateTime(Year, Month, Day, Hour,
+      Minute, Second, 0);
+    ContestTransaction.DurationMinutes := StrToInt(Values['duration']);
+    ContestTransaction.ScoringPolicy := StrToScoringPolicy(Values['scoring-policy']);
+    ContestTransaction.AllowUpsolving := (Values['allow-upsolving'] <> '');
+  end;
 end;
 
 function TContestEditWebModule.DoCreatePage: THtmlPage;
 begin
   Result := TContestEditPage.Create;
+end;
+
+procedure TContestEditWebModule.DoPageAfterConstruction(APage: THtmlPage);
+var
+  Transaction: TContestTransaction;
+begin
+  inherited DoPageAfterConstruction(APage);
+  Transaction := EditableObject.CreateTransaction(User) as TContestTransaction;
+  try
+    (APage as TContestEditPage).DateTime := Transaction.StartTime;
+  finally
+    FreeAndNil(Transaction);
+  end;
 end;
 
 function TContestEditWebModule.HookClass: TEditableModuleHookClass;
