@@ -173,7 +173,7 @@ type
       AAccess: TEditableAccessRights); virtual;
     procedure HandleUserDeleting(AInfo: TUserInfo); virtual;
     procedure HandleUserChangedRole({%H-}AInfo: TUserInfo); virtual;
-    procedure MessageReceived(AMessage: TAuthorMessage);
+    procedure MessageReceived(AMessage: TAuthorMessage); virtual;
     procedure UpdateModifyTime;
     procedure HandleSelfDeletion; virtual;
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);

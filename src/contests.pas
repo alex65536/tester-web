@@ -28,7 +28,8 @@ interface
 
 uses
   Classes, SysUtils, editableobjects, webstrconsts, datastorages, users,
-  tswebutils, dateutils, typinfo, serverconfig, contestproblems;
+  tswebutils, dateutils, typinfo, serverconfig, contestproblems,
+  tswebobservers;
 
 type
   EContestAction = class(EEditableAction);
@@ -134,9 +135,12 @@ type
     function ContestAllowUpsolving: boolean;
     procedure HandleSelfDeletion; override;
     procedure HandleUserDeleting(AInfo: TUserInfo); override;
+    procedure HandleProblemDeleting(AProblem: TContestProblem); virtual;
+    procedure MessageReceived(AMessage: TAuthorMessage); override;
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
   public
     property Manager: TContestManager read GetManager;
+    function ProblemManager: TContestProblemManager;
     function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession; override;
     function CreateParticipantSession(AUser: TUser): TContestParticipantSession; virtual;
     function CreateTransaction(AUser: TUser): TEditableTransaction; override;
@@ -151,6 +155,8 @@ type
     function CreateStorage: TAbstractDataStorage; override;
     procedure DoCreateNewObject(AObject: TEditableObject); override;
   public
+    function ProblemManager: TContestProblemManager; virtual; abstract;
+    function SubmissionManager: TContestSubmissionManager; virtual; abstract;
     function CreateManagerSession(AUser: TUser): TEditableManagerSession; override;
   end;
 
@@ -431,9 +437,28 @@ begin
   DoDeleteParticipant(AInfo);
 end;
 
+procedure TContest.HandleProblemDeleting(AProblem: TContestProblem);
+begin
+  // TODO : Implement HandleProblemDeleting !!!
+end;
+
+procedure TContest.MessageReceived(AMessage: TAuthorMessage);
+begin
+  if (AMessage is TEditableDeletingMessage) and
+    (AMessage.Sender is TContestProblemManager) then
+    HandleProblemDeleting((AMessage as TEditableDeletingMessage).EditableObject as TContestProblem)
+  else
+    inherited MessageReceived(AMessage);
+end;
+
 constructor TContest.Create(const AName: string; AManager: TEditableManager);
 begin
   inherited Create(AName, AManager);
+end;
+
+function TContest.ProblemManager: TContestProblemManager;
+begin
+  Result := (Manager as TContestManager).ProblemManager;
 end;
 
 function TContest.CreateAccessSession(AUser: TUser): TEditableObjectAccessSession;

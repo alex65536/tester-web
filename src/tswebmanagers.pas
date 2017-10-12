@@ -31,6 +31,8 @@ type
 
   TTsWebContestManager = class(TContestManager)
   public
+    function ProblemManager: TContestProblemManager; override;
+    function SubmissionManager: TContestSubmissionManager; override;
     constructor Create;
   end;
 
@@ -61,6 +63,16 @@ begin
 end;
 
 { TTsWebContestManager }
+
+function TTsWebContestManager.ProblemManager: TContestProblemManager;
+begin
+  Result := tswebmanagers.ProblemManager;
+end;
+
+function TTsWebContestManager.SubmissionManager: TContestSubmissionManager;
+begin
+  Result := tswebmanagers.SubmissionManager;
+end;
 
 constructor TTsWebContestManager.Create;
 begin
