@@ -105,14 +105,13 @@ type
   TContestSubmissionManager = class(TSubmissionManager)
   protected
     function ContestSectionName(AID: integer): string;
-    function SubmissionProblemID(AID: integer): integer;
     function SubmissionContestID(AID: integer): integer;
     procedure HandleContestDeleting(AContest: TBaseContest); virtual;
-    function ListByContest(AContest: TBaseContest): TIdList;
-    procedure MessageReceived(AMessage: TAuthorMessage); override;
     procedure DoInternalCreateSubmission(ASubmission: TTestSubmission;
       AProblem: TProblem; AUser: TUser); override;
     procedure DoDeleteSubmission(AID: integer); override;
+    function ListByContest(AContest: TBaseContest): TIdList;
+    procedure MessageReceived(AMessage: TAuthorMessage); override;
   public
     function ContestManager: TBaseContestManager; virtual; abstract;
     function ContestFilter(AID: integer; AObject: TObject): boolean;
@@ -127,11 +126,6 @@ implementation
 function TContestSubmissionManager.ContestSectionName(AID: integer): string;
 begin
   Result := 'contests.' + Id2Str(AID);
-end;
-
-function TContestSubmissionManager.SubmissionProblemID(AID: integer): integer;
-begin
-  Result := inherited SubmissionProblemID(AID);
 end;
 
 function TContestSubmissionManager.SubmissionContestID(AID: integer): integer;
@@ -234,7 +228,7 @@ end;
 
 function TContestProblem.GetContestManager: TBaseContestManager;
 begin
-  Result := Manager as TBaseContestManager;
+  Result := (Manager as TContestProblemManager).ContestManager;
 end;
 
 procedure TContestProblem.SetContest(AID: integer);
@@ -331,7 +325,7 @@ begin
   Result := inherited CanReadSubmission(AProblem, AOwner);
   if Result then
     Exit;
-  if (AOwner.ID = User.ID) then
+  if AOwner.ID = User.ID then
   begin
     Contest := (AProblem as TContestProblem).Contest;
     if Contest <> nil then
