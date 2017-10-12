@@ -94,7 +94,8 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   tswebcontestmodules,
   tswebeditablepages,
   tswebcontestelements,
-  tswebdatetimefeatures;
+  tswebdatetimefeatures,
+  contestproblems;
 
 {$ifdef Windows}
 var

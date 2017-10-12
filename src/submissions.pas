@@ -255,18 +255,18 @@ type
     function ListByOwner(AInfo: TUserInfo): TIdList;
     function ListByProblem(AProblem: TTestableProblem): TIdList;
 
-    function Filter(AList: TIdList; AObject: TObject;
-      AFilter: TSubmissionFilter): TIdList;
-    function ProblemFilter(AID: integer; AObject: TObject): boolean;
-    function AvailableFilter(AID: integer; AObject: TObject): boolean;
-
     function CreateSubmission(AUser: TUser; AProblem: TTestableProblem;
       ALanguage: TSubmissionLanguage; const AFileName: string): integer;
     function GetSubmission(AID: integer): TViewSubmission;
     procedure RejudgeSubmission(AID: integer); virtual;
 
-    procedure MessageReceived(AMessage: TAuthorMessage);
+    procedure MessageReceived(AMessage: TAuthorMessage); virtual;
   public
+    function Filter(AList: TIdList; AObject: TObject;
+      AFilter: TSubmissionFilter): TIdList;
+    function ProblemFilter(AID: integer; AObject: TObject): boolean;
+    function AvailableFilter(AID: integer; AObject: TObject): boolean;
+
     function ProblemManager: TTestableProblemManager; virtual; abstract;
     property Queue: TSubmissionQueue read FQueue;
     function SubmissionExists(AID: integer): boolean;
@@ -282,6 +282,7 @@ type
     function GetManager: TTestableProblemManager;
     function GetSubmissionManager: TSubmissionManager;
   protected
+    function DoCreateProblemFromSubmission(AID: integer): TTestableProblem; virtual;
     procedure ValidateSubmission(AID: integer);
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
   public
@@ -365,6 +366,14 @@ begin
   Result := Manager.SubmissionManager;
 end;
 
+function TProblemSubmissionSession.DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
+var
+  ProblemID: integer;
+begin
+  ProblemID := SubmissionManager.SubmissionProblemID(AID);
+  Result := Manager.GetObject(ProblemID) as TTestableProblem;
+end;
+
 procedure TProblemSubmissionSession.ValidateSubmission(AID: integer);
 begin
   if not SubmissionManager.SubmissionExists(AID) then
@@ -378,13 +387,12 @@ end;
 
 function TProblemSubmissionSession.CanReadSubmission(AID: integer): boolean;
 var
-  UserID, ProblemID: integer;
+  UserID: integer;
   Problem: TTestableProblem;
   Info: TUserInfo;
 begin
   UserID := SubmissionManager.SubmissionOwnerID(AID);
-  ProblemID := SubmissionManager.SubmissionProblemID(AID);
-  Problem := Manager.GetObject(ProblemID) as TTestableProblem;
+  Problem := DoCreateProblemFromSubmission(AID);
   try
     Info := UserManager.GetUserInfo(UserID);
     try
@@ -425,11 +433,9 @@ end;
 
 function TProblemSubmissionSession.CanRejudgeSubmission(AID: integer): boolean;
 var
-  ProblemID: integer;
   Problem: TTestableProblem;
 begin
-  ProblemID := SubmissionManager.SubmissionProblemID(AID);
-  Problem := Manager.GetObject(ProblemID) as TTestableProblem;
+  Problem := DoCreateProblemFromSubmission(AID);
   try
     Result := CanRejudgeSubmission(Problem);
   finally

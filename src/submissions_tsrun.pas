@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, submissions, UTF8Process, tswebcrypto, serverconfig,
   filemanager, FileUtil, LazFileUtils, tswebobservers, webstrconsts,
-  objectshredder;
+  objectshredder, contestproblems;
 
 type
   ETsRunSubmission = class(Exception);
@@ -102,9 +102,9 @@ type
     destructor Destroy; override;
   end;
 
-  { TTsRunSubmissionManager }
+  { TTsRunContestSubmissionManager }
 
-  TTsRunSubmissionManager = class(TSubmissionManager)
+  TTsRunContestSubmissionManager = class(TContestSubmissionManager)
   protected
     function CreateQueue: TSubmissionQueue; override;
     function DoCreateTestSubmission(AID: integer): TTestSubmission; override;
@@ -112,14 +112,14 @@ type
 
 implementation
 
-{ TTsRunSubmissionManager }
+{ TTsRunContestSubmissionManager }
 
-function TTsRunSubmissionManager.CreateQueue: TSubmissionQueue;
+function TTsRunContestSubmissionManager.CreateQueue: TSubmissionQueue;
 begin
   Result := TTsRunSubmissionQueue.Create(Self);
 end;
 
-function TTsRunSubmissionManager.DoCreateTestSubmission(AID: integer): TTestSubmission;
+function TTsRunContestSubmissionManager.DoCreateTestSubmission(AID: integer): TTestSubmission;
 begin
   Result := TTsRunTestSubmission.Create(Self, AID);
 end;

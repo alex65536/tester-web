@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, editableobjects, webstrconsts, datastorages, users,
-  tswebutils, dateutils, typinfo, serverconfig;
+  tswebutils, dateutils, typinfo, serverconfig, contestproblems;
 
 type
   EContestAction = class(EEditableAction);
@@ -113,7 +113,7 @@ type
 
   { TContest }
 
-  TContest = class(TEditableObject)
+  TContest = class(TBaseContest)
   private
     function GetManager: TContestManager;
   protected
@@ -123,12 +123,15 @@ type
     procedure DoAddParticipant(AInfo: TUserInfo);
     procedure DeleteParticipant(AInfo: TUserInfo);
     procedure DoDeleteParticipant(AInfo: TUserInfo);
-    function HasParticipant(AInfo: TUserInfo): boolean;
+    function HasParticipant(AInfo: TUserInfo): boolean; override;
+    function ParticipantCanSubmit(AInfo: TUserInfo): boolean; override;
+    function ParticipantCanView(AInfo: TUserInfo): boolean; override;
     function ListParticipants: TStringList;
     function ContestStartTime: TDateTime;
     function ContestDurationMinutes: integer;
     function ContestEndTime: TDateTime;
     function ContestStatus: TContestStatus;
+    function ContestAllowUpsolving: boolean;
     procedure HandleSelfDeletion; override;
     procedure HandleUserDeleting(AInfo: TUserInfo); override;
     {%H-}constructor Create(const AName: string; AManager: TEditableManager);
@@ -141,7 +144,7 @@ type
 
   { TContestManager }
 
-  TContestManager = class(TEditableManager)
+  TContestManager = class(TBaseContestManager)
   protected
     function ObjectTypeName: string; override;
     function CreateObject(const AName: string): TEditableObject; override;
@@ -342,6 +345,25 @@ begin
   Result := Storage.VariableExists(ParticipantsFullKeyName(AInfo.ID));
 end;
 
+function TContest.ParticipantCanSubmit(AInfo: TUserInfo): boolean;
+begin
+  if not HasParticipant(AInfo) then
+    Exit(False);
+  case ContestStatus of
+    csRunning: Result := True;
+    csUpsolve: Result := ContestAllowUpsolving
+    else
+      Result := False;
+  end;
+end;
+
+function TContest.ParticipantCanView(AInfo: TUserInfo): boolean;
+begin
+  if not HasParticipant(AInfo) then
+    Exit(False);
+  Result := ContestStatus in [csRunning, csUpsolve];
+end;
+
 function TContest.ListParticipants: TStringList;
 var
   Keys: TStringList;
@@ -389,6 +411,11 @@ begin
     Result := csRunning
   else
     Result := csUpsolve;
+end;
+
+function TContest.ContestAllowUpsolving: boolean;
+begin
+  Result := Storage.ReadBool(FullKeyName('allowUpsolving'), True);
 end;
 
 procedure TContest.HandleSelfDeletion;
