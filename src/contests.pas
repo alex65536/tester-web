@@ -50,19 +50,6 @@ type
       AObject: TEditableObject);
   end;
 
-  { TBaseContestTransaction }
-
-  TBaseContestTransaction = class(TEditableTransaction)
-  protected
-    procedure DoReload; override;
-    procedure DoCommit; override;
-    procedure DoClone(ADest: TEditableTransaction); override;
-    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
-      AObject: TEditableObject);
-  public
-    procedure Validate; override;
-  end;
-
   { TContestParticipantSession }
 
   TContestParticipantSession = class(TEditableObjectSession)
@@ -81,9 +68,9 @@ type
     function ListParticipants: TStringList;
   end;
 
-  { TContestTransaction }
+  { TBaseContestTransaction }
 
-  TContestTransaction = class(TBaseContestTransaction)
+  TBaseContestTransaction = class(TEditableTransaction)
   private
     FAllowUpsolving: boolean;
     FDurationMinutes: integer;
@@ -95,6 +82,8 @@ type
     procedure DoReload; override;
     procedure DoCommit; override;
     procedure DoClone(ADest: TEditableTransaction); override;
+    {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
+      AObject: TEditableObject);
   public
     property StartTime: TDateTime read FStartTime write FStartTime;
     property EndTime: TDateTime read GetEndTime;
@@ -103,6 +92,12 @@ type
     property ScoringPolicy: TContestScoringPolicy read FScoringPolicy write FScoringPolicy;
     property AllowUpsolving: boolean read FAllowUpsolving write FAllowUpsolving;
     procedure Validate; override;
+  end;
+
+  { TContestTransaction }
+
+  TContestTransaction = class(TBaseContestTransaction)
+  public
   end;
 
   { TContestManagerSession }
@@ -180,19 +175,19 @@ begin
   raise EConvertError.Create(SNoSuchScoringPolicy);
 end;
 
-{ TContestTransaction }
+{ TBaseContestTransaction }
 
-function TContestTransaction.GetEndTime: TDateTime;
+function TBaseContestTransaction.GetEndTime: TDateTime;
 begin
   Result := (EditableObject as TContest).ContestEndTime;
 end;
 
-function TContestTransaction.GetStatus: TContestStatus;
+function TBaseContestTransaction.GetStatus: TContestStatus;
 begin
   Result := (EditableObject as TContest).ContestStatus;
 end;
 
-procedure TContestTransaction.DoReload;
+procedure TBaseContestTransaction.DoReload;
 begin
   inherited DoReload;
   FStartTime := Storage.ReadFloat(FullKeyName('startTime'), Now);
@@ -202,7 +197,7 @@ begin
   FAllowUpsolving := Storage.ReadBool(FullKeyName('allowUpsolving'), True);
 end;
 
-procedure TContestTransaction.DoCommit;
+procedure TBaseContestTransaction.DoCommit;
 begin
   inherited DoCommit;
   Storage.WriteFloat(FullKeyName('startTime'), FStartTime);
@@ -211,10 +206,10 @@ begin
   Storage.WriteBool(FullKeyName('allowUpsolving'), FAllowUpsolving);
 end;
 
-procedure TContestTransaction.DoClone(ADest: TEditableTransaction);
+procedure TBaseContestTransaction.DoClone(ADest: TEditableTransaction);
 begin
   inherited DoClone(ADest);
-  with ADest as TContestTransaction do
+  with ADest as TBaseContestTransaction do
   begin
     StartTime := Self.StartTime;
     DurationMinutes := Self.DurationMinutes;
@@ -223,7 +218,13 @@ begin
   end;
 end;
 
-procedure TContestTransaction.Validate;
+constructor TBaseContestTransaction.Create(AManager: TEditableManager;
+  AUser: TUser; AObject: TEditableObject);
+begin
+  inherited Create(AManager, AUser, AObject);
+end;
+
+procedure TBaseContestTransaction.Validate;
 begin
   inherited Validate;
   if (FDurationMinutes < 0) or (FDurationMinutes > Config.Contest_MaxDurationMinutes) then
@@ -481,34 +482,6 @@ end;
 constructor TContestManagerSession.Create(AManager: TEditableManager; AUser: TUser);
 begin
   inherited Create(AManager, AUser);
-end;
-
-{ TBaseContestTransaction }
-
-procedure TBaseContestTransaction.DoReload;
-begin
-  inherited DoReload;
-end;
-
-procedure TBaseContestTransaction.DoCommit;
-begin
-  inherited DoCommit;
-end;
-
-procedure TBaseContestTransaction.DoClone(ADest: TEditableTransaction);
-begin
-  inherited DoClone(ADest);
-end;
-
-constructor TBaseContestTransaction.Create(AManager: TEditableManager;
-  AUser: TUser; AObject: TEditableObject);
-begin
-  inherited Create(AManager, AUser, AObject);
-end;
-
-procedure TBaseContestTransaction.Validate;
-begin
-  inherited Validate;
 end;
 
 { TContestAccessSession }
