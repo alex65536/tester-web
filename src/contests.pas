@@ -102,6 +102,7 @@ type
     property AllowUpsolving: boolean read FAllowUpsolving write FAllowUpsolving;
     property ProblemNames[I: integer]: string read GetProblemNames;
     property ProblemCount: integer read GetProblemCount;
+    function GetProblem(AIndex: integer): TContestProblem;
     function CanAddProblem(const AProblemName: string): boolean; virtual;
     procedure AddProblem(const AProblemName: string; AIndex: integer = -1);
     procedure DeleteProblem(AIndex: integer);
@@ -166,7 +167,6 @@ type
   protected
     property Storage;
     property ProblemList: TContestProblemList read FProblemList;
-    procedure SetToProblem(AProblem: TContestProblem);
     function DoCreateProblemList: TContestProblemList; virtual;
     function ProblemsSectionName: string;
     function ParticipantsSectionName: string;
@@ -178,6 +178,7 @@ type
     function HasParticipant(AInfo: TUserInfo): boolean; override;
     function ParticipantCanSubmit(AInfo: TUserInfo): boolean; override;
     function ParticipantCanView(AInfo: TUserInfo): boolean; override;
+    function DoGetProblem(const AProblemName: string): TContestProblem; virtual;
     function ListParticipants: TStringList;
     function ContestStartTime: TDateTime;
     function ContestDurationMinutes: integer;
@@ -335,13 +336,7 @@ function TContestProblemList.GetProblem(AIndex: integer): TContestProblem;
 begin
   if (AIndex < 0) or (AIndex >= ProblemCount) then
     raise EContestValidate.CreateFmt(SIndexOutOfBounds, [AIndex]);
-  Result := Contest.ProblemManager.GetObject(ProblemByIndexKeyName(AIndex)) as TContestProblem;
-  try
-    Contest.SetToProblem(Result);
-  except
-    FreeAndNil(Result);
-    raise;
-  end;
+  Result := Contest.DoGetProblem(ProblemByIndexKeyName(AIndex));
 end;
 
 function TContestProblemList.IsProblemListValid(AValue: TStringList): boolean;
@@ -441,6 +436,11 @@ begin
   inherited Create(AManager, AUser, AObject);
   FProblemList := TStringList.Create;
   FWasProblemList := TStringList.Create;
+end;
+
+function TBaseContestTransaction.GetProblem(AIndex: integer): TContestProblem;
+begin
+  Result := Contest.DoGetProblem(ProblemList[AIndex]);
 end;
 
 function TBaseContestTransaction.CanAddProblem(const AProblemName: string): boolean;
@@ -589,11 +589,6 @@ begin
   Result := (inherited Manager) as TContestManager;
 end;
 
-procedure TContest.SetToProblem(AProblem: TContestProblem);
-begin
-  inherited SetToProblem(AProblem);
-end;
-
 function TContest.DoCreateProblemList: TContestProblemList;
 begin
   Result := TContestProblemList.Create(Self);
@@ -662,6 +657,17 @@ begin
   if not HasParticipant(AInfo) then
     Exit(False);
   Result := ContestStatus in [csRunning, csUpsolve];
+end;
+
+function TContest.DoGetProblem(const AProblemName: string): TContestProblem;
+begin
+  Result := ProblemManager.GetObject(AProblemName) as TContestProblem;
+  try
+    SetToProblem(Result);
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
 end;
 
 function TContest.ListParticipants: TStringList;
