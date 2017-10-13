@@ -16,19 +16,21 @@
 		<title>~+title;</title>
 	</head>
 	<body>
-~C!		~?#+header;
-		<table class="container"><tr>
-~C!			~?#+nav;
-			<td class="content-cell">
-				<table class="box content-table">
-~C!					~?#+contentHeader;
-					<tr><td class="content">
-						~#+content;
-					</td></tr>
-~C!					~?#+contentFooter;
-				</table>
-			</td>
-		</tr></table>
-~C!		~?#+footer;
+		<table class="container">
+~C!			~?#+header;
+			<tr>
+~C!				~?#+nav;
+				<td class="content-cell">
+					<table class="box content-table">
+~C!						~?#+contentHeader;
+						<tr><td class="content">
+							~#+content;
+						</td></tr>
+~C!						~?#+contentFooter;
+					</table>
+				</td>
+			</tr>
+~C!			~?#+footer;
+		</table>
 	</body>
 </html>

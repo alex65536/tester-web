@@ -16,10 +16,18 @@ body {
 	margin-bottom: 0;
 	padding: 5pt 10pt;
 }
+.box.nomargin {
+	margin: 0;
+}
 table.container {
 	border-spacing: 5pt 3pt;
 	width: 100%;
 	height: 100%;
+}
+td.header-cell, td.content-cell, td.footer-cell {
+	height: 100%;
+	margin: 0;
+	padding: 0;
 }
 
 
@@ -31,14 +39,29 @@ table.container {
 	text-align: center;
 	width: 100%;
 }
+.header-table {
+	border-spacing: 0;
+	empty-cells: show;
+	height: 100%;
+	width: 100%;
+}
+.header-table td.space {
+	padding: 0;
+	padding-top: 3pt;
+}
 
 
+td.logo-cell {
+	padding: 0;
+	padding-right: 5pt;
+}
 .logo {
 	height: 112pt;
 	width: auto;
 }
 .logo-box {
 	background-color: #E3FFF0;
+	margin: 0;
 	padding: 5pt;
 	width: auto;
 }
@@ -47,7 +70,9 @@ table.container {
 .userbar {
 	background-color: #7CE6AB;
 	font-size: 12pt;
+	height: 1.5em;
 	text-align: right;
+	vertical-align: middle;
 	width: 100%;
 }
 .userbar a.action {
@@ -94,11 +119,6 @@ table.container {
 }
 
 
-td.content-cell {
-	height: 100%;
-	margin: 0;
-	padding: 0;
-}
 table.content-table {
 	background-color: #E3FFF0;
 	border-spacing: 0;
