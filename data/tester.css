@@ -39,7 +39,7 @@ td.header-cell, td.content-cell, td.footer-cell {
 	text-align: center;
 	width: 100%;
 }
-.header-table {
+.container.header-table {
 	border-spacing: 0;
 	empty-cells: show;
 	height: 100%;
