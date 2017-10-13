@@ -331,6 +331,9 @@ resourcestring
   SContestAlreadySet = 'The contest is already set to this problem!';
   SProblemListNotValid = 'Problem list is not valid!';
   SIndexOutOfBounds = 'List index %d is out of bounds!';
+  SProblemAlreadyAdded = 'Problem "%s" is already added!';
+  SUnableMoveProblemUp = 'Unable to move the problem up.';
+  SUnableMoveProblemDown = 'Unable to move the problem down.';
 
 implementation
 

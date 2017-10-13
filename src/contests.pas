@@ -74,24 +74,43 @@ type
   private
     FAllowUpsolving: boolean;
     FDurationMinutes: integer;
+    FProblemList: TStringList;
+    FWasProblemList: TStringList;
     FScoringPolicy: TContestScoringPolicy;
     FStartTime: TDateTime;
+    function GetContest: TContest;
     function GetEndTime: TDateTime;
+    function GetProblemCount: integer;
+    function GetProblemNames(I: integer): string;
     function GetStatus: TContestStatus;
   protected
+    property ProblemList: TStringList read FProblemList;
+    procedure ReloadProblemList;
+    procedure CommitProblemList;
     procedure DoReload; override;
     procedure DoCommit; override;
     procedure DoClone(ADest: TEditableTransaction); override;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
   public
+    property Contest: TContest read GetContest;
     property StartTime: TDateTime read FStartTime write FStartTime;
     property EndTime: TDateTime read GetEndTime;
     property Status: TContestStatus read GetStatus;
     property DurationMinutes: integer read FDurationMinutes write FDurationMinutes;
     property ScoringPolicy: TContestScoringPolicy read FScoringPolicy write FScoringPolicy;
     property AllowUpsolving: boolean read FAllowUpsolving write FAllowUpsolving;
+    property ProblemNames[I: integer]: string read GetProblemNames;
+    property ProblemCount: integer read GetProblemCount;
+    function CanAddProblem(const AProblemName: string): boolean; virtual;
+    procedure AddProblem(const AProblemName: string; AIndex: integer = -1);
+    procedure DeleteProblem(AIndex: integer);
+    function CanMoveProblemUp(AIndex: integer): boolean;
+    procedure MoveProblemUp(AIndex: integer);
+    function CanMoveProblemDown(AIndex: integer): boolean;
+    procedure MoveProblemDown(AIndex: integer);
     procedure Validate; override;
+    destructor Destroy; override;
   end;
 
   { TContestTransaction }
@@ -346,12 +365,40 @@ end;
 
 function TBaseContestTransaction.GetEndTime: TDateTime;
 begin
-  Result := (EditableObject as TContest).ContestEndTime;
+  Result := Contest.ContestEndTime;
+end;
+
+function TBaseContestTransaction.GetProblemCount: integer;
+begin
+  Result := FProblemList.Count;
+end;
+
+function TBaseContestTransaction.GetProblemNames(I: integer): string;
+begin
+  Result := FProblemList.Strings[I];
+end;
+
+function TBaseContestTransaction.GetContest: TContest;
+begin
+  Result := EditableObject as TContest;
 end;
 
 function TBaseContestTransaction.GetStatus: TContestStatus;
 begin
-  Result := (EditableObject as TContest).ContestStatus;
+  Result := Contest.ContestStatus;
+end;
+
+procedure TBaseContestTransaction.ReloadProblemList;
+begin
+  FreeAndNil(FProblemList);
+  FProblemList := Contest.ProblemList.ProblemList;
+  FWasProblemList.Assign(FProblemList);
+end;
+
+procedure TBaseContestTransaction.CommitProblemList;
+begin
+  if not FWasProblemList.Equals(FProblemList) then
+    Contest.ProblemList.ProblemList := FProblemList;
 end;
 
 procedure TBaseContestTransaction.DoReload;
@@ -362,6 +409,7 @@ begin
   FScoringPolicy := StrToScoringPolicy(Storage.ReadString(FullKeyName('scoringPolicy'),
     ScoringPolicyToStr(spMaxScore)));
   FAllowUpsolving := Storage.ReadBool(FullKeyName('allowUpsolving'), True);
+  ReloadProblemList;
 end;
 
 procedure TBaseContestTransaction.DoCommit;
@@ -371,6 +419,7 @@ begin
   Storage.WriteInteger(FullKeyName('durationMinutes'), FDurationMinutes);
   Storage.WriteString(FullKeyName('scoringPolicy'), ScoringPolicyToStr(FScoringPolicy));
   Storage.WriteBool(FullKeyName('allowUpsolving'), FAllowUpsolving);
+  CommitProblemList;
 end;
 
 procedure TBaseContestTransaction.DoClone(ADest: TEditableTransaction);
@@ -382,6 +431,7 @@ begin
     DurationMinutes := Self.DurationMinutes;
     ScoringPolicy := Self.ScoringPolicy;
     AllowUpsolving := Self.AllowUpsolving;
+    ProblemList.Assign(Self.ProblemList);
   end;
 end;
 
@@ -389,6 +439,58 @@ constructor TBaseContestTransaction.Create(AManager: TEditableManager;
   AUser: TUser; AObject: TEditableObject);
 begin
   inherited Create(AManager, AUser, AObject);
+  FProblemList := TStringList.Create;
+  FWasProblemList := TStringList.Create;
+end;
+
+function TBaseContestTransaction.CanAddProblem(const AProblemName: string): boolean;
+begin
+  with Contest.ProblemManager do
+    Result := GetAccessRights(AProblemName, User.Info) in AccessCanReadSet;
+end;
+
+procedure TBaseContestTransaction.AddProblem(const AProblemName: string;
+  AIndex: integer);
+begin
+  // validate
+  if not CanAddProblem(AProblemName) then
+    raise EContestAccessDenied.Create(SAccessDenied);
+  if ProblemList.IndexOf(AProblemName) >= 0 then
+    raise EContestValidate.CreateFmt(SProblemAlreadyAdded, [AProblemName]);
+  // add problem
+  if AIndex < 0 then
+    ProblemList.Add(AProblemName)
+  else
+    ProblemList.Insert(AIndex, AProblemName);
+end;
+
+procedure TBaseContestTransaction.DeleteProblem(AIndex: integer);
+begin
+  ProblemList.Delete(AIndex);
+end;
+
+function TBaseContestTransaction.CanMoveProblemUp(AIndex: integer): boolean;
+begin
+  Result := (AIndex > 0) and (AIndex < ProblemList.Count);
+end;
+
+procedure TBaseContestTransaction.MoveProblemUp(AIndex: integer);
+begin
+  if not CanMoveProblemUp(AIndex) then
+    raise EContestValidate.Create(SUnableMoveProblemUp);
+  ProblemList.Exchange(AIndex - 1, AIndex);
+end;
+
+function TBaseContestTransaction.CanMoveProblemDown(AIndex: integer): boolean;
+begin
+  Result := (AIndex >= 0) and (AIndex + 1 < ProblemList.Count);
+end;
+
+procedure TBaseContestTransaction.MoveProblemDown(AIndex: integer);
+begin
+  if not CanMoveProblemDown(AIndex) then
+    raise EContestValidate.Create(SUnableMoveProblemDown);
+  ProblemList.Exchange(AIndex, AIndex + 1);
 end;
 
 procedure TBaseContestTransaction.Validate;
@@ -396,6 +498,15 @@ begin
   inherited Validate;
   if (FDurationMinutes < 0) or (FDurationMinutes > Config.Contest_MaxDurationMinutes) then
     raise EContestValidate.CreateFmt(SContestDurationInterval, [0, Config.Contest_MaxDurationMinutes]);
+  if not Contest.ProblemList.IsProblemListValid(FProblemList) then
+    raise EContestValidate.Create(SProblemListNotValid);
+end;
+
+destructor TBaseContestTransaction.Destroy;
+begin
+  FreeAndNil(FWasProblemList);
+  FreeAndNil(FProblemList);
+  inherited Destroy;
 end;
 
 { TContestParticipantSession }
