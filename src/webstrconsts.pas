@@ -330,7 +330,7 @@ resourcestring
   SInvalidDate = '"%.2d.%.2d.%.4d %.2d:%.2d:%.2d" is an invalid date!';
   SContestAlreadySet = 'The contest is already set to this problem!';
   SProblemListNotValid = 'Problem list is not valid!';
-  SOutOfBounds = 'Index %d is out of bounds.';
+  SIndexOutOfBounds = 'List index %d is out of bounds!';
 
 implementation
 

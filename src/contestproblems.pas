@@ -127,7 +127,7 @@ implementation
 
 procedure TBaseContest.SetToProblem(AProblem: TContestProblem);
 begin
-  AProblem.SetContest(Self.ID);
+  AProblem.SetContest(Self.Name);
 end;
 
 { TContestSubmissionManager }

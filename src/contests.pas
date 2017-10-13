@@ -315,7 +315,7 @@ end;
 function TContestProblemList.GetProblem(AIndex: integer): TContestProblem;
 begin
   if (AIndex < 0) or (AIndex >= ProblemCount) then
-    raise EContestValidate.Create(SOutOfBounds, [AIndex]);
+    raise EContestValidate.CreateFmt(SIndexOutOfBounds, [AIndex]);
   Result := Contest.ProblemManager.GetObject(ProblemByIndexKeyName(AIndex)) as TContestProblem;
   try
     Contest.SetToProblem(Result);
