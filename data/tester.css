@@ -352,15 +352,13 @@ table.styled th {
 table.styled th.narrow {
 	width: 1pt;
 }
-table.styled td.nowrap {
-	white-space: nowrap;
-}
-
-
-table.access-table th.id, table.participants-table th.id {
+table.styled th.id {
 	padding-left: 1em;
 	padding-right: 1em;
 	width: 1pt;
+}
+table.styled td.nowrap {
+	white-space: nowrap;
 }
 
 
@@ -519,4 +517,9 @@ input[type=number].d-3 {
 }
 input[type=number].d-4 {
 	width: 9ch;
+}
+
+
+td.contest-actions {
+	white-space: nowrap;
 }
