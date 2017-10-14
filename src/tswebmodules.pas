@@ -100,20 +100,6 @@ type
     function DoCreatePage: THtmlPage; override;
   end;
 
-  { TPage1WebModule }
-
-  TPage1WebModule = class(THtmlPageWebModule)
-  protected
-    function DoCreatePage: THtmlPage; override;
-  end;
-
-  { TPage2WebModule }
-
-  TPage2WebModule = class(THtmlPageWebModule)
-  protected
-    function DoCreatePage: THtmlPage; override;
-  end;
-
   { TLoginWebModule }
 
   TLoginWebModule = class(TAuthWebModule)
@@ -396,40 +382,6 @@ begin
   UserManager.AuthentificateSession(Session, Username, Password);
 end;
 
-{ TPage2WebModule }
-
-function TPage2WebModule.DoCreatePage: THtmlPage;
-begin
-  Result := TSimpleHtmlPage.Create;
-  try
-    with Result as TSimpleHtmlPage do
-    begin
-      Title := 'Page 2';
-      TextContent := 'This is page 2.';
-    end;
-  except
-    FreeAndNil(Result);
-    raise;
-  end;
-end;
-
-{ TPage1WebModule }
-
-function TPage1WebModule.DoCreatePage: THtmlPage;
-begin
-  Result := TSimpleHtmlPage.Create;
-  try
-    with Result as TSimpleHtmlPage do
-    begin
-      Title := 'Page 1';
-      TextContent := 'This is page 1.';
-    end;
-  except
-    FreeAndNil(Result);
-    raise;
-  end;
-end;
-
 { TIndexWebModule }
 
 function TIndexWebModule.DoCreatePage: THtmlPage;
@@ -438,8 +390,8 @@ begin
   try
     with Result as TSimpleHtmlPage do
     begin
-      Title := 'Main Page';
-      TextContent := 'Hello World!';
+      Title := SMainPage;
+      TextContent := STsWebGreeting;
     end;
   except
     FreeAndNil(Result);
@@ -451,9 +403,7 @@ end;
 
 procedure TDefaultNavBar.DoCreateElements;
 begin
-  AddElement('Main Page', '~documentRoot;/main');
-  AddElement('Page 1', '~documentRoot;/page1');
-  AddElement('Page 2', '~documentRoot;/page2');
+  AddElement(SMainPage, '~documentRoot;/main');
   AddElement(SProblemList, '~documentRoot;/problems');
   AddElement(SContestList, '~documentRoot;/contests');
 end;
@@ -472,8 +422,6 @@ end;
 
 initialization
   RegisterHTTPModule('main', TIndexWebModule, True);
-  RegisterHTTPModule('page1', TPage1WebModule, True);
-  RegisterHTTPModule('page2', TPage2WebModule, True);
   RegisterHTTPModule('login', TLoginWebModule, True);
   RegisterHTTPModule('logout', TLogoutWebModule, True);
   RegisterHTTPModule('register', TRegisterWebModule, True);

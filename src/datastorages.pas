@@ -183,7 +183,6 @@ end;
 
 procedure TFileDataStorage.BackUp;
 begin
-  inherited BackUp;
   RemoveDirUTF8(GetSecondBackupFileName);
   RenameFileUTF8(GetBackupFileName, GetSecondBackupFileName);
   CopyFile(GetFileName, GetBackupFileName, True);

@@ -350,6 +350,8 @@ resourcestring
   SPasswordType = 'Password';
   SStrInvalidUTF8 = '%s is not a valid UTF-8 string.';
   SStrInvalidLen = '%s length must be from %d to %d characters.';
+  SMainPage = 'Main Page';
+  STsWebGreeting = 'Welcome to Tester Web!';
 
 implementation
 
