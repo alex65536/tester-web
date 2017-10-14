@@ -9,7 +9,7 @@
 [V] 16.09.2017 Make simple site with user log in/log out/see others info
 [V] 26.09.2017 Create problem system
 [V] 06.10.2017 Create submission system
-[*] Create contest system
-[*] Make contest editor
-[*] Add contest participation
+[V] 14.10.2017 Create contest system
+[V] 14.10.2017 Make contest editor
+[*] Add contest participant interface
 [*] Add standings
