@@ -255,21 +255,10 @@ procedure ValidateUsername(const Username: string);
 const
   MinUsernameLen = 3;
   MaxUsernameLen = 24;
-  UsernameAvailableChars = ['A' .. 'Z', 'a' .. 'z', '0' .. '9', '_', '-'];
-
-  function AvailableCharsStr: string; inline;
-  begin
-    Result := '[''A'' .. ''Z'', ''a'' .. ''z'', ''0'' .. ''9'', ''_'', ''-'']';
-  end;
-
-var
-  C: char;
 begin
   if (Length(Username) < MinUsernameLen) or (Length(Username) > MaxUsernameLen) then
     raise EUserValidate.CreateFmt(SUsernameLength, [MinUsernameLen, MaxUsernameLen]);
-  for C in Username do
-    if not (C in UsernameAvailableChars) then
-      raise EUserValidate.CreateFmt(SUsernameChars, [AvailableCharsStr]);
+  ValidateVarNameStr(SUserVarType, Username, EUserValidate);
 end;
 
 procedure ValidatePassword(const Password: string);

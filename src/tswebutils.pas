@@ -30,6 +30,8 @@ uses
 function Id2Str(AID: integer): string;
 function Str2Id(const AID: string): integer;
 
+procedure ValidateVarNameStr(const VarType, VarName: string; AExceptClass: ExceptClass);
+
 implementation
 
 function Id2Str(AID: integer): string;
@@ -42,6 +44,23 @@ begin
   if Pos('id', AID) <> 1 then
     raise EConvertError.CreateFmt(SInvalidIDStr, [AID]);
   Result := AID.Substring(2).ToInteger;
+end;
+
+procedure ValidateVarNameStr(const VarType, VarName: string; AExceptClass: ExceptClass);
+const
+  AvailableChars = ['A' .. 'Z', 'a' .. 'z', '0' .. '9', '_', '-'];
+  Digits = ['0' .. '9'];
+  AvailableCharsStr = '[''A'' .. ''Z'', ''a'' .. ''z'', ''0'' .. ''9'', ''_'', ''-'']';
+var
+  C: char;
+begin
+  if VarName = '' then
+    raise AExceptClass.CreateFmt(SVarNameNonEmpty, [VarType]);
+  if VarName[1] in Digits then
+    raise AExceptClass.CreateFmt(SVarNameLeadingDigit, [VarType]);
+  for C in VarName do
+    if not (C in AvailableChars) then
+      raise AExceptClass.CreateFmt(SVarNameInvalidChar, [VarType, AvailableCharsStr]);
 end;
 
 end.

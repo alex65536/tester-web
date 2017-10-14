@@ -278,21 +278,10 @@ procedure ValidateObjectName(const ObjName: string);
 const
   MinObjNameLen = 3;
   MaxObjNameLen = 24;
-  ObjAvailableChars = ['A' .. 'Z', 'a' .. 'z', '0' .. '9', '_', '-'];
-
-  function AvailableCharsStr: string; inline;
-  begin
-    Result := '[''A'' .. ''Z'', ''a'' .. ''z'', ''0'' .. ''9'', ''_'', ''-'']';
-  end;
-
-var
-  C: char;
 begin
   if (Length(ObjName) < MinObjNameLen) or (Length(ObjName) > MaxObjNameLen) then
     raise EUserValidate.CreateFmt(SObjectNameLength, [MinObjNameLen, MaxObjNameLen]);
-  for C in ObjName do
-    if not (C in ObjAvailableChars) then
-      raise EEditableValidate.CreateFmt(SObjectNameChars, [AvailableCharsStr]);
+  ValidateVarNameStr(SObjectVarType, ObjName, EEditableValidate);
 end;
 
 procedure ValidateObjectTitle(const ObjTitle: string);

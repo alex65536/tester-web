@@ -277,8 +277,6 @@ end;
 
 function TContestProblemList.ProblemByIndexKeyName(AIndex: integer): string;
 begin
-  // "idx" before index is a temporary (?) workaround.
-  // TODO : Determine what to do with keys starting with digits!!!
   Result := ProblemsByIndexSectionName + '.idx' + IntToStr(AIndex);
 end;
 

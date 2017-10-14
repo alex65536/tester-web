@@ -58,7 +58,6 @@ resourcestring
   SNoSuchUserRole = 'No such TUserRole!';
   SUsernameLength = 'Username length must be from %d to %d characters.';
   SPasswordLength = 'Password length must be from %d to %d characters.';
-  SUsernameChars = 'Username must contain only the following characters: %s';
   SNameLength = 'First or last name length must be from %d to %d characters.';
   SInvalidUsernamePassword = 'Invalid username or password.';
   SInvalidPassword = 'Invalid password.';
@@ -142,7 +141,6 @@ resourcestring
   SObjectDoesNotExist = '%s with name "%s" doesn''t exist!';
   SObjectExists = '%s with name "%s" already exists!';
   SObjectNameLength = 'Name length must be from %d to %d characters.';
-  SObjectNameChars = 'Name must contain only the following characters: %s';
   SObjectTitleLength = 'Title length must be from %d to %d characters.';
   SObjectUserHasAccess = 'User with name "%2:s" already has access!';
   SObjectUserNoAccess = 'User with name "%2:s" doesn''t have access!';
@@ -347,6 +345,11 @@ resourcestring
   SContestAddProblemPrompt = 'Enter problem name to add';
   SContestAddProblemBtn = 'Add';
   SProblemNotExist = 'Problem with name "%s" doesn''t exist!';
+  SVarNameInvalidChar = '%s must contain only characters from the set %s.';
+  SVarNameLeadingDigit = '%s must not have a digit as a first character.';
+  SVarNameNonEmpty = '%s must not be empty.';
+  SUserVarType = 'Username';
+  SObjectVarType = 'Name';
 
 implementation
 
