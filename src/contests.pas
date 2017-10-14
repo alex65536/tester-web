@@ -105,6 +105,7 @@ type
     function GetProblem(AIndex: integer): TContestProblem;
     function CanAddProblem(const AProblemName: string): boolean; virtual;
     procedure AddProblem(const AProblemName: string; AIndex: integer = -1);
+    function CanDeleteProblem(AIndex: integer): boolean;
     procedure DeleteProblem(AIndex: integer);
     function CanMoveProblemUp(AIndex: integer): boolean;
     procedure MoveProblemUp(AIndex: integer);
@@ -464,8 +465,15 @@ begin
     ProblemList.Insert(AIndex, AProblemName);
 end;
 
+function TBaseContestTransaction.CanDeleteProblem(AIndex: integer): boolean;
+begin
+  Result := (AIndex >= 0) and (AIndex < ProblemList.Count);
+end;
+
 procedure TBaseContestTransaction.DeleteProblem(AIndex: integer);
 begin
+  if not CanDeleteProblem(AIndex) then
+    raise EContestValidate.Create(SUnableDeleteProblem);
   ProblemList.Delete(AIndex);
 end;
 

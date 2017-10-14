@@ -335,6 +335,7 @@ resourcestring
   SUnableMoveProblemUp = 'Unable to move the problem up.';
   SUnableMoveProblemDown = 'Unable to move the problem down.';
   SContestProblemsText = 'Problems';
+  SUnableDeleteProblem = 'Unable to delete the problem.';
 
 implementation
 
