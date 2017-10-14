@@ -237,7 +237,7 @@ begin
   end;
   // add "add user" form
   if Session.CanAddParticipant then
-    LoadPagePart('editable', 'editableAccessAdd', 'contestParticipantAdd');
+    LoadPagePart('editable', 'editableAddUserForm', 'contestParticipantAdd');
   // add participant table
   Table := TContestParticipantTable.Create(Parent, Session);
   try

@@ -354,7 +354,7 @@ begin
         ItemsAsText['objectAddUserPrompt'] := SObjectAddUserPrompt;
         ItemsAsText['objectAddUserBtn'] := SObjectAddUserBtn;
       end;
-      LoadPagePart('editable', 'editableAccessAdd');
+      LoadPagePart('editable', 'editableAddUserForm', 'editableAccessAdd');
     end;
     // access table
     List := TEditableAccessNodeList.Create(Parent, Session);
