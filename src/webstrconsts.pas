@@ -56,9 +56,6 @@ resourcestring
   SLicenseNotice = 'Tester Web is licensed under the terms of <a href="~licenseLink;">GNU GPL</a> version 2 or any later version.';
   SSourcesNotice = 'Sources are available on <a href="~githubLink;">Github</a>.';
   SNoSuchUserRole = 'No such TUserRole!';
-  SUsernameLength = 'Username length must be from %d to %d characters.';
-  SPasswordLength = 'Password length must be from %d to %d characters.';
-  SNameLength = 'First or last name length must be from %d to %d characters.';
   SInvalidUsernamePassword = 'Invalid username or password.';
   SInvalidPassword = 'Invalid password.';
   SUnableLogIn = 'Unable to log in (maybe, the user is blocked?)';
@@ -140,8 +137,6 @@ resourcestring
   SOwnerAlreadyExists = 'User with role urOwner already exists!';
   SObjectDoesNotExist = '%s with name "%s" doesn''t exist!';
   SObjectExists = '%s with name "%s" already exists!';
-  SObjectNameLength = 'Name length must be from %d to %d characters.';
-  SObjectTitleLength = 'Title length must be from %d to %d characters.';
   SObjectUserHasAccess = 'User with name "%2:s" already has access!';
   SObjectUserNoAccess = 'User with name "%2:s" doesn''t have access!';
   SObjectCannotGrantNoneRole = 'Cannot grant erNone to user!';
@@ -350,6 +345,11 @@ resourcestring
   SVarNameNonEmpty = '%s must not be empty.';
   SUserVarType = 'Username';
   SObjectVarType = 'Name';
+  SUserFirstLastNameType = 'First or last name';
+  SObjectTitleType = 'Title';
+  SPasswordType = 'Password';
+  SStrInvalidUTF8 = '%s is not a valid UTF-8 string.';
+  SStrInvalidLen = '%s length must be from %d to %d characters.';
 
 implementation
 

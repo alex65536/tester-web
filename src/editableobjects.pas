@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, TypInfo, webstrconsts, users, datastorages, tswebobservers,
-  tswebutils;
+  tswebutils, serverconfig;
 
 type
   TEditableAccessRights = (erNone, erRead, erWrite, erOwner);
@@ -275,22 +275,16 @@ begin
 end;
 
 procedure ValidateObjectName(const ObjName: string);
-const
-  MinObjNameLen = 3;
-  MaxObjNameLen = 24;
 begin
-  if (Length(ObjName) < MinObjNameLen) or (Length(ObjName) > MaxObjNameLen) then
-    raise EUserValidate.CreateFmt(SObjectNameLength, [MinObjNameLen, MaxObjNameLen]);
+  ValidateStrLength(SObjectVarType, ObjName, Config.Strings_MinNameLength,
+    Config.Strings_MaxNameLength, EEditableValidate);
   ValidateVarNameStr(SObjectVarType, ObjName, EEditableValidate);
 end;
 
 procedure ValidateObjectTitle(const ObjTitle: string);
-const
-  MinTitleLen = 2;
-  MaxTitleLen = 42;
 begin
-  if (Length(ObjTitle) < MinTitleLen) or (Length(ObjTitle) > MaxTitleLen) then
-    raise EEditableValidate.CreateFmt(SObjectTitleLength, [MinTitleLen, MaxTitleLen]);
+  ValidateStrLength(SObjectTitleType, ObjTitle, Config.Strings_MinTitleLength,
+    Config.Strings_MaxTitleLength, EEditableValidate);
 end;
 
 { TEditableObjectMessage }

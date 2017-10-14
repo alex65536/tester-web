@@ -25,12 +25,14 @@ unit tswebutils;
 interface
 
 uses
-  Classes, SysUtils, webstrconsts;
+  Classes, SysUtils, webstrconsts, LazUTF8;
 
 function Id2Str(AID: integer): string;
 function Str2Id(const AID: string): integer;
 
 procedure ValidateVarNameStr(const VarType, VarName: string; AExceptClass: ExceptClass);
+procedure ValidateStrLength(const AType, AStr: string; MinLen, MaxLen: integer;
+  AExceptClass: ExceptClass);
 
 implementation
 
@@ -61,6 +63,18 @@ begin
   for C in VarName do
     if not (C in AvailableChars) then
       raise AExceptClass.CreateFmt(SVarNameInvalidChar, [VarType, AvailableCharsStr]);
+end;
+
+procedure ValidateStrLength(const AType, AStr: string; MinLen, MaxLen: integer;
+  AExceptClass: ExceptClass);
+var
+  StrLen: integer;
+begin
+  if FindInvalidUTF8Character(PChar(AStr), Length(AStr)) >= 0 then
+    raise AExceptClass.CreateFmt(SStrInvalidUTF8, [AType]);
+  StrLen := UTF8Length(AStr);
+  if (StrLen < MinLen) or (StrLen > MaxLen) then
+    raise AExceptClass.CreateFmt(SStrInvalidLen, [AType, MinLen, MaxLen]);
 end;
 
 end.

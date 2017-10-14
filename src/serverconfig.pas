@@ -70,6 +70,12 @@ type
     function GetSession_IDLength: integer;
     function GetSession_TokenLength: integer;
     function GetStorages_CommitIntervalSeconds: integer;
+    function GetStrings_MaxNameLength: integer;
+    function GetStrings_MaxPasswordLength: integer;
+    function GetStrings_MaxTitleLength: integer;
+    function GetStrings_MinNameLength: integer;
+    function GetStrings_MinPasswordLength: integer;
+    function GetStrings_MinTitleLength: integer;
     function GetTesting_MaxPoolSize: integer;
   protected
     procedure FPOObservedChanged(ASender: TObject; Operation: TFPObservedOperation;
@@ -130,6 +136,14 @@ type
 
     // contest options
     property Contest_MaxDurationMinutes: integer read GetContest_MaxDurationMinutes;
+
+    // strings options
+    property Strings_MinNameLength: integer read GetStrings_MinNameLength;
+    property Strings_MaxNameLength: integer read GetStrings_MaxNameLength;
+    property Strings_MinTitleLength: integer read GetStrings_MinTitleLength;
+    property Strings_MaxTitleLength: integer read GetStrings_MaxTitleLength;
+    property Strings_MinPasswordLength: integer read GetStrings_MinPasswordLength;
+    property Strings_MaxPasswordLength: integer read GetStrings_MaxPasswordLength;
 
     constructor Create;
     procedure Reload;
@@ -286,6 +300,36 @@ begin
   Result := FStorage.ReadInteger('storages.commitIntervalSeconds', 30);
 end;
 
+function TTesterServerConfig.GetStrings_MaxNameLength: integer;
+begin
+  Result := FStorage.ReadInteger('strings.maxNameLength', 24);
+end;
+
+function TTesterServerConfig.GetStrings_MaxPasswordLength: integer;
+begin
+  Result := FStorage.ReadInteger('strings.maxPasswordLength', 64);
+end;
+
+function TTesterServerConfig.GetStrings_MaxTitleLength: integer;
+begin
+  Result := FStorage.ReadInteger('strings.maxTitleLength', 42);
+end;
+
+function TTesterServerConfig.GetStrings_MinNameLength: integer;
+begin
+  Result := FStorage.ReadInteger('strings.minNameLength', 3);
+end;
+
+function TTesterServerConfig.GetStrings_MinPasswordLength: integer;
+begin
+  Result := FStorage.ReadInteger('strings.minPasswordLength', 8);
+end;
+
+function TTesterServerConfig.GetStrings_MinTitleLength: integer;
+begin
+  Result := FStorage.ReadInteger('strings.minTitleLength', 2);
+end;
+
 function TTesterServerConfig.GetTesting_MaxPoolSize: integer;
 begin
   Result := FStorage.ReadInteger('testing.maxPoolSize', 2);
@@ -345,6 +389,13 @@ begin
     WriteInteger('testing.maxPoolSize', Testing_MaxPoolSize);
 
     WriteInteger('contest.maxDurationMinutes', GetContest_MaxDurationMinutes);
+
+    WriteInteger('strings.minNameLength', Strings_MinNameLength);
+    WriteInteger('strings.maxNameLength', Strings_MaxNameLength);
+    WriteInteger('strings.minTitleLength', Strings_MinTitleLength);
+    WriteInteger('strings.maxTitleLength', Strings_MaxTitleLength);
+    WriteInteger('strings.minPasswordLength', Strings_MinPasswordLength);
+    WriteInteger('strings.maxPasswordLength', Strings_MaxPasswordLength);
   end;
 end;
 

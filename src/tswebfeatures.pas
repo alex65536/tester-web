@@ -26,7 +26,7 @@ interface
 
 uses
   SysUtils, htmlpages, htmlpreprocess, webstrconsts, tswebpagesbase,
-  navbars, users, userpages, tswebsessions;
+  navbars, users, userpages, tswebsessions, serverconfig;
 
 type
 
@@ -293,6 +293,9 @@ begin
     end;
     ItemsAsText['fileTooBigAlertHead'] := SFileTooBigAlertHead;
     ItemsAsText['fileTooBigAlertTail'] := SFileTooBigAlertTail;
+    ItemsAsText['nameMaxLength'] := IntToStr(Config.Strings_MaxNameLength);
+    ItemsAsText['titleMaxLength'] := IntToStr(Config.Strings_MaxTitleLength);
+    ItemsAsText['passwordMaxLength'] := IntToStr(Config.Strings_MaxPasswordLength);
   end;
 end;
 

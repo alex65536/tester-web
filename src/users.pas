@@ -252,31 +252,22 @@ begin
 end;
 
 procedure ValidateUsername(const Username: string);
-const
-  MinUsernameLen = 3;
-  MaxUsernameLen = 24;
 begin
-  if (Length(Username) < MinUsernameLen) or (Length(Username) > MaxUsernameLen) then
-    raise EUserValidate.CreateFmt(SUsernameLength, [MinUsernameLen, MaxUsernameLen]);
+  ValidateStrLength(SUserVarType, Username, Config.Strings_MinNameLength,
+    Config.Strings_MaxNameLength, EUserValidate);
   ValidateVarNameStr(SUserVarType, Username, EUserValidate);
 end;
 
 procedure ValidatePassword(const Password: string);
-const
-  MinPasswordLen = 8;
-  MaxPasswordLen = 64;
 begin
-  if (Length(Password) < MinPasswordLen) or (Length(Password) > MaxPasswordLen) then
-    raise EUserValidate.CreateFmt(SPasswordLength, [MinPasswordLen, MaxPasswordLen]);
+  ValidateStrLength(SPasswordType, Password, Config.Strings_MinPasswordLength,
+    Config.Strings_MaxPasswordLength, EUserValidate);
 end;
 
 procedure ValidateFirstLastName(const Name: string);
-const
-  MinNameLen = 2;
-  MaxNameLen = 42;
 begin
-  if (Length(Name) < MinNameLen) or (Length(Name) > MaxNameLen) then
-    raise EUserValidate.CreateFmt(SNameLength, [MinNameLen, MaxNameLen]);
+  ValidateStrLength(SUserFirstLastNameType, Name, Config.Strings_MinTitleLength,
+    Config.Strings_MaxTitleLength, EUserValidate);
 end;
 
 function UserManager: TUserManager;
