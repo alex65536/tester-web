@@ -329,6 +329,24 @@ resourcestring
   SWordToStrError = '"%s" is an invalid integer or it doesn''t fit the interval [%d .. %d]';
   SInvalidDate = '"%.2d.%.2d.%.4d %.2d:%.2d:%.2d" is an invalid date!';
   SContestAlreadySet = 'The contest is already set to this problem!';
+  SProblemListNotValid = 'Problem list is not valid!';
+  SIndexOutOfBounds = 'List index %d is out of bounds!';
+  SProblemAlreadyAdded = 'Problem "%s" is already added!';
+  SUnableMoveProblemUp = 'Unable to move the problem up.';
+  SUnableMoveProblemDown = 'Unable to move the problem down.';
+  SContestProblemsText = 'Problems';
+  SUnableDeleteProblem = 'Unable to delete the problem.';
+  SActionUpCaption = 'Up';
+  SActionDownCaption = 'Down';
+  SActionDeleteCaption = 'Delete';
+  SContestProblemNumberHeader = '#';
+  SContestProblemNameHeader = 'Name';
+  SContestProblemTitleHeader = 'Title';
+  SContestProblemActionsHeader = 'Actions';
+  SContestAddProblem = 'Add problem:';
+  SContestAddProblemPrompt = 'Enter problem name to add';
+  SContestAddProblemBtn = 'Add';
+  SProblemNotExist = 'Problem with name "%s" doesn''t exist!';
 
 implementation
 

@@ -62,7 +62,114 @@ type
     constructor Create(AParent: THtmlPage; ASession: TContestParticipantSession);
   end;
 
+  { TContestProblemListItem }
+
+  TContestProblemListItem = class(TTesterHtmlPageElement)
+  private
+    FIndex: integer;
+    FTransaction: TContestTransaction;
+  protected
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Transaction: TContestTransaction read FTransaction;
+    property Index: integer read FIndex;
+    constructor Create(AParent: THtmlPage; ATransaction: TContestTransaction;
+      AIndex: integer);
+  end;
+
+  TContestProblemList = class(TTesterHtmlListedPageElement)
+  private
+    FTransaction: TContestTransaction;
+  protected
+    procedure DoFillList;
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Transaction: TContestTransaction read FTransaction;
+    constructor Create(AParent: THtmlPage; ATransaction: TContestTransaction);
+  end;
+
 implementation
+
+{ TContestProblemList }
+
+procedure TContestProblemList.DoFillList;
+var
+  I: integer;
+begin
+  for I := 0 to Transaction.ProblemCount - 1 do
+    List.Add(TContestProblemListItem.Create(Parent, Transaction, I));
+end;
+
+procedure TContestProblemList.DoFillVariables;
+begin
+  with Storage do
+  begin
+    ItemsAsText['contestProblemNumberHeader'] := SContestProblemNumberHeader;
+    ItemsAsText['contestProblemNameHeader'] := SContestProblemNameHeader;
+    ItemsAsText['contestProblemTitleHeader'] := SContestProblemTitleHeader;
+    ItemsAsText['contestProblemActionsHeader'] := SContestProblemActionsHeader;
+  end;
+  AddListToVariable('contestProblemListInner');
+end;
+
+procedure TContestProblemList.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('contest', 'contestProblemList'));
+end;
+
+constructor TContestProblemList.Create(AParent: THtmlPage;
+  ATransaction: TContestTransaction);
+begin
+  inherited Create(AParent);
+  FTransaction := ATransaction;
+  DoFillList;
+end;
+
+{ TContestProblemListItem }
+
+procedure TContestProblemListItem.DoFillVariables;
+
+  procedure LoadAction(const VarName: string; Enabled: boolean);
+  var
+    FileName: string;
+  begin
+    if Enabled then
+      FileName := 'contestActionBtnEnabled'
+    else
+      FileName := 'contestActionBtnDisabled';
+    Storage.SetFromFile(VarName, TemplateLocation('contest', FileName));
+  end;
+
+begin
+  with Storage do
+  begin
+    ItemsAsText['actionTarget'] := IntToStr(Index);
+    ItemsAsText['contestProblemNumber'] := IntToStr(Index + 1);
+    ItemsAsText['contestProblemName'] := Transaction.ProblemNames[Index];
+    ItemsAsText['contestProblemTitle'] := Transaction.ProblemTitles[Index];
+    ItemsAsText['actionUpCaption'] := SActionUpCaption;
+    ItemsAsText['actionDownCaption'] := SActionDownCaption;
+    ItemsAsText['actionDeleteCaption'] := SActionDeleteCaption;
+  end;
+  LoadAction('contestActionUp', Transaction.CanMoveProblemUp(Index));
+  LoadAction('contestActionDown', Transaction.CanMoveProblemDown(Index));
+  LoadAction('contestActionDelete', Transaction.CanDeleteProblem(Index));
+end;
+
+procedure TContestProblemListItem.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('contest', 'contestProblemListItem'));
+end;
+
+constructor TContestProblemListItem.Create(AParent: THtmlPage;
+  ATransaction: TContestTransaction; AIndex: integer);
+begin
+  inherited Create(AParent);
+  FTransaction := ATransaction;
+  FIndex := AIndex;
+end;
 
 { TContestParticipantTable }
 

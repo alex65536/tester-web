@@ -103,9 +103,28 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TContestProblemsFeature }
+
+  TContestProblemsFeature = class(TEditableTransactionPageFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
   { TContestParticipantButtonFeature }
 
   TContestParticipantButtonFeature = class(TEditableNavButtonFeature)
+  protected
+    function Enabled: boolean; override;
+    function PagePartDir: string; override;
+    function PagePartName: string; override;
+    procedure InternalSatisfy; override;
+  end;
+
+  { TContestProblemsBtnFeature }
+
+  TContestProblemsBtnFeature = class(TEditableNavButtonFeature)
   protected
     function Enabled: boolean; override;
     function PagePartDir: string; override;
@@ -130,6 +149,71 @@ type
   end;
 
 implementation
+
+{ TContestProblemsFeature }
+
+procedure TContestProblemsFeature.InternalSatisfy;
+var
+  List: TContestProblemList;
+begin
+  // set variables
+  with Parent.Variables do
+  begin
+    ItemsAsText['contentHeaderText'] := SContestProblemsText;
+  end;
+  // load "add problem" form (if necessary)
+  if Transaction.CanWriteData then
+  begin
+    with Parent.Variables do
+    begin
+      ItemsAsText['contestAddProblem'] := SContestAddProblem;
+      ItemsAsText['contestAddProblemPrompt'] := SContestAddProblemPrompt;
+      ItemsAsText['contestAddProblemBtn'] := SContestAddProblemBtn;
+    end;
+    LoadPagePart('contest', 'contestProblemAdd');
+  end;
+  // load problem list
+  List := TContestProblemList.Create(Parent, Transaction as TContestTransaction);
+  try
+    Parent.AddElementPagePart('contestProblemList', List);
+  finally
+    FreeAndNil(List);
+  end;
+  // load page template
+  LoadPagePart('contest', 'contestProblems', 'content');
+end;
+
+procedure TContestProblemsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TPostDataFeature);
+  ADependencies.Add(TContentFeature);
+  ADependencies.Add(TContestButtonsFeature);
+  ADependencies.Add(TEditablePageTitleFeature);
+end;
+
+{ TContestProblemsBtnFeature }
+
+function TContestProblemsBtnFeature.Enabled: boolean;
+begin
+  Result := True;
+end;
+
+function TContestProblemsBtnFeature.PagePartDir: string;
+begin
+  Result := 'contest';
+end;
+
+function TContestProblemsBtnFeature.PagePartName: string;
+begin
+  Result := 'contestProblemsBtn';
+end;
+
+procedure TContestProblemsBtnFeature.InternalSatisfy;
+begin
+  inherited InternalSatisfy;
+  Parent.Variables.ItemsAsText['editableReserved2Btn'] := '~+#contestProblemsBtn;';
+end;
 
 { TContestParticipantFeature }
 
@@ -229,6 +313,7 @@ begin
   with Parent.Variables do
   begin
     ItemsAsText['contestParticipantsText'] := SContestParticipantsText;
+    ItemsAsText['contestProblemsText'] := SContestProblemsText;
   end;
 end;
 
@@ -236,6 +321,7 @@ procedure TContestButtonsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TContestParticipantButtonFeature);
+  ADependencies.Add(TContestProblemsBtnFeature);
   ADependencies.Add(TEditableButtonsFeature);
 end;
 
@@ -366,6 +452,7 @@ begin
     ItemsAsText['editableAccessRef'] := 'contest-access';
     ItemsAsText['editableSettingsRef'] := 'contest-settings';
     ItemsAsText['contestParticipantsRef'] := 'contest-participants';
+    ItemsAsText['contestProblemsRef'] := 'contest-problems';
   end;
 end;
 

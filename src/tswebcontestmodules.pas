@@ -106,7 +106,55 @@ type
     function HookClass: TEditableModuleHookClass; override;
   end;
 
+  { TContestProblemsWebModule }
+
+  TContestProblemsWebModule = class(TEditableObjectPostWebModule)
+  protected
+    procedure DoHandlePost(ARequest: TRequest); override;
+    function DoCreatePage: THtmlPage; override;
+    function HookClass: TEditableModuleHookClass; override;
+  end;
+
 implementation
+
+{ TContestProblemsWebModule }
+
+procedure TContestProblemsWebModule.DoHandlePost(ARequest: TRequest);
+var
+  Transaction: TContestTransaction;
+  Query: string;
+  Index: integer;
+begin
+  Transaction := EditableObject.CreateTransaction(User) as TContestTransaction;
+  try
+    Query := ARequest.ContentFields.Values['query'];
+    if Query = 'add' then
+      Transaction.AddProblem(ARequest.ContentFields.Values['problem'])
+    else
+    begin
+      Index := StrToInt(ARequest.ContentFields.Values['target']);
+      if Query = 'up' then
+        Transaction.MoveProblemUp(Index)
+      else if Query = 'down' then
+        Transaction.MoveProblemDown(Index)
+      else if Query = 'delete' then
+        Transaction.DeleteProblem(Index);
+    end;
+    Transaction.Commit;
+  finally
+    FreeAndNil(Transaction);
+  end;
+end;
+
+function TContestProblemsWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TContestProblemsPage.Create;
+end;
+
+function TContestProblemsWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TContestModuleHook;
+end;
 
 { TContestParticipantsWebModule }
 
@@ -299,6 +347,7 @@ initialization
   RegisterHTTPModule('contest-edit', TContestEditWebModule, True);
   RegisterHTTPModule('contest-settings', TContestSettingsWebModule, True);
   RegisterHTTPModule('contest-participants', TContestParticipantsWebModule, True);
+  RegisterHTTPModule('contest-problems', TContestProblemsWebModule, True);
 
 end.
 

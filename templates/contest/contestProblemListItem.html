@@ -1,0 +1,18 @@
+<tr>
+	<td>~contestProblemNumber;</td>
+	<td>
+		<a href="~documentRoot;/problem-view?object=~contestProblemName;">~contestProblemName;</a>
+	</td>
+	<td>~contestProblemTitle;</td>
+	<td class="contest-actions">
+~X!		<!-- Up button -->
+~X!		~:actionQuery='up' ~:actionImage='arrowUp' ~:actionCaption='~actionUpCaption;'
+		~#+contestActionUp;
+~X!		<!-- Down button -->
+~X!		~:actionQuery='down' ~:actionImage='arrowDown' ~:actionCaption='~actionDownCaption;'
+		~#+contestActionDown;
+~X!		<!-- Delete button -->
+~X!		~:actionQuery='delete' ~:actionImage='crossMark' ~:actionCaption='~actionDeleteCaption;'
+		~#+contestActionDelete;
+	</td>
+</tr>
