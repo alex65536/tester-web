@@ -351,6 +351,7 @@ resourcestring
   SStrInvalidLen = '%s length must be from %d to %d characters.';
   SMainPage = 'Main Page';
   STsWebGreeting = 'Welcome to Tester Web!';
+  SKillPageTitle = 'Kill Server';
 
 implementation
 

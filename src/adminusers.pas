@@ -75,6 +75,7 @@ end;
 
 procedure TOwnerUser.TerminateServer;
 begin
+  NeedsAuthentification;
   if Assigned(OnServerTerminate) then
     OnServerTerminate()
   else

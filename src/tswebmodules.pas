@@ -25,7 +25,7 @@ unit tswebmodules;
 interface
 
 uses
-  SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess, fphttp,
+  SysUtils, Classes, webmodules, tswebnavbars, navbars, htmlpreprocess, fphttp,
   htmlpages, tswebpages, HTTPDefs, users, webstrconsts, authwebmodules,
   tswebprofilefeatures, tswebpagesbase, tsmiscwebmodules, allusers, userpages;
 
@@ -173,9 +173,18 @@ type
 
   { TKillServerWebModule }
 
-  TKillServerWebModule = class(TTesterWebModule)
+  TKillServerWebModule = class(TConfirmPasswordWebModule)
+  private
+    FKilled: boolean;
   protected
-    procedure DoInsideRequest; override;
+    procedure ConfirmationSuccess(var ACanRedirect: boolean;
+      var {%H-}ARedirect: string); override;
+    procedure DoBeforeRequest; override;
+    function DoCreatePage: THtmlPage; override;
+    procedure DoPageAfterConstruction(APage: THtmlPage); override;
+    procedure InternalHandleRequest; override;
+  public
+    procedure AfterConstruction; override;
   end;
 
 implementation
@@ -334,18 +343,41 @@ end;
 
 { TKillServerWebModule }
 
-procedure TKillServerWebModule.DoInsideRequest;
-var
-  User: TUser;
+procedure TKillServerWebModule.ConfirmationSuccess(var ACanRedirect: boolean;
+  var ARedirect: string);
 begin
-  User := UserManager.LoadUserFromSession(Session);
-  try
-    if (User = nil) or not (User is TOwnerUser) then
-      raise EUserAccessDenied.Create(SAccessDenied);
-    (User as TOwnerUser).TerminateServer;
-  finally
-    FreeAndNil(User);
-  end;
+  (User as TOwnerUser).TerminateServer;
+  FKilled := True;
+  ACanRedirect := False;
+end;
+
+procedure TKillServerWebModule.DoBeforeRequest;
+begin
+  inherited DoBeforeRequest;
+  FKilled := False;
+end;
+
+function TKillServerWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TNavConfirmPasswordPage.Create;
+end;
+
+procedure TKillServerWebModule.DoPageAfterConstruction(APage: THtmlPage);
+begin
+  inherited DoPageAfterConstruction(APage);
+  (APage as TNavConfirmPasswordPage).Title := SKillPageTitle;
+end;
+
+procedure TKillServerWebModule.InternalHandleRequest;
+begin
+  if not FKilled then
+    inherited InternalHandleRequest;
+end;
+
+procedure TKillServerWebModule.AfterConstruction;
+begin
+  Handlers.Add(TDeclineNotLoggedWebModuleHandler.Create([urOwner]));
+  inherited AfterConstruction;
 end;
 
 { TRegisterWebModule }
@@ -434,6 +466,9 @@ begin
     AddElement(SProblemList, '~documentRoot;/problems');
     AddElement(SContestList, '~documentRoot;/contests');
   end;
+  // add "kill server" (for owner)
+  if (User <> nil) and (User is TOwnerUser) then
+    AddElement(SKillPageTitle, '~documentRoot;/kill');
 end;
 
 { TSimpleHtmlPage }
