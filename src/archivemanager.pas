@@ -44,8 +44,12 @@ var
 begin
   // validate archive size
   ValidateFileSize(Unzipper.FileName, Config.Files_MaxArchiveSize, SArchiveTooBig);
-  // calculate sum files size
+
   Unzipper.Examine;
+  // if too many files - raise an error
+  if Unzipper.Entries.Count > Config.Files_MaxArchiveFileCount then
+    raise EArchiveManager.CreateFmt(SArchiveTooManyFiles, [Config.Files_MaxArchiveFileCount]);
+  // calculate sum files size
   SumSize := 0;
   with Unzipper.Entries do
   begin

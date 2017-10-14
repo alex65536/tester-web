@@ -240,7 +240,10 @@ type
     function CreateQueue: TSubmissionQueue; virtual; abstract;
     function DoCreateTestSubmission(AID: integer): TTestSubmission; virtual;
     function DoCreateViewSubmission(AID: integer): TViewSubmission; virtual;
-    procedure DeleteSubmission(AID: integer); virtual;
+    procedure DoInternalCreateSubmission(ASubmission: TTestSubmission;
+      AProblem: TProblem; AUser: TUser); virtual;
+    procedure DeleteSubmission(AID: integer);
+    procedure DoDeleteSubmission(AID: integer); virtual;
     procedure HandleUserDeleting(AInfo: TUserInfo); virtual;
     procedure HandleProblemDeleting(AProblem: TTestableProblem); virtual;
     procedure ResumeCreateSubmission(AID: integer); virtual;
@@ -252,18 +255,18 @@ type
     function ListByOwner(AInfo: TUserInfo): TIdList;
     function ListByProblem(AProblem: TTestableProblem): TIdList;
 
-    function Filter(AList: TIdList; AObject: TObject;
-      AFilter: TSubmissionFilter): TIdList;
-    function ProblemFilter(AID: integer; AObject: TObject): boolean;
-    function AvailableFilter(AID: integer; AObject: TObject): boolean;
-
     function CreateSubmission(AUser: TUser; AProblem: TTestableProblem;
       ALanguage: TSubmissionLanguage; const AFileName: string): integer;
     function GetSubmission(AID: integer): TViewSubmission;
     procedure RejudgeSubmission(AID: integer); virtual;
 
-    procedure MessageReceived(AMessage: TAuthorMessage);
+    procedure MessageReceived(AMessage: TAuthorMessage); virtual;
   public
+    function Filter(AList: TIdList; AObject: TObject;
+      AFilter: TSubmissionFilter): TIdList;
+    function ProblemFilter(AID: integer; AObject: TObject): boolean;
+    function AvailableFilter(AID: integer; AObject: TObject): boolean;
+
     function ProblemManager: TTestableProblemManager; virtual; abstract;
     property Queue: TSubmissionQueue read FQueue;
     function SubmissionExists(AID: integer): boolean;
@@ -279,6 +282,7 @@ type
     function GetManager: TTestableProblemManager;
     function GetSubmissionManager: TSubmissionManager;
   protected
+    function DoCreateProblemFromSubmission(AID: integer): TTestableProblem; virtual;
     procedure ValidateSubmission(AID: integer);
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
   public
@@ -362,6 +366,14 @@ begin
   Result := Manager.SubmissionManager;
 end;
 
+function TProblemSubmissionSession.DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
+var
+  ProblemID: integer;
+begin
+  ProblemID := SubmissionManager.SubmissionProblemID(AID);
+  Result := Manager.GetObject(ProblemID) as TTestableProblem;
+end;
+
 procedure TProblemSubmissionSession.ValidateSubmission(AID: integer);
 begin
   if not SubmissionManager.SubmissionExists(AID) then
@@ -375,13 +387,12 @@ end;
 
 function TProblemSubmissionSession.CanReadSubmission(AID: integer): boolean;
 var
-  UserID, ProblemID: integer;
+  UserID: integer;
   Problem: TTestableProblem;
   Info: TUserInfo;
 begin
   UserID := SubmissionManager.SubmissionOwnerID(AID);
-  ProblemID := SubmissionManager.SubmissionProblemID(AID);
-  Problem := Manager.GetObject(ProblemID) as TTestableProblem;
+  Problem := DoCreateProblemFromSubmission(AID);
   try
     Info := UserManager.GetUserInfo(UserID);
     try
@@ -422,11 +433,9 @@ end;
 
 function TProblemSubmissionSession.CanRejudgeSubmission(AID: integer): boolean;
 var
-  ProblemID: integer;
   Problem: TTestableProblem;
 begin
-  ProblemID := SubmissionManager.SubmissionProblemID(AID);
-  Problem := Manager.GetObject(ProblemID) as TTestableProblem;
+  Problem := DoCreateProblemFromSubmission(AID);
   try
     Result := CanRejudgeSubmission(Problem);
   finally
@@ -587,6 +596,18 @@ begin
   Result := TViewSubmission.Create(Self, AID);
 end;
 
+procedure TSubmissionManager.DoInternalCreateSubmission(ASubmission: TTestSubmission;
+  AProblem: TProblem; AUser: TUser);
+var
+  ID: integer;
+begin
+  ID := ASubmission.ID;
+  Storage.WriteInteger(SubmissionSectionName(ID) + '.ownerId', AUser.ID);
+  Storage.WriteBool(OwnerSectionName(AUser.ID) + '.' + Id2Str(ID), True);
+  Storage.WriteInteger(SubmissionSectionName(ID) + '.problemId', AProblem.ID);
+  Storage.WriteBool(ProblemSectionName(AProblem.ID) + '.' + Id2Str(ID), True);
+end;
+
 procedure TSubmissionManager.DeleteSubmission(AID: integer);
 var
   Submission: TViewSubmission;
@@ -600,11 +621,17 @@ begin
   finally
     FreeAndNil(Submission);
   end;
+  // do internal deletion
+  DoDeleteSubmission(AID);
   // remove from the storage
+  Storage.DeletePath(SubmissionSectionName(AID));
+end;
+
+procedure TSubmissionManager.DoDeleteSubmission(AID: integer);
+begin
   Storage.DeleteVariable(OwnerSectionName(SubmissionOwnerID(AID)) + '.' + Id2Str(AID));
   Storage.DeleteVariable(ProblemSectionName(SubmissionProblemID(AID)) +
     '.' + Id2Str(AID));
-  Storage.DeletePath(SubmissionSectionName(AID));
 end;
 
 procedure TSubmissionManager.HandleUserDeleting(AInfo: TUserInfo);
@@ -748,11 +775,8 @@ begin
   ID := NextID;
   Submission := DoCreateTestSubmission(ID);
   try
-    // fill owner & problem
-    Storage.WriteInteger(SubmissionSectionName(ID) + '.ownerId', AUser.ID);
-    Storage.WriteBool(OwnerSectionName(AUser.ID) + '.' + Id2Str(ID), True);
-    Storage.WriteInteger(SubmissionSectionName(ID) + '.problemId', AProblem.ID);
-    Storage.WriteBool(ProblemSectionName(AProblem.ID) + '.' + Id2Str(ID), True);
+    // internal submission creation
+    DoInternalCreateSubmission(Submission, AProblem, AUser);
     // prepare submission for adding to queue
     Submission.UpdateSubmitTime;
     Submission.AddFile(ALanguage, AFileName);

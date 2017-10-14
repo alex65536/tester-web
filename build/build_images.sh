@@ -18,3 +18,7 @@ build_one "userEditor"    64
 build_one "tickMark"      32
 build_one "crossMark"     32
 build_one "crossMarkGray" 32
+build_one "arrowUp"       32
+build_one "arrowUpGray"   32
+build_one "arrowDown"     32
+build_one "arrowDownGray" 32

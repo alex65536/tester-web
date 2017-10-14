@@ -35,6 +35,7 @@ type
   IEditableWebModule = interface
     ['{3930B3B7-0A9F-41AF-929A-D416E801EE75}']
     function Manager: TEditableManager;
+    function NeedAccessRights: TEditableAccessRightsSet;
   end;
 
   IEditableModuleHook = interface
@@ -43,12 +44,21 @@ type
   end;
   {$interfaces COM}
 
-  { TEditableRedirectIfNoAccessHandler }
+  TEditableNoAccessHandlerBehaviour = (ahbError, ahbRedirect);
 
-  TEditableRedirectIfNoAccessHandler = class(TWebModuleHandler)
+  { TEditableNoAccessHandler }
+
+  TEditableNoAccessHandler = class(TWebModuleHandler)
+  private
+    FBehaviour: TEditableNoAccessHandlerBehaviour;
+    FNeedAccessRigths: TEditableAccessRightsSet;
   public
+    property Behaviour: TEditableNoAccessHandlerBehaviour read FBehaviour;
+    property NeedAccessRigths: TEditableAccessRightsSet read FNeedAccessRigths;
     procedure HandleRequest({%H-}ARequest: TRequest; AResponse: TResponse;
       var Handled: boolean); override;
+    constructor Create(ABehaviour: TEditableNoAccessHandlerBehaviour;
+      ANeedAccessRigths: TEditableAccessRightsSet);
   end;
 
   { TEditableModuleHook }
@@ -57,6 +67,8 @@ type
   private
     FParent: THtmlPageWebModule;
     FInside: boolean;
+  protected
+    function NeedAccessRights: TEditableAccessRightsSet;
   public
     property Parent: THtmlPageWebModule read FParent;
     property Inside: boolean read FInside;
@@ -98,8 +110,8 @@ type
   protected
     property EditableObject: TEditableObject read FEditableObject;
     function Inside: boolean; override;
-    procedure DoInsideHandlePost(ARequest: TRequest); virtual; abstract;
-    procedure DoHandlePost(ARequest: TRequest); override;
+    procedure DoSessionCreated; override;
+    procedure DoAfterRequest; override;
   end;
 
   { TEditableObjListWebModule }
@@ -132,7 +144,7 @@ type
 
   TEditableAccessWebModule = class(TEditableObjectPostWebModule)
   protected
-    procedure DoInsideHandlePost(ARequest: TRequest); override;
+    procedure DoHandlePost(ARequest: TRequest); override;
   end;
 
   { TEditableViewWebModule }
@@ -146,8 +158,9 @@ type
 
   TEditableEditWebModule = class(TEditableObjectPostWebModule)
   protected
+    function NeedAccessRights: TEditableAccessRightsSet; override;
     procedure DoInsideEdit(ATransaction: TEditableTransaction); virtual;
-    procedure DoInsideHandlePost({%H-}ARequest: TRequest); override;
+    procedure DoHandlePost({%H-}ARequest: TRequest); override;
   end;
 
   { TEditableSettingsWebModule }
@@ -155,7 +168,7 @@ type
   TEditableSettingsWebModule = class(TEditableObjectPostWebModule)
   protected
     function Inside: boolean; override;
-    procedure DoInsideHandlePost(ARequest: TRequest); override;
+    procedure DoHandlePost(ARequest: TRequest); override;
   end;
 
 function EditableObjectNameFromRequest(ARequest: TRequest): string;
@@ -182,7 +195,7 @@ begin
   Result := True;
 end;
 
-procedure TEditableSettingsWebModule.DoInsideHandlePost(ARequest: TRequest);
+procedure TEditableSettingsWebModule.DoHandlePost(ARequest: TRequest);
 var
   NewName: string;
   ManagerSession: TEditableManagerSession;
@@ -207,24 +220,31 @@ begin
   Result := True;
 end;
 
-procedure TEditableObjectPostWebModule.DoHandlePost(ARequest: TRequest);
+procedure TEditableObjectPostWebModule.DoSessionCreated;
 begin
+  inherited DoSessionCreated;
   FEditableObject := Hook.EditableObject;
-  try
-    DoInsideHandlePost(ARequest);
-  finally
-    FreeAndNil(FEditableObject);
-  end;
+end;
+
+procedure TEditableObjectPostWebModule.DoAfterRequest;
+begin
+  FreeAndNil(FEditableObject);
+  inherited DoAfterRequest;
 end;
 
 { TEditableEditWebModule }
+
+function TEditableEditWebModule.NeedAccessRights: TEditableAccessRightsSet;
+begin
+  Result := AccessCanWriteSet;
+end;
 
 procedure TEditableEditWebModule.DoInsideEdit(ATransaction: TEditableTransaction);
 begin
   ATransaction.Title := Request.ContentFields.Values['title'];
 end;
 
-procedure TEditableEditWebModule.DoInsideHandlePost(ARequest: TRequest);
+procedure TEditableEditWebModule.DoHandlePost(ARequest: TRequest);
 var
   Transaction: TEditableTransaction;
 begin
@@ -247,7 +267,7 @@ end;
 
 { TEditableAccessWebModule }
 
-procedure TEditableAccessWebModule.DoInsideHandlePost(ARequest: TRequest);
+procedure TEditableAccessWebModule.DoHandlePost(ARequest: TRequest);
 var
   AccessSession: TEditableObjectAccessSession;
   Target: TUserInfo;
@@ -370,6 +390,11 @@ end;
 
 { TEditableModuleHook }
 
+function TEditableModuleHook.NeedAccessRights: TEditableAccessRightsSet;
+begin
+  Result := (Parent as IEditableWebModule).NeedAccessRights;
+end;
+
 function TEditableModuleHook.EditableObject: TEditableObject;
 begin
   if not Inside then
@@ -387,16 +412,16 @@ end;
 procedure TEditableModuleHook.BeginAddHandlers;
 begin
   if Inside then
-    Parent.Handlers.Add(TEditableRedirectIfNoAccessHandler.Create);
+    Parent.Handlers.Add(TEditableNoAccessHandler.Create(ahbError, NeedAccessRights));
 end;
 
 procedure TEditableModuleHook.EndAddHandlers;
 begin
-  // we need two redirectors
-  // first to redirect back users that have no access
+  // we need two NoAccessHandlers
+  // first to throw away users that have no access
   // second to redirect self-deleted ones
   if Inside then
-    Parent.Handlers.Add(TEditableRedirectIfNoAccessHandler.Create);
+    Parent.Handlers.Add(TEditableNoAccessHandler.Create(ahbRedirect, NeedAccessRights));
   Parent.Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create(EditorsSet));
 end;
 
@@ -406,38 +431,60 @@ begin
   FInside := AInside;
 end;
 
-{ TEditableRedirectIfNoAccessHandler }
+{ TEditableNoAccessHandler }
 
-procedure TEditableRedirectIfNoAccessHandler.HandleRequest(ARequest: TRequest;
+procedure TEditableNoAccessHandler.HandleRequest(ARequest: TRequest;
   AResponse: TResponse; var Handled: boolean);
 var
   Hook: TEditableModuleHook;
   EditableObject: TEditableObject;
   User: TEditorUser;
-  Redirect: boolean;
-begin
-  Hook := (Parent as IEditableModuleHook).Hook;
-  Redirect := False;
-  try
-    EditableObject := Hook.EditableObject;
-    try
-      User := (Parent as IUserWebModule).User as TEditorUser;
-      Redirect := EditableObject.GetAccessRights(User) = erNone;
-    finally
-      FreeAndNil(EditableObject);
-    end;
-  except
-    on E: EEditableAction do
-      Redirect := True
-    else
-      raise;
-  end;
-  if Redirect then
+  Good: boolean;
+
+  procedure SendRedirect;
   begin
     AResponse.Location := Hook.ObjectsRoot;
     AResponse.Code := 303;
     Handled := True;
   end;
+
+begin
+  Hook := (Parent as IEditableModuleHook).Hook;
+  Good := True;
+  try
+    EditableObject := Hook.EditableObject;
+    try
+      User := (Parent as IUserWebModule).User as TEditorUser;
+      Good := EditableObject.GetAccessRights(User) in NeedAccessRigths;
+    finally
+      FreeAndNil(EditableObject);
+    end;
+  except
+    on E: EEditableAction do
+    begin
+      if Behaviour = ahbError then
+        raise
+      else
+        Good := False;
+    end
+    else
+      raise;
+  end;
+  if not Good then
+  begin
+    case Behaviour of
+      ahbError: raise EEditableAccessDenied.Create(SAccessDenied);
+      ahbRedirect: SendRedirect;
+    end;
+  end;
+end;
+
+constructor TEditableNoAccessHandler.Create(ABehaviour: TEditableNoAccessHandlerBehaviour;
+  ANeedAccessRigths: TEditableAccessRightsSet);
+begin
+  inherited Create;
+  FBehaviour := ABehaviour;
+  FNeedAccessRigths := ANeedAccessRigths;
 end;
 
 end.

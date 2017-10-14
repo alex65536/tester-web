@@ -248,8 +248,10 @@ begin
   try
     FThread.Synchronize(@InternalRequestHandler);
   finally
-    WriteLn('Request "', FRequest.Method, ' ', FRequest.URI, '" processed in ',
-      MilliSecondsBetween(Time, Now), ' ms.');
+    WriteLn(Format(SRequestShowFormat, [
+      FormatDateTime(SRequestDateTimeFormat, Now), FRequest.Method,
+      FRequest.URI, FRequest.RemoteAddress, MilliSecondsBetween(Time, Now)
+    ]));
     FRequest := nil;
     FResponse := nil;
   end;

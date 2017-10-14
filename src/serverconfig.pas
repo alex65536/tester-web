@@ -44,12 +44,14 @@ type
   private
     FConstructing: boolean;
     FStorage: TAbstractDataStorage;
+    function GetContest_MaxDurationMinutes: integer;
     function GetCrypto_HashLen: integer;
     function GetCrypto_SaltLen: integer;
     function GetCrypto_SCrypt_LogN: integer;
     function GetCrypto_SCrypt_R: integer;
     function GetCrypto_SCrypt_P: integer;
     function GetFiles_DefaultSrcSize: integer;
+    function GetFiles_MaxArchiveFileCount: integer;
     function GetFiles_MaxArchiveSize: integer;
     function GetFiles_MaxSrcSize: integer;
     function GetFiles_MaxStatementsSize: integer;
@@ -110,6 +112,7 @@ type
 
     // files default settings (all sizes are in KBytes!)
     property Files_MaxArchiveSize: integer read GetFiles_MaxArchiveSize;
+    property Files_MaxArchiveFileCount: integer read GetFiles_MaxArchiveFileCount;
     property Files_MaxUnpackedArchiveSize: integer read GetFiles_MaxUnpackedArchiveSize;
     property Files_MaxStatementsSize: integer read GetFiles_MaxStatementsSize;
     property Files_MaxSrcSize: integer read GetFiles_MaxSrcSize;
@@ -124,6 +127,9 @@ type
 
     // testing options
     property Testing_MaxPoolSize: integer read GetTesting_MaxPoolSize;
+
+    // contest options
+    property Contest_MaxDurationMinutes: integer read GetContest_MaxDurationMinutes;
 
     constructor Create;
     procedure Reload;
@@ -157,6 +163,11 @@ begin
   Result := FStorage.ReadInteger('crypto.hashLen', 64);
 end;
 
+function TTesterServerConfig.GetContest_MaxDurationMinutes: integer;
+begin
+  Result := FStorage.ReadInteger('contest.maxDurationMinutes', 10080);
+end;
+
 function TTesterServerConfig.GetCrypto_SCrypt_LogN: integer;
 begin
   Result := FStorage.ReadInteger('crypto.scrypt.logN', 14);
@@ -175,6 +186,11 @@ end;
 function TTesterServerConfig.GetFiles_DefaultSrcSize: integer;
 begin
   Result := FStorage.ReadInteger('files.defaultSrcSize', 64);
+end;
+
+function TTesterServerConfig.GetFiles_MaxArchiveFileCount: integer;
+begin
+  Result := FStorage.ReadInteger('files.maxArchiveFileCount', 2048);
 end;
 
 function TTesterServerConfig.GetFiles_MaxArchiveSize: integer;
@@ -315,6 +331,7 @@ begin
 
     WriteString('files.notice', SFilesNotice);
     WriteInteger('files.maxArchiveSize', Files_MaxArchiveSize);
+    WriteInteger('files.maxArchiveFileCount', GetFiles_MaxArchiveFileCount);
     WriteInteger('files.maxSrcSize', Files_MaxSrcSize);
     WriteInteger('files.defaultSrcSize', Files_DefaultSrcSize);
     WriteInteger('files.maxStatementsSize', Files_MaxStatementsSize);
@@ -326,6 +343,8 @@ begin
     WriteInteger('server.port', Server_Port);
 
     WriteInteger('testing.maxPoolSize', Testing_MaxPoolSize);
+
+    WriteInteger('contest.maxDurationMinutes', GetContest_MaxDurationMinutes);
   end;
 end;
 

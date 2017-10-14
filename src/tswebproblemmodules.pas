@@ -27,8 +27,8 @@ interface
 uses
   SysUtils, tswebmodules, tswebeditablemodules, fphttp, htmlpages, problems,
   editableobjects, tswebpagesbase, tswebproblempages, webstrconsts, HTTPDefs,
-  webmodules, downloadhandlers, tsmiscwebmodules, tswebmanagers, submissions,
-  submissionlanguages;
+  downloadhandlers, tsmiscwebmodules, tswebmanagers, submissionlanguages,
+  submissions;
 
 type
 
@@ -135,12 +135,13 @@ type
 
   TProblemSubmissionsWebModule = class(TEditableObjectPostWebModule)
   protected
+    function NeedAccessRights: TEditableAccessRightsSet; override;
     function Inside: boolean; override;
     function HookClass: TEditableModuleHookClass; override;
     function DoCreatePage: THtmlPage; override;
     function CanRedirect: boolean; override;
     function RedirectLocation: string; override;
-    procedure DoInsideHandlePost(ARequest: TRequest); override;
+    procedure DoHandlePost(ARequest: TRequest); override;
   end;
 
   { TProblemSettingsWebModule }
@@ -167,6 +168,11 @@ end;
 
 { TProblemSubmissionsWebModule }
 
+function TProblemSubmissionsWebModule.NeedAccessRights: TEditableAccessRightsSet;
+begin
+  Result := AccessCanWriteSet;
+end;
+
 function TProblemSubmissionsWebModule.Inside: boolean;
 begin
   Result := True;
@@ -192,7 +198,7 @@ begin
   Result := Request.URI;
 end;
 
-procedure TProblemSubmissionsWebModule.DoInsideHandlePost(ARequest: TRequest);
+procedure TProblemSubmissionsWebModule.DoHandlePost(ARequest: TRequest);
 var
   TestProblem: TTestableProblem;
   SubmissionSession: TProblemSubmissionSession;

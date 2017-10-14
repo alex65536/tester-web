@@ -25,9 +25,9 @@ unit tswebproblemfeatures;
 interface
 
 uses
-  SysUtils, Classes, tswebeditablefeatures, webstrconsts, htmlpages,
-  tswebfeatures, serverconfig, problems, webstrutils, editableobjects,
-  tswebsubmissionfeatures, submissions, tswebmanagers, tswebsubmissionelements;
+  SysUtils, tswebeditablefeatures, webstrconsts, htmlpages, tswebfeatures,
+  serverconfig, problems, webstrutils, editableobjects, tswebsubmissionfeatures,
+  submissions, tswebsubmissionelements;
 
 type
 
@@ -168,7 +168,6 @@ end;
 procedure TProblemSettingsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
-  ADependencies.Add(TEditableCloneFormFeature);
   ADependencies.Add(TProblemButtonsFeature);
   ADependencies.Add(TEditableSettingsFeature);
 end;

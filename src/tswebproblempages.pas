@@ -25,35 +25,25 @@ unit tswebproblempages;
 interface
 
 uses
-  SysUtils, tswebmodules, tswebeditablefeatures, tswebeditablemodules,
-  webstrconsts, problems, editableobjects, navbars, tswebpagesbase, tswebpages,
-  htmlpreprocess, tswebeditableelements, tswebproblemfeatures, tswebmanagers;
+  SysUtils, tswebeditablefeatures, webstrconsts, editableobjects, tswebmanagers,
+  tswebproblemfeatures, tswebeditablepages;
 
 type
 
   { TProblemHtmlPage }
 
-  TProblemHtmlPage = class(TDefaultHtmlPage, IEditablePage)
+  TProblemHtmlPage = class(TEditableHtmlPage)
   protected
-    function HasEditableObject: boolean; virtual;
-    function EditableObject: TEditableObject;
-    function Manager: TEditableManager;
-    function CreateNavBar: TNavBar; override;
+    function DoGetManager: TEditableManager; override;
     procedure AddFeatures; override;
-    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
   end;
 
   { TProblemPostHtmlPage }
 
-  TProblemPostHtmlPage = class(TProblemHtmlPage, IPostHtmlPage)
-  private
-    FError: string;
-    FSuccess: string;
-  public
-    function GetError: string;
-    function GetSuccess: string;
-    procedure SetError(AValue: string);
-    procedure SetSuccess(AValue: string);
+  TProblemPostHtmlPage = class(TEditablePostHtmlPage)
+  protected
+    function DoGetManager: TEditableManager; override;
+    procedure AddFeatures; override;
   end;
 
   { TProblemListPage }
@@ -208,61 +198,28 @@ end;
 
 { TProblemPostHtmlPage }
 
-function TProblemPostHtmlPage.GetError: string;
-begin
-  Result := FError;
-end;
-
-function TProblemPostHtmlPage.GetSuccess: string;
-begin
-  Result := FSuccess;
-end;
-
-procedure TProblemPostHtmlPage.SetError(AValue: string);
-begin
-  FError := AValue;
-end;
-
-procedure TProblemPostHtmlPage.SetSuccess(AValue: string);
-begin
-  FSuccess := AValue;
-end;
-
-{ TProblemHtmlPage }
-
-function TProblemHtmlPage.HasEditableObject: boolean;
-begin
-  Result := True;
-end;
-
-function TProblemHtmlPage.EditableObject: TEditableObject;
-begin
-  if HasEditableObject then
-    Result := EditableObjectFromRequest(Request, Manager)
-  else
-    Result := nil;
-end;
-
-function TProblemHtmlPage.Manager: TEditableManager;
+function TProblemPostHtmlPage.DoGetManager: TEditableManager;
 begin
   Result := ProblemManager;
 end;
 
-function TProblemHtmlPage.CreateNavBar: TNavBar;
+procedure TProblemPostHtmlPage.AddFeatures;
 begin
-  Result := TDefaultNavBar.Create(Self);
+  AddFeature(TProblemBaseFeature);
+  inherited AddFeatures;
+end;
+
+{ TProblemHtmlPage }
+
+function TProblemHtmlPage.DoGetManager: TEditableManager;
+begin
+  Result := ProblemManager;
 end;
 
 procedure TProblemHtmlPage.AddFeatures;
 begin
   AddFeature(TProblemBaseFeature);
   inherited AddFeatures;
-end;
-
-procedure TProblemHtmlPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
-begin
-  // do nothing, not necessary
-  Strings.Text := '';
 end;
 
 end.

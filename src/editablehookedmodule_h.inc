@@ -25,6 +25,7 @@ type
     FHook: TEditableModuleHook;
   protected
     function Inside: boolean; virtual; abstract;
+    function NeedAccessRights: TEditableAccessRightsSet; virtual;
     function HookClass: TEditableModuleHookClass; virtual; abstract;
     function CreateHook: TEditableModuleHook; virtual;
   public

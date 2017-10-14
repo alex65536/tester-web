@@ -1,0 +1,38 @@
+~X! <!-- Start date/time -->
+<tr>
+	<td class="view-table-key">~contestStartDateKey;</td>
+	<td class="view-table-value">
+		~#dateEdit;
+	</td>
+</tr>
+<tr>
+	<td class="view-table-key">~contestStartTimeKey;</td>
+	<td class="view-table-value">
+		~+#timeEdit;
+	</td>
+</tr>
+~X! <!-- Duration -->
+<tr>
+	<td class="view-table-key">~contestDurationKey;</td>
+	<td class="view-table-value">
+		<input type="number" name="duration" min="0" max="~contestDurationMax;" value="~contestDurationValue;">
+		~durationMinutes;
+	</td>
+</tr>
+~X! <!-- Scoring policy -->
+<tr>
+	<td class="view-table-key">~contestScoringPolicyKey;</td>
+	<td class="view-table-value">
+		<select name="scoring-policy">
+			<option value="spMaxScore"~?spMaxScoreSel;>~spMaxScoreStr;</option>
+			<option value="spLastScore"~?spLastScoreSel;>~spLastScoreStr;</option>
+		</select>
+	</td>
+</tr>
+~X! <!-- Allow upsolving? -->
+<tr>
+	<td class="view-table-key">~contestAllowUpsolvingKey;</td>
+	<td class="view-table-value">
+		<input type="checkbox" name="allow-upsolving"~?allowUpsolvingChecked;>
+	</td>
+</tr>

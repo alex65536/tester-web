@@ -131,10 +131,8 @@ type
     function PropsFullFileName: string;
     procedure HandleSelfDeletion; override;
   public
-    function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession;
-      override;
-    function CreateTransaction(AUser: TUser): TEditableTransaction;
-      override;
+    function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession; override;
+    function CreateTransaction(AUser: TUser): TEditableTransaction; override;
   end;
 
   { TProblemManager }
@@ -145,8 +143,7 @@ type
     function CreateStorage: TAbstractDataStorage; override;
     function CreateObject(const AName: string): TEditableObject; override;
   public
-    function CreateManagerSession(AUser: TUser): TEditableManagerSession;
-      override;
+    function CreateManagerSession(AUser: TUser): TEditableManagerSession; override;
   end;
 
 function StatementsTypeToStr(AType: TProblemStatementsType): string;
