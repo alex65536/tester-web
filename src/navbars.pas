@@ -118,12 +118,18 @@ procedure TNavBar.DoFillVariables;
 var
   ListInner: TIndentTaggedStrings;
 begin
-  ListInner := TIndentTaggedStrings.Create;
+  FElements.Clear;
   try
-    BuildElementsList(ListInner);
-    Storage.SetItemAsStrings('navItems', ListInner);
+    DoCreateElements;
+    ListInner := TIndentTaggedStrings.Create;
+    try
+      BuildElementsList(ListInner);
+      Storage.SetItemAsStrings('navItems', ListInner);
+    finally
+      FreeAndNil(ListInner);
+    end;
   finally
-    FreeAndNil(ListInner);
+    FElements.Clear;
   end;
 end;
 
@@ -149,7 +155,6 @@ constructor TNavBar.Create(AParent: THtmlPage);
 begin
   inherited Create(AParent);
   FElements := TNavBarElementList.Create(True);
-  DoCreateElements;
 end;
 
 destructor TNavBar.Destroy;

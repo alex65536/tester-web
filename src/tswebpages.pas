@@ -189,7 +189,7 @@ end;
 procedure TRegisterHtmlPage.AfterConstruction;
 begin
   inherited AfterConstruction;
-  Title := SRegisterTitle;
+  Title := SUserDoRegister;
 end;
 
 { TLoginHtmlPage }
@@ -203,7 +203,7 @@ end;
 procedure TLoginHtmlPage.AfterConstruction;
 begin
   inherited AfterConstruction;
-  Title := SLoginTitle;
+  Title := SUserDoLogIn;
 end;
 
 { TAuthHtmlPage }

@@ -49,15 +49,6 @@ type
     procedure InternalSatisfy; override;
   end;
 
-  { TProfileTitlePageFeature }
-
-  TProfileTitlePageFeature = class(TUserInfoFeature)
-  protected
-    procedure InternalSatisfy; override;
-  public
-    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
-  end;
-
   { TProfileChangeRoleFeature }
 
   TProfileChangeRoleFeature = class(TUserInfoFeature)
@@ -185,23 +176,6 @@ begin
 end;
 
 procedure TProfileChangeRoleFeature.DependsOn(ADependencies: THtmlPageFeatureList);
-begin
-  inherited DependsOn(ADependencies);
-  ADependencies.Add(TProfilePageFeature);
-end;
-
-{ TProfileTitlePageFeature }
-
-procedure TProfileTitlePageFeature.InternalSatisfy;
-begin
-  with Parent.Variables, Info do
-  begin
-    ItemsAsText['title'] := Format(SProfileOf, [Username]);
-    ItemsAsText['pageHeader'] := Format(SProfileOf, [Username]);
-  end;
-end;
-
-procedure TProfileTitlePageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TProfilePageFeature);

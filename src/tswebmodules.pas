@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, webmodules, tswebnavbars, navbars, htmlpreprocess, fphttp,
   htmlpages, tswebpages, HTTPDefs, users, webstrconsts, authwebmodules,
-  tswebprofilefeatures, tswebpagesbase, tsmiscwebmodules, allusers;
+  tswebprofilefeatures, tswebpagesbase, tsmiscwebmodules, allusers, userpages;
 
 type
 
@@ -284,7 +284,6 @@ end;
 procedure TProfileHtmlPage.AddFeatures;
 begin
   inherited AddFeatures;
-  AddFeature(TProfileTitlePageFeature);
   AddFeature(TProfilePageFeature);
   AddFeature(TProfileChangeRoleFeature);
   AddFeature(TProfileSettingsBtnFeature);
@@ -306,14 +305,17 @@ end;
 
 constructor TProfileHtmlPage.Create;
 begin
-  inherited Create;
-  FUsername := '';
+  Create('');
 end;
 
 constructor TProfileHtmlPage.Create(const AUsername: string);
 begin
   inherited Create;
   FUsername := AUsername;
+  if FUsername = '' then
+    Title := SProfile
+  else
+    Title := Format(SProfileOf, [FUsername]);
 end;
 
 { TNavRegisterPage }
@@ -402,10 +404,36 @@ end;
 { TDefaultNavBar }
 
 procedure TDefaultNavBar.DoCreateElements;
+var
+  User: TUser;
 begin
+  // retreive user
+  if Parent is TUserPage then
+    User := (Parent as TUserPage).User
+  else
+    User := nil;
+  // add main page
   AddElement(SMainPage, '~documentRoot;/main');
-  AddElement(SProblemList, '~documentRoot;/problems');
-  AddElement(SContestList, '~documentRoot;/contests');
+  // add login/register for guests, and profile/logout for users
+  if Parent is TUserPage then
+  begin
+    if User = nil then
+    begin
+      AddElement(SUserDoLogIn, '~documentRoot;/login');
+      AddElement(SUserDoRegister, '~documentRoot;/register');
+    end
+    else
+    begin
+      AddElement(SProfile, '~documentRoot;/profile');
+      AddElement(SUserDoLogOut, '~documentRoot;/logout');
+    end;
+  end;
+  // add contest/problem lists (for editors)
+  if (User <> nil) and (User is TEditorUser) then
+  begin
+    AddElement(SProblemList, '~documentRoot;/problems');
+    AddElement(SContestList, '~documentRoot;/contests');
+  end;
 end;
 
 { TSimpleHtmlPage }

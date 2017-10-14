@@ -85,8 +85,6 @@ resourcestring
   SAuthFirstNamePrompt = 'Enter first name';
   SAuthLastName = 'Last name:';
   SAuthLastNamePrompt = 'Enter last name';
-  SLoginTitle = 'Log in';
-  SRegisterTitle = 'Register';
   SConfirmPasswordTitle = 'Password confirmation';
   SLoginRequest = 'To log into the system, please fill in the following form.';
   SLoginSubmit = 'Log in';
@@ -103,6 +101,7 @@ resourcestring
   SProfileUserNameKey = 'Username:';
   SProfileRealNameKey = 'Real name:';
   SProfileUserRoleKey = 'User role:';
+  SProfile = 'Profile';
   SProfileOf = 'Profile of %s';
   SProfileRegisterTimeKey = 'Registered at:';
   SProfileLoginTimeLey = 'Last visit at:';

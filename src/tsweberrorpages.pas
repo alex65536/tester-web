@@ -26,7 +26,7 @@ interface
 
 uses
   SysUtils, tswebpagesbase, tswebfeatures, htmlpreprocess, webstrconsts,
-  errorpages, navbars, tswebmodules;
+  errorpages, tswebmodules;
 
 type
 
@@ -39,33 +39,20 @@ type
 
   { TTesterErrorPage }
 
-  TTesterErrorPage = class(TErrorHtmlPage, IPageNavBar)
-  private
-    FNavBar: TNavBar;
+  TTesterErrorPage = class(TErrorHtmlPage)
   protected
-    function GetNavBar: TNavBar;
     procedure AddFeatures; override;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
-  public
-    procedure Clear; override;
-    constructor Create; override;
-    destructor Destroy; override;
   end;
 
 implementation
 
 { TTesterErrorPage }
 
-function TTesterErrorPage.GetNavBar: TNavBar;
-begin
-  Result := FNavBar;
-end;
-
 procedure TTesterErrorPage.AddFeatures;
 begin
   inherited AddFeatures;
   AddFeature(THeaderFeature);
-  AddFeature(TNavBarFeature);
   AddFeature(TErrorPageFeature);
   AddFeature(TFooterFeature);
 end;
@@ -73,24 +60,6 @@ end;
 procedure TTesterErrorPage.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
   Strings.LoadFromFile(TemplateLocation('', 'skeleton'));
-end;
-
-procedure TTesterErrorPage.Clear;
-begin
-  inherited Clear;
-  FNavBar.Clear;
-end;
-
-constructor TTesterErrorPage.Create;
-begin
-  inherited Create;
-  FNavBar := TDefaultNavBar.Create(Self);
-end;
-
-destructor TTesterErrorPage.Destroy;
-begin
-  FreeAndNil(FNavBar);
-  inherited Destroy;
 end;
 
 { TErrorPageFeature }
