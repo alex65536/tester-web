@@ -135,6 +135,7 @@ type
 
   TProblemSubmissionsWebModule = class(TEditableObjectPostWebModule)
   protected
+    function NeedAccessRights: TEditableAccessRightsSet; override;
     function Inside: boolean; override;
     function HookClass: TEditableModuleHookClass; override;
     function DoCreatePage: THtmlPage; override;
@@ -166,6 +167,11 @@ begin
 end;
 
 { TProblemSubmissionsWebModule }
+
+function TProblemSubmissionsWebModule.NeedAccessRights: TEditableAccessRightsSet;
+begin
+  Result := AccessCanWriteSet;
+end;
 
 function TProblemSubmissionsWebModule.Inside: boolean;
 begin

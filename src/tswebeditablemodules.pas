@@ -35,6 +35,7 @@ type
   IEditableWebModule = interface
     ['{3930B3B7-0A9F-41AF-929A-D416E801EE75}']
     function Manager: TEditableManager;
+    function NeedAccessRights: TEditableAccessRightsSet;
   end;
 
   IEditableModuleHook = interface
@@ -50,11 +51,14 @@ type
   TEditableNoAccessHandler = class(TWebModuleHandler)
   private
     FBehaviour: TEditableNoAccessHandlerBehaviour;
+    FNeedAccessRigths: TEditableAccessRightsSet;
   public
     property Behaviour: TEditableNoAccessHandlerBehaviour read FBehaviour;
+    property NeedAccessRigths: TEditableAccessRightsSet read FNeedAccessRigths;
     procedure HandleRequest({%H-}ARequest: TRequest; AResponse: TResponse;
       var Handled: boolean); override;
-    constructor Create(ABehaviour: TEditableNoAccessHandlerBehaviour);
+    constructor Create(ABehaviour: TEditableNoAccessHandlerBehaviour;
+      ANeedAccessRigths: TEditableAccessRightsSet);
   end;
 
   { TEditableModuleHook }
@@ -63,6 +67,8 @@ type
   private
     FParent: THtmlPageWebModule;
     FInside: boolean;
+  protected
+    function NeedAccessRights: TEditableAccessRightsSet;
   public
     property Parent: THtmlPageWebModule read FParent;
     property Inside: boolean read FInside;
@@ -152,6 +158,7 @@ type
 
   TEditableEditWebModule = class(TEditableObjectPostWebModule)
   protected
+    function NeedAccessRights: TEditableAccessRightsSet; override;
     procedure DoInsideEdit(ATransaction: TEditableTransaction); virtual;
     procedure DoHandlePost({%H-}ARequest: TRequest); override;
   end;
@@ -226,6 +233,11 @@ begin
 end;
 
 { TEditableEditWebModule }
+
+function TEditableEditWebModule.NeedAccessRights: TEditableAccessRightsSet;
+begin
+  Result := AccessCanWriteSet;
+end;
 
 procedure TEditableEditWebModule.DoInsideEdit(ATransaction: TEditableTransaction);
 begin
@@ -378,6 +390,11 @@ end;
 
 { TEditableModuleHook }
 
+function TEditableModuleHook.NeedAccessRights: TEditableAccessRightsSet;
+begin
+  Result := (Parent as IEditableWebModule).NeedAccessRights;
+end;
+
 function TEditableModuleHook.EditableObject: TEditableObject;
 begin
   if not Inside then
@@ -395,7 +412,7 @@ end;
 procedure TEditableModuleHook.BeginAddHandlers;
 begin
   if Inside then
-    Parent.Handlers.Add(TEditableNoAccessHandler.Create(ahbError));
+    Parent.Handlers.Add(TEditableNoAccessHandler.Create(ahbError, NeedAccessRights));
 end;
 
 procedure TEditableModuleHook.EndAddHandlers;
@@ -404,7 +421,7 @@ begin
   // first to throw away users that have no access
   // second to redirect self-deleted ones
   if Inside then
-    Parent.Handlers.Add(TEditableNoAccessHandler.Create(ahbRedirect));
+    Parent.Handlers.Add(TEditableNoAccessHandler.Create(ahbRedirect, NeedAccessRights));
   Parent.Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create(EditorsSet));
 end;
 
@@ -422,7 +439,7 @@ var
   Hook: TEditableModuleHook;
   EditableObject: TEditableObject;
   User: TEditorUser;
-  Redirect: boolean;
+  Good: boolean;
 
   procedure SendRedirect;
   begin
@@ -433,12 +450,12 @@ var
 
 begin
   Hook := (Parent as IEditableModuleHook).Hook;
-  Redirect := False;
+  Good := True;
   try
     EditableObject := Hook.EditableObject;
     try
       User := (Parent as IUserWebModule).User as TEditorUser;
-      Redirect := EditableObject.GetAccessRights(User) = erNone;
+      Good := EditableObject.GetAccessRights(User) in NeedAccessRigths;
     finally
       FreeAndNil(EditableObject);
     end;
@@ -448,12 +465,12 @@ begin
       if Behaviour = ahbError then
         raise
       else
-        Redirect := True;
+        Good := False;
     end
     else
       raise;
   end;
-  if Redirect then
+  if not Good then
   begin
     case Behaviour of
       ahbError: raise EEditableAccessDenied.Create(SAccessDenied);
@@ -462,10 +479,12 @@ begin
   end;
 end;
 
-constructor TEditableNoAccessHandler.Create(ABehaviour: TEditableNoAccessHandlerBehaviour);
+constructor TEditableNoAccessHandler.Create(ABehaviour: TEditableNoAccessHandlerBehaviour;
+  ANeedAccessRigths: TEditableAccessRightsSet);
 begin
   inherited Create;
   FBehaviour := ABehaviour;
+  FNeedAccessRigths := ANeedAccessRigths;
 end;
 
 end.
