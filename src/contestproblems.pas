@@ -50,6 +50,7 @@ type
 
   TContestProblemSubmissionSession = class(TProblemSubmissionSession)
   protected
+    function ContestAccessLevel(AProblem: TContestProblem): TEditableAccessRights;
     function DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
       override;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
@@ -65,6 +66,7 @@ type
 
   TContestTestProblemTransaction = class(TTestProblemTransaction)
   protected
+    function ContestAccessLevel: TEditableAccessRights;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
   public
@@ -277,6 +279,14 @@ begin
   Result := (EditableObject as TContestProblem).Contest;
 end;
 
+function TContestTestProblemTransaction.ContestAccessLevel: TEditableAccessRights;
+begin
+  if (User is TEditorUser) and (Contest <> nil) then
+    Result := Contest.GetAccessRights(User as TEditorUser)
+  else
+    Result := erNone;
+end;
+
 constructor TContestTestProblemTransaction.Create(AManager: TEditableManager;
   AUser: TUser; AObject: TEditableObject);
 begin
@@ -285,30 +295,42 @@ end;
 
 function TContestTestProblemTransaction.CanTestProblem: boolean;
 begin
+  // inherit access
   Result := inherited CanTestProblem;
   if Result then
     Exit;
+  // for contest setters
+  if ContestAccessLevel in AccessCanReadSet then
+    Exit(True);
+  // for participants
   if Contest <> nil then
     Result := Contest.ParticipantCanSubmit(User.Info);
 end;
 
 function TContestTestProblemTransaction.CanReadData: boolean;
-var
-  CanReadAsSetter, CanReadAsParticipant: boolean;
 begin
+  // inherit access
   Result := inherited CanReadData;
   if Result then
     Exit;
+  // for contest setters
+  if ContestAccessLevel in AccessCanReadSet then
+    Exit(True);
+  // for participants
   if Contest <> nil then
-  begin
-    CanReadAsSetter := (User is TEditorUser) and
-      (Contest.GetAccessRights(User.Info) in AccessCanReadSet);
-    CanReadAsParticipant := Contest.ParticipantCanView(User.Info);
-    Result := CanReadAsSetter or CanReadAsParticipant;
-  end;
+    Result := Contest.ParticipantCanView(User.Info);
 end;
 
 { TContestProblemSubmissionSession }
+
+function TContestProblemSubmissionSession.ContestAccessLevel(
+  AProblem: TContestProblem): TEditableAccessRights;
+begin
+  if (User is TEditorUser) and (AProblem.Contest <> nil) then
+    Result := AProblem.Contest.GetAccessRights(User as TEditorUser)
+  else
+    Result := erNone;
+end;
 
 function TContestProblemSubmissionSession.DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
 var
@@ -337,10 +359,19 @@ function TContestProblemSubmissionSession.CanReadSubmission(AProblem: TTestableP
   AOwner: TUserInfo): boolean;
 var
   Contest: TBaseContest;
+  ContestAccess: TEditableAccessRights;
 begin
+  // inherit access
   Result := inherited CanReadSubmission(AProblem, AOwner);
   if Result then
     Exit;
+  // for contest setters
+  ContestAccess := ContestAccessLevel(AProblem as TContestProblem);
+  if (ContestAccess in AccessCanReadSet) and (AOwner.ID = User.ID) then
+    Exit(True);
+  if ContestAccess in AccessCanWriteSet then
+    Exit(True);
+  // for participants
   if AOwner.ID = User.ID then
   begin
     Contest := (AProblem as TContestProblem).Contest;
@@ -351,15 +382,13 @@ end;
 
 function TContestProblemSubmissionSession.CanRejudgeSubmission(
   AProblem: TTestableProblem): boolean;
-var
-  Contest: TBaseContest;
 begin
+  // inherit access
   Result := inherited CanRejudgeSubmission(AProblem);
   if Result then
     Exit;
-  Contest := (AProblem as TContestProblem).Contest;
-  if (Contest <> nil) and (User is TEditorUser) then
-    Result := Contest.GetAccessRights(User as TEditorUser) in AccessCanWriteSet;
+  // for contest setters (with write access!)
+  Result := ContestAccessLevel(AProblem as TContestProblem) in AccessCanWriteSet;
 end;
 
 function TContestProblemSubmissionSession.ListByContest(AContest: TBaseContest): TIdList;
