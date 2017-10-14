@@ -72,7 +72,6 @@ type
 
   TThreadedHttpApplication = class(TCustomApplication)
   private
-    FServerActive: boolean;
     FOnIdle: TNotifyEvent;
     FServerThread: THttpApplicationHandlerThread;
     function GetDefaultModuleName: string;
@@ -86,6 +85,7 @@ type
   public
     property OnIdle: TNotifyEvent read FOnIdle write FOnIdle;
     property DefaultModuleName: string read GetDefaultModuleName write SetDefaultModuleName;
+    procedure Initialize; override;
     procedure Terminate(AExitCode: Integer); override;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -113,8 +113,17 @@ end;
 { TThreadedHttpApplication }
 
 procedure TThreadedHttpApplication.ServerTerminated(Sender: TObject);
+var
+  Thread: THttpApplicationHandlerThread;
 begin
-  FServerActive := False;
+  Thread := Sender as THttpApplicationHandlerThread;
+  if Thread.FatalException = nil then
+    Terminate(0)
+  else
+  begin
+    ShowException(Thread.FatalException as Exception);
+    Terminate(1);
+  end;
 end;
 
 function TThreadedHttpApplication.GetDefaultModuleName: string;
@@ -132,14 +141,9 @@ end;
 procedure TThreadedHttpApplication.DoRun;
 begin
   inherited DoRun;
-  FServerActive := True;
-  FServerThread.Start;
-  while FServerActive do
-  begin
-    DoIdle;
-    CheckSynchronize;
-    Sleep(1);
-  end;
+  DoIdle;
+  CheckSynchronize;
+  Sleep(1);
 end;
 
 procedure TThreadedHttpApplication.SetTitle(const AValue: string);
@@ -154,10 +158,17 @@ begin
     FOnIdle(Self);
 end;
 
+procedure TThreadedHttpApplication.Initialize;
+begin
+  inherited Initialize;
+  FServerThread.Start;
+end;
+
 procedure TThreadedHttpApplication.Terminate(AExitCode: Integer);
 begin
+  if not Terminated then
+    FServerThread.Terminate;
   inherited Terminate(AExitCode);
-  FServerThread.Terminate;
 end;
 
 constructor TThreadedHttpApplication.Create(AOwner: TComponent);
@@ -170,6 +181,7 @@ begin
     OnLog := @Self.Log;
     Address := Config.Server_Address;
     Port := Config.Server_Port;
+    QueueSize := Config.Server_QueueSize;
     PreferModuleName := True;
   end;
 end;
@@ -206,8 +218,8 @@ end;
 
 destructor THttpApplicationHandlerThread.Destroy;
 begin
-  FreeAndNil(FWebHandler);
   inherited Destroy;
+  FreeAndNil(FWebHandler);
 end;
 
 { TThreadedHttpHandler }

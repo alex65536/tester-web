@@ -66,6 +66,7 @@ type
     function GetProblem_DefaultPropsFile: string;
     function GetServer_Address: string;
     function GetServer_Port: integer;
+    function GetServer_QueueSize: integer;
     function GetSession_AliveTimeMinutes: integer;
     function GetSession_IDLength: integer;
     function GetSession_TokenLength: integer;
@@ -78,6 +79,7 @@ type
     function GetStrings_MinTitleLength: integer;
     function GetTesting_MaxPoolSize: integer;
   protected
+    property Storage: TAbstractDataStorage read FStorage;
     procedure FPOObservedChanged(ASender: TObject; Operation: TFPObservedOperation;
       Data: Pointer);
     procedure DefaultSettings; virtual;
@@ -130,6 +132,7 @@ type
     // server settings
     property Server_Address: string read GetServer_Address;
     property Server_Port: integer read GetServer_Port;
+    property Server_QueueSize: integer read GetServer_QueueSize;
 
     // testing options
     property Testing_MaxPoolSize: integer read GetTesting_MaxPoolSize;
@@ -280,6 +283,11 @@ begin
   Result := FStorage.ReadInteger('server.port', 8080);
 end;
 
+function TTesterServerConfig.GetServer_QueueSize: integer;
+begin
+  Result := FStorage.ReadInteger('server.queueSize', 5);
+end;
+
 function TTesterServerConfig.GetSession_AliveTimeMinutes: integer;
 begin
   Result := FStorage.ReadInteger('session.aliveTimeMinutes', 60);
@@ -297,7 +305,7 @@ end;
 
 function TTesterServerConfig.GetStorages_CommitIntervalSeconds: integer;
 begin
-  Result := FStorage.ReadInteger('storages.commitIntervalSeconds', 30);
+  Result := FStorage.ReadInteger('storages.commitIntervalSeconds', 60);
 end;
 
 function TTesterServerConfig.GetStrings_MaxNameLength: integer;
@@ -385,6 +393,7 @@ begin
 
     WriteString('server.address', Server_Address);
     WriteInteger('server.port', Server_Port);
+    WriteInteger('server.queueSize', Server_QueueSize);
 
     WriteInteger('testing.maxPoolSize', Testing_MaxPoolSize);
 
