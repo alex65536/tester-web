@@ -103,6 +103,15 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TContestProblemsFeature }
+
+  TContestProblemsFeature = class(TEditableTransactionPageFeature)
+  protected
+    procedure InternalSatisfy; override;
+  public
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
   { TContestParticipantButtonFeature }
 
   TContestParticipantButtonFeature = class(TEditableNavButtonFeature)
@@ -140,6 +149,26 @@ type
   end;
 
 implementation
+
+{ TContestProblemsFeature }
+
+procedure TContestProblemsFeature.InternalSatisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['contentHeaderText'] := SContestProblemsText;
+  end;
+  LoadPagePart('contest', 'contestProblems', 'content');
+end;
+
+procedure TContestProblemsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TPostDataFeature);
+  ADependencies.Add(TContentFeature);
+  ADependencies.Add(TContestButtonsFeature);
+  ADependencies.Add(TEditablePageTitleFeature);
+end;
 
 { TContestProblemsBtnFeature }
 

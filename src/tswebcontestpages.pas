@@ -106,7 +106,22 @@ type
     procedure AddFeatures; override;
   end;
 
+  { TContestProblemsPage }
+
+  TContestProblemsPage = class(TContestPostHtmlPage)
+  protected
+    procedure AddFeatures; override;
+  end;
+
 implementation
+
+{ TContestProblemsPage }
+
+procedure TContestProblemsPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TContestProblemsFeature);
+end;
 
 { TContestParticipantPage }
 

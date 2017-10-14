@@ -106,7 +106,27 @@ type
     function HookClass: TEditableModuleHookClass; override;
   end;
 
+  { TContestProblemsWebModule }
+
+  TContestProblemsWebModule = class(TEditableObjectPostWebModule)
+  protected
+    function DoCreatePage: THtmlPage; override;
+    function HookClass: TEditableModuleHookClass; override;
+  end;
+
 implementation
+
+{ TContestProblemsWebModule }
+
+function TContestProblemsWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TContestProblemsPage.Create;
+end;
+
+function TContestProblemsWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TContestModuleHook;
+end;
 
 { TContestParticipantsWebModule }
 
@@ -299,6 +319,7 @@ initialization
   RegisterHTTPModule('contest-edit', TContestEditWebModule, True);
   RegisterHTTPModule('contest-settings', TContestSettingsWebModule, True);
   RegisterHTTPModule('contest-participants', TContestParticipantsWebModule, True);
+  RegisterHTTPModule('contest-problems', TContestProblemsWebModule, True);
 
 end.
 
