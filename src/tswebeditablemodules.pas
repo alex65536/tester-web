@@ -43,12 +43,18 @@ type
   end;
   {$interfaces COM}
 
-  { TEditableRedirectIfNoAccessHandler }
+  TEditableNoAccessHandlerBehaviour = (ahbError, ahbRedirect);
 
-  TEditableRedirectIfNoAccessHandler = class(TWebModuleHandler)
+  { TEditableNoAccessHandler }
+
+  TEditableNoAccessHandler = class(TWebModuleHandler)
+  private
+    FBehaviour: TEditableNoAccessHandlerBehaviour;
   public
+    property Behaviour: TEditableNoAccessHandlerBehaviour read FBehaviour;
     procedure HandleRequest({%H-}ARequest: TRequest; AResponse: TResponse;
       var Handled: boolean); override;
+    constructor Create(ABehaviour: TEditableNoAccessHandlerBehaviour);
   end;
 
   { TEditableModuleHook }
@@ -389,16 +395,16 @@ end;
 procedure TEditableModuleHook.BeginAddHandlers;
 begin
   if Inside then
-    Parent.Handlers.Add(TEditableRedirectIfNoAccessHandler.Create);
+    Parent.Handlers.Add(TEditableNoAccessHandler.Create(ahbError));
 end;
 
 procedure TEditableModuleHook.EndAddHandlers;
 begin
-  // we need two redirectors
-  // first to redirect back users that have no access
+  // we need two NoAccessHandlers
+  // first to throw away users that have no access
   // second to redirect self-deleted ones
   if Inside then
-    Parent.Handlers.Add(TEditableRedirectIfNoAccessHandler.Create);
+    Parent.Handlers.Add(TEditableNoAccessHandler.Create(ahbRedirect));
   Parent.Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create(EditorsSet));
 end;
 
@@ -408,15 +414,23 @@ begin
   FInside := AInside;
 end;
 
-{ TEditableRedirectIfNoAccessHandler }
+{ TEditableNoAccessHandler }
 
-procedure TEditableRedirectIfNoAccessHandler.HandleRequest(ARequest: TRequest;
+procedure TEditableNoAccessHandler.HandleRequest(ARequest: TRequest;
   AResponse: TResponse; var Handled: boolean);
 var
   Hook: TEditableModuleHook;
   EditableObject: TEditableObject;
   User: TEditorUser;
   Redirect: boolean;
+
+  procedure SendRedirect;
+  begin
+    AResponse.Location := Hook.ObjectsRoot;
+    AResponse.Code := 303;
+    Handled := True;
+  end;
+
 begin
   Hook := (Parent as IEditableModuleHook).Hook;
   Redirect := False;
@@ -430,16 +444,28 @@ begin
     end;
   except
     on E: EEditableAction do
-      Redirect := True
+    begin
+      if Behaviour = ahbError then
+        raise
+      else
+        Redirect := True;
+    end
     else
       raise;
   end;
   if Redirect then
   begin
-    AResponse.Location := Hook.ObjectsRoot;
-    AResponse.Code := 303;
-    Handled := True;
+    case Behaviour of
+      ahbError: raise EEditableAccessDenied.Create(SAccessDenied);
+      ahbRedirect: SendRedirect;
+    end;
   end;
+end;
+
+constructor TEditableNoAccessHandler.Create(ABehaviour: TEditableNoAccessHandlerBehaviour);
+begin
+  inherited Create;
+  FBehaviour := ABehaviour;
 end;
 
 end.
