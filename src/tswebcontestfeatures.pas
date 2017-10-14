@@ -113,6 +113,16 @@ type
     procedure InternalSatisfy; override;
   end;
 
+  { TContestProblemsBtnFeature }
+
+  TContestProblemsBtnFeature = class(TEditableNavButtonFeature)
+  protected
+    function Enabled: boolean; override;
+    function PagePartDir: string; override;
+    function PagePartName: string; override;
+    procedure InternalSatisfy; override;
+  end;
+
   { TContestButtonsFeature }
 
   TContestButtonsFeature = class(TTesterPageFeature)
@@ -130,6 +140,29 @@ type
   end;
 
 implementation
+
+{ TContestProblemsBtnFeature }
+
+function TContestProblemsBtnFeature.Enabled: boolean;
+begin
+  Result := True;
+end;
+
+function TContestProblemsBtnFeature.PagePartDir: string;
+begin
+  Result := 'contest';
+end;
+
+function TContestProblemsBtnFeature.PagePartName: string;
+begin
+  Result := 'contestProblemsBtn';
+end;
+
+procedure TContestProblemsBtnFeature.InternalSatisfy;
+begin
+  inherited InternalSatisfy;
+  Parent.Variables.ItemsAsText['editableReserved2Btn'] := '~+#contestProblemsBtn;';
+end;
 
 { TContestParticipantFeature }
 
@@ -229,6 +262,7 @@ begin
   with Parent.Variables do
   begin
     ItemsAsText['contestParticipantsText'] := SContestParticipantsText;
+    ItemsAsText['contestProblemsText'] := SContestProblemsText;
   end;
 end;
 
@@ -236,6 +270,7 @@ procedure TContestButtonsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
 begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TContestParticipantButtonFeature);
+  ADependencies.Add(TContestProblemsBtnFeature);
   ADependencies.Add(TEditableButtonsFeature);
 end;
 
@@ -366,6 +401,7 @@ begin
     ItemsAsText['editableAccessRef'] := 'contest-access';
     ItemsAsText['editableSettingsRef'] := 'contest-settings';
     ItemsAsText['contestParticipantsRef'] := 'contest-participants';
+    ItemsAsText['contestProblemsRef'] := 'contest-problems';
   end;
 end;
 

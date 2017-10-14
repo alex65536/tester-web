@@ -334,6 +334,7 @@ resourcestring
   SProblemAlreadyAdded = 'Problem "%s" is already added!';
   SUnableMoveProblemUp = 'Unable to move the problem up.';
   SUnableMoveProblemDown = 'Unable to move the problem down.';
+  SContestProblemsText = 'Problems';
 
 implementation
 
