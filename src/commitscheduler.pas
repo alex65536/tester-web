@@ -50,6 +50,7 @@ type
     procedure AttachStorage(AStorage: TAbstractDataStorage);
     procedure DetachStorage(AStorage: TAbstractDataStorage);
     procedure CheckCommit;
+    procedure BackUp;
     constructor Create;
     destructor Destroy; override;
   end;
@@ -122,7 +123,18 @@ end;
 procedure TCommitScheduler.CheckCommit;
 begin
   if CanCommit then
+  begin
+    BackUp;
     CommitAll;
+  end;
+end;
+
+procedure TCommitScheduler.BackUp;
+var
+  I: integer;
+begin
+  for I := 0 to FStorages.Count - 1 do
+    FStorages[I].BackUp;
 end;
 
 constructor TCommitScheduler.Create;

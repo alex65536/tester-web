@@ -27,7 +27,7 @@ unit datastorages;
 interface
 
 uses
-  Classes, SysUtils, IniFiles, LazFileUtils, Laz2_DOM, Laz2_XMLRead,
+  Classes, SysUtils, IniFiles, FileUtil, LazFileUtils, Laz2_DOM, Laz2_XMLRead,
   Laz2_XMLWrite, AvgLvlTree, escaping, tswebdirectories;
 
 const
@@ -60,6 +60,7 @@ type
     procedure WriteString(const Path: string; const Value: string); virtual;
     procedure WriteBool(const Path: string; Value: boolean); virtual;
     procedure WriteFloat(const Path: string; Value: double); virtual;
+    procedure BackUp; virtual; abstract;
     procedure Commit; virtual;
     procedure Reload; virtual;
     constructor Create(const AStoragePath: string);
@@ -70,8 +71,15 @@ type
   { TFileDataStorage }
 
   TFileDataStorage = class(TAbstractDataStorage)
+  private
+    function ExpandDir(const ADirName: string): string;
   protected
-    function GetFileName: string; virtual;
+    function GetFileExt: string; virtual; abstract;
+    function GetFileName: string;
+    function GetBackupFileName: string;
+    function GetSecondBackupFileName: string;
+  public
+    procedure BackUp; override;
   end;
 
   { TIniDataStorage }
@@ -88,7 +96,7 @@ type
     procedure RemoveSectionIfEmpty(const Section: string);
     procedure RemoveEmptySections;
   protected
-    function GetFileName: string; override;
+    function GetFileExt: string; override;
     function GetAllChildren(const Path: string): TStringList;
   public
     function GetRootElements: TStringList; override;
@@ -125,7 +133,7 @@ type
     function RootElement: TDOMElement;
     procedure LoadDocument;
   protected
-    function GetFileName: string; override;
+    function GetFileExt: string; override;
     function GetChildElements(ARoot: TDOMElement): TStringList;
   public
     function GetRootElements: TStringList; override;
@@ -153,16 +161,39 @@ implementation
 
 { TFileDataStorage }
 
+function TFileDataStorage.ExpandDir(const ADirName: string): string;
+begin
+  Result := AppendPathDelim(ExpandInternalDirLocation(ADirName))
+end;
+
 function TFileDataStorage.GetFileName: string;
 begin
-  Result := AppendPathDelim(ExpandInternalDirLocation('data')) + StoragePath + '.db';
+  Result := ExpandDir('data') + StoragePath + GetFileExt;
+end;
+
+function TFileDataStorage.GetBackupFileName: string;
+begin
+  Result := ExpandDir('data.bak') + StoragePath + GetFileExt;
+end;
+
+function TFileDataStorage.GetSecondBackupFileName: string;
+begin
+  Result := ExpandDir('data.bak2') + StoragePath + GetFileExt;
+end;
+
+procedure TFileDataStorage.BackUp;
+begin
+  inherited BackUp;
+  RemoveDirUTF8(GetSecondBackupFileName);
+  RenameFileUTF8(GetBackupFileName, GetSecondBackupFileName);
+  CopyFile(GetFileName, GetBackupFileName, True);
 end;
 
 { TXmlDataStorage }
 
-function TXmlDataStorage.GetFileName: string;
+function TXmlDataStorage.GetFileExt: string;
 begin
-  Result := ChangeFileExt(inherited GetFileName, '.xml');
+  Result := '.xml';
 end;
 
 function TXmlDataStorage.GetChildElements(ARoot: TDOMElement): TStringList;
@@ -445,9 +476,9 @@ begin
   end;
 end;
 
-function TIniDataStorage.GetFileName: string;
+function TIniDataStorage.GetFileExt: string;
 begin
-  Result := ChangeFileExt(inherited GetFileName, '.ini');
+  Result := '.ini';
 end;
 
 function TIniDataStorage.GetAllChildren(const Path: string): TStringList;

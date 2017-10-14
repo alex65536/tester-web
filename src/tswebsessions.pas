@@ -339,5 +339,6 @@ end;
 
 initialization
   SessionFactoryClass := TTesterWebSessionFactory;
+  SessionFactory;
 
 end.
