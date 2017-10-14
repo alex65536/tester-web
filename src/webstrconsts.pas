@@ -336,6 +336,17 @@ resourcestring
   SUnableMoveProblemDown = 'Unable to move the problem down.';
   SContestProblemsText = 'Problems';
   SUnableDeleteProblem = 'Unable to delete the problem.';
+  SActionUpCaption = 'Up';
+  SActionDownCaption = 'Down';
+  SActionDeleteCaption = 'Delete';
+  SContestProblemNumberHeader = '#';
+  SContestProblemNameHeader = 'Name';
+  SContestProblemTitleHeader = 'Title';
+  SContestProblemActionsHeader = 'Actions';
+  SContestAddProblem = 'Add problem:';
+  SContestAddProblemPrompt = 'Enter problem name to add';
+  SContestAddProblemBtn = 'Add';
+  SProblemNotExist = 'Problem with name "%s" doesn''t exist!';
 
 implementation
 

@@ -521,5 +521,10 @@ input[type=number].d-4 {
 
 
 td.contest-actions {
+	display: flex;
 	white-space: nowrap;
+}
+td.contest-actions button {
+	margin-left: 3pt;
+	margin-right: 3pt;
 }

@@ -293,12 +293,19 @@ begin
 end;
 
 function TContestTestProblemTransaction.CanReadData: boolean;
+var
+  CanReadAsSetter, CanReadAsParticipant: boolean;
 begin
   Result := inherited CanReadData;
   if Result then
     Exit;
   if Contest <> nil then
-    Result := Contest.ParticipantCanView(User.Info);
+  begin
+    CanReadAsSetter := (User is TEditorUser) and
+      (Contest.GetAccessRights(User.Info) in AccessCanReadSet);
+    CanReadAsParticipant := Contest.ParticipantCanView(User.Info);
+    Result := CanReadAsSetter or CanReadAsParticipant;
+  end;
 end;
 
 { TContestProblemSubmissionSession }

@@ -153,11 +153,33 @@ implementation
 { TContestProblemsFeature }
 
 procedure TContestProblemsFeature.InternalSatisfy;
+var
+  List: TContestProblemList;
 begin
+  // set variables
   with Parent.Variables do
   begin
     ItemsAsText['contentHeaderText'] := SContestProblemsText;
   end;
+  // load "add problem" form (if necessary)
+  if Transaction.CanWriteData then
+  begin
+    with Parent.Variables do
+    begin
+      ItemsAsText['contestAddProblem'] := SContestAddProblem;
+      ItemsAsText['contestAddProblemPrompt'] := SContestAddProblemPrompt;
+      ItemsAsText['contestAddProblemBtn'] := SContestAddProblemBtn;
+    end;
+    LoadPagePart('contest', 'contestProblemAdd');
+  end;
+  // load problem list
+  List := TContestProblemList.Create(Parent, Transaction as TContestTransaction);
+  try
+    Parent.AddElementPagePart('contestProblemList', List);
+  finally
+    FreeAndNil(List);
+  end;
+  // load page template
   LoadPagePart('contest', 'contestProblems', 'content');
 end;
 

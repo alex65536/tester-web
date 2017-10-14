@@ -82,6 +82,7 @@ type
     function GetEndTime: TDateTime;
     function GetProblemCount: integer;
     function GetProblemNames(I: integer): string;
+    function GetProblemTitles(I: integer): string;
     function GetStatus: TContestStatus;
   protected
     property ProblemList: TStringList read FProblemList;
@@ -101,6 +102,7 @@ type
     property ScoringPolicy: TContestScoringPolicy read FScoringPolicy write FScoringPolicy;
     property AllowUpsolving: boolean read FAllowUpsolving write FAllowUpsolving;
     property ProblemNames[I: integer]: string read GetProblemNames;
+    property ProblemTitles[I: integer]: string read GetProblemTitles;
     property ProblemCount: integer read GetProblemCount;
     function GetProblem(AIndex: integer): TContestProblem;
     function CanAddProblem(const AProblemName: string): boolean; virtual;
@@ -212,6 +214,8 @@ type
     function ProblemManager: TContestProblemManager; virtual; abstract;
     function SubmissionManager: TContestSubmissionManager; virtual; abstract;
     function CreateManagerSession(AUser: TUser): TEditableManagerSession; override;
+    constructor Create;
+    destructor Destroy; override;
   end;
 
 function ScoringPolicyToStr(APolicy: TContestScoringPolicy): string;
@@ -273,7 +277,9 @@ end;
 
 function TContestProblemList.ProblemByIndexKeyName(AIndex: integer): string;
 begin
-  Result := ProblemsByIndexSectionName + '.' + IntToStr(AIndex);
+  // "idx" before index is a temporary (?) workaround.
+  // TODO : Determine what to do with keys starting with digits!!!
+  Result := ProblemsByIndexSectionName + '.idx' + IntToStr(AIndex);
 end;
 
 function TContestProblemList.ProblemCountKeyName: string;
@@ -374,6 +380,24 @@ begin
   Result := FProblemList.Strings[I];
 end;
 
+function TBaseContestTransaction.GetProblemTitles(I: integer): string;
+var
+  Problem: TContestProblem;
+  Transaction: TContestTestProblemTransaction;
+begin
+  Problem := GetProblem(I);
+  try
+    Transaction := Problem.CreateTestTransaction(User) as TContestTestProblemTransaction;
+    try
+      Result := Transaction.Title;
+    finally
+      FreeAndNil(Transaction);
+    end;
+  finally
+    FreeAndNil(Problem);
+  end;
+end;
+
 function TBaseContestTransaction.GetContest: TContest;
 begin
   Result := EditableObject as TContest;
@@ -447,17 +471,19 @@ end;
 function TBaseContestTransaction.CanAddProblem(const AProblemName: string): boolean;
 begin
   with Contest.ProblemManager do
-    Result := GetAccessRights(AProblemName, User.Info) in AccessCanReadSet;
+    Result := CanWriteData and (GetAccessRights(AProblemName, User.Info) in AccessCanReadSet);
 end;
 
 procedure TBaseContestTransaction.AddProblem(const AProblemName: string;
   AIndex: integer);
 begin
   // validate
-  if not CanAddProblem(AProblemName) then
-    raise EContestAccessDenied.Create(SAccessDenied);
+  if not Contest.ProblemManager.ObjectExists(AProblemName) then
+    raise EContestValidate.CreateFmt(SProblemNotExist, [AProblemName]);
   if ProblemList.IndexOf(AProblemName) >= 0 then
     raise EContestValidate.CreateFmt(SProblemAlreadyAdded, [AProblemName]);
+  if not CanAddProblem(AProblemName) then
+    raise EContestAccessDenied.Create(SAccessDenied);
   // add problem
   if AIndex < 0 then
     ProblemList.Add(AProblemName)
@@ -467,7 +493,7 @@ end;
 
 function TBaseContestTransaction.CanDeleteProblem(AIndex: integer): boolean;
 begin
-  Result := (AIndex >= 0) and (AIndex < ProblemList.Count);
+  Result := CanWriteData and (AIndex >= 0) and (AIndex < ProblemList.Count);
 end;
 
 procedure TBaseContestTransaction.DeleteProblem(AIndex: integer);
@@ -479,7 +505,7 @@ end;
 
 function TBaseContestTransaction.CanMoveProblemUp(AIndex: integer): boolean;
 begin
-  Result := (AIndex > 0) and (AIndex < ProblemList.Count);
+  Result := CanWriteData and (AIndex > 0) and (AIndex < ProblemList.Count);
 end;
 
 procedure TBaseContestTransaction.MoveProblemUp(AIndex: integer);
@@ -491,7 +517,7 @@ end;
 
 function TBaseContestTransaction.CanMoveProblemDown(AIndex: integer): boolean;
 begin
-  Result := (AIndex >= 0) and (AIndex + 1 < ProblemList.Count);
+  Result := CanWriteData and (AIndex >= 0) and (AIndex + 1 < ProblemList.Count);
 end;
 
 procedure TBaseContestTransaction.MoveProblemDown(AIndex: integer);
@@ -588,6 +614,19 @@ end;
 function TContestManager.CreateManagerSession(AUser: TUser): TEditableManagerSession;
 begin
   Result := TContestManagerSession.Create(Self, AUser);
+end;
+
+constructor TContestManager.Create;
+begin
+  inherited Create;
+  ProblemManager.Subscribe(Self);
+end;
+
+destructor TContestManager.Destroy;
+begin
+  if ProblemManager <> nil then
+    ProblemManager.Unsubscribe(Self);
+  inherited Destroy;
 end;
 
 { TContest }
