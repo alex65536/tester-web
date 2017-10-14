@@ -352,6 +352,11 @@ resourcestring
   SMainPage = 'Main Page';
   STsWebGreeting = 'Welcome to Tester Web!';
   SKillPageTitle = 'Kill Server';
+  SFindUserRequest = 'Please enter username of the user to find.';
+  SFindUserLabel = 'Username:';
+  SFindUserPrompt = 'Enter username to find';
+  SFindUserSubmit = 'Find user';
+  SFindUserTitle = 'Find User';
 
 implementation
 

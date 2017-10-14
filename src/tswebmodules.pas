@@ -27,7 +27,8 @@ interface
 uses
   SysUtils, Classes, webmodules, tswebnavbars, navbars, htmlpreprocess, fphttp,
   htmlpages, tswebpages, HTTPDefs, users, webstrconsts, authwebmodules,
-  tswebprofilefeatures, tswebpagesbase, tsmiscwebmodules, allusers, userpages;
+  tswebprofilefeatures, tswebpagesbase, tsmiscwebmodules, allusers, userpages,
+  tswebfeatures;
 
 type
 
@@ -91,6 +92,17 @@ type
   TNavSettingsPage = class(TSettingsHtmlPage)
   protected
     function CreateNavBar: TNavBar; override;
+  end;
+
+  { TFindUserPage }
+
+  TFindUserPage = class(TPostHtmlPage)
+  protected
+    function CreateNavBar: TNavBar; override;
+    procedure AddFeatures; override;
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
+  public
+    procedure AfterConstruction; override;
   end;
 
   { TIndexWebModule }
@@ -167,8 +179,6 @@ type
   TProfileWebModule = class(THtmlPageWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
-  public
-    procedure AfterConstruction; override;
   end;
 
   { TKillServerWebModule }
@@ -187,7 +197,78 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TFindUserWebModule }
+
+  TFindUserWebModule = class(TPostWebModule)
+  private
+    FUsername: string;
+  protected
+    function CanRedirect: boolean; override;
+    function RedirectLocation: string; override;
+    procedure DoHandlePost(ARequest: TRequest); override;
+    procedure DoBeforeRequest; override;
+    function DoCreatePage: THtmlPage; override;
+  end;
+
 implementation
+
+{ TFindUserWebModule }
+
+function TFindUserWebModule.CanRedirect: boolean;
+begin
+  Result := FUsername <> '';
+end;
+
+function TFindUserWebModule.RedirectLocation: string;
+begin
+  Result := DocumentRoot + '/profile?user=' + FUsername;
+end;
+
+procedure TFindUserWebModule.DoHandlePost(ARequest: TRequest);
+var
+  Username: string;
+begin
+  Username := ARequest.ContentFields.Values['user'];
+  if not UserManager.UserExists(Username) then
+    raise EUserNotExist.CreateFmt(SUserDoesNotExist, [Username]);
+  FUsername := Username;
+end;
+
+procedure TFindUserWebModule.DoBeforeRequest;
+begin
+  inherited DoBeforeRequest;
+  FUsername := '';
+end;
+
+function TFindUserWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TFindUserPage.Create;
+end;
+
+{ TFindUserPage }
+
+function TFindUserPage.CreateNavBar: TNavBar;
+begin
+  Result := TDefaultNavBar.Create(Self);
+end;
+
+procedure TFindUserPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TUserBarFeature);
+  AddFeature(TFindUserPageFeature);
+end;
+
+procedure TFindUserPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
+begin
+  Strings.Text := '~+#findUser;';
+end;
+
+procedure TFindUserPage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Title := SFindUserTitle;
+end;
 
 { TDeleteUserWebModule }
 
@@ -270,12 +351,6 @@ end;
 function TProfileWebModule.DoCreatePage: THtmlPage;
 begin
   Result := TProfileHtmlPage.Create(Request.QueryFields.Values['user']);
-end;
-
-procedure TProfileWebModule.AfterConstruction;
-begin
-  inherited AfterConstruction;
-  Handlers.Insert(0, TDeclineNotLoggedWebModuleHandler.Create(AllUserRoles, True));
 end;
 
 { TProfileHtmlPage }
@@ -444,8 +519,9 @@ begin
     User := (Parent as TUserPage).User
   else
     User := nil;
-  // add main page
+  // add user-independent pages
   AddElement(SMainPage, '~documentRoot;/main');
+  AddElement(SFindUserTitle, '~documentRoot;/find-user');
   // add login/register for guests, and profile/logout for users
   if Parent is TUserPage then
   begin
@@ -457,6 +533,7 @@ begin
     else
     begin
       AddElement(SProfile, '~documentRoot;/profile');
+      AddElement(SUpdateSettingsTitle, '~documentRoot;/settings');
       AddElement(SUserDoLogOut, '~documentRoot;/logout');
     end;
   end;
@@ -493,5 +570,6 @@ initialization
   RegisterHTTPModule('change-role', TChangeUserRoleWebModule, True);
   RegisterHTTPModule('settings', TNavSettingsWebModule, True);
   RegisterHTTPModule('delete-user', TDeleteUserWebModule, True);
+  RegisterHTTPModule('find-user', TFindUserWebModule, True);
 
 end.

@@ -76,7 +76,35 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TFindUserPageFeature }
+
+  TFindUserPageFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TFindUserPageFeature }
+
+procedure TFindUserPageFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['findUserRequest'] := SFindUserRequest;
+    ItemsAsText['findUserLabel'] := SFindUserLabel;
+    ItemsAsText['findUserPrompt'] := SFindUserPrompt;
+    ItemsAsText['findUserSubmit'] := SFindUserSubmit;
+  end;
+  LoadPagePart('', 'findUser');
+end;
+
+procedure TFindUserPageFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TPostDataFeature);
+end;
 
 { TProfileDeleteBtnFeature }
 
