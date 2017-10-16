@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, tswebpagesbase, tswebmodules, tswebeditablemodules,
   fphttp, tswebcontestpages, tswebmanagers, editableobjects, htmlpages,
-  contests, HTTPDefs, users, webstrconsts, dateutils;
+  contests, HTTPDefs, users, webstrconsts, dateutils, standings;
 
 type
 

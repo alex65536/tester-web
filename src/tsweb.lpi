@@ -57,7 +57,7 @@
         <PackageName Value="FCL"/>
       </Item7>
     </RequiredPackages>
-    <Units Count="63">
+    <Units Count="64">
       <Unit0>
         <Filename Value="tsweb.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -310,6 +310,10 @@
         <Filename Value="contestproblems.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit62>
+      <Unit63>
+        <Filename Value="standings.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit63>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

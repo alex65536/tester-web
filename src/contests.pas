@@ -28,8 +28,7 @@ interface
 
 uses
   Classes, SysUtils, editableobjects, webstrconsts, datastorages, users,
-  tswebutils, dateutils, typinfo, serverconfig, contestproblems,
-  tswebobservers;
+  tswebutils, dateutils, serverconfig, contestproblems, standings, tswebobservers;
 
 type
   EContestAction = class(EEditableAction);
@@ -40,7 +39,6 @@ type
   TContestManager = class;
 
   TContestStatus = (csNotStarted, csRunning, csUpsolve);
-  TContestScoringPolicy = (spMaxScore, spLastScore);
 
   { TContestAccessSession }
 
@@ -218,25 +216,7 @@ type
     destructor Destroy; override;
   end;
 
-function ScoringPolicyToStr(APolicy: TContestScoringPolicy): string;
-function StrToScoringPolicy(const S: string): TContestScoringPolicy;
-
 implementation
-
-function ScoringPolicyToStr(APolicy: TContestScoringPolicy): string;
-begin
-  Result := GetEnumName(TypeInfo(APolicy), Ord(APolicy));
-end;
-
-function StrToScoringPolicy(const S: string): TContestScoringPolicy;
-var
-  P: TContestScoringPolicy;
-begin
-  for P in TContestScoringPolicy do
-    if ScoringPolicyToStr(P) = S then
-      Exit(P);
-  raise EConvertError.Create(SNoSuchScoringPolicy);
-end;
 
 { TContestProblemList }
 

@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, Classes, tswebfeatures, tswebeditablefeatures, htmlpages,
   webstrconsts, contests, tswebcontestelements, tswebdatetimefeatures,
-  serverconfig;
+  serverconfig, standings;
 
 const
   SContestScoringPolicies: array [TContestScoringPolicy] of string = (
