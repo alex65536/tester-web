@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, submissionlanguages, users, datastorages, problems,
   testresults, jsonsaver, tswebobservers, filemanager, fgl, editableobjects,
-  webstrconsts, tswebutils, serverconfig, LazFileUtils, tswebdirectories, Math,
+  webstrconsts, tswebutils, serverconfig, LazFileUtils, tswebdirectories,
   submissioninfo, testerprimitives;
 
 type
@@ -39,13 +39,6 @@ type
   TSubmissionManager = class;
   TTestableProblem = class;
   TTestableProblemManager = class;
-
-  { TIdList }
-
-  TIdList = class(specialize TFPGList<integer>)
-  public
-    procedure Sort(Reversed: boolean);
-  end;
 
   { TBaseSubmission }
 
@@ -251,10 +244,6 @@ type
     function SubmissionProblemID(AID: integer): integer;
     function StrListToIdList(AList: TStringList): TIdList;
 
-    function ListAll: TIdList;
-    function ListByOwner(AInfo: TUserInfo): TIdList;
-    function ListByProblem(AProblem: TTestableProblem): TIdList;
-
     function CreateSubmission(AUser: TUser; AProblem: TTestableProblem;
       ALanguage: TSubmissionLanguage; const AFileName: string): integer;
     function GetSubmission(AID: integer): TViewSubmission;
@@ -266,6 +255,10 @@ type
       AFilter: TSubmissionFilter): TIdList;
     function ProblemFilter(AID: integer; AObject: TObject): boolean;
     function AvailableFilter(AID: integer; AObject: TObject): boolean;
+
+    function ListAll: TIdList;
+    function ListByOwner(AInfo: TUserInfo): TIdList;
+    function ListByProblem(AProblem: TTestableProblem): TIdList;
 
     function ProblemManager: TTestableProblemManager; virtual; abstract;
     property Queue: TSubmissionQueue read FQueue;
@@ -343,16 +336,6 @@ type
   end;
 
 implementation
-
-function IdComparePlain(const AID1, AID2: integer): integer;
-begin
-  Result := CompareValue(AID1, AID2);
-end;
-
-function IdCompareReversed(const AID1, AID2: integer): integer;
-begin
-  Result := -CompareValue(AID1, AID2);
-end;
 
 { TProblemSubmissionSession }
 
@@ -530,16 +513,6 @@ begin
     raise ESubmissionValidate.CreateFmt(SSubmissionTooBig, [MaxSrcLimit]);
   with SubmissionManager do
     Result := CreateSubmission(User, Problem as TTestableProblem, ALanguage, AFileName);
-end;
-
-{ TIdList }
-
-procedure TIdList.Sort(Reversed: boolean);
-begin
-  if Reversed then
-    inherited Sort(@IdCompareReversed)
-  else
-    inherited Sort(@IdComparePlain);
 end;
 
 { TTestSubmissionList }

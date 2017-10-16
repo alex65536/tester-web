@@ -114,11 +114,11 @@ type
     procedure DoInternalCreateSubmission(ASubmission: TTestSubmission;
       AProblem: TProblem; AUser: TUser); override;
     procedure DoDeleteSubmission(AID: integer); override;
-    function ListByContest(AContest: TBaseContest): TIdList;
     procedure MessageReceived(AMessage: TAuthorMessage); override;
   public
     function ContestManager: TBaseContestManager; virtual; abstract;
     function ContestFilter(AID: integer; AObject: TObject): boolean;
+    function ListByContest(AContest: TBaseContest): TIdList;
     constructor Create;
     destructor Destroy; override;
   end;

@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, tswebeditablefeatures, webstrconsts, htmlpages, tswebfeatures,
   serverconfig, problems, webstrutils, editableobjects, tswebsubmissionfeatures,
-  submissions, tswebsubmissionelements;
+  submissions, tswebsubmissionelements, tswebutils;
 
 type
 

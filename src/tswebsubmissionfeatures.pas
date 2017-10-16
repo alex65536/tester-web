@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, submissions, tswebeditablefeatures, editableobjects,
-  tswebfeatures, htmlpages, webstrconsts, tswebsubmissionelements,
+  tswebfeatures, htmlpages, webstrconsts, tswebsubmissionelements, tswebutils,
   tswebmanagers, submissioninfo, strverdicts, LazFileUtils, submissionlanguages;
 
 const

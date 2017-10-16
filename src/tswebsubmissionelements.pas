@@ -26,7 +26,8 @@ interface
 
 uses
   SysUtils, submissionlanguages, tswebpagesbase, htmlpages, htmlpreprocess,
-  submissions, submissioninfo, strverdicts, webstrconsts, strconsts, testresults;
+  submissions, submissioninfo, strverdicts, webstrconsts, strconsts, testresults,
+  tswebutils;
 
 type
 
