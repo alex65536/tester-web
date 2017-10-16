@@ -240,6 +240,7 @@ type
     procedure DoDeleteSubmission(AID: integer); virtual;
     procedure HandleUserDeleting(AInfo: TUserInfo); virtual;
     procedure HandleProblemDeleting(AProblem: TTestableProblem); virtual;
+    procedure HandleSubmissionTested(ASubmission: TTestSubmission); virtual;
     procedure ResumeCreateSubmission(AID: integer); virtual;
     function SubmissionOwnerID(AID: integer): integer;
     function SubmissionProblemID(AID: integer): integer;
@@ -638,6 +639,12 @@ begin
   end;
 end;
 
+procedure TSubmissionManager.HandleSubmissionTested(ASubmission: TTestSubmission);
+begin
+  Broadcast(TSubmissionTestedMessage.Create.AddSubmission(ASubmission)
+    .AddSender(Self).Lock);
+end;
+
 procedure TSubmissionManager.ResumeCreateSubmission(AID: integer);
 begin
   Queue.AddSubmission(DoCreateTestSubmission(AID));
@@ -899,6 +906,8 @@ begin
   if (AMessage is TSubmissionDeletingPoolMessage) or
     (AMessage is TSubmissionTestedMessage) then
     TriggerAddToPool;
+  if AMessage is TSubmissionTestedMessage then
+    Manager.HandleSubmissionTested((AMessage as TSubmissionTestedMessage).Submission);
 end;
 
 procedure TSubmissionQueue.FPOObservedChanged(ASender: TObject;
