@@ -46,6 +46,23 @@ type
   TBaseContestManager = class(TEditableManager)
   end;
 
+  { TContestTestSubmission }
+
+  TContestTestSubmission = class(TTestSubmission)
+  private
+    function GetContest: TBaseContest;
+    function GetContestID: integer;
+    function GetContestName: string;
+  protected
+    function DoGetProblem: TTestableProblem; override;
+    {%H-}constructor Create(AManager: TSubmissionManager; AID: integer);
+  public
+    function ContestManager: TBaseContestManager;
+    property Contest: TBaseContest read GetContest;
+    property ContestID: integer read GetContestID;
+    property ContestName: string read GetContestName;
+  end;
+
   { TContestProblemSubmissionSession }
 
   TContestProblemSubmissionSession = class(TProblemSubmissionSession)
@@ -111,6 +128,7 @@ type
     function ContestSectionName(AID: integer): string;
     function SubmissionContestID(AID: integer): integer;
     procedure HandleContestDeleting(AContest: TBaseContest); virtual;
+    function DoCreateTestSubmission(AID: integer): TTestSubmission; override;
     procedure DoInternalCreateSubmission(ASubmission: TTestSubmission;
       AProblem: TProblem; AUser: TUser); override;
     procedure DoDeleteSubmission(AID: integer); override;
@@ -124,6 +142,49 @@ type
   end;
 
 implementation
+
+{ TContestTestSubmission }
+
+function TContestTestSubmission.GetContest: TBaseContest;
+begin
+  if ContestID >= 0 then
+    Result := ContestManager.GetObject(ContestID) as TBaseContest
+  else
+    Result := nil;
+end;
+
+function TContestTestSubmission.GetContestID: integer;
+begin
+  Result := (Manager as TContestSubmissionManager).SubmissionContestID(ID);
+end;
+
+function TContestTestSubmission.GetContestName: string;
+begin
+  Result := ContestManager.IdToObjectName(ContestID);
+end;
+
+function TContestTestSubmission.DoGetProblem: TTestableProblem;
+begin
+  Result := inherited DoGetProblem;
+  try
+    if ContestID >= 0 then
+      (Result as TContestProblem).SetContest(ContestID);
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
+end;
+
+constructor TContestTestSubmission.Create(AManager: TSubmissionManager;
+  AID: integer);
+begin
+  inherited Create(AManager, AID);
+end;
+
+function TContestTestSubmission.ContestManager: TBaseContestManager;
+begin
+  Result := (Manager as TContestSubmissionManager).ContestManager;
+end;
 
 { TBaseContest }
 
@@ -157,6 +218,11 @@ begin
   finally
     FreeAndNil(List);
   end;
+end;
+
+function TContestSubmissionManager.DoCreateTestSubmission(AID: integer): TTestSubmission;
+begin
+  Result := TContestTestSubmission.Create(Self, AID);
 end;
 
 function TContestSubmissionManager.ListByContest(AContest: TBaseContest): TIdList;

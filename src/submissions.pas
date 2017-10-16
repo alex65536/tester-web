@@ -60,6 +60,7 @@ type
   protected
     property Storage: TAbstractDataStorage read FStorage;
     function FilesLocation: string; virtual;
+    function DoGetProblem: TTestableProblem; virtual;
     function SectionName: string;
     function FullKeyName(const Key: string): string;
     function ResultsSectionName: string;
@@ -1233,7 +1234,7 @@ end;
 
 function TBaseSubmission.GetProblem: TTestableProblem;
 begin
-  Result := Manager.ProblemManager.GetObject(ProblemName) as TTestableProblem;
+  Result := DoGetProblem;
 end;
 
 function TBaseSubmission.GetProblemName: string;
@@ -1262,6 +1263,11 @@ end;
 function TBaseSubmission.FilesLocation: string;
 begin
   Result := ExpandInternalDirLocation('submissions');
+end;
+
+function TBaseSubmission.DoGetProblem: TTestableProblem;
+begin
+  Result := Manager.ProblemManager.GetObject(ProblemName) as TTestableProblem;
 end;
 
 function TBaseSubmission.SectionName: string;

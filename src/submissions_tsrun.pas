@@ -64,7 +64,7 @@ type
 
   { TTsRunTestSubmission }
 
-  TTsRunTestSubmission = class(TTestSubmission)
+  TTsRunTestSubmission = class(TContestTestSubmission)
   private
     FThread: TTsRunThread;
     FFinishTrigger: boolean;
