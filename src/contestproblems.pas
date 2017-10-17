@@ -159,6 +159,9 @@ type
   TContestSubmissionManager = class(TSubmissionManager)
   protected
     function ContestSectionName(AID: integer): string;
+    function ContestProblemSectionName(AContestID, AProblemID: integer): string;
+    function ContestProblemUserSectionName(AContestID, AProblemID,
+      AUserID: integer): string;
     function SubmissionContestID(AID: integer): integer;
     procedure HandleContestDeleting(AContest: TBaseContest); virtual;
     function DoCreateProblemFromSubmission(AID: integer): TTestableProblem; override;
@@ -171,6 +174,9 @@ type
     function ContestManager: TBaseContestManager; virtual; abstract;
     function ContestFilter(AID: integer; AObject: TObject): boolean;
     function ListByContest(AContest: TBaseContest): TIdList;
+    function ListByContestProblem(AProblem: TContestProblem): TIdList;
+    function ListByContestProblemUser(AProblem: TContestProblem;
+      AInfo: TUserInfo): TIdList;
     constructor Create;
     destructor Destroy; override;
   end;
@@ -288,6 +294,19 @@ begin
   Result := 'contests.' + Id2Str(AID);
 end;
 
+function TContestSubmissionManager.ContestProblemSectionName(AContestID,
+  AProblemID: integer): string;
+begin
+  Result := 'contestProblems.' + Id2Str(AContestID) + '.' + Id2Str(AProblemID);
+end;
+
+function TContestSubmissionManager.ContestProblemUserSectionName(AContestID,
+  AProblemID, AUserID: integer): string;
+begin
+  Result := 'contestProblemUsers.' + Id2Str(AContestID) + '.' + Id2Str(AProblemID) +
+    '.' + Id2Str(AUserID);
+end;
+
 function TContestSubmissionManager.SubmissionContestID(AID: integer): integer;
 begin
   Result := Storage.ReadInteger(SubmissionSectionName(AID) + '.contestId', -1);
@@ -340,6 +359,34 @@ begin
   end;
 end;
 
+function TContestSubmissionManager.ListByContestProblem(
+  AProblem: TContestProblem): TIdList;
+var
+  StrList: TStringList;
+begin
+  StrList := Storage.GetChildElements(ContestProblemSectionName(AProblem.Contest.ID,
+    AProblem.ID));
+  try
+    Result := StrListToIdList(StrList);
+  finally
+    FreeAndNil(StrList);
+  end;
+end;
+
+function TContestSubmissionManager.ListByContestProblemUser(
+  AProblem: TContestProblem; AInfo: TUserInfo): TIdList;
+var
+  StrList: TStringList;
+begin
+  StrList := Storage.GetChildElements(ContestProblemUserSectionName(AProblem.Contest.ID,
+    AProblem.ID, AInfo.ID));
+  try
+    Result := StrListToIdList(StrList);
+  finally
+    FreeAndNil(StrList);
+  end;
+end;
+
 function TContestSubmissionManager.ContestFilter(AID: integer;
   AObject: TObject): boolean;
 begin
@@ -367,6 +414,10 @@ begin
   begin
     Storage.WriteInteger(SubmissionSectionName(ID) + '.contestId', Contest.ID);
     Storage.WriteBool(ContestSectionName(Contest.ID) + '.' + Id2Str(ID), True);
+    Storage.WriteBool(ContestProblemSectionName(Contest.ID, AProblem.ID) + '.' +
+      Id2Str(ID), True);
+    Storage.WriteBool(ContestProblemUserSectionName(Contest.ID, AProblem.ID,
+      AUser.ID) + '.' + Id2Str(ID), True);
     if Contest.ContestStatus = csRunning then
       Storage.WriteBool(SubmissionSectionName(ID) + '.isItRated', True);
   end;
@@ -375,10 +426,20 @@ end;
 procedure TContestSubmissionManager.DoDeleteSubmission(AID: integer);
 var
   ContestID: integer;
+  ProblemID: integer;
+  UserID: integer;
 begin
   ContestID := SubmissionContestID(AID);
+  ProblemID := SubmissionProblemID(AID);
+  UserID := SubmissionOwnerID(AID);
   if ContestID >= 0 then
+  begin
+    Storage.DeleteVariable(ContestProblemSectionName(ContestID, ProblemID) +
+      '.' + Id2Str(AID));
+    Storage.DeleteVariable(ContestProblemUserSectionName(ContestID, ProblemID, UserID) +
+      '.' + Id2Str(AID));
     Storage.DeleteVariable(ContestSectionName(ContestID) + '.' + Id2Str(AID));
+  end;
   inherited DoDeleteSubmission(AID);
 end;
 
