@@ -620,6 +620,7 @@ end;
 
 destructor TStandingsRow.Destroy;
 begin
+  FreeAndNil(FUserInfo);
   FreeAndNil(FList);
   inherited Destroy;
 end;
