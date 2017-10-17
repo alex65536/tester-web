@@ -248,7 +248,6 @@ type
 
     function CreateSubmission(AUser: TUser; AProblem: TTestableProblem;
       ALanguage: TSubmissionLanguage; const AFileName: string): integer;
-    function GetSubmission(AID: integer): TViewSubmission;
     procedure RejudgeSubmission(AID: integer); virtual;
 
     procedure MessageReceived(AMessage: TAuthorMessage); virtual;
@@ -261,6 +260,8 @@ type
     function ListAll: TIdList;
     function ListByOwner(AInfo: TUserInfo): TIdList;
     function ListByProblem(AProblem: TTestableProblem): TIdList;
+
+    function GetSubmission(AID: integer): TViewSubmission;
 
     function ProblemManager: TTestableProblemManager; virtual; abstract;
     property Queue: TSubmissionQueue read FQueue;

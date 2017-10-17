@@ -177,13 +177,15 @@ type
     procedure DoDeleteParticipant(AInfo: TUserInfo);
     function HasParticipant(AInfo: TUserInfo): boolean; override;
     function DoGetProblem(const AProblemName: string): TContestProblem; virtual;
-    function ListParticipants: TStringList;
+    function ListParticipants: TStringList; override;
     function ContestStartTime: TDateTime;
     function ContestDurationMinutes: integer;
     function ContestEndTime: TDateTime;
+    function ContestScoringPolicy: TContestScoringPolicy; override;
     function ContestStatus: TContestStatus; override;
     function ContestAllowUpsolving: boolean; override;
-    procedure HandleSelfDeletion; override;
+    function ContestProblemCount: integer; override;
+    function ContestProblem(AIndex: integer): TContestProblem; override;
     procedure HandleUserDeleting(AInfo: TUserInfo); override;
     procedure HandleProblemDeleting(AProblem: TContestProblem); virtual;
     procedure MessageReceived(AMessage: TAuthorMessage); override;
@@ -749,6 +751,12 @@ begin
   Result := IncMinute(ContestStartTime, ContestDurationMinutes);
 end;
 
+function TContest.ContestScoringPolicy: TContestScoringPolicy;
+begin
+  Result := StrToScoringPolicy(Storage.ReadString(FullKeyName('scoringPolicy'),
+    ScoringPolicyToStr(spMaxScore)));
+end;
+
 function TContest.ContestStatus: TContestStatus;
 var
   CurTime: TDateTime;
@@ -767,11 +775,14 @@ begin
   Result := Storage.ReadBool(FullKeyName('allowUpsolving'), True);
 end;
 
-procedure TContest.HandleSelfDeletion;
+function TContest.ContestProblemCount: integer;
 begin
-  inherited HandleSelfDeletion;
-  // to be implemented later ...
-  // TODO : Implement it, make "later" come :)
+  Result := ProblemList.ProblemCount;
+end;
+
+function TContest.ContestProblem(AIndex: integer): TContestProblem;
+begin
+  Result := ProblemList.GetProblem(AIndex);
 end;
 
 procedure TContest.HandleUserDeleting(AInfo: TUserInfo);
