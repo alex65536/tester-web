@@ -31,14 +31,18 @@ uses
 type
   TContestProblem = class;
 
+  TContestStatus = (csNotStarted, csRunning, csUpsolve);
+
   { TBaseContest }
 
   TBaseContest = class(TEditableObject)
   protected
     procedure SetToProblem(AProblem: TContestProblem);
+    function ContestStatus: TContestStatus; virtual; abstract;
+    function ContestAllowUpsolving: boolean; virtual; abstract;
     function HasParticipant(AInfo: TUserInfo): boolean; virtual; abstract;
-    function ParticipantCanSubmit(AInfo: TUserInfo): boolean; virtual; abstract;
-    function ParticipantCanView(AInfo: TUserInfo): boolean; virtual; abstract;
+    function ParticipantCanSubmit(AInfo: TUserInfo): boolean; virtual;
+    function ParticipantCanView(AInfo: TUserInfo): boolean; virtual;
   end;
 
   { TBaseContestManager }
@@ -191,6 +195,25 @@ end;
 procedure TBaseContest.SetToProblem(AProblem: TContestProblem);
 begin
   AProblem.SetContest(Self.Name);
+end;
+
+function TBaseContest.ParticipantCanSubmit(AInfo: TUserInfo): boolean;
+begin
+  if not HasParticipant(AInfo) then
+    Exit(False);
+  case ContestStatus of
+    csRunning: Result := True;
+    csUpsolve: Result := ContestAllowUpsolving
+    else
+      Result := False;
+  end;
+end;
+
+function TBaseContest.ParticipantCanView(AInfo: TUserInfo): boolean;
+begin
+  if not HasParticipant(AInfo) then
+    Exit(False);
+  Result := ContestStatus in [csRunning, csUpsolve];
 end;
 
 { TContestSubmissionManager }

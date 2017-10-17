@@ -38,8 +38,6 @@ type
   TContest = class;
   TContestManager = class;
 
-  TContestStatus = (csNotStarted, csRunning, csUpsolve);
-
   { TContestAccessSession }
 
   TContestAccessSession = class(TEditableObjectAccessSession)
@@ -177,15 +175,13 @@ type
     procedure DeleteParticipant(AInfo: TUserInfo);
     procedure DoDeleteParticipant(AInfo: TUserInfo);
     function HasParticipant(AInfo: TUserInfo): boolean; override;
-    function ParticipantCanSubmit(AInfo: TUserInfo): boolean; override;
-    function ParticipantCanView(AInfo: TUserInfo): boolean; override;
     function DoGetProblem(const AProblemName: string): TContestProblem; virtual;
     function ListParticipants: TStringList;
     function ContestStartTime: TDateTime;
     function ContestDurationMinutes: integer;
     function ContestEndTime: TDateTime;
-    function ContestStatus: TContestStatus;
-    function ContestAllowUpsolving: boolean;
+    function ContestStatus: TContestStatus; override;
+    function ContestAllowUpsolving: boolean; override;
     procedure HandleSelfDeletion; override;
     procedure HandleUserDeleting(AInfo: TUserInfo); override;
     procedure HandleProblemDeleting(AProblem: TContestProblem); virtual;
@@ -663,25 +659,6 @@ end;
 function TContest.HasParticipant(AInfo: TUserInfo): boolean;
 begin
   Result := Storage.VariableExists(ParticipantsFullKeyName(AInfo.ID));
-end;
-
-function TContest.ParticipantCanSubmit(AInfo: TUserInfo): boolean;
-begin
-  if not HasParticipant(AInfo) then
-    Exit(False);
-  case ContestStatus of
-    csRunning: Result := True;
-    csUpsolve: Result := ContestAllowUpsolving
-    else
-      Result := False;
-  end;
-end;
-
-function TContest.ParticipantCanView(AInfo: TUserInfo): boolean;
-begin
-  if not HasParticipant(AInfo) then
-    Exit(False);
-  Result := ContestStatus in [csRunning, csUpsolve];
 end;
 
 function TContest.DoGetProblem(const AProblemName: string): TContestProblem;
