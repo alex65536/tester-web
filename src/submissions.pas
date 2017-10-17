@@ -60,7 +60,6 @@ type
   protected
     property Storage: TAbstractDataStorage read FStorage;
     function FilesLocation: string; virtual;
-    function DoGetProblem: TTestableProblem; virtual;
     function SectionName: string;
     function FullKeyName(const Key: string): string;
     function ResultsSectionName: string;
@@ -234,6 +233,7 @@ type
     function CreateQueue: TSubmissionQueue; virtual; abstract;
     function DoCreateTestSubmission(AID: integer): TTestSubmission; virtual;
     function DoCreateViewSubmission(AID: integer): TViewSubmission; virtual;
+    function DoCreateProblemFromSubmission(AID: integer): TTestableProblem; virtual;
     procedure DoInternalCreateSubmission(ASubmission: TTestSubmission;
       AProblem: TProblem; AUser: TUser); virtual;
     procedure DeleteSubmission(AID: integer);
@@ -277,7 +277,6 @@ type
     function GetManager: TTestableProblemManager;
     function GetSubmissionManager: TSubmissionManager;
   protected
-    function DoCreateProblemFromSubmission(AID: integer): TTestableProblem; virtual;
     procedure ValidateSubmission(AID: integer);
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
   public
@@ -351,14 +350,6 @@ begin
   Result := Manager.SubmissionManager;
 end;
 
-function TProblemSubmissionSession.DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
-var
-  ProblemID: integer;
-begin
-  ProblemID := SubmissionManager.SubmissionProblemID(AID);
-  Result := Manager.GetObject(ProblemID) as TTestableProblem;
-end;
-
 procedure TProblemSubmissionSession.ValidateSubmission(AID: integer);
 begin
   if not SubmissionManager.SubmissionExists(AID) then
@@ -377,7 +368,7 @@ var
   Info: TUserInfo;
 begin
   UserID := SubmissionManager.SubmissionOwnerID(AID);
-  Problem := DoCreateProblemFromSubmission(AID);
+  Problem := SubmissionManager.DoCreateProblemFromSubmission(AID);
   try
     Info := UserManager.GetUserInfo(UserID);
     try
@@ -420,7 +411,7 @@ function TProblemSubmissionSession.CanRejudgeSubmission(AID: integer): boolean;
 var
   Problem: TTestableProblem;
 begin
-  Problem := DoCreateProblemFromSubmission(AID);
+  Problem := SubmissionManager.DoCreateProblemFromSubmission(AID);
   try
     Result := CanRejudgeSubmission(Problem);
   finally
@@ -569,6 +560,11 @@ end;
 function TSubmissionManager.DoCreateViewSubmission(AID: integer): TViewSubmission;
 begin
   Result := TViewSubmission.Create(Self, AID);
+end;
+
+function TSubmissionManager.DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
+begin
+  Result := ProblemManager.GetObject(SubmissionProblemID(AID)) as TTestableProblem;
 end;
 
 procedure TSubmissionManager.DoInternalCreateSubmission(ASubmission: TTestSubmission;
@@ -1243,7 +1239,7 @@ end;
 
 function TBaseSubmission.GetProblem: TTestableProblem;
 begin
-  Result := DoGetProblem;
+  Result := Manager.DoCreateProblemFromSubmission(ID);
 end;
 
 function TBaseSubmission.GetProblemName: string;
@@ -1272,11 +1268,6 @@ end;
 function TBaseSubmission.FilesLocation: string;
 begin
   Result := ExpandInternalDirLocation('submissions');
-end;
-
-function TBaseSubmission.DoGetProblem: TTestableProblem;
-begin
-  Result := Manager.ProblemManager.GetObject(ProblemName) as TTestableProblem;
 end;
 
 function TBaseSubmission.SectionName: string;

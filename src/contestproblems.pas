@@ -80,16 +80,15 @@ type
   TBaseContestManager = class(TEditableManager)
   end;
 
-  { TContestTestSubmission }
+  { TContestViewSubmission }
 
-  TContestTestSubmission = class(TTestSubmission)
+  TContestViewSubmission = class(TViewSubmission)
   private
     function GetContest: TBaseContest;
     function GetContestID: integer;
     function GetContestName: string;
     function GetRated: boolean;
   protected
-    function DoGetProblem: TTestableProblem; override;
     {%H-}constructor Create(AManager: TSubmissionManager; AID: integer);
   public
     function ContestManager: TBaseContestManager;
@@ -104,8 +103,6 @@ type
   TContestProblemSubmissionSession = class(TProblemSubmissionSession)
   protected
     function ContestAccessLevel(AProblem: TContestProblem): TEditableAccessRights;
-    function DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
-      override;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
   public
     function CanReadSubmission(AProblem: TTestableProblem; AOwner: TUserInfo): boolean;
@@ -164,7 +161,8 @@ type
     function ContestSectionName(AID: integer): string;
     function SubmissionContestID(AID: integer): integer;
     procedure HandleContestDeleting(AContest: TBaseContest); virtual;
-    function DoCreateTestSubmission(AID: integer): TTestSubmission; override;
+    function DoCreateProblemFromSubmission(AID: integer): TTestableProblem; override;
+    function DoCreateViewSubmission(AID: integer): TViewSubmission; override;
     procedure DoInternalCreateSubmission(ASubmission: TTestSubmission;
       AProblem: TProblem; AUser: TUser); override;
     procedure DoDeleteSubmission(AID: integer); override;
@@ -197,9 +195,9 @@ begin
   Result := Self;
 end;
 
-{ TContestTestSubmission }
+{ TContestViewSubmission }
 
-function TContestTestSubmission.GetContest: TBaseContest;
+function TContestViewSubmission.GetContest: TBaseContest;
 begin
   if ContestID >= 0 then
     Result := ContestManager.GetObject(ContestID) as TBaseContest
@@ -207,40 +205,28 @@ begin
     Result := nil;
 end;
 
-function TContestTestSubmission.GetContestID: integer;
+function TContestViewSubmission.GetContestID: integer;
 begin
   Result := (Manager as TContestSubmissionManager).SubmissionContestID(ID);
 end;
 
-function TContestTestSubmission.GetContestName: string;
+function TContestViewSubmission.GetContestName: string;
 begin
   Result := ContestManager.IdToObjectName(ContestID);
 end;
 
-function TContestTestSubmission.GetRated: boolean;
+function TContestViewSubmission.GetRated: boolean;
 begin
   Result := Storage.ReadBool(FullKeyName('isItRated'), False);
 end;
 
-function TContestTestSubmission.DoGetProblem: TTestableProblem;
-begin
-  Result := inherited DoGetProblem;
-  try
-    if ContestID >= 0 then
-      (Result as TContestProblem).SetContest(ContestID);
-  except
-    FreeAndNil(Result);
-    raise;
-  end;
-end;
-
-constructor TContestTestSubmission.Create(AManager: TSubmissionManager;
+constructor TContestViewSubmission.Create(AManager: TSubmissionManager;
   AID: integer);
 begin
   inherited Create(AManager, AID);
 end;
 
-function TContestTestSubmission.ContestManager: TBaseContestManager;
+function TContestViewSubmission.ContestManager: TBaseContestManager;
 begin
   Result := (Manager as TContestSubmissionManager).ContestManager;
 end;
@@ -322,9 +308,24 @@ begin
   end;
 end;
 
-function TContestSubmissionManager.DoCreateTestSubmission(AID: integer): TTestSubmission;
+function TContestSubmissionManager.DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
+var
+  ContestID: integer;
 begin
-  Result := TContestTestSubmission.Create(Self, AID);
+  Result := inherited DoCreateProblemFromSubmission(AID);
+  try
+    ContestID := SubmissionContestID(AID);
+    if ContestID >= 0 then
+      (Result as TContestProblem).SetContest(ContestID);
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
+end;
+
+function TContestSubmissionManager.DoCreateViewSubmission(AID: integer): TViewSubmission;
+begin
+  Result := TContestViewSubmission.Create(Self, AID);
 end;
 
 function TContestSubmissionManager.ListByContest(AContest: TBaseContest): TIdList;
@@ -500,23 +501,6 @@ begin
     Result := AProblem.Contest.GetAccessRights(User as TEditorUser)
   else
     Result := erNone;
-end;
-
-function TContestProblemSubmissionSession.DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
-var
-  ContestID: integer;
-  ContestSubmitMgr: TContestSubmissionManager;
-begin
-  Result := inherited DoCreateProblemFromSubmission(AID);
-  try
-    ContestSubmitMgr := SubmissionManager as TContestSubmissionManager;
-    ContestID := ContestSubmitMgr.SubmissionContestID(AID);
-    if ContestID >= 0 then
-      (Result as TContestProblem).SetContest(ContestID);
-  except
-    FreeAndNil(Result);
-    raise;
-  end;
 end;
 
 constructor TContestProblemSubmissionSession.Create(AManager: TEditableManager;
