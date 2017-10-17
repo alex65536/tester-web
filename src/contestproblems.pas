@@ -64,11 +64,8 @@ type
   TBaseContest = class(TEditableObject)
   protected
     procedure SetToProblem(AProblem: TContestProblem);
-    function ListParticipants: TStringList; virtual; abstract;
     function ContestStatus: TContestStatus; virtual; abstract;
     function ContestAllowUpsolving: boolean; virtual; abstract;
-    function ContestProblemCount: integer; virtual; abstract;
-    function ContestProblem(AIndex: integer): TContestProblem; virtual; abstract;
     function HasParticipant(AInfo: TUserInfo): boolean; virtual; abstract;
     function ParticipantCanSubmit(AInfo: TUserInfo): boolean; virtual;
     function ParticipantCanView(AInfo: TUserInfo): boolean; virtual;
@@ -76,6 +73,10 @@ type
     procedure TriggerProblemDeleted(AProblem: TContestProblem); virtual;
     procedure TriggerParticipantAdded(AInfo: TUserInfo); virtual;
     procedure TriggerParticipantDeleted(AInfo: TUserInfo); virtual;
+  public
+    function ContestProblemCount: integer; virtual; abstract;
+    function ContestProblem(AIndex: integer): TContestProblem; virtual; abstract;
+    function ListParticipants: TStringList; virtual; abstract;
   end;
 
   { TBaseContestManager }

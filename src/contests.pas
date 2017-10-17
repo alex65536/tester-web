@@ -177,15 +177,12 @@ type
     procedure DoDeleteParticipant(AInfo: TUserInfo);
     function HasParticipant(AInfo: TUserInfo): boolean; override;
     function DoGetProblem(const AProblemName: string): TContestProblem; virtual;
-    function ListParticipants: TStringList; override;
     function ContestStartTime: TDateTime;
     function ContestDurationMinutes: integer;
     function ContestEndTime: TDateTime;
     function ContestScoringPolicy: TContestScoringPolicy; override;
     function ContestStatus: TContestStatus; override;
     function ContestAllowUpsolving: boolean; override;
-    function ContestProblemCount: integer; override;
-    function ContestProblem(AIndex: integer): TContestProblem; override;
     procedure HandleUserDeleting(AInfo: TUserInfo); override;
     procedure HandleProblemDeleting(AProblem: TContestProblem); virtual;
     procedure MessageReceived(AMessage: TAuthorMessage); override;
@@ -193,6 +190,9 @@ type
   public
     property Manager: TContestManager read GetManager;
     function ProblemManager: TContestProblemManager;
+    function ContestProblemCount: integer; override;
+    function ContestProblem(AIndex: integer): TContestProblem; override;
+    function ListParticipants: TStringList; override;
     function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession; override;
     function CreateParticipantSession(AUser: TUser): TContestParticipantSession; virtual;
     function CreateTransaction(AUser: TUser): TEditableTransaction; override;
