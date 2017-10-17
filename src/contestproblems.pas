@@ -57,6 +57,7 @@ type
     function GetContest: TBaseContest;
     function GetContestID: integer;
     function GetContestName: string;
+    function GetRated: boolean;
   protected
     function DoGetProblem: TTestableProblem; override;
     {%H-}constructor Create(AManager: TSubmissionManager; AID: integer);
@@ -65,6 +66,7 @@ type
     property Contest: TBaseContest read GetContest;
     property ContestID: integer read GetContestID;
     property ContestName: string read GetContestName;
+    property Rated: boolean read GetRated;
   end;
 
   { TContestProblemSubmissionSession }
@@ -165,6 +167,11 @@ end;
 function TContestTestSubmission.GetContestName: string;
 begin
   Result := ContestManager.IdToObjectName(ContestID);
+end;
+
+function TContestTestSubmission.GetRated: boolean;
+begin
+  Result := Storage.ReadBool(FullKeyName('isItRated'), False);
 end;
 
 function TContestTestSubmission.DoGetProblem: TTestableProblem;
@@ -287,6 +294,8 @@ begin
   begin
     Storage.WriteInteger(SubmissionSectionName(ID) + '.contestId', Contest.ID);
     Storage.WriteBool(ContestSectionName(Contest.ID) + '.' + Id2Str(ID), True);
+    if Contest.ContestStatus = csRunning then
+      Storage.WriteBool(SubmissionSectionName(ID) + '.isItRated', True);
   end;
 end;
 
