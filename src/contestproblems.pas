@@ -33,6 +33,32 @@ type
 
   TContestStatus = (csNotStarted, csRunning, csUpsolve);
 
+  { TContestParticipantMessage }
+
+  TContestParticipantMessage = class(TEditableObjectMessage)
+  private
+    FUserInfo: TUserInfo;
+  public
+    property UserInfo: TUserInfo read FUserInfo;
+    function AddUserInfo(AUserInfo: TUserInfo): TContestParticipantMessage;
+  end;
+
+  { TContestProblemMessage }
+
+  TContestProblemMessage = class(TEditableObjectMessage)
+  private
+    FProblem: TContestProblem;
+  public
+    property Problem: TContestProblem read FProblem;
+    function AddProblem(AProblem: TContestProblem): TContestProblemMessage;
+  end;
+
+  TContestParticipantAddedMessage = class(TContestParticipantMessage);
+  TContestParticipantDeletedMessage = class(TContestParticipantMessage);
+
+  TContestProblemAddedMessage = class(TContestProblemMessage);
+  TContestProblemDeletedMessage = class(TContestProblemMessage);
+
   { TBaseContest }
 
   TBaseContest = class(TEditableObject)
@@ -43,6 +69,10 @@ type
     function HasParticipant(AInfo: TUserInfo): boolean; virtual; abstract;
     function ParticipantCanSubmit(AInfo: TUserInfo): boolean; virtual;
     function ParticipantCanView(AInfo: TUserInfo): boolean; virtual;
+    procedure TriggerProblemAdded(AProblem: TContestProblem); virtual;
+    procedure TriggerProblemDeleted(AProblem: TContestProblem); virtual;
+    procedure TriggerParticipantAdded(AInfo: TUserInfo); virtual;
+    procedure TriggerParticipantDeleted(AInfo: TUserInfo); virtual;
   end;
 
   { TBaseContestManager }
@@ -149,6 +179,24 @@ type
 
 implementation
 
+{ TContestProblemMessage }
+
+function TContestProblemMessage.AddProblem(AProblem: TContestProblem): TContestProblemMessage;
+begin
+  NeedsUnlocked;
+  FProblem := AProblem;
+  Result := Self;
+end;
+
+{ TContestParticipantMessage }
+
+function TContestParticipantMessage.AddUserInfo(AUserInfo: TUserInfo): TContestParticipantMessage;
+begin
+  NeedsUnlocked;
+  FUserInfo := AUserInfo;
+  Result := Self;
+end;
+
 { TContestTestSubmission }
 
 function TContestTestSubmission.GetContest: TBaseContest;
@@ -221,6 +269,30 @@ begin
   if not HasParticipant(AInfo) then
     Exit(False);
   Result := ContestStatus in [csRunning, csUpsolve];
+end;
+
+procedure TBaseContest.TriggerProblemAdded(AProblem: TContestProblem);
+begin
+  Manager.Broadcast(TContestProblemAddedMessage.Create.AddProblem(AProblem)
+    .AddObject(Self).AddSender(Manager).Lock);
+end;
+
+procedure TBaseContest.TriggerProblemDeleted(AProblem: TContestProblem);
+begin
+  Manager.Broadcast(TContestProblemDeletedMessage.Create.AddProblem(AProblem)
+    .AddObject(Self).AddSender(Manager).Lock);
+end;
+
+procedure TBaseContest.TriggerParticipantAdded(AInfo: TUserInfo);
+begin
+  Manager.Broadcast(TContestParticipantAddedMessage.Create.AddUserInfo(AInfo)
+    .AddObject(Self).AddSender(Manager).Lock);
+end;
+
+procedure TBaseContest.TriggerParticipantDeleted(AInfo: TUserInfo);
+begin
+  Manager.Broadcast(TContestParticipantDeletedMessage.Create.AddUserInfo(AInfo)
+    .AddObject(Self).AddSender(Manager).Lock);
 end;
 
 { TContestSubmissionManager }

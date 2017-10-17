@@ -142,6 +142,7 @@ type
     function ProblemsByIndexSectionName: string;
     function ProblemByIndexKeyName(AIndex: integer): string;
     function ProblemCountKeyName: string;
+    procedure HandleProblemDifference(AOldList, ANewList: TStringList);
     function GetProblemList: TStringList;
     procedure SetProblemList(AValue: TStringList);
     function GetProblemCount: integer;
@@ -159,7 +160,7 @@ type
 
   { TContest }
 
-  TContest = class(TBaseContest)
+  TContest = class(TBaseStandingsContest)
   private
     FProblemList: TContestProblemList;
     function GetManager: TContestManager;
@@ -198,7 +199,7 @@ type
 
   { TContestManager }
 
-  TContestManager = class(TBaseContestManager)
+  TContestManager = class(TBaseStandingsContestManager)
   protected
     function ObjectTypeName: string; override;
     function CreateObject(const AName: string): TEditableObject; override;
@@ -261,6 +262,36 @@ begin
   Result := ProblemsSectionName + '.count';
 end;
 
+procedure TContestProblemList.HandleProblemDifference(AOldList,
+  ANewList: TStringList);
+var
+  I: integer;
+  Problem: TContestProblem;
+begin
+  // handle added problems
+  for I := 0 to ANewList.Count - 1 do
+    if AOldList.IndexOf(ANewList[I]) < 0 then
+    begin
+      Problem := Contest.ProblemManager.GetObject(ANewList[I]) as TContestProblem;
+      try
+        Contest.TriggerProblemAdded(Problem);
+      finally
+        FreeAndNil(Problem);
+      end;
+    end;
+  // handle deleted problems
+  for I := 0 to AOldList.Count - 1 do
+    if ANewList.IndexOf(AOldList[I]) < 0 then
+    begin
+      Problem := Contest.ProblemManager.GetObject(AOldList[I]) as TContestProblem;
+      try
+        Contest.TriggerProblemDeleted(Problem);
+      finally
+        FreeAndNil(Problem);
+      end;
+    end;
+end;
+
 function TContestProblemList.GetProblemList: TStringList;
 var
   I: integer;
@@ -278,10 +309,18 @@ end;
 procedure TContestProblemList.SetProblemList(AValue: TStringList);
 var
   I: integer;
+  OldList: TStringList;
 begin
   // validate new list
   if not IsProblemListValid(AValue) then
     raise EContestValidate.Create(SProblemListNotValid);
+  // handle the difference in problems
+  OldList := ProblemList;
+  try
+    HandleProblemDifference(OldList, AValue);
+  finally
+    FreeAndNil(OldList);
+  end;
   // delete old values
   Storage.DeletePath(ProblemsByIdSectionName);
   Storage.DeletePath(ProblemsByIndexSectionName);
@@ -641,6 +680,7 @@ end;
 procedure TContest.DoAddParticipant(AInfo: TUserInfo);
 begin
   Storage.WriteBool(ParticipantsFullKeyName(AInfo.ID), True);
+  TriggerParticipantAdded(AInfo);
 end;
 
 procedure TContest.DeleteParticipant(AInfo: TUserInfo);
@@ -654,6 +694,7 @@ end;
 procedure TContest.DoDeleteParticipant(AInfo: TUserInfo);
 begin
   Storage.DeleteVariable(ParticipantsFullKeyName(AInfo.ID));
+  TriggerParticipantDeleted(AInfo);
 end;
 
 function TContest.HasParticipant(AInfo: TUserInfo): boolean;
