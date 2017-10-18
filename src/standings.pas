@@ -28,6 +28,9 @@ uses
   Classes, SysUtils, typinfo, contestproblems, submissions, webstrconsts,
   datastorages, users, editableobjects, tswebobservers, fgl, tswebutils, math;
 
+const
+  ScoreCompareEps = 1e-7;
+
 type
   TContestScoringPolicy = (spMaxScore, spLastScore);
 
@@ -205,7 +208,7 @@ end;
 
 function StandingsRowCompare(const ARow1, ARow2: TStandingsRow): integer;
 begin
-  Result := -CompareValue(ARow1.SumScore, ARow2.SumScore, 1e-7);
+  Result := -CompareValue(ARow1.SumScore, ARow2.SumScore, ScoreCompareEps);
 end;
 
 { TStandingsRowList }
@@ -251,7 +254,7 @@ end;
 
 function TStandingsManager.ContestSectionName(AContest: TBaseContest): string;
 begin
-  Result := TablesSectionName + '.byContest.' + Id2Str(AContest.ID);
+  Result := TablesSectionName + '.' + Id2Str(AContest.ID);
 end;
 
 function TStandingsManager.RowSectionName(AContest: TBaseContest;
@@ -366,9 +369,10 @@ var
 
   function BetterSubmissionFound: boolean;
   begin
+    Result := False;
     case (Contest as TBaseStandingsContest).ContestScoringPolicy of
-      spMaxScore: Result := BestScore > Submission.Score;
-      spLastScore: Result := BestID > Submission.ID;
+      spMaxScore: Result := Submission.Score > BestScore;
+      spLastScore: Result := Submission.ID > BestID;
     end;
   end;
 
