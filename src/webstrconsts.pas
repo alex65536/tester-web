@@ -151,7 +151,7 @@ resourcestring
   SEditableCreateTitle = 'Title:';
   SEditableCreateTitlePrompt = 'Enter object title';
   SEditableCreateSubmit = 'Create';
-  SProblemList = 'Problems List';
+  SProblemList = 'Problem Editor';
   SEditableListName = 'Name';
   SEditableListTitle = 'Title';
   SEditableListAuthor = 'Author';
@@ -282,7 +282,7 @@ resourcestring
   SContestCloneNamePrompt = 'Enter new contest name';
   SContestCloneObject = 'Clone contest:';
   SContestDeleteObject = 'Delete contest:';
-  SContestList = 'Contests List';
+  SContestList = 'Contest Editor';
   SContestCreateNew = 'Create New Contest';
   SContestEditSubmit = 'Edit contest';
   SRequestShowFormat = '%s Request %s %s from %s done in %d ms.';
@@ -357,6 +357,7 @@ resourcestring
   SFindUserPrompt = 'Enter username to find';
   SFindUserSubmit = 'Find user';
   SFindUserTitle = 'Find User';
+  SContestShowStandingsKey = 'Show standings?';
 
 implementation
 

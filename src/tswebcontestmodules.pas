@@ -240,6 +240,7 @@ begin
     ContestTransaction.DurationMinutes := StrToInt(Values['duration']);
     ContestTransaction.ScoringPolicy := StrToScoringPolicy(Values['scoring-policy']);
     ContestTransaction.AllowUpsolving := (Values['allow-upsolving'] <> '');
+    ContestTransaction.ShowStandingsTable := (Values['show-standings'] <> '');
   end;
 end;
 

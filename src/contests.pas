@@ -102,7 +102,6 @@ type
     property ScoringPolicy: TContestScoringPolicy read FScoringPolicy write FScoringPolicy;
     property AllowUpsolving: boolean read FAllowUpsolving write FAllowUpsolving;
     property ShowStandingsTable: boolean read FShowStandingsTable write FShowStandingsTable;
-    // TODO : Update frontend for this!
     property ProblemNames[I: integer]: string read GetProblemNames;
     property ProblemTitles[I: integer]: string read GetProblemTitles;
     property ProblemCount: integer read GetProblemCount;
@@ -579,6 +578,7 @@ begin
     DurationMinutes := Self.DurationMinutes;
     ScoringPolicy := Self.ScoringPolicy;
     AllowUpsolving := Self.AllowUpsolving;
+    ShowStandingsTable := Self.ShowStandingsTable;
     ProblemList.Assign(Self.ProblemList);
   end;
 end;
