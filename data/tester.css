@@ -548,3 +548,10 @@ td.contest-actions button {
 	margin-left: 3pt;
 	margin-right: 3pt;
 }
+
+
+.standings-table-wrapper {
+	overflow: scroll;
+	table-layout: fixed;
+	width: 100%;
+}
