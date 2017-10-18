@@ -588,17 +588,19 @@ end;
 procedure TStandingsRow.DoLoadData;
 var
   I: integer;
+  ScoreKey: string;
   Score: double;
   Problem: TContestProblem;
 begin
-  FList := TDoubleList.Create;
   FSumScore := 0.0;
+  FList := TDoubleList.Create;
   try
     for I := 0 to Contest.ContestProblemCount - 1 do
     begin
       Problem := Contest.ContestProblem(I);
       try
-        Score := Storage.ReadFloat(Manager.ColumnSectionName(Contest, UserInfo, Problem) + '.score', 0.0);
+        ScoreKey := Manager.ColumnSectionName(Contest, UserInfo, Problem) + '.score';
+        Score := Storage.ReadFloat(ScoreKey, 0.0);
         FList.Add(Score);
         FSumScore := FSumScore + Score;
       finally
@@ -624,8 +626,8 @@ end;
 
 destructor TStandingsRow.Destroy;
 begin
-  FreeAndNil(FUserInfo);
   FreeAndNil(FList);
+  FreeAndNil(FUserInfo);
   inherited Destroy;
 end;
 
