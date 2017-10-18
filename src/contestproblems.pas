@@ -113,7 +113,9 @@ type
       override;
     function CanRejudgeSubmission(AProblem: TTestableProblem): boolean;
       override;
-    function ListByContest(AContest: TBaseContest): TIdList;
+    function CanRejudgeSubmission(AContest: TBaseContest): boolean; virtual;
+    function ListAvailable(AContest: TBaseContest): TIdList; overload;
+    procedure RejudgeSubmissions(AContest: TBaseContest); overload;
   end;
 
   { TContestTestProblemTransaction }
@@ -610,10 +612,32 @@ begin
   Result := ContestAccessLevel(AProblem as TContestProblem) in AccessCanWriteSet;
 end;
 
-function TContestProblemSubmissionSession.ListByContest(AContest: TBaseContest): TIdList;
+function TContestProblemSubmissionSession.CanRejudgeSubmission(AContest: TBaseContest): boolean;
 begin
-  with SubmissionManager do
+  Result := (User is TEditorUser) and
+   (AContest.GetAccessRights(User as TEditorUser) in AccessCanWriteSet);
+end;
+
+function TContestProblemSubmissionSession.ListAvailable(AContest: TBaseContest): TIdList;
+begin
+  with SubmissionManager as TContestSubmissionManager do
     Result := Filter(ListByContest(AContest), Self, @AvailableFilter);
+end;
+
+procedure TContestProblemSubmissionSession.RejudgeSubmissions(AContest: TBaseContest);
+var
+  List: TIdList;
+  ID: integer;
+begin
+  if not CanRejudgeSubmission(AContest) then
+    raise ESubmissionAccessDenied.Create(SAccessDenied);
+  List := ListAvailable(AContest);
+  try
+    for ID in List do
+      (SubmissionManager as TContestSubmissionManager).RejudgeSubmission(ID);
+  finally
+    FreeAndNil(List);
+  end;
 end;
 
 end.
