@@ -358,7 +358,7 @@ resourcestring
   SFindUserSubmit = 'Find user';
   SFindUserTitle = 'Find User';
   SContestShowStandingsKey = 'Show standings?';
-  SContestSolveTitle = 'Contests';
+  SContestSolveTitle = 'Contest List';
   SDurationMinFormatHours = '%d:%.2d';
   SDurationMinFormatDays = '%dd %d:%.2d';
   SDurationSecFormatHours = '%d:%.2d:%.2d';
@@ -374,6 +374,10 @@ resourcestring
   SSolveDurationHeader = 'Duration';
   SSolveStatusHeader = 'Status';
   SSolveAccessTypeHeader = 'Access type';
+  SSolveProblemIndexHeader = '#';
+  SSolveProblemTitleHeader = 'Title';
+  SSolveProblemScoreHeader = 'Score';
+  SSolveProblemListTitle = 'Contest';
 
 implementation
 

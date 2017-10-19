@@ -26,7 +26,8 @@ interface
 
 uses
   Classes, SysUtils, contests, contestproblems, htmlpreprocess, htmlpages,
-  tswebpagesbase, webstrconsts, webstrutils, tswebmanagers;
+  tswebpagesbase, webstrconsts, webstrutils, tswebmanagers, strconsts,
+  standings;
 
 const
   SContestAccessTypes: array [TContestAccessType] of string = (
@@ -38,10 +39,18 @@ const
 type
   {$interfaces CORBA}
 
-  { IContestPage }
+  { IContestSolvePage }
 
-  IContestPage = interface
+  IContestSolvePage = interface
     ['{7C18C5C5-C400-4CEB-866C-6EB91084F07E}']
+    function Contest: TContest;
+    function ContestName: string;
+  end;
+
+  { IContestSolveModule }
+
+  IContestSolveModule = interface
+    ['{99858B2B-A77C-447B-9019-97F94E1FFB8C}']
     function Contest: TContest;
   end;
   {$interfaces COM}
@@ -51,13 +60,13 @@ type
   TSolveContestListItem = class(TTesterHtmlPageElement)
   private
     FContest: TContest;
-    FTransaction: TContestViewTransaction;
+    FTransaction: TViewContestTransaction;
   protected
     procedure DoFillVariables; override;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
     property Contest: TContest read FContest;
-    property Transaction: TContestViewTransaction read FTransaction;
+    property Transaction: TViewContestTransaction read FTransaction;
     constructor Create(AParent: THtmlPage; AContest: TContest);
     destructor Destroy; override;
   end;
@@ -76,7 +85,106 @@ type
     constructor Create(AParent: THtmlPage; ASession: TContestManagerSession);
   end;
 
+  { TSolveProblemListItem }
+
+  TSolveProblemListItem = class(TTesterHtmlPageElement)
+  private
+    FProblemIndex: integer;
+    FTransaction: TTestContestTransaction;
+  protected
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Transaction: TTestContestTransaction read FTransaction;
+    property ProblemIndex: integer read FProblemIndex;
+    constructor Create(AParent: THtmlPage; ATransaction: TTestContestTransaction;
+      AProblemIndex: integer);
+  end;
+
+  { TSolveProblemList }
+
+  TSolveProblemList = class(TTesterHtmlListedPageElement)
+  private
+    FTransaction: TTestContestTransaction;
+  protected
+    procedure DoFillList;
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Transaction: TTestContestTransaction read FTransaction;
+    constructor Create(AParent: THtmlPage; ATransaction: TTestContestTransaction);
+  end;
+
 implementation
+
+{ TSolveProblemList }
+
+procedure TSolveProblemList.DoFillList;
+var
+  I: integer;
+begin
+  for I := 0 to Transaction.ProblemCount - 1 do
+    List.Add(TSolveProblemListItem.Create(Parent, Transaction, I));
+end;
+
+procedure TSolveProblemList.DoFillVariables;
+begin
+  with Storage do
+  begin
+    ItemsAsText['solveProblemIndexHeader'] := SSolveProblemIndexHeader;
+    ItemsAsText['solveProblemTitleHeader'] := SSolveProblemTitleHeader;
+    ItemsAsText['solveProblemScoreHeader'] := SSolveProblemScoreHeader;
+  end;
+  AddListToVariable('solveProblemListInner');
+end;
+
+procedure TSolveProblemList.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('solve', 'solveProblemList'));
+end;
+
+constructor TSolveProblemList.Create(AParent: THtmlPage;
+  ATransaction: TTestContestTransaction);
+begin
+  inherited Create(AParent);
+  FTransaction := ATransaction;
+  DoFillList;
+end;
+
+{ TSolveProblemListItem }
+
+procedure TSolveProblemListItem.DoFillVariables;
+var
+  Row: TStandingsRow;
+  Score: string;
+begin
+  // get problem score
+  Row := Transaction.GetOwnResults;
+  if Row = nil then
+    Score := SNoAnswer
+  else
+    Score := Format(SScoreFmt, [Row.ProblemScores[ProblemIndex]]);
+  // fill variables
+  with Storage do
+  begin
+    ItemsAsText['solveProblemIndex'] := IntToStr(ProblemIndex + 1);
+    ItemsAsText['solveProblemTitle'] := Transaction.ProblemTitles[ProblemIndex];
+    ItemsAsText['solveProblemScore'] := Score;
+  end;
+end;
+
+procedure TSolveProblemListItem.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('solve', 'solveProblemListItem'));
+end;
+
+constructor TSolveProblemListItem.Create(AParent: THtmlPage;
+  ATransaction: TTestContestTransaction; AProblemIndex: integer);
+begin
+  inherited Create(AParent);
+  FTransaction := ATransaction;
+  FProblemIndex := AProblemIndex;
+end;
 
 { TSolveContestListItem }
 

@@ -24,20 +24,77 @@ unit tswebsolvefeatures;
 
 interface
 
+// TODO : For each in-contest page, view contest status and title bar!!!
+
 uses
   SysUtils, tswebfeatures, tswebsolveelements, contests, tswebmanagers, userpages,
-  editableobjects;
+  editableobjects, users, htmlpages;
 
 type
 
   { TSolveContestListFeature }
 
-  TSolveContestListFeature = class(TUserInfoFeature)
+  TSolveContestListFeature = class(TTesterPageFeature)
   public
     procedure Satisfy; override;
   end;
 
+  { TSolveContestBaseFeature }
+
+  TSolveContestBaseFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+  end;
+
+  { TSolveProblemListFeature }
+
+  TSolveProblemListFeature = class(TTesterPageFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TSolveContestBaseFeature }
+
+procedure TSolveContestBaseFeature.Satisfy;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['solveContest'] := (Parent as IContestSolvePage).ContestName;
+  end;
+end;
+
+{ TSolveProblemListFeature }
+
+procedure TSolveProblemListFeature.Satisfy;
+var
+  Contest: TContest;
+  User: TUser;
+  Transaction: TTestContestTransaction;
+  List: TSolveProblemList;
+begin
+  Contest := (Parent as IContestSolvePage).Contest;
+  User := (Parent as TUserPage).User;
+  Transaction := Contest.CreateTestTransaction(User);
+  try
+    List := TSolveProblemList.Create(Parent, Transaction);
+    try
+      Parent.AddElementPagePart('solveProblemList', List);
+    finally
+      FreeAndNil(List);
+    end;
+  finally
+    FreeAndNil(Transaction);
+  end;
+end;
+
+procedure TSolveProblemListFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TSolveContestBaseFeature);
+end;
 
 { TSolveContestListFeature }
 

@@ -32,11 +32,16 @@ type
   TEditableModuleHook = class;
 
   {$interfaces CORBA}
+
+  { IEditableWebModule }
+
   IEditableWebModule = interface
     ['{3930B3B7-0A9F-41AF-929A-D416E801EE75}']
     function Manager: TEditableManager;
     function NeedAccessRights: TEditableAccessRightsSet;
   end;
+
+  { IEditableModuleHook }
 
   IEditableModuleHook = interface
     ['{B788C26E-E9B2-4C14-B162-9E833D90295F}']
@@ -171,21 +176,23 @@ type
     procedure DoHandlePost(ARequest: TRequest); override;
   end;
 
-function EditableObjectNameFromRequest(ARequest: TRequest): string;
-function EditableObjectFromRequest(ARequest: TRequest;
-  AManager: TEditableManager): TEditableObject;
+function EditableObjectNameFromRequest(ARequest: TRequest;
+  const AFieldName: string = 'object'): string;
+function EditableObjectFromRequest(ARequest: TRequest; AManager: TEditableManager;
+  const AFieldName: string = 'object'): TEditableObject;
 
 implementation
 
-function EditableObjectNameFromRequest(ARequest: TRequest): string;
+function EditableObjectNameFromRequest(ARequest: TRequest;
+  const AFieldName: string): string;
 begin
-  Result := ARequest.QueryFields.Values['object'];
+  Result := ARequest.QueryFields.Values[AFieldName];
 end;
 
 function EditableObjectFromRequest(ARequest: TRequest;
-  AManager: TEditableManager): TEditableObject;
+  AManager: TEditableManager; const AFieldName: string): TEditableObject;
 begin
-  Result := AManager.GetObject(EditableObjectNameFromRequest(ARequest));
+  Result := AManager.GetObject(EditableObjectNameFromRequest(ARequest, AFieldName));
 end;
 
 { TEditableSettingsWebModule }

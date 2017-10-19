@@ -107,6 +107,8 @@ type
     procedure AfterConstruction; override;
   end;
 
+  // TODO : Refactor here to adapt this for solve contest system!!!
+
   { TProblemTestBaseWebModule }
 
   TProblemTestBaseWebModule = class(TEditablePostWebModule)
