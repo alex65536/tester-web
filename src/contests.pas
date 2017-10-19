@@ -78,6 +78,7 @@ type
     function GetAccessType: TContestAccessType;
     function GetContest: TContest;
     function GetEndTime: TDateTime;
+    function GetMinutesLeft: integer;
     function GetProblemCount: integer;
     function GetProblemNames(I: integer): string;
     function GetProblemTitles(I: integer): string;
@@ -96,6 +97,7 @@ type
     property Contest: TContest read GetContest;
     property StartTime: TDateTime read FStartTime write FStartTime;
     property EndTime: TDateTime read GetEndTime;
+    property MinutesLeft: integer read GetMinutesLeft;
     property Status: TContestStatus read GetStatus;
     property AccessType: TContestAccessType read GetAccessType;
     property DurationMinutes: integer read FDurationMinutes write FDurationMinutes;
@@ -126,6 +128,7 @@ type
     property Contest;
     property StartTime;
     property EndTime;
+    property MinutesLeft;
     property Status;
     property AccessType;
     property DurationMinutes;
@@ -153,8 +156,10 @@ type
 
   TContestViewTransaction = class(TBaseContestTransaction)
   public
+    property Contest;
     property StartTime;
     property EndTime;
+    property MinutesLeft;
     property Status;
     property AccessType;
     property DurationMinutes;
@@ -224,6 +229,7 @@ type
     function DoGetProblem(const AProblemName: string): TContestProblem; virtual;
     function ContestStartTime: TDateTime;
     function ContestDurationMinutes: integer;
+    function ContestMinutesLeft: integer;
     function ContestEndTime: TDateTime;
     function ContestScoringPolicy: TContestScoringPolicy; override;
     function ContestStatus: TContestStatus; override;
@@ -488,6 +494,11 @@ end;
 function TBaseContestTransaction.GetEndTime: TDateTime;
 begin
   Result := Contest.ContestEndTime;
+end;
+
+function TBaseContestTransaction.GetMinutesLeft: integer;
+begin
+  Result := Contest.ContestMinutesLeft;
 end;
 
 function TBaseContestTransaction.GetProblemCount: integer;
@@ -857,6 +868,14 @@ end;
 function TContest.ContestDurationMinutes: integer;
 begin
   Result := Storage.ReadInteger(FullKeyName('durationMinutes'), 0);
+end;
+
+function TContest.ContestMinutesLeft: integer;
+begin
+  if ContestStatus = csRunning then
+    Result := MinutesBetween(Now, ContestEndTime)
+  else
+    Result := 0;
 end;
 
 function TContest.ContestEndTime: TDateTime;
