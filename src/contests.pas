@@ -184,6 +184,7 @@ type
     FContest: TContest;
     FStorage: TAbstractDataStorage;
     function ProblemIndexToId(AIndex: integer): integer;
+    function ProblemIndexToName(AIndex: integer): string;
     procedure AddProblemToList(AIndex: integer; const AProblemName: string);
   protected
     property Storage: TAbstractDataStorage read FStorage;
@@ -333,6 +334,11 @@ begin
   Result := Storage.ReadInteger(ProblemByIndexKeyName(AIndex), -1);
 end;
 
+function TContestProblemList.ProblemIndexToName(AIndex: integer): string;
+begin
+  Result := Contest.ProblemManager.IdToObjectName(ProblemIndexToId(AIndex));
+end;
+
 procedure TContestProblemList.AddProblemToList(AIndex: integer;
   const AProblemName: string);
 var
@@ -467,7 +473,7 @@ function TContestProblemList.GetProblem(AIndex: integer): TContestProblem;
 begin
   if (AIndex < 0) or (AIndex >= ProblemCount) then
     raise EContestValidate.CreateFmt(SIndexOutOfBounds, [AIndex]);
-  Result := Contest.DoGetProblem(ProblemByIndexKeyName(AIndex));
+  Result := Contest.DoGetProblem(ProblemIndexToName(AIndex));
 end;
 
 function TContestProblemList.IsProblemListValid(AValue: TStringList): boolean;
