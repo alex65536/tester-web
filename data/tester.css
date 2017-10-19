@@ -204,7 +204,7 @@ table.center-wrapper {
 	text-decoration: none;
 	white-space: nowrap;
 }
-button.styled-btn:active, a.styled-btn:hover {
+button.styled-btn:active, .styled-btn:hover {
 	background-color: #2DA35D;
 	border-style: ridge;
 }
@@ -212,7 +212,7 @@ button.styled-btn:active, a.styled-btn:hover {
 	background-color: #BD5447;
 	border-color: #A72E1C;
 }
-button.red-btn:active, a.red-btn:hover {
+button.red-btn:active, .red-btn:hover {
 	background-color: #A33F2D;
 }
 .grayed-btn, button.grayed-btn:active, a.grayed-btn:hover {
