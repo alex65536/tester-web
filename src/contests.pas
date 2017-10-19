@@ -142,9 +142,9 @@ type
     property Problems;
   end;
 
-  { TContestTestTransaction }
+  { TTestContestTransaction }
 
-  TContestTestTransaction = class(TContestTransaction)
+  TTestContestTransaction = class(TContestTransaction)
   public
     function CanReadData: boolean; override;
     function CanWriteData: boolean; override;
@@ -153,9 +153,9 @@ type
     function GetOwnResults: TStandingsRow;
   end;
 
-  { TContestViewTransaction }
+  { TViewContestTransaction }
 
-  TContestViewTransaction = class(TBaseContestTransaction)
+  TViewContestTransaction = class(TBaseContestTransaction)
   public
     property Contest;
     property StartTime;
@@ -251,8 +251,8 @@ type
     function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession; override;
     function CreateParticipantSession(AUser: TUser): TContestParticipantSession; virtual;
     function CreateTransaction(AUser: TUser): TEditableTransaction; override;
-    function CreateTestTransaction(AUser: TUser): TContestTestTransaction; virtual;
-    function CreateViewTransaction(AUser: TUser): TContestViewTransaction; virtual;
+    function CreateTestTransaction(AUser: TUser): TTestContestTransaction; virtual;
+    function CreateViewTransaction(AUser: TUser): TViewContestTransaction; virtual;
     destructor Destroy; override;
   end;
 
@@ -274,9 +274,9 @@ type
 
 implementation
 
-{ TContestViewTransaction }
+{ TViewContestTransaction }
 
-function TContestViewTransaction.CanReadData: boolean;
+function TViewContestTransaction.CanReadData: boolean;
 begin
   Result := inherited CanReadData;
   if Result then
@@ -284,24 +284,24 @@ begin
   Result := Contest.HasParticipant(User.Info);
 end;
 
-function TContestViewTransaction.CanWriteData: boolean;
+function TViewContestTransaction.CanWriteData: boolean;
 begin
   Result := False;
 end;
 
-{ TContestTestTransaction }
+{ TTestContestTransaction }
 
-function TContestTestTransaction.CanReadData: boolean;
+function TTestContestTransaction.CanReadData: boolean;
 begin
   Result := CanAccessContest;
 end;
 
-function TContestTestTransaction.CanWriteData: boolean;
+function TTestContestTransaction.CanWriteData: boolean;
 begin
   Result := False;
 end;
 
-function TContestTestTransaction.CanGetStandings: boolean;
+function TTestContestTransaction.CanGetStandings: boolean;
 begin
   // for setters, we always allow to view the table
   if AccessLevel in AccessCanReadSet then
@@ -315,14 +315,14 @@ begin
   Result := True;
 end;
 
-function TContestTestTransaction.GetStandings: TStandingsTable;
+function TTestContestTransaction.GetStandings: TStandingsTable;
 begin
   if not CanGetStandings then
     raise EContestAccessDenied.Create(SAccessDenied);
   Result := Contest.StandingsTable;
 end;
 
-function TContestTestTransaction.GetOwnResults: TStandingsRow;
+function TTestContestTransaction.GetOwnResults: TStandingsRow;
 begin
   Result := Contest.StandingsTable.RowsByUsername[User.Username];
 end;
@@ -1001,14 +1001,14 @@ begin
   Result := TContestTransaction.Create(Manager, AUser, Self);
 end;
 
-function TContest.CreateTestTransaction(AUser: TUser): TContestTestTransaction;
+function TContest.CreateTestTransaction(AUser: TUser): TTestContestTransaction;
 begin
-  Result := TContestTestTransaction.Create(Manager, AUser, Self);
+  Result := TTestContestTransaction.Create(Manager, AUser, Self);
 end;
 
-function TContest.CreateViewTransaction(AUser: TUser): TContestViewTransaction;
+function TContest.CreateViewTransaction(AUser: TUser): TViewContestTransaction;
 begin
-  Result := TContestViewTransaction.Create(Manager, AUser, Self);
+  Result := TViewContestTransaction.Create(Manager, AUser, Self);
 end;
 
 destructor TContest.Destroy;
