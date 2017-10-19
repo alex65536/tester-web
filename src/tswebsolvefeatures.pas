@@ -28,7 +28,7 @@ interface
 
 uses
   SysUtils, tswebfeatures, tswebsolveelements, contests, tswebmanagers, userpages,
-  editableobjects, users, htmlpages;
+  editableobjects, users, htmlpages, tswebpagesbase;
 
 type
 
@@ -44,6 +44,7 @@ type
   TSolveContestBaseFeature = class(TTesterPageFeature)
   public
     procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
   { TSolveProblemListFeature }
@@ -59,11 +60,45 @@ implementation
 { TSolveContestBaseFeature }
 
 procedure TSolveContestBaseFeature.Satisfy;
+var
+  Contest: TContest;
+  User: TUser;
+
+  function GetContestTitle: string;
+  var
+    Transaction: TViewContestTransaction;
+  begin
+    Transaction := Contest.CreateViewTransaction(User);
+    try
+      Result := Transaction.Title;
+    finally
+      FreeAndNil(Transaction);
+    end;
+  end;
+
+var
+  PageTitle, ContestTitle: string;
 begin
+  Contest := (Parent as IContestSolvePage).Contest;
+  User := (Parent as TUserPage).User;
+  PageTitle := (Parent as TContentHtmlPage).Title;
+  ContestTitle := GetContestTitle;
   with Parent.Variables do
   begin
-    ItemsAsText['solveContest'] := (Parent as IContestSolvePage).ContestName;
+    ItemsAsText['solveContest'] := Contest.Name;
+    ItemsAsText['solveContestTitle'] := ContestTitle;
+    ItemsAsText['pageTitle'] := PageTitle;
+    ItemsAsText['contentHeaderText'] := PageTitle;
+    ItemsAsText['pageHeader'] := ContestTitle;
+    ItemsAsText['title'] := '~pageTitle;: ~solveContestTitle;';
   end;
+end;
+
+procedure TSolveContestBaseFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TContentHeaderFeature);
+  ADependencies.Add(THeaderFeature);
 end;
 
 { TSolveProblemListFeature }
