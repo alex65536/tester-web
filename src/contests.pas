@@ -117,6 +117,7 @@ type
     procedure MoveProblemUp(AIndex: integer);
     function CanMoveProblemDown(AIndex: integer): boolean;
     procedure MoveProblemDown(AIndex: integer);
+    function CanAccessContest: boolean; virtual;
     procedure Validate; override;
     destructor Destroy; override;
   end;
@@ -291,10 +292,7 @@ end;
 
 function TContestTestTransaction.CanReadData: boolean;
 begin
-  Result := inherited CanReadData;
-  if Result then
-    Exit;
-  Result := Contest.ParticipantCanView(User.Info);
+  Result := CanAccessContest;
 end;
 
 function TContestTestTransaction.CanWriteData: boolean;
@@ -664,6 +662,11 @@ begin
   if not CanMoveProblemDown(AIndex) then
     raise EContestValidate.Create(SUnableMoveProblemDown);
   ProblemList.Exchange(AIndex, AIndex + 1);
+end;
+
+function TBaseContestTransaction.CanAccessContest: boolean;
+begin
+  Result := (AccessLevel in AccessCanReadSet) or Contest.ParticipantCanView(User.Info);
 end;
 
 procedure TBaseContestTransaction.Validate;
