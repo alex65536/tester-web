@@ -25,9 +25,109 @@ unit tswebsolveelements;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, contests, contestproblems, standings, htmlpreprocess,
+  htmlpages, tswebpagesbase;
+
+type
+  {$interfaces CORBA}
+
+  { IContestPage }
+
+  IContestPage = interface
+    ['{7C18C5C5-C400-4CEB-866C-6EB91084F07E}']
+    function Contest: TContest;
+  end;
+  {$interfaces COM}
+
+  { TSolveContestListItem }
+
+  TSolveContestListItem = class(TTesterHtmlPageElement)
+  private
+    FTransaction: TContestViewTransaction;
+  protected
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Transaction: TContestViewTransaction read FTransaction;
+    constructor Create(AParent: THtmlPage; ATransaction: TContestViewTransaction);
+    destructor Destroy; override;
+  end;
+
+  { TSolveContestList }
+
+  TSolveContestList = class(TTesterHtmlListedPageElement)
+  private
+    FManagerSession: TContestManagerSession;
+  protected
+    procedure DoFillList;
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property ManagerSession: TContestManagerSession read FManagerSession;
+    constructor Create(AParent: THtmlPage; ASession: TContestManagerSession);
+  end;
 
 implementation
+
+{ TSolveContestListItem }
+
+procedure TSolveContestListItem.DoFillVariables;
+begin
+  with Storage do
+  begin
+    ItemsAsText['solveName'] := Transaction.EditableObject.Name;
+    ItemsAsText['solveTitle'] := Transaction.Title;
+    if Transaction.Status = csNotStarted then
+      ItemsAsText['solveNameLink'] := '~+#solveInactiveName;'
+    else
+      ItemsAsText['solveNameLink'] := '~+#solveActiveName;';
+    ItemsAsText['solveDuration'] := ;
+  end;
+{<td>~+solveNameLink;</td>
+<td>~solveStartTime;</td>
+<td>~solveDuration;</td>
+<td>~solveStatus;</td>
+<td>~solveAccessType;</td> }
+end;
+
+procedure TSolveContestListItem.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+
+end;
+
+constructor TSolveContestListItem.Create(AParent: THtmlPage;
+  ATransaction: TContestViewTransaction);
+begin
+
+end;
+
+destructor TSolveContestListItem.Destroy;
+begin
+  inherited Destroy;
+end;
+
+{ TSolveContestList }
+
+procedure TSolveContestList.DoFillList;
+begin
+
+end;
+
+procedure TSolveContestList.DoFillVariables;
+begin
+
+end;
+
+procedure TSolveContestList.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+
+end;
+
+constructor TSolveContestList.Create(AParent: THtmlPage;
+  ASession: TContestManagerSession);
+begin
+
+end;
 
 end.
 

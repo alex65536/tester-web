@@ -45,7 +45,7 @@ uses
          was not found.
       +    Preprocess the contents of the variable recursively.
       `    Adds <br> at the end of each line. Can be used only when the contents
-         are indented as HTML.
+         are escaped as HTML.
     MODIFIERS may not conflict or repeat. VARNAME must contain latin letters,
     numbers and underscores, but not starting with number.
 
