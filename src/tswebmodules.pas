@@ -522,6 +522,18 @@ begin
   // add user-independent pages
   AddElement(SMainPage, '~documentRoot;/main');
   AddElement(SFindUserTitle, '~documentRoot;/find-user');
+  // add solve contest page (for all users)
+  if User <> nil then
+    AddElement(SContestSolveTitle, '~documentRoot;/solve');
+  // add contest/problem lists (for editors)
+  if (User <> nil) and (User is TEditorUser) then
+  begin
+    AddElement(SProblemList, '~documentRoot;/problems');
+    AddElement(SContestList, '~documentRoot;/contests');
+  end;
+  // add "kill server" (for owner)
+  if (User <> nil) and (User is TOwnerUser) then
+    AddElement(SKillPageTitle, '~documentRoot;/kill');
   // add login/register for guests, and profile/logout for users
   if Parent is TUserPage then
   begin
@@ -537,15 +549,6 @@ begin
       AddElement(SUserDoLogOut, '~documentRoot;/logout');
     end;
   end;
-  // add contest/problem lists (for editors)
-  if (User <> nil) and (User is TEditorUser) then
-  begin
-    AddElement(SProblemList, '~documentRoot;/problems');
-    AddElement(SContestList, '~documentRoot;/contests');
-  end;
-  // add "kill server" (for owner)
-  if (User <> nil) and (User is TOwnerUser) then
-    AddElement(SKillPageTitle, '~documentRoot;/kill');
 end;
 
 { TSimpleHtmlPage }

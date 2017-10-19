@@ -358,6 +358,7 @@ resourcestring
   SFindUserSubmit = 'Find user';
   SFindUserTitle = 'Find User';
   SContestShowStandingsKey = 'Show standings?';
+  SContestSolveTitle = 'Contests';
 
 implementation
 
