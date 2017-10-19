@@ -37,15 +37,36 @@ type
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   end;
 
+  { TTesterNavBarSplitter }
+
+  TTesterNavBarSplitter = class(TNavBarSplitter)
+  protected
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  end;
+
   { TTesterNavBar }
 
   TTesterNavBar = class(TNavBar)
   protected
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
     function DoCreateElement(AParent: THtmlPage): TNavBarElement; override;
+    function DoCreateSplitter(AParent: THtmlPage): TNavBarSplitter; override;
   end;
 
 implementation
+
+{ TTesterNavBarSplitter }
+
+procedure TTesterNavBarSplitter.DoFillVariables;
+begin
+  // do nothing
+end;
+
+procedure TTesterNavBarSplitter.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('', 'navSplitter'));
+end;
 
 { TTesterNavBar }
 
@@ -57,6 +78,11 @@ end;
 function TTesterNavBar.DoCreateElement(AParent: THtmlPage): TNavBarElement;
 begin
   Result := TTesterNavBarElement.Create(AParent);
+end;
+
+function TTesterNavBar.DoCreateSplitter(AParent: THtmlPage): TNavBarSplitter;
+begin
+  Result := TTesterNavBarSplitter.Create(AParent);
 end;
 
 { TTesterNavBarElement }

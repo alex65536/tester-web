@@ -38,6 +38,7 @@ td.header-cell, td.content-cell, td.footer-cell {
 	font-size: 44pt;
 	text-align: center;
 	width: 100%;
+	white-space: nowrap;
 }
 .container.header-table {
 	border-spacing: 0;
@@ -117,6 +118,13 @@ td.logo-cell {
 .nav li a:hover { 
 	background-color: #2F684A;
 }
+.nav hr.splitter {
+	border-style: none;
+	border-top-color: #19804A;
+	border-top-style: ridge;
+	border-top-width: 2pt;
+	margin: 0;
+}
 
 
 table.content-table {
@@ -168,10 +176,13 @@ table.center-wrapper {
 	border-color: #1CA757;
 }
 .right-align {
-	text-align: right;
+	text-align: right !important;
 }
 .center-align {
-	text-align: center;
+	text-align: center !important;
+}
+.left-align {
+	text-align: left !important;
 }
 .inline-element {
 	display: inline;
