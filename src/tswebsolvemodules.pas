@@ -25,9 +25,27 @@ unit tswebsolvemodules;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, tswebmodules, webmodules, tswebsolvepages, fphttp, htmlpages;
+
+type
+
+  { TSolveContestListModule }
+
+  TSolveContestListModule = class(THtmlPageWebModule)
+  public
+    function DoCreatePage: THtmlPage; override;
+  end;
 
 implementation
 
+{ TSolveContestListModule }
+
+function TSolveContestListModule.DoCreatePage: THtmlPage;
+begin
+  Result := TSolveListPage.Create;
+end;
+
+initialization
+  RegisterHTTPModule('solve', TSolveContestListModule, True);
 end.
 

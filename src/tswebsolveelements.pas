@@ -25,8 +25,15 @@ unit tswebsolveelements;
 interface
 
 uses
-  Classes, SysUtils, contests, contestproblems, standings, htmlpreprocess,
-  htmlpages, tswebpagesbase;
+  Classes, SysUtils, contests, contestproblems, htmlpreprocess, htmlpages,
+  tswebpagesbase, webstrconsts, webstrutils, tswebmanagers;
+
+const
+  SContestAccessTypes: array [TContestAccessType] of string = (
+    SContestAccessTypeNone,
+    SContestAccessTypeSetter,
+    SContestAccessTypeParticipant
+  );
 
 type
   {$interfaces CORBA}
@@ -43,13 +50,15 @@ type
 
   TSolveContestListItem = class(TTesterHtmlPageElement)
   private
+    FContest: TContest;
     FTransaction: TContestViewTransaction;
   protected
     procedure DoFillVariables; override;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
+    property Contest: TContest read FContest;
     property Transaction: TContestViewTransaction read FTransaction;
-    constructor Create(AParent: THtmlPage; ATransaction: TContestViewTransaction);
+    constructor Create(AParent: THtmlPage; AContest: TContest);
     destructor Destroy; override;
   end;
 
@@ -72,61 +81,95 @@ implementation
 { TSolveContestListItem }
 
 procedure TSolveContestListItem.DoFillVariables;
+var
+  ContestStatus: string;
 begin
+  // retrieve contest status
+  case Transaction.Status of
+    csNotStarted: ContestStatus := SStatusNotStarted;
+    csRunning: ContestStatus := Format(SStatusRunning, [DurationSecondsToStr(Transaction.SecondsLeft)]);
+    csUpsolve: ContestStatus := SStatusUpsolve;
+  end;
+  // fill variables
   with Storage do
   begin
-    ItemsAsText['solveName'] := Transaction.EditableObject.Name;
+    ItemsAsText['solveName'] := Transaction.Contest.Name;
     ItemsAsText['solveTitle'] := Transaction.Title;
-    if Transaction.Status = csNotStarted then
-      ItemsAsText['solveNameLink'] := '~+#solveInactiveName;'
+    if Transaction.CanAccessContest then
+      ItemsAsText['solveNameLink'] := '~+#solveActiveName;'
     else
-      ItemsAsText['solveNameLink'] := '~+#solveActiveName;';
-    ItemsAsText['solveDuration'] := ;
+      ItemsAsText['solveNameLink'] := '~+#solveInactiveName;';
+    ItemsAsText['solveStartTime'] := FormatDateTime(SPreferredDateTimeFormat,
+      Transaction.StartTime);
+    ItemsAsText['solveDuration'] := DurationMinutesToStr(Transaction.DurationMinutes);
+    ItemsAsText['solveStatus'] := ContestStatus;
+    ItemsAsText['solveAccessType'] := SContestAccessTypes[Transaction.AccessType];
   end;
-{<td>~+solveNameLink;</td>
-<td>~solveStartTime;</td>
-<td>~solveDuration;</td>
-<td>~solveStatus;</td>
-<td>~solveAccessType;</td> }
 end;
 
 procedure TSolveContestListItem.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-
+  Strings.LoadFromFile(TemplateLocation('solve', 'solveListItem'));
 end;
 
-constructor TSolveContestListItem.Create(AParent: THtmlPage;
-  ATransaction: TContestViewTransaction);
+constructor TSolveContestListItem.Create(AParent: THtmlPage; AContest: TContest);
 begin
-
+  inherited Create(AParent);
+  FContest := AContest;
+  FTransaction := AContest.CreateViewTransaction(Parent.User);
 end;
 
 destructor TSolveContestListItem.Destroy;
 begin
+  FreeAndNil(FTransaction);
+  FreeAndNil(FContest);
   inherited Destroy;
 end;
 
 { TSolveContestList }
 
 procedure TSolveContestList.DoFillList;
+var
+  I: integer;
+  ContestList: TStringList;
+  Contest: TContest;
 begin
-
+  ContestList := ManagerSession.ListAvailableContests;
+  try
+    for I := 0 to ContestList.Count - 1 do
+    begin
+      Contest := ContestManager.GetObject(ContestList[I]) as TContest;
+      List.Add(TSolveContestListItem.Create(Parent, Contest));
+    end;
+  finally
+    FreeAndNil(ContestList);
+  end;
 end;
 
 procedure TSolveContestList.DoFillVariables;
 begin
-
+  with Storage do
+  begin
+    ItemsAsText['solveNameHeader'] := SSolveNameHeader;
+    ItemsAsText['solveStartTimeHeader'] := SSolveStartTimeHeader;
+    ItemsAsText['solveDurationHeader'] := SSolveDurationHeader;
+    ItemsAsText['solveStatusHeader'] := SSolveStatusHeader;
+    ItemsAsText['solveAccessTypeHeader'] := SSolveAccessTypeHeader;
+  end;
+  AddListToVariable('solveListInner');
 end;
 
 procedure TSolveContestList.DoGetSkeleton(Strings: TIndentTaggedStrings);
 begin
-
+  Strings.LoadFromFile(TemplateLocation('solve', 'solveList'));
 end;
 
 constructor TSolveContestList.Create(AParent: THtmlPage;
   ASession: TContestManagerSession);
 begin
-
+  inherited Create(AParent);
+  FManagerSession := ASession;
+  DoFillList;
 end;
 
 end.

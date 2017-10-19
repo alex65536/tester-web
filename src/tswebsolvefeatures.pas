@@ -25,9 +25,39 @@ unit tswebsolvefeatures;
 interface
 
 uses
-  Classes, SysUtils;
+  SysUtils, tswebfeatures, tswebsolveelements, contests, tswebmanagers, userpages,
+  editableobjects;
+
+type
+
+  { TSolveContestListFeature }
+
+  TSolveContestListFeature = class(TUserInfoFeature)
+  public
+    procedure Satisfy; override;
+  end;
 
 implementation
+
+{ TSolveContestListFeature }
+
+procedure TSolveContestListFeature.Satisfy;
+var
+  ManagerSession: TEditableManagerSession;
+  List: TSolveContestList;
+begin
+  ManagerSession := ContestManager.CreateManagerSession((Parent as TUserPage).User);
+  try
+    List := TSolveContestList.Create(Parent, ManagerSession as TContestManagerSession);
+    try
+      Parent.AddElementPagePart('solveList', List);
+    finally
+      FreeAndNil(List);
+    end;
+  finally
+    FreeAndNil(ManagerSession);
+  end;
+end;
 
 end.
 

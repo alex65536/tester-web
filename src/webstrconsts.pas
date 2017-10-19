@@ -359,6 +359,21 @@ resourcestring
   SFindUserTitle = 'Find User';
   SContestShowStandingsKey = 'Show standings?';
   SContestSolveTitle = 'Contests';
+  SDurationMinFormatHours = '%d:%.2d';
+  SDurationMinFormatDays = '%dd %d:%.2d';
+  SDurationSecFormatHours = '%d:%.2d:%.2d';
+  SDurationSecFormatDays = '%dd %d:%.2d:%.2d';
+  SStatusNotStarted = 'Not started';
+  SStatusRunning = 'Running (%s left)';
+  SStatusUpsolve = 'Upsolve';
+  SContestAccessTypeNone = '(none)';
+  SContestAccessTypeSetter = 'Contest setter';
+  SContestAccessTypeParticipant = 'Participant';
+  SSolveNameHeader = 'Name';
+  SSolveStartTimeHeader = 'Start time';
+  SSolveDurationHeader = 'Duration';
+  SSolveStatusHeader = 'Status';
+  SSolveAccessTypeHeader = 'Access type';
 
 implementation
 

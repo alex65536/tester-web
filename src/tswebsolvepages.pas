@@ -25,9 +25,47 @@ unit tswebsolvepages;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, tswebsolvefeatures, tswebsolveelements, webstrconsts,
+  tswebmodules, tswebpages, htmlpreprocess, navbars;
+
+type
+
+  { TSolveListPage }
+
+  TSolveListPage = class(TDefaultHtmlPage)
+  protected
+    procedure AddFeatures; override;
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
+    function CreateNavBar: TNavBar; override;
+  public
+    procedure AfterConstruction; override;
+  end;
 
 implementation
+
+{ TSolveListPage }
+
+procedure TSolveListPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TSolveContestListFeature);
+end;
+
+procedure TSolveListPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
+begin
+  Strings.Text := '~#solveList;';
+end;
+
+function TSolveListPage.CreateNavBar: TNavBar;
+begin
+  Result := TDefaultNavBar.Create(Self);
+end;
+
+procedure TSolveListPage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Title := SContestSolveTitle;
+end;
 
 end.
 
