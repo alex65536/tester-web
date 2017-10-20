@@ -243,6 +243,7 @@ resourcestring
   SSubmissionHeaderId = 'ID';
   SSubmissionHeaderSubmitTime = 'Submit time';
   SSubmissionHeaderAuthor = 'Author';
+  SSubmissionHeaderProblem = 'Problem';
   SSubmissionHeaderLanguage = 'Language';
   SSubmissionHeaderVerdict = 'Verdict';
   SSubmissionHeaderTest = 'Test';

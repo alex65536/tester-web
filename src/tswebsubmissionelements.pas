@@ -207,6 +207,7 @@ begin
     ItemsAsText['submissionHeaderId'] := SSubmissionHeaderId;
     ItemsAsText['submissionHeaderSubmitTime'] := SSubmissionHeaderSubmitTime;
     ItemsAsText['submissionHeaderAuthor'] := SSubmissionHeaderAuthor;
+    ItemsAsText['submissionHeaderProblem'] := SSubmissionHeaderProblem;
     ItemsAsText['submissionHeaderLanguage'] := SSubmissionHeaderLanguage;
     ItemsAsText['submissionHeaderVerdict'] := SSubmissionHeaderVerdict;
     ItemsAsText['submissionHeaderTest'] := SSubmissionHeaderTest;
@@ -252,6 +253,7 @@ procedure TSubmissionItem.DoFillVariables;
 begin
   with Storage do
   begin
+    // TODO : View submission problem name!!!
     ItemsAsText['submissionId'] := IntToStr(Submission.ID);
     ItemsAsText['submissionSubmitTime'] := FormatDateTime(SPreferredDateTimeFormat, Submission.SubmitTime);
     ItemsAsText['submissionAuthorLink'] := Parent.GenerateUserLink(Submission.OwnerName);
