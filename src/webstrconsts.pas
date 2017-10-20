@@ -364,8 +364,9 @@ resourcestring
   SDurationSecFormatHours = '%d:%.2d:%.2d';
   SDurationSecFormatDays = '%dd %d:%.2d:%.2d';
   SStatusNotStarted = 'Not started';
-  SStatusRunning = 'Running (%s left)';
-  SStatusUpsolve = 'Upsolve';
+  SStatusRunning = 'Running';
+  SStatusRunningFmt = 'Running (%s left)';
+  SStatusUpsolve = 'Upsolving';
   SContestAccessTypeNone = '(none)';
   SContestAccessTypeSetter = 'Contest setter';
   SContestAccessTypeParticipant = 'Participant';
@@ -378,6 +379,7 @@ resourcestring
   SSolveProblemTitleHeader = 'Title';
   SSolveProblemScoreHeader = 'Score';
   SSolveProblemListTitle = 'Contest';
+  SSolveTimeLeft = 'Time left:';
 
 implementation
 

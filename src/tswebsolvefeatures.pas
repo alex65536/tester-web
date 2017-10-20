@@ -24,11 +24,9 @@ unit tswebsolvefeatures;
 
 interface
 
-// TODO : For each in-contest page, view contest status and title bar!!!
-
 uses
   SysUtils, tswebfeatures, tswebsolveelements, contests, tswebmanagers, userpages,
-  editableobjects, users, htmlpages, tswebpagesbase;
+  editableobjects, users, htmlpages, tswebpagesbase, contestproblems, webstrconsts;
 
 type
 
@@ -39,9 +37,20 @@ type
     procedure Satisfy; override;
   end;
 
+  { TContestUserFeature }
+
+  TContestUserFeature = class(TTesterPageFeature)
+  private
+    function GetContest: TContest;
+    function GetUser: TUser;
+  public
+    property User: TUser read GetUser;
+    property Contest: TContest read GetContest;
+  end;
+
   { TSolveContestBaseFeature }
 
-  TSolveContestBaseFeature = class(TTesterPageFeature)
+  TSolveContestBaseFeature = class(TContestUserFeature)
   public
     procedure Satisfy; override;
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
@@ -49,20 +58,75 @@ type
 
   { TSolveProblemListFeature }
 
-  TSolveProblemListFeature = class(TTesterPageFeature)
+  TSolveProblemListFeature = class(TContestUserFeature)
   public
     procedure Satisfy; override;
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TSolveContestStatusFeature }
+
+  TSolveContestStatusFeature = class(TContestUserFeature)
+  public
+    procedure Satisfy; override;
+  end;
+
 implementation
+
+{ TContestUserFeature }
+
+function TContestUserFeature.GetContest: TContest;
+begin
+  Result := (Parent as IContestSolvePage).Contest;
+end;
+
+function TContestUserFeature.GetUser: TUser;
+begin
+  Result := (Parent as TUserPage).User;
+end;
+
+{ TSolveContestStatusFeature }
+
+procedure TSolveContestStatusFeature.Satisfy;
+var
+  Transaction: TTestContestTransaction;
+  ContestStatus: string;
+  TimeLeft: integer;
+begin
+  // retrieve contest status
+  Transaction := Contest.CreateTestTransaction(User);
+  try
+    case Transaction.Status of
+      csNotStarted: ContestStatus := SStatusNotStarted;
+      csRunning: ContestStatus := SStatusRunning;
+      csUpsolve: ContestStatus := SStatusUpsolve;
+    end;
+    if Transaction.Status = csRunning then
+      TimeLeft := Transaction.SecondsLeft
+    else
+      TimeLeft := -1;
+  finally
+    FreeAndNil(Transaction);
+  end;
+  // fill variables
+  with Parent.Variables do
+  begin
+    ItemsAsText['solveStatus'] := ContestStatus;
+    if TimeLeft >= 0 then
+    begin
+      ItemsAsText['solveTimeLeft'] := SSolveTimeLeft;
+      with Parent as TTesterHtmlPage do
+        ItemsAsText['solveTimeLeftTimer'] := GenerateTimer(TimeLeft);
+      LoadPagePart('solve', 'solveContestStatusTimer');
+    end;
+  end;
+  // load page part
+  LoadPagePart('solve', 'solveContestStatus', 'contestPostHeader');
+end;
 
 { TSolveContestBaseFeature }
 
 procedure TSolveContestBaseFeature.Satisfy;
-var
-  Contest: TContest;
-  User: TUser;
 
   function GetContestTitle: string;
   var
@@ -79,8 +143,6 @@ var
 var
   PageTitle, ContestTitle: string;
 begin
-  Contest := (Parent as IContestSolvePage).Contest;
-  User := (Parent as TUserPage).User;
   PageTitle := (Parent as TContentHtmlPage).Title;
   ContestTitle := GetContestTitle;
   with Parent.Variables do
@@ -99,19 +161,16 @@ begin
   inherited DependsOn(ADependencies);
   ADependencies.Add(TContentHeaderFeature);
   ADependencies.Add(THeaderFeature);
+  ADependencies.Add(TSolveContestStatusFeature);
 end;
 
 { TSolveProblemListFeature }
 
 procedure TSolveProblemListFeature.Satisfy;
 var
-  Contest: TContest;
-  User: TUser;
   Transaction: TTestContestTransaction;
   List: TSolveProblemList;
 begin
-  Contest := (Parent as IContestSolvePage).Contest;
-  User := (Parent as TUserPage).User;
   Transaction := Contest.CreateTestTransaction(User);
   try
     List := TSolveProblemList.Create(Parent, Transaction);

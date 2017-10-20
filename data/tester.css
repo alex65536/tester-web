@@ -569,3 +569,29 @@ td.contest-actions button {
 	table-layout: fixed;
 	width: 100%;
 }
+
+
+td.solve-contest-status {
+	background-color: #7CE6AB;
+	border-radius: 0;
+	border-left-style: none;
+	border-right-style: none;
+	border-top-style: none;
+	box-shadow: none;
+	color: black;
+	position: relative;
+	text-align: center;
+}
+.status-header {
+	font-size: 16pt;
+	font-weight: bold;
+}
+.status-time-left {
+	position: absolute;
+	right: 7pt;
+}
+.status-time-left .timer {
+	color: #1000FF;
+	font-size: 16pt;
+	font-weight: bold;
+}

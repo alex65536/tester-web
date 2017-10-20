@@ -195,7 +195,7 @@ begin
   // retrieve contest status
   case Transaction.Status of
     csNotStarted: ContestStatus := SStatusNotStarted;
-    csRunning: ContestStatus := Format(SStatusRunning, [Parent.GenerateTimer(Transaction.SecondsLeft)]);
+    csRunning: ContestStatus := Format(SStatusRunningFmt, [Parent.GenerateTimer(Transaction.SecondsLeft)]);
     csUpsolve: ContestStatus := SStatusUpsolve;
   end;
   // fill variables
