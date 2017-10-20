@@ -71,9 +71,10 @@ type
     FAllowUpsolving: boolean;
     FDurationMinutes: integer;
     FProblemList: TStringList;
-    FShowStandingsTable: boolean;
     FWasProblemList: TStringList;
+    FShowStandingsTable: boolean;
     FScoringPolicy: TContestScoringPolicy;
+    FWasScoringPolicy: TContestScoringPolicy;
     FStartTime: TDateTime;
     function GetAccessType: TContestAccessType;
     function GetContest: TContest;
@@ -391,6 +392,7 @@ begin
     begin
       Problem := Contest.ProblemManager.GetObject(ANewList[I]) as TContestProblem;
       try
+        Contest.SetToProblem(Problem);
         Contest.TriggerProblemAdded(Problem);
       finally
         FreeAndNil(Problem);
@@ -402,6 +404,7 @@ begin
     begin
       Problem := Contest.ProblemManager.GetObject(AOldList[I]) as TContestProblem;
       try
+        Contest.SetToProblem(Problem);
         Contest.TriggerProblemDeleted(Problem);
       finally
         FreeAndNil(Problem);
@@ -571,6 +574,7 @@ begin
   FAllowUpsolving := Storage.ReadBool(FullKeyName('allowUpsolving'), True);
   FShowStandingsTable := Storage.ReadBool(FullKeyName('showStandingsTable'), True);
   ReloadProblemList;
+  FWasScoringPolicy := FScoringPolicy;
 end;
 
 procedure TBaseContestTransaction.DoCommit;
@@ -582,6 +586,8 @@ begin
   Storage.WriteBool(FullKeyName('allowUpsolving'), FAllowUpsolving);
   Storage.WriteBool(FullKeyName('showStandingsTable'), FShowStandingsTable);
   CommitProblemList;
+  if FWasScoringPolicy <> FScoringPolicy then
+    Contest.StandingsTable.RecalcTable;
 end;
 
 procedure TBaseContestTransaction.DoClone(ADest: TEditableTransaction);

@@ -62,6 +62,7 @@ type
     {%H-}constructor Create(AManager: TStandingsManager);
   public
     procedure LoadData;
+    procedure ReloadData;
   end;
 
   TStandingsTable = class;
@@ -118,6 +119,7 @@ type
       default;
     property RowCount: integer read GetRowCount;
     procedure SortByScore;
+    procedure RecalcTable;
     destructor Destroy; override;
   end;
 
@@ -142,6 +144,7 @@ type
     procedure ProblemDeleted(AProblem: TContestProblem); virtual;
     procedure SubmissionTested(ASubmission: TTestSubmission); virtual;
     procedure ContestDeleted; virtual;
+    procedure RecalcEntireTable;
   end;
 
   { TStandingsManager }
@@ -512,6 +515,28 @@ begin
   Storage.DeletePath(ContestSectionName);
 end;
 
+procedure TStandingsContestHandler.RecalcEntireTable;
+var
+  UserList: TStringList;
+  Username: string;
+  Info: TUserInfo;
+begin
+  UserList := Contest.ListParticipants;
+  try
+    for Username in UserList do
+    begin
+      Info := UserManager.GetUserInfo(Username);
+      try
+        DoRecalcRow(Info);
+      finally
+        FreeAndNil(Info);
+      end;
+    end;
+  finally
+    FreeAndNil(UserList);
+  end;
+end;
+
 { TStandingsTable }
 
 function TStandingsTable.GetRowCount: integer;
@@ -569,6 +594,19 @@ procedure TStandingsTable.SortByScore;
 begin
   LoadData;
   FList.Sort;
+end;
+
+procedure TStandingsTable.RecalcTable;
+var
+  Handler: TStandingsContestHandler;
+begin
+  Handler := TStandingsContestHandler.Create(Manager, Contest);
+  try
+    Handler.RecalcEntireTable;
+  finally
+    FreeAndNil(Handler);
+  end;
+  ReloadData;
 end;
 
 destructor TStandingsTable.Destroy;
@@ -657,6 +695,15 @@ begin
     Exit;
   DoLoadData;
   FDataLoaded := True;
+end;
+
+procedure TStandingsLoadableObject.ReloadData;
+begin
+  if FDataLoaded then
+  begin
+    FDataLoaded := False;
+    LoadData;
+  end;
 end;
 
 { TStandingsObject }
