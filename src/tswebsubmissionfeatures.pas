@@ -306,6 +306,9 @@ procedure TSubmitPageFeature.InternalSatisfy;
 var
   List: TSubmissionLanguageItemList;
 begin
+  // we don't add this feature it we're not allowed to test!
+  if not Transaction.CanTestProblem then
+    Exit;
   // fill variables
   with Parent.Variables do
   begin
