@@ -218,7 +218,7 @@ button.styled-btn:active, .styled-btn:hover {
 button.red-btn:active, .red-btn:hover {
 	background-color: #A33F2D;
 }
-.grayed-btn, button.grayed-btn:active, a.grayed-btn:hover {
+.grayed-btn, button.grayed-btn:active, .grayed-btn:hover {
 	background-color: #9C9C9C;
 	border-color: #929292;
 	border-style: ridge;

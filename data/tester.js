@@ -20,7 +20,7 @@ function intToStr(x, minLen) {
 function timeSecondsToStr(seconds) {
 	var days = intToStr(seconds / 86400, 0);
 	seconds %= 86400;
-	var hours = intToStr(seconds / 3600, 2);
+	var hours = intToStr(seconds / 3600, 1);
 	seconds %= 3600;
 	var minutes = intToStr(seconds / 60, 2);
 	seconds = intToStr(seconds % 60, 2);
@@ -42,13 +42,14 @@ function attachTimer(element) {
 		if (curValue < 0) {
 			curValue = 0;
 			clearInterval(timerObj.timerId);
+			location.reload();
 		}
 		timerObj.element.textContent = timeSecondsToStr(curValue);
 	}
 	
 	timerObj.element = element;
 	timerObj.startTime = new Date().getTime();
-	timerObj.timerId = setInterval(timerObj.callback, 100);
+	timerObj.timerId = setInterval(timerObj.callback, 500);
 }
 
 function attachTimers() {
