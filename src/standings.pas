@@ -131,6 +131,8 @@ type
     function RowSectionName(AInfo: TUserInfo): string;
     function ColumnSectionName(AInfo: TUserInfo; AProblem: TContestProblem): string;
     procedure DoRecalcCell(AInfo: TUserInfo; AProblem: TContestProblem); virtual;
+    procedure DoRecalcRow(AInfo: TUserInfo);
+    procedure DoRecalcCol(AProblem: TContestProblem);
     {%H-}constructor Create(AManager: TStandingsManager; AContest: TBaseContest);
   public
     property Contest: TBaseContest read FContest;
@@ -405,14 +407,7 @@ begin
   end;
 end;
 
-constructor TStandingsContestHandler.Create(AManager: TStandingsManager;
-  AContest: TBaseContest);
-begin
-  inherited Create(AManager);
-  FContest := AContest;
-end;
-
-procedure TStandingsContestHandler.UserAdded(AInfo: TUserInfo);
+procedure TStandingsContestHandler.DoRecalcRow(AInfo: TUserInfo);
 var
   I: integer;
   Problem: TContestProblem;
@@ -428,12 +423,7 @@ begin
   end;
 end;
 
-procedure TStandingsContestHandler.UserDeleted(AInfo: TUserInfo);
-begin
-  Storage.DeletePath(RowSectionName(AInfo));
-end;
-
-procedure TStandingsContestHandler.ProblemAdded(AProblem: TContestProblem);
+procedure TStandingsContestHandler.DoRecalcCol(AProblem: TContestProblem);
 var
   UserList: TStringList;
   Username: string;
@@ -453,6 +443,28 @@ begin
   finally
     FreeAndNil(UserList);
   end;
+end;
+
+constructor TStandingsContestHandler.Create(AManager: TStandingsManager;
+  AContest: TBaseContest);
+begin
+  inherited Create(AManager);
+  FContest := AContest;
+end;
+
+procedure TStandingsContestHandler.UserAdded(AInfo: TUserInfo);
+begin
+  DoRecalcRow(AInfo);
+end;
+
+procedure TStandingsContestHandler.UserDeleted(AInfo: TUserInfo);
+begin
+  Storage.DeletePath(RowSectionName(AInfo));
+end;
+
+procedure TStandingsContestHandler.ProblemAdded(AProblem: TContestProblem);
+begin
+  DoRecalcCol(AProblem);
 end;
 
 procedure TStandingsContestHandler.ProblemDeleted(AProblem: TContestProblem);
