@@ -564,10 +564,15 @@ td.contest-actions button {
 }
 
 
-.standings-table-wrapper {
-	overflow: scroll;
+.scrolled-table-wrapper {
+	padding: 3pt 5pt;
 	table-layout: fixed;
 	width: 100%;
+}
+.scrolled-table-wrapper .wrap, .scrolled-table-wrapper .wrap table {
+	overflow: auto;
+	margin: 0;
+	padding: 0;
 }
 
 
