@@ -179,7 +179,7 @@ begin
   end;
   if Redirect then
   begin
-    AResponse.Location := DocumentRoot;
+    AResponse.Location := DocumentRoot + '/solve';
     AResponse.Code := 303;
     Handled := True;
   end;
