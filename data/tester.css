@@ -107,7 +107,8 @@ td.logo-cell table {
 	margin: 0;
 	padding: 0;
 	vertical-align: top;
-	width: 150pt;
+	white-space: nowrap;
+	width: 1pt;
 }
 .nav ul {
 	list-style-type: none;
