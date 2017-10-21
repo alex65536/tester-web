@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, tswebsolvefeatures, tswebsolveelements, webstrconsts, tswebmodules,
   tswebpages, htmlpreprocess, navbars, contests, tswebpagesbase, tswebnavbars,
-  tswebeditableelements, tswebmanagers, editableobjects;
+  tswebeditableelements, tswebmanagers, editableobjects, users, userpages;
 
 type
 
@@ -146,7 +146,7 @@ begin
   FreeAndNil(FTransaction);
   inherited DoUpdateRequest;
   FTransaction := Contest.CreateTestTransaction(User);
-  Title := Format(SProblemIndexFmt, [ProblemIndex + 1]) + Transaction.ProblemTitles[ProblemIndex];
+  Title := Format(SSolveProblemTitle, [ProblemIndex + 1]);
 end;
 
 constructor TSolveContestProblemPage.Create;
@@ -247,6 +247,10 @@ end;
 { TSolveContestNavBar }
 
 procedure TSolveContestNavBar.DoCreateElements;
+var
+  User: TUser;
+  Transaction: TContestTransaction;
+  I: integer;
 begin
   // add common elements
   AddElement(SMainPage, '~documentRoot;/main');
@@ -254,6 +258,16 @@ begin
   // add contest-specific elements
   AddSplitter;
   AddElement(SSolveProblemListTitle, '~documentRoot;/solve-contest~+contestParam;');
+  // add problem elements
+  User := (Parent as TUserPage).User;
+  Transaction := (Parent as IContestSolvePage).Contest.CreateTestTransaction(User);
+  try
+    for I := 0 to Transaction.ProblemCount - 1 do
+      AddNestedElement(Format(SSolveProblemTitle, [I + 1]),
+        Format('~documentRoot;/solve-problem~+contestParam;&problem=%d', [I + 1]));
+  finally
+    FreeAndNil(Transaction);
+  end;
 end;
 
 procedure TSolveContestNavBar.DoFillVariables;
