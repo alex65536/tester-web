@@ -117,6 +117,8 @@ type
     function Inside: boolean; override;
     procedure DoSessionCreated; override;
     procedure DoAfterRequest; override;
+    function CanRedirect: boolean; override;
+    function RedirectLocation: string; override;
   end;
 
   { TEditableObjListWebModule }
@@ -166,6 +168,7 @@ type
     function NeedAccessRights: TEditableAccessRightsSet; override;
     procedure DoInsideEdit(ATransaction: TEditableTransaction); virtual;
     procedure DoHandlePost({%H-}ARequest: TRequest); override;
+    function CanRedirect: boolean; override;
   end;
 
   { TEditableSettingsWebModule }
@@ -239,6 +242,16 @@ begin
   inherited DoAfterRequest;
 end;
 
+function TEditableObjectPostWebModule.CanRedirect: boolean;
+begin
+  Result := True;
+end;
+
+function TEditableObjectPostWebModule.RedirectLocation: string;
+begin
+  Result := Request.URI;
+end;
+
 { TEditableEditWebModule }
 
 function TEditableEditWebModule.NeedAccessRights: TEditableAccessRightsSet;
@@ -263,6 +276,11 @@ begin
   finally
     FreeAndNil(Transaction);
   end;
+end;
+
+function TEditableEditWebModule.CanRedirect: boolean;
+begin
+  Result := False;
 end;
 
 { TEditableViewWebModule }
