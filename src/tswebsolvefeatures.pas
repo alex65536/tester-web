@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, tswebfeatures, tswebsolveelements, contests, tswebmanagers, userpages,
   editableobjects, users, htmlpages, tswebpagesbase, contestproblems, webstrconsts,
-  tswebproblemfeatures, tswebsubmissionfeatures, tswebeditablefeatures;
+  tswebproblemfeatures, tswebsubmissionfeatures;
 
 type
 

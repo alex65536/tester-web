@@ -105,6 +105,7 @@ td.logo-cell table {
 .nav {
 	background-color: #5C9978;
 	margin: 0;
+	min-width: 107pt;
 	padding: 0;
 	vertical-align: top;
 	white-space: nowrap;
