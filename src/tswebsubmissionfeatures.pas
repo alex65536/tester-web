@@ -144,7 +144,7 @@ begin
   // fill brief table
   IdList := TIdList.Create;
   IdList.Add(Submission.ID);
-  BriefTable := TSubmissionItemList.Create(Parent, IdList, Session);
+  BriefTable := TSubmissionItemList.Create(Parent, IdList, Session, nil);
   try
     Parent.AddElementPagePart('submissionBriefTable', BriefTable);
   finally
@@ -284,7 +284,7 @@ var
   List: TSubmissionItemList;
 begin
   SubmissionIds := Session.ListByOwner(EditableObject as TTestableProblem);
-  List := TSubmissionItemList.Create(Parent, SubmissionIds, Session);
+  List := TSubmissionItemList.Create(Parent, SubmissionIds, Session, nil);
   try
     Parent.AddElementPagePart('problemSubmissionList', List);
   finally
