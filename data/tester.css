@@ -400,7 +400,7 @@ table.styled th.id {
 	padding-right: 1em;
 	width: 1pt;
 }
-table.styled td.nowrap {
+table.styled td.nowrap, table.styled th.nowrap {
 	white-space: nowrap;
 }
 
@@ -613,4 +613,11 @@ td.solve-contest-status {
 	color: #1000FF;
 	font-size: 16pt;
 	font-weight: bold;
+}
+
+
+a.standings-problem-index {
+	color: white;
+	font-style: italic;
+	font-weight: normal;
 }

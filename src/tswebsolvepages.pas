@@ -123,10 +123,39 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TSolveStandingsPage }
+
+  TSolveStandingsPage = class(TSolveContestPage)
+  protected
+    procedure AddFeatures; override;
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
 implementation
 
 uses
   tswebsolvemodules;
+
+{ TSolveStandingsPage }
+
+procedure TSolveStandingsPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TSolveStandingsFeature);
+end;
+
+procedure TSolveStandingsPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
+begin
+  Strings.Text := '~#solveStandings;';
+end;
+
+procedure TSolveStandingsPage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Title := SSolveStandingsTitle;
+end;
 
 { TSolveSubmissionsPage }
 

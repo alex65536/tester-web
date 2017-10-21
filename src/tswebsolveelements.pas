@@ -133,7 +133,224 @@ type
     constructor Create(AParent: THtmlPage; ATransaction: TTestContestTransaction);
   end;
 
+  { TSolveStandingsRowItem }
+
+  TSolveStandingsRowItem = class(TTesterHtmlPageElement)
+  private
+    FScore: double;
+  protected
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Score: double read FScore;
+    constructor Create(AParent: THtmlPage; AScore: double);
+  end;
+
+  { TSolveStandingsRow }
+
+  TSolveStandingsRow = class(TTesterHtmlListedPageElement)
+  private
+    FRow: TStandingsRow;
+  protected
+    procedure DoFillList;
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Row: TStandingsRow read FRow;
+    constructor Create(AParent: THtmlPage; ARow: TStandingsRow);
+  end;
+
+  { TSolveStandingsProblemHeader }
+
+  TSolveStandingsProblemHeader = class(TTesterHtmlPageElement)
+  private
+    FIndex: integer;
+  protected
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Index: integer read FIndex;
+    constructor Create(AParent: THtmlPage; AIndex: integer);
+  end;
+
+  { TSolveStandingsHeader }
+
+  TSolveStandingsHeader = class(TTesterHtmlListedPageElement)
+  private
+    FProblemCount: integer;
+  protected
+    procedure DoFillList;
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property ProblemCount: integer read FProblemCount;
+    constructor Create(AParent: THtmlPage; AProblemCount: integer);
+  end;
+
+  TSolveStandings = class(TTesterHtmlListedPageElement)
+  private
+    FHeader: TSolveStandingsHeader;
+    FTable: TStandingsTable;
+    FTransaction: TTestContestTransaction;
+  protected
+    procedure DoFillList;
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property Table: TStandingsTable read FTable;
+    property Header: TSolveStandingsHeader read FHeader;
+    property Transaction: TTestContestTransaction read FTransaction;
+    constructor Create(AParent: THtmlPage; ATransaction: TTestContestTransaction);
+    destructor Destroy; override;
+  end;
+
 implementation
+
+{ TSolveStandings }
+
+procedure TSolveStandings.DoFillList;
+var
+  I: integer;
+begin
+  Table.SortByScore;
+  for I := 0 to Table.RowCount - 1 do
+    List.Add(TSolveStandingsRow.Create(Parent, Table.Rows[I]));
+end;
+
+procedure TSolveStandings.DoFillVariables;
+begin
+  Parent.AddElementPagePart('solveStandingsHeader', Header);
+  AddListToVariable('solveStandingsInner');
+end;
+
+procedure TSolveStandings.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('solve', 'solveStandings'));
+end;
+
+constructor TSolveStandings.Create(AParent: THtmlPage;
+  ATransaction: TTestContestTransaction);
+begin
+  inherited Create(AParent);
+  FTransaction := ATransaction;
+  FTable := Transaction.GetStandings;
+  FHeader := TSolveStandingsHeader.Create(Parent, Transaction.ProblemCount);
+  DoFillList;
+end;
+
+destructor TSolveStandings.Destroy;
+begin
+  FreeAndNil(FHeader);
+  inherited Destroy;
+end;
+
+{ TSolveStandingsHeader }
+
+procedure TSolveStandingsHeader.DoFillList;
+var
+  I: integer;
+begin
+  for I := 0 to ProblemCount - 1 do
+    List.Add(TSolveStandingsProblemHeader.Create(Parent, I));
+end;
+
+procedure TSolveStandingsHeader.DoFillVariables;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['solveParticipantHeader'] := SSolveParticipantHeader;
+    ItemsAsText['solveTotalScoreHeader'] := SSolveTotalScoreHeader;
+  end;
+  AddListToVariable('solveProblemHeaders');
+end;
+
+procedure TSolveStandingsHeader.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('solve', 'solveStandingsHeader'));
+end;
+
+constructor TSolveStandingsHeader.Create(AParent: THtmlPage;
+  AProblemCount: integer);
+begin
+  inherited Create(AParent);
+  FProblemCount := AProblemCount;
+  DoFillList;
+end;
+
+{ TSolveStandingsProblemHeader }
+
+procedure TSolveStandingsProblemHeader.DoFillVariables;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['solveProblemIndex'] := IntToStr(Index + 1);
+  end;
+end;
+
+procedure TSolveStandingsProblemHeader.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('solve', 'solveStandingsProblemHeader'));
+end;
+
+constructor TSolveStandingsProblemHeader.Create(AParent: THtmlPage;
+  AIndex: integer);
+begin
+  inherited Create(AParent);
+  FIndex := AIndex;
+end;
+
+{ TSolveStandingsRow }
+
+procedure TSolveStandingsRow.DoFillList;
+var
+  I: integer;
+begin
+  for I := 0 to Row.ProblemScoreCount - 1 do
+    List.Add(TSolveStandingsRowItem.Create(Parent, Row.ProblemScores[I]));
+end;
+
+procedure TSolveStandingsRow.DoFillVariables;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['solveParticipantLink'] := Parent.GenerateUserLink(Row.UserInfo);
+    ItemsAsText['solveTotalScore'] := Format(SScoreFmt, [Row.SumScore]);
+  end;
+  AddListToVariable('solveStandingsRowInner');
+end;
+
+procedure TSolveStandingsRow.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('solve', 'solveStandingsRow'));
+end;
+
+constructor TSolveStandingsRow.Create(AParent: THtmlPage; ARow: TStandingsRow);
+begin
+  inherited Create(AParent);
+  FRow := ARow;
+  DoFillList;
+end;
+
+{ TSolveStandingsRowItem }
+
+procedure TSolveStandingsRowItem.DoFillVariables;
+begin
+  with Parent.Variables do
+  begin
+    ItemsAsText['solveProblemScore'] := Format(SScoreFmt, [Score]);
+  end;
+end;
+
+procedure TSolveStandingsRowItem.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('solve', 'solveStandingsRowItem'));
+end;
+
+constructor TSolveStandingsRowItem.Create(AParent: THtmlPage; AScore: double);
+begin
+  inherited Create(AParent);
+  FScore := AScore;
+end;
 
 { TSubmissionSolveProblemHandler }
 

@@ -125,6 +125,13 @@ type
     function DoCreatePage: THtmlPage; override;
   end;
 
+  { TSolveStandingsWebModule }
+
+  TSolveStandingsWebModule = class(TSolveBaseContestWebModule)
+  protected
+    function DoCreatePage: THtmlPage; override;
+  end;
+
 function SolveContestFromRequest(ARequest: TRequest): TContest;
 function SolveContestNameFromRequest(ARequest: TRequest): string;
 
@@ -140,12 +147,21 @@ begin
   Result := EditableObjectNameFromRequest(ARequest, 'contest');
 end;
 
+{ TSolveStandingsWebModule }
+
+function TSolveStandingsWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TSolveStandingsPage.Create;
+end;
+
 { TSolveSubmissionsWebModule }
 
 procedure TSolveSubmissionsWebModule.DoHandlePost(ARequest: TRequest);
 var
   SubmissionSession: TContestProblemSubmissionSession;
 begin
+  if ARequest.ContentFields.Values['query'] <> 'rejudge' then
+    Exit;
   SubmissionSession := ProblemManager.CreateSubmissionSession(User) as TContestProblemSubmissionSession;
   try
     SubmissionSession.RejudgeSubmissions(Contest);
@@ -390,6 +406,7 @@ initialization
   RegisterHTTPModule('solve-problem', TSolveContestProblemModule, True);
   RegisterHTTPModule('solve-download', TSolveDownloadWebModule, True);
   RegisterHTTPModule('solve-submissions', TSolveSubmissionsWebModule, True);
+  RegisterHTTPModule('solve-standings', TSolveStandingsWebModule, True);
 
 end.
 

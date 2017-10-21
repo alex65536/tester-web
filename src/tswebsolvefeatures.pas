@@ -88,7 +88,34 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TSolveStandingsFeature }
+
+  TSolveStandingsFeature = class(TContestUserFeature)
+  public
+    procedure Satisfy; override;
+  end;
+
 implementation
+
+{ TSolveStandingsFeature }
+
+procedure TSolveStandingsFeature.Satisfy;
+var
+  Transaction: TTestContestTransaction;
+  Standings: TSolveStandings;
+begin
+  Transaction := Contest.CreateTestTransaction(User);
+  try
+    Standings := TSolveStandings.Create(Parent, Transaction);
+    try
+      Parent.AddElementPagePart('solveStandings', Standings);
+    finally
+      FreeAndNil(Standings);
+    end;
+  finally
+    FreeAndNil(Transaction);
+  end;
+end;
 
 { TSolveSubmissionsFeature }
 
