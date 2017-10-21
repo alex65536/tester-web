@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, submissionlanguages, tswebpagesbase, htmlpages, htmlpreprocess,
   submissions, submissioninfo, strverdicts, webstrconsts, strconsts, testresults,
-  tswebutils;
+  tswebutils, users;
 
 type
 
@@ -57,6 +57,19 @@ type
   end;
 
   TSubmissionProblemHandlerClass = class of TSubmissionProblemHandler;
+
+  { TSubmissionProblemTransactionHandler }
+
+  TSubmissionProblemTransactionHandler = class(TSubmissionProblemHandler)
+  private
+    FProblem: TTestableProblem;
+    FTransaction: TTestProblemTransaction;
+  public
+    property Problem: TTestableProblem read FProblem;
+    property Transaction: TTestProblemTransaction read FTransaction;
+    constructor Create(ASubmissionItem: TSubmissionItem); override;
+    destructor Destroy; override;
+  end;
 
   { TSubmissionProblemNameHandler }
 
@@ -154,6 +167,22 @@ type
   end;
 
 implementation
+
+{ TSubmissionProblemTransactionHandler }
+
+constructor TSubmissionProblemTransactionHandler.Create(ASubmissionItem: TSubmissionItem);
+begin
+  inherited Create(ASubmissionItem);
+  FProblem := ASubmissionItem.Submission.Problem;
+  FTransaction := Problem.CreateTestTransaction(SubmissionItem.Parent.User);
+end;
+
+destructor TSubmissionProblemTransactionHandler.Destroy;
+begin
+  FreeAndNil(FTransaction);
+  FreeAndNil(FProblem);
+  inherited Destroy;
+end;
 
 { TSubmissionProblemNameHandler }
 

@@ -25,9 +25,9 @@ unit tswebsolvefeatures;
 interface
 
 uses
-  SysUtils, tswebfeatures, tswebsolveelements, contests, tswebmanagers, userpages,
-  editableobjects, users, htmlpages, tswebpagesbase, contestproblems, webstrconsts,
-  tswebproblemfeatures, tswebsubmissionfeatures;
+  SysUtils, tswebfeatures, tswebsolveelements, contests, tswebmanagers, users,
+  editableobjects, tswebpagesbase, contestproblems, userpages, webstrconsts,
+  tswebproblemfeatures, tswebsubmissionelements, htmlpages;
 
 type
 
@@ -80,7 +80,49 @@ type
     procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
   end;
 
+  { TSolveSubmissionsFeature }
+
+  TSolveSubmissionsFeature = class(TContestUserFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TSolveSubmissionsFeature }
+
+procedure TSolveSubmissionsFeature.Satisfy;
+var
+  Session: TContestProblemSubmissionSession;
+  List: TSubmissionItemList;
+begin
+  Session := ProblemManager.CreateSubmissionSession(User) as TContestProblemSubmissionSession;
+  try
+    // add submission list
+    List := TSubmissionItemList.Create(Parent, Session.ListAvailable(Contest),
+      Session, TSubmissionSolveProblemHandler);
+    try
+      Parent.AddElementPagePart('solveSubmissionList', List);
+    finally
+      FreeAndNil(List);
+    end;
+    // add rejudge button (if can rejudge)
+    if Session.CanRejudgeSubmission(Contest) then
+      Parent.Variables.ItemsAsText['solveRejudgeForm'] := '~#+solveCanRejudgeForm;';
+  finally
+    FreeAndNil(Session);
+  end;
+  // load page part
+  LoadPagePart('solve', 'solveSubmissions');
+end;
+
+procedure TSolveSubmissionsFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TPostDataFeature);
+  ADependencies.Add(TProblemRejudgeFormFeature);
+end;
 
 { TSolveContestProblemFeature }
 

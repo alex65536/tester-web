@@ -383,7 +383,9 @@ resourcestring
   SSolveTimeLeft = 'Time left:';
   SProblemIndexFmt = '%d. ';
   SSolveProblemTitle = 'Problem %d';
+  SFullSolveProblemTitle = '%d. %s';
   SUnableParseFilename = 'Unable to parse filename';
+  SSolveSubmissionsTitle = 'Submissions';
 
 implementation
 

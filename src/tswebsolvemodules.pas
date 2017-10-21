@@ -70,6 +70,8 @@ type
   protected
     procedure DoSessionCreated; override;
     procedure DoAfterRequest; override;
+    function CanRedirect: boolean; override;
+    function RedirectLocation: string; override;
   public
     function Contest: TContest;
     property Transaction: TTestContestTransaction read FTransaction;
@@ -115,6 +117,14 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TSolveSubmissionsWebModule }
+
+  TSolveSubmissionsWebModule = class(TSolvePostContestWebModule)
+  protected
+    procedure DoHandlePost(ARequest: TRequest); override;
+    function DoCreatePage: THtmlPage; override;
+  end;
+
 function SolveContestFromRequest(ARequest: TRequest): TContest;
 function SolveContestNameFromRequest(ARequest: TRequest): string;
 
@@ -128,6 +138,25 @@ end;
 function SolveContestNameFromRequest(ARequest: TRequest): string;
 begin
   Result := EditableObjectNameFromRequest(ARequest, 'contest');
+end;
+
+{ TSolveSubmissionsWebModule }
+
+procedure TSolveSubmissionsWebModule.DoHandlePost(ARequest: TRequest);
+var
+  SubmissionSession: TContestProblemSubmissionSession;
+begin
+  SubmissionSession := ProblemManager.CreateSubmissionSession(User) as TContestProblemSubmissionSession;
+  try
+    SubmissionSession.RejudgeSubmissions(Contest);
+  finally
+    FreeAndNil(SubmissionSession);
+  end;
+end;
+
+function TSolveSubmissionsWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := TSolveSubmissionsPage.Create;
 end;
 
 { TSolveDownloadHandler }
@@ -268,6 +297,16 @@ begin
   inherited DoAfterRequest;
 end;
 
+function TSolvePostContestWebModule.CanRedirect: boolean;
+begin
+  Result := True;
+end;
+
+function TSolvePostContestWebModule.RedirectLocation: string;
+begin
+  Result := Request.URI;
+end;
+
 function TSolvePostContestWebModule.Contest: TContest;
 begin
   Result := FContest;
@@ -350,6 +389,7 @@ initialization
   RegisterHTTPModule('solve-contest', TSolveProblemListWebModule, True);
   RegisterHTTPModule('solve-problem', TSolveContestProblemModule, True);
   RegisterHTTPModule('solve-download', TSolveDownloadWebModule, True);
+  RegisterHTTPModule('solve-submissions', TSolveSubmissionsWebModule, True);
 
 end.
 

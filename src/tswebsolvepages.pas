@@ -113,10 +113,39 @@ type
     destructor Destroy; override;
   end;
 
+  { TSolveSubmissionsPage }
+
+  TSolveSubmissionsPage = class(TSolveContestPostPage)
+  protected
+    procedure AddFeatures; override;
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
 implementation
 
 uses
   tswebsolvemodules;
+
+{ TSolveSubmissionsPage }
+
+procedure TSolveSubmissionsPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TSolveSubmissionsFeature);
+end;
+
+procedure TSolveSubmissionsPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
+begin
+  Strings.Text := '~+#solveSubmissions;';
+end;
+
+procedure TSolveSubmissionsPage.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Title := SSolveSubmissionsTitle;
+end;
 
 { TSolveContestProblemPage }
 
@@ -252,14 +281,16 @@ var
   Transaction: TContestTransaction;
   I: integer;
 begin
+  User := (Parent as TUserPage).User;
   // add common elements
   AddElement(SMainPage, '~documentRoot;/main');
   AddElement(SContestSolveTitle, '~documentRoot;/solve');
   // add contest-specific elements
   AddSplitter;
   AddElement(SSolveProblemListTitle, '~documentRoot;/solve-contest~+contestParam;');
+  // add submissions page
+  AddNestedElement(SSolveSubmissionsTitle, '~documentRoot;/solve-submissions~+contestParam;');
   // add problem elements
-  User := (Parent as TUserPage).User;
   Transaction := (Parent as IContestSolvePage).Contest.CreateTestTransaction(User);
   try
     for I := 0 to Transaction.ProblemCount - 1 do

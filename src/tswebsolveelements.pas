@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, contests, contestproblems, htmlpreprocess, htmlpages,
   tswebpagesbase, webstrconsts, webstrutils, tswebmanagers, strconsts,
-  standings;
+  standings, tswebsubmissionelements;
 
 const
   SContestAccessTypes: array [TContestAccessType] of string = (
@@ -61,6 +61,17 @@ type
     function GetProblemIndex: integer;
   end;
   {$interfaces COM}
+
+  { TSubmissionSolveProblemHandler }
+
+  TSubmissionSolveProblemHandler = class(TSubmissionProblemTransactionHandler)
+  private
+    function GetProblem: TContestProblem;
+  public
+    property Problem: TContestProblem read GetProblem;
+    function ProblemRef: string; override;
+    function ProblemTitle: string; override;
+  end;
 
   { TSolveContestListItem }
 
@@ -123,6 +134,24 @@ type
   end;
 
 implementation
+
+{ TSubmissionSolveProblemHandler }
+
+function TSubmissionSolveProblemHandler.GetProblem: TContestProblem;
+begin
+  Result := (inherited Problem) as TContestProblem;
+end;
+
+function TSubmissionSolveProblemHandler.ProblemRef: string;
+begin
+  Result := Format('%s/solve-problem?contest=%s&problem=%d', [DocumentRoot,
+    Problem.Contest.Name, Problem.Index]);
+end;
+
+function TSubmissionSolveProblemHandler.ProblemTitle: string;
+begin
+  Result := Format(SFullSolveProblemTitle, [Problem.Index, Transaction.Title]);
+end;
 
 { TSolveProblemList }
 
