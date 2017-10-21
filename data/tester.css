@@ -38,10 +38,9 @@ td.header-cell, td.content-cell, td.footer-cell {
 	background-color: #47BD7B;
 	color: white;
 	font-weight: bold;
-	font-size: 44pt;
+	font-size: 40pt;
 	text-align: center;
 	width: 100%;
-	white-space: nowrap;
 }
 .container.header-table {
 	border-spacing: 0;
@@ -56,8 +55,13 @@ td.header-cell, td.content-cell, td.footer-cell {
 
 
 td.logo-cell {
+	height: 100%;
 	padding: 0;
 	padding-right: 5pt;
+}
+td.logo-cell table {
+	border-spacing: 0;
+	height: 100%;
 }
 .logo {
 	height: 112pt;
@@ -65,6 +69,7 @@ td.logo-cell {
 }
 .logo-box {
 	background-color: #E3FFF0;
+	height: 100%;
 	margin: 0;
 	padding: 5pt;
 	width: auto;
