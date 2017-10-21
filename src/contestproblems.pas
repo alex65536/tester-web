@@ -181,9 +181,10 @@ type
     procedure MessageReceived(AMessage: TAuthorMessage); override;
   public
     function ContestManager: TBaseContestManager; virtual; abstract;
+    function ProblemFilter(AID: integer; AObject: TObject): boolean; override;
     function ContestFilter(AID: integer; AObject: TObject): boolean;
+    function ListByProblem(AProblem: TTestableProblem): TIdList; override;
     function ListByContest(AContest: TBaseContest): TIdList;
-    function ListByContestProblem(AProblem: TContestProblem): TIdList;
     function ListByContestProblemUser(AProblem: TContestProblem;
       AInfo: TUserInfo): TIdList;
     constructor Create;
@@ -368,20 +369,6 @@ begin
   end;
 end;
 
-function TContestSubmissionManager.ListByContestProblem(
-  AProblem: TContestProblem): TIdList;
-var
-  StrList: TStringList;
-begin
-  StrList := Storage.GetChildElements(ContestProblemSectionName(AProblem.Contest.ID,
-    AProblem.ID));
-  try
-    Result := StrListToIdList(StrList);
-  finally
-    FreeAndNil(StrList);
-  end;
-end;
-
 function TContestSubmissionManager.ListByContestProblemUser(
   AProblem: TContestProblem; AInfo: TUserInfo): TIdList;
 var
@@ -402,12 +389,49 @@ begin
   Result := SubmissionContestID(AID) = (AObject as TBaseContest).ID;
 end;
 
+function TContestSubmissionManager.ListByProblem(AProblem: TTestableProblem): TIdList;
+var
+  ContestProblem: TContestProblem;
+
+  function ListByContestProblem: TIdList;
+  var
+    StrList: TStringList;
+  begin
+    StrList := Storage.GetChildElements(ContestProblemSectionName(
+      ContestProblem.Contest.ID, AProblem.ID));
+    try
+      Result := StrListToIdList(StrList);
+    finally
+      FreeAndNil(StrList);
+    end;
+  end;
+
+begin
+  ContestProblem := AProblem as TContestProblem;
+  if ContestProblem.Contest = nil then
+    Result := inherited ListByProblem(AProblem)
+  else
+    Result := ListByContestProblem;
+end;
+
 procedure TContestSubmissionManager.MessageReceived(AMessage: TAuthorMessage);
 begin
   if (AMessage is TEditableDeletingMessage) and (AMessage.Sender is TBaseContest) then
     HandleContestDeleting((AMessage as TEditableDeletingMessage).EditableObject as TBaseContest)
   else
     inherited MessageReceived(AMessage);
+end;
+
+function TContestSubmissionManager.ProblemFilter(AID: integer; AObject: TObject): boolean;
+var
+  ContestProblem: TContestProblem;
+begin
+  ContestProblem := AObject as TContestProblem;
+  Result := inherited ProblemFilter(AID, AObject);
+  if not Result then
+    Exit;
+  if ContestProblem.Contest <> nil then
+    Result := SubmissionContestID(AID) = ContestProblem.Contest.ID;
 end;
 
 procedure TContestSubmissionManager.DoInternalCreateSubmission(
@@ -544,30 +568,26 @@ end;
 
 function TContestTestProblemTransaction.CanTestProblem: boolean;
 begin
-  // inherit access
-  Result := inherited CanTestProblem;
-  if Result then
-    Exit;
   // for contest setters
   if ContestAccessLevel in AccessCanReadSet then
     Exit(True);
   // for participants
   if Contest <> nil then
-    Result := Contest.ParticipantCanSubmit(User.Info);
+    Result := Contest.ParticipantCanSubmit(User.Info)
+  else
+    Result := inherited CanTestProblem;
 end;
 
 function TContestTestProblemTransaction.CanReadData: boolean;
 begin
-  // inherit access
-  Result := inherited CanReadData;
-  if Result then
-    Exit;
   // for contest setters
   if ContestAccessLevel in AccessCanReadSet then
     Exit(True);
   // for participants
   if Contest <> nil then
-    Result := Contest.ParticipantCanView(User.Info);
+    Result := Contest.ParticipantCanView(User.Info)
+  else
+    Result := inherited CanReadData;
 end;
 
 { TContestProblemSubmissionSession }
