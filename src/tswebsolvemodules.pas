@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, webmodules, tswebsolvepages, fphttp, htmlpages, tswebeditablemodules,
   tsmiscwebmodules, tswebsolveelements, contests, users, editableobjects,
-  HTTPDefs, tswebpagesbase, tswebmanagers;
+  HTTPDefs, tswebpagesbase, tswebmanagers, tswebproblemmodules;
 
 type
 
@@ -64,11 +64,13 @@ type
   TSolvePostContestWebModule = class(TPostUserWebModule, IContestSolveModule)
   private
     FContest: TContest;
+    FTransaction: TTestContestTransaction;
   protected
     procedure DoSessionCreated; override;
     procedure DoAfterRequest; override;
   public
     function Contest: TContest;
+    property Transaction: TTestContestTransaction read FTransaction;
     procedure AfterConstruction; override;
   end;
 
@@ -77,6 +79,22 @@ type
   TSolveProblemListWebModule = class(TSolveBaseContestWebModule)
   protected
     function DoCreatePage: THtmlPage; override;
+  end;
+
+  { TSolveContestProblemModule }
+
+  TSolveContestProblemModule = class(TSolvePostContestWebModule)
+  private
+    FHandler: TProblemTestPostHandler;
+  protected
+    function ProblemIndex: integer;
+    function DoCreatePage: THtmlPage; override;
+    procedure DoPageAfterConstruction(APage: THtmlPage); override;
+    procedure DoSessionCreated; override;
+    procedure DoAfterRequest; override;
+    procedure DoHandlePost(ARequest: TRequest); override;
+    function CanRedirect: boolean; override;
+    function RedirectLocation: string; override;
   end;
 
 function SolveContestFromRequest(ARequest: TRequest): TContest;
@@ -94,6 +112,51 @@ begin
   Result := EditableObjectNameFromRequest(ARequest, 'contest');
 end;
 
+{ TSolveContestProblemModule }
+
+function TSolveContestProblemModule.ProblemIndex: integer;
+begin
+  Result := StrToInt(Request.QueryFields.Values['problem']) - 1;
+end;
+
+function TSolveContestProblemModule.DoCreatePage: THtmlPage;
+begin
+  Result := TSolveContestProblemPage.Create;
+end;
+
+procedure TSolveContestProblemModule.DoPageAfterConstruction(APage: THtmlPage);
+begin
+  inherited DoPageAfterConstruction(APage);
+  (APage as TSolveContestProblemPage).ProblemIndex := Self.ProblemIndex;
+end;
+
+procedure TSolveContestProblemModule.DoSessionCreated;
+begin
+  inherited DoSessionCreated;
+  FHandler := TProblemTestPostHandler.Create(Transaction.Problems[ProblemIndex], Self);
+end;
+
+procedure TSolveContestProblemModule.DoAfterRequest;
+begin
+  FreeAndNil(FHandler);
+  inherited DoAfterRequest;
+end;
+
+procedure TSolveContestProblemModule.DoHandlePost(ARequest: TRequest);
+begin
+  FHandler.HandlePost(ARequest);
+end;
+
+function TSolveContestProblemModule.CanRedirect: boolean;
+begin
+  Result := FHandler.CanRedirect;
+end;
+
+function TSolveContestProblemModule.RedirectLocation: string;
+begin
+  Result := FHandler.RedirectLocation;
+end;
+
 { TSolveProblemListWebModule }
 
 function TSolveProblemListWebModule.DoCreatePage: THtmlPage;
@@ -107,10 +170,12 @@ procedure TSolvePostContestWebModule.DoSessionCreated;
 begin
   inherited DoSessionCreated;
   FContest := SolveContestFromRequest(Request);
+  FTransaction := FContest.CreateTestTransaction(User);
 end;
 
 procedure TSolvePostContestWebModule.DoAfterRequest;
 begin
+  FreeAndNil(FTransaction);
   FreeAndNil(FContest);
   inherited DoAfterRequest;
 end;
@@ -195,6 +260,7 @@ end;
 initialization
   RegisterHTTPModule('solve', TSolveContestListModule, True);
   RegisterHTTPModule('solve-contest', TSolveProblemListWebModule, True);
+  RegisterHTTPModule('solve-problem', TSolveContestProblemModule, True);
 
 end.
 

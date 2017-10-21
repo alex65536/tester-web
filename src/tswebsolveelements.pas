@@ -53,6 +53,13 @@ type
     ['{99858B2B-A77C-447B-9019-97F94E1FFB8C}']
     function Contest: TContest;
   end;
+
+  { IContestProblemPage }
+
+  IContestProblemPage = interface
+    ['{5CAB7787-860A-4744-BD9B-7C0E9CE13C48}']
+    function GetProblemIndex: integer;
+  end;
   {$interfaces COM}
 
   { TSolveContestListItem }

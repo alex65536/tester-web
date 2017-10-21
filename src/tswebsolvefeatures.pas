@@ -26,7 +26,8 @@ interface
 
 uses
   SysUtils, tswebfeatures, tswebsolveelements, contests, tswebmanagers, userpages,
-  editableobjects, users, htmlpages, tswebpagesbase, contestproblems, webstrconsts;
+  editableobjects, users, htmlpages, tswebpagesbase, contestproblems, webstrconsts,
+  tswebproblemfeatures, tswebsubmissionfeatures, tswebeditablefeatures;
 
 type
 
@@ -71,7 +72,36 @@ type
     procedure Satisfy; override;
   end;
 
+  { TSolveContestProblemFeature }
+
+  TSolveContestProblemFeature = class(TContestUserFeature)
+  public
+    procedure Satisfy; override;
+    procedure DependsOn(ADependencies: THtmlPageFeatureList); override;
+  end;
+
 implementation
+
+{ TSolveContestProblemFeature }
+
+procedure TSolveContestProblemFeature.Satisfy;
+var
+  Index: integer;
+begin
+  with Parent.Variables do
+  begin
+    Index := (Parent as IContestProblemPage).GetProblemIndex + 1;
+    ItemsAsText['problemIndex'] := IntToStr(Index);
+    ItemsAsText['problemFullIndex'] := Format(SProblemIndexFmt, [Index]);
+  end;
+  LoadPagePart('solve', 'solveContestProblem');
+end;
+
+procedure TSolveContestProblemFeature.DependsOn(ADependencies: THtmlPageFeatureList);
+begin
+  inherited DependsOn(ADependencies);
+  ADependencies.Add(TProblemTestInnerFeature);
+end;
 
 { TContestUserFeature }
 

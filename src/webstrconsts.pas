@@ -381,6 +381,7 @@ resourcestring
   SSolveProblemScoreHeader = 'Score';
   SSolveProblemListTitle = 'Contest';
   SSolveTimeLeft = 'Time left:';
+  SProblemIndexFmt = '%d. ';
 
 implementation
 

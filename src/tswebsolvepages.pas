@@ -26,7 +26,8 @@ interface
 
 uses
   SysUtils, tswebsolvefeatures, tswebsolveelements, webstrconsts, tswebmodules,
-  tswebpages, htmlpreprocess, navbars, contests, tswebpagesbase, tswebnavbars;
+  tswebpages, htmlpreprocess, navbars, contests, tswebpagesbase, tswebnavbars,
+  tswebeditableelements, tswebmanagers, editableobjects;
 
 type
 
@@ -93,10 +94,72 @@ type
     procedure AfterConstruction; override;
   end;
 
+  { TSolveContestProblemPage }
+
+  TSolveContestProblemPage = class(TSolveContestPostPage, IContestProblemPage, IEditablePage)
+  private
+    FProblemIndex: integer;
+    FTransaction: TTestContestTransaction;
+  protected
+    procedure AddFeatures; override;
+    procedure DoGetInnerContents(Strings: TIndentTaggedStrings); override;
+    function GetProblemIndex: integer;
+    function EditableObject: TEditableObject;
+    procedure DoUpdateRequest; override;
+  public
+    property ProblemIndex: integer read GetProblemIndex write FProblemIndex;
+    property Transaction: TTestContestTransaction read FTransaction;
+    constructor Create; override;
+    destructor Destroy; override;
+  end;
+
 implementation
 
 uses
   tswebsolvemodules;
+
+{ TSolveContestProblemPage }
+
+procedure TSolveContestProblemPage.AddFeatures;
+begin
+  inherited AddFeatures;
+  AddFeature(TSolveContestProblemFeature);
+end;
+
+procedure TSolveContestProblemPage.DoGetInnerContents(Strings: TIndentTaggedStrings);
+begin
+  Strings.Text := '~+#solveContestProblem;';
+end;
+
+function TSolveContestProblemPage.GetProblemIndex: integer;
+begin
+  Result := FProblemIndex;
+end;
+
+function TSolveContestProblemPage.EditableObject: TEditableObject;
+begin
+  Result := Transaction.Problems[ProblemIndex];
+end;
+
+procedure TSolveContestProblemPage.DoUpdateRequest;
+begin
+  FreeAndNil(FTransaction);
+  inherited DoUpdateRequest;
+  FTransaction := Contest.CreateTestTransaction(User);
+  Title := Format(SProblemIndexFmt, [ProblemIndex + 1]) + Transaction.ProblemTitles[ProblemIndex];
+end;
+
+constructor TSolveContestProblemPage.Create;
+begin
+  inherited Create;
+  FTransaction := nil;
+end;
+
+destructor TSolveContestProblemPage.Destroy;
+begin
+  FreeAndNil(FTransaction);
+  inherited Destroy;
+end;
 
 { TSolveProblemListPage }
 
