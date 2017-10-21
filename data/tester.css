@@ -19,6 +19,9 @@ body {
 .box.nomargin {
 	margin: 0;
 }
+.box input, .box select, .box option {
+	font-family: inherit;
+}
 table.container {
 	border-spacing: 5pt 3pt;
 	width: 100%;
@@ -279,7 +282,6 @@ button.red-btn:active, .red-btn:hover {
 	text-align: right;
 }
 .auth-edit {
-	font-family: inherit;
 }
 
 
