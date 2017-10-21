@@ -1053,6 +1053,8 @@ end;
 constructor TEditableCustomSession.Create(AManager: TEditableManager;
   AUser: TUser);
 begin
+  if AUser = nil then
+    raise EEditableAccessDenied.Create(SAccessDenied);
   FManager := AManager;
   FStorage := AManager.Storage;
   FUser := AUser;
