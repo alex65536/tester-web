@@ -573,12 +573,17 @@ td.contest-actions button {
 
 
 .scrolled-table-wrapper {
-	padding: 3pt 5pt;
+	padding: 3pt 3pt;
 	table-layout: fixed;
 	width: 100%;
 }
-.scrolled-table-wrapper .wrap, .scrolled-table-wrapper .wrap table {
+.scrolled-table-wrapper .wrap {
 	overflow: auto;
+	margin: 0;
+	padding: 0;
+}
+.scrolled-table-wrapper .wrap table {
+	box-shadow: none;
 	margin: 0;
 	padding: 0;
 }
