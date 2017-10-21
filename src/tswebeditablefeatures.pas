@@ -523,7 +523,7 @@ begin
     ItemsAsText['editableListDelete'] := SEditableListDelete;
   end;
   // load list
-  List := TEditableObjList.Create(Parent, (Parent as IEditablePage).Manager);
+  List := TEditableObjList.Create(Parent, (Parent as IEditableManagerPage).Manager);
   try
     Parent.AddElementPagePart('editableObjListTable', List)
   finally
