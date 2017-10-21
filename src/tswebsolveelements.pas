@@ -258,6 +258,7 @@ procedure TSolveStandingsHeader.DoFillVariables;
 begin
   with Parent.Variables do
   begin
+    ItemsAsText['solvePlaceHeader'] := SSolvePlaceHeader;
     ItemsAsText['solveParticipantHeader'] := SSolveParticipantHeader;
     ItemsAsText['solveTotalScoreHeader'] := SSolveTotalScoreHeader;
   end;
@@ -310,12 +311,22 @@ begin
 end;
 
 procedure TSolveStandingsRow.DoFillVariables;
+var
+  Place: string;
 begin
+  // get place string
+  if Row.MinPlace = Row.MaxPlace then
+    Place := IntToStr(Row.MinPlace + 1)
+  else
+    Place := Format('%d-%d', [Row.MinPlace + 1, Row.MaxPlace + 1]);
+  // fill variables
   with Parent.Variables do
   begin
+    ItemsAsText['solvePlace'] := Place;
     ItemsAsText['solveParticipantLink'] := Parent.GenerateUserLink(Row.UserInfo);
     ItemsAsText['solveTotalScore'] := Format(SScoreFmt, [Row.SumScore]);
   end;
+  // add problem scores
   AddListToVariable('solveStandingsRowInner');
 end;
 

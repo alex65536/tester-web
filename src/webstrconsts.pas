@@ -389,6 +389,7 @@ resourcestring
   SSolveStandingsTitle  = 'Standings';
   SSolveParticipantHeader = 'Participant';
   SSolveTotalScoreHeader = 'Total score';
+  SSolvePlaceHeader = 'Place';
 
 implementation
 

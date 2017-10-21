@@ -20,7 +20,7 @@
 }
 unit standings;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}{$H+}{$inline on}
 
 interface
 
@@ -72,6 +72,8 @@ type
   TStandingsRow = class(TStandingsLoadableObject)
   private
     FContest: TBaseContest;
+    FMaxPlace: integer;
+    FMinPlace: integer;
     FTable: TStandingsTable;
     FUserInfo: TUserInfo;
     FList: TDoubleList;
@@ -84,6 +86,8 @@ type
     {%H-}constructor Create(AManager: TStandingsManager; ATable: TStandingsTable;
       AUserID: integer);
   public
+    property MinPlace: integer read FMinPlace write FMinPlace;
+    property MaxPlace: integer read FMaxPlace write FMaxPlace;
     property Contest: TBaseContest read FContest;
     property Table: TStandingsTable read FTable;
     property UserInfo: TUserInfo read FUserInfo;
@@ -111,6 +115,7 @@ type
     function GetRowsByUsername(Username: string): TStandingsRow;
   protected
     procedure DoLoadData; override;
+    procedure FillRowsPlace;
     {%H-}constructor Create(AManager: TStandingsManager; AContest: TBaseContest);
   public
     property Contest: TBaseContest read FContest;
@@ -582,6 +587,30 @@ begin
   end;
 end;
 
+procedure TStandingsTable.FillRowsPlace;
+
+  function RowsEqual(A, B: integer): boolean; inline;
+  begin
+    Result := CompareValue(FList[A].SumScore, FList[B].SumScore, ScoreCompareEps) = 0;
+  end;
+
+var
+  WasIndex, Index, I: integer;
+begin
+  Index := 0;
+  while Index < FList.Count do
+  begin
+    WasIndex := Index;
+    while (Index < FList.Count) and RowsEqual(Index, WasIndex) do
+      Inc(Index);
+    for I := WasIndex to Index - 1 do
+    begin
+      FList[I].MinPlace := WasIndex;
+      FList[I].MaxPlace := Index - 1;
+    end;
+  end;
+end;
+
 constructor TStandingsTable.Create(AManager: TStandingsManager;
   AContest: TBaseContest);
 begin
@@ -594,6 +623,7 @@ procedure TStandingsTable.SortByScore;
 begin
   LoadData;
   FList.Sort;
+  FillRowsPlace;
 end;
 
 procedure TStandingsTable.RecalcTable;
@@ -672,6 +702,8 @@ begin
   FUserInfo := UserManager.GetUserInfo(AUserID);
   FList := nil;
   FSumScore := 0.0;
+  FMinPlace := -1;
+  FMaxPlace := -1;
 end;
 
 destructor TStandingsRow.Destroy;
