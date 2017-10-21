@@ -8,3 +8,53 @@ function checkFileSize(inputId, maxFileSize) {
 		}
 	}
 }
+
+function intToStr(x, minLen) {
+	var str = '' + ~~x;
+	while (str.length < minLen) {
+		str = '0' + str;
+	}
+	return str;
+}
+
+function timeSecondsToStr(seconds) {
+	var days = intToStr(seconds / 86400, 0);
+	seconds %= 86400;
+	var hours = intToStr(seconds / 3600, 1);
+	seconds %= 3600;
+	var minutes = intToStr(seconds / 60, 2);
+	seconds = intToStr(seconds % 60, 2);
+	var result = hours + ':' + minutes + ':' + seconds;
+	if (days != 0) {
+		result = days + 'd ' + result;
+	}
+	return result;
+}
+
+function attachTimer(element) {
+	var timerObj = {};
+	
+	timerObj.callback = function() {
+		var curTime = new Date().getTime();
+		var passed = (curTime - timerObj.startTime) / 1000;
+		var timerInterval = +timerObj.element.getAttribute('data-interval');
+		var curValue = timerInterval - passed;
+		if (curValue < 0) {
+			curValue = 0;
+			clearInterval(timerObj.timerId);
+			location.reload();
+		}
+		timerObj.element.textContent = timeSecondsToStr(curValue);
+	}
+	
+	timerObj.element = element;
+	timerObj.startTime = new Date().getTime();
+	timerObj.timerId = setInterval(timerObj.callback, 500);
+}
+
+function attachTimers() {
+	var elements = document.getElementsByClassName('timer');
+	for (var i = 0; i < elements.length; i++) {
+		attachTimer(elements.item(i));
+	}
+}

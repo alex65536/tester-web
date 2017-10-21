@@ -30,22 +30,34 @@ uses
 type
   TNavBar = class;
 
-  { TNavBarElement }
+  { TNavBarBaseElement }
 
-  TNavBarElement = class(THtmlPageElement)
+  TNavBarBaseElement = class(THtmlPageElement)
   private
     FActive: boolean;
     FCaption: string;
+  public
+    property Active: boolean read FActive write FActive;
+    property Caption: string read FCaption write FCaption;
+  end;
+
+  { TNavBarElement }
+
+  TNavBarElement = class(TNavBarBaseElement)
+  private
     FLink: string;
   protected
     procedure DoFillVariables; override;
   public
-    property Caption: string read FCaption write FCaption;
     property Link: string read FLink write FLink;
-    property Active: boolean read FActive write FActive;
   end;
 
-  TNavBarElementList = specialize TFPGObjectList<TNavBarElement>;
+  { TNavBarSplitter }
+
+  TNavBarSplitter = class(TNavBarBaseElement)
+  end;
+
+  TNavBarElementList = specialize TFPGObjectList<TNavBarBaseElement>;
 
   { TNavBar }
 
@@ -58,11 +70,14 @@ type
     procedure DoCreateElements; virtual; abstract;
     procedure DoFillVariables; override;
     function DoCreateElement(AParent: THtmlPage): TNavBarElement; virtual; abstract;
+    function DoCreateSplitter(AParent: THtmlPage): TNavBarSplitter; virtual; abstract;
   public
     property ActiveCaption: string read FActiveCaption write FActiveCaption;
     property Elements: TNavBarElementList read FElements;
     function CreateElement(const ACaption, ALink: string): TNavBarElement;
     function AddElement(const ACaption, ALink: string): TNavBarElement;
+    function CreateSplitter: TNavBarSplitter;
+    function AddSplitter: TNavBarSplitter;
     constructor Create(AParent: THtmlPage);
     destructor Destroy; override;
   end;
@@ -148,7 +163,18 @@ end;
 function TNavBar.AddElement(const ACaption, ALink: string): TNavBarElement;
 begin
   Elements.Add(CreateElement(ACaption, ALink));
-  Result := Elements.Last;
+  Result := Elements.Last as TNavBarElement;
+end;
+
+function TNavBar.CreateSplitter: TNavBarSplitter;
+begin
+  Result := DoCreateSplitter(Parent);
+end;
+
+function TNavBar.AddSplitter: TNavBarSplitter;
+begin
+  Elements.Add(CreateSplitter);
+  Result := Elements.Last as TNavBarSplitter;
 end;
 
 constructor TNavBar.Create(AParent: THtmlPage);

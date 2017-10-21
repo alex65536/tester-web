@@ -32,6 +32,18 @@ type
   { TTesterNavBarElement }
 
   TTesterNavBarElement = class(TNavBarElement)
+  private
+    FShowMiddleDot: boolean;
+  protected
+    procedure DoFillVariables; override;
+    procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
+  public
+    property ShowMiddleDot: boolean read FShowMiddleDot write FShowMiddleDot;
+  end;
+
+  { TTesterNavBarSplitter }
+
+  TTesterNavBarSplitter = class(TNavBarSplitter)
   protected
     procedure DoFillVariables; override;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
@@ -43,9 +55,22 @@ type
   protected
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
     function DoCreateElement(AParent: THtmlPage): TNavBarElement; override;
+    function DoCreateSplitter(AParent: THtmlPage): TNavBarSplitter; override;
   end;
 
 implementation
+
+{ TTesterNavBarSplitter }
+
+procedure TTesterNavBarSplitter.DoFillVariables;
+begin
+  // do nothing
+end;
+
+procedure TTesterNavBarSplitter.DoGetSkeleton(Strings: TIndentTaggedStrings);
+begin
+  Strings.LoadFromFile(TemplateLocation('', 'navSplitter'));
+end;
 
 { TTesterNavBar }
 
@@ -59,12 +84,19 @@ begin
   Result := TTesterNavBarElement.Create(AParent);
 end;
 
+function TTesterNavBar.DoCreateSplitter(AParent: THtmlPage): TNavBarSplitter;
+begin
+  Result := TTesterNavBarSplitter.Create(AParent);
+end;
+
 { TTesterNavBarElement }
 
 procedure TTesterNavBarElement.DoFillVariables;
 begin
   inherited DoFillVariables;
   Storage.ItemsAsText['navActive'] := ' class="active"';
+  if ShowMiddleDot then
+    Storage.ItemsAsText['navHasMiddleDot'] := '~+#navMiddleDot;';
 end;
 
 procedure TTesterNavBarElement.DoGetSkeleton(Strings: TIndentTaggedStrings);

@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, submissionlanguages, tswebpagesbase, htmlpages, htmlpreprocess,
   submissions, submissioninfo, strverdicts, webstrconsts, strconsts, testresults,
-  tswebutils;
+  tswebutils, users;
 
 type
 
@@ -41,6 +41,43 @@ type
     function SubmissionSession: TProblemSubmissionSession;
   end;
   {$interfaces COM}
+
+  TSubmissionItem = class;
+
+  { TSubmissionProblemHandler }
+
+  TSubmissionProblemHandler = class
+  private
+    FSubmissionItem: TSubmissionItem;
+  public
+    property SubmissionItem: TSubmissionItem read FSubmissionItem write FSubmissionItem;
+    function ProblemTitle: string; virtual; abstract;
+    function ProblemRef: string; virtual; abstract;
+    constructor Create(ASubmissionItem: TSubmissionItem); virtual;
+  end;
+
+  TSubmissionProblemHandlerClass = class of TSubmissionProblemHandler;
+
+  { TSubmissionProblemTransactionHandler }
+
+  TSubmissionProblemTransactionHandler = class(TSubmissionProblemHandler)
+  private
+    FProblem: TTestableProblem;
+    FTransaction: TTestProblemTransaction;
+  public
+    property Problem: TTestableProblem read FProblem;
+    property Transaction: TTestProblemTransaction read FTransaction;
+    constructor Create(ASubmissionItem: TSubmissionItem); override;
+    destructor Destroy; override;
+  end;
+
+  { TSubmissionProblemNameHandler }
+
+  TSubmissionProblemNameHandler = class(TSubmissionProblemHandler)
+  public
+    function ProblemTitle: string; override;
+    function ProblemRef: string; override;
+  end;
 
   { TSubmissionLanguageItem }
 
@@ -69,13 +106,16 @@ type
 
   TSubmissionItem = class(TTesterHtmlPageElement)
   private
+    FHandler: TSubmissionProblemHandler;
     FSubmission: TViewSubmission;
   protected
     procedure DoFillVariables; override;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
     property Submission: TViewSubmission read FSubmission;
-    constructor Create(AParent: THtmlPage; ASubmission: TViewSubmission);
+    property Handler: TSubmissionProblemHandler read FHandler;
+    constructor Create(AParent: THtmlPage; ASubmission: TViewSubmission;
+      AHandlerClass: TSubmissionProblemHandlerClass);
     destructor Destroy; override;
   end;
 
@@ -83,6 +123,7 @@ type
 
   TSubmissionItemList = class(TTesterHtmlListedPageElement)
   private
+    FHandlerClass: TSubmissionProblemHandlerClass;
     FSubmissionList: TIdList;
     FSession: TProblemSubmissionSession;
   protected
@@ -92,8 +133,9 @@ type
   public
     property Session: TProblemSubmissionSession read FSession;
     property SubmissionList: TIdList read FSubmissionList;
+    property HandlerClass: TSubmissionProblemHandlerClass read FHandlerClass;
     constructor Create(AParent: THtmlPage; ASubmissionList: TIdList;
-      ASession: TProblemSubmissionSession);
+      ASession: TProblemSubmissionSession; AHandlerClass: TSubmissionProblemHandlerClass);
     destructor Destroy; override;
   end;
 
@@ -125,6 +167,42 @@ type
   end;
 
 implementation
+
+{ TSubmissionProblemTransactionHandler }
+
+constructor TSubmissionProblemTransactionHandler.Create(ASubmissionItem: TSubmissionItem);
+begin
+  inherited Create(ASubmissionItem);
+  FProblem := ASubmissionItem.Submission.Problem;
+  FTransaction := Problem.CreateTestTransaction(SubmissionItem.Parent.User);
+end;
+
+destructor TSubmissionProblemTransactionHandler.Destroy;
+begin
+  FreeAndNil(FTransaction);
+  FreeAndNil(FProblem);
+  inherited Destroy;
+end;
+
+{ TSubmissionProblemNameHandler }
+
+function TSubmissionProblemNameHandler.ProblemTitle: string;
+begin
+  Result := SubmissionItem.Submission.ProblemName;
+end;
+
+function TSubmissionProblemNameHandler.ProblemRef: string;
+begin
+  Result := DocumentRoot + '/problem-view?object=' + SubmissionItem.Submission.ProblemName;
+end;
+
+{ TSubmissionProblemHandler }
+
+constructor TSubmissionProblemHandler.Create(ASubmissionItem: TSubmissionItem);
+begin
+  inherited Create;
+  FSubmissionItem := ASubmissionItem;
+end;
 
 { TSubmissionTestItemList }
 
@@ -197,7 +275,7 @@ var
 begin
   SubmissionList.Sort(True);
   for AID in SubmissionList do
-    List.Add(TSubmissionItem.Create(Parent, Session.GetSubmission(AID)));
+    List.Add(TSubmissionItem.Create(Parent, Session.GetSubmission(AID), HandlerClass));
 end;
 
 procedure TSubmissionItemList.DoFillVariables;
@@ -207,6 +285,11 @@ begin
     ItemsAsText['submissionHeaderId'] := SSubmissionHeaderId;
     ItemsAsText['submissionHeaderSubmitTime'] := SSubmissionHeaderSubmitTime;
     ItemsAsText['submissionHeaderAuthor'] := SSubmissionHeaderAuthor;
+    if HandlerClass <> nil then
+    begin
+      ItemsAsText['submissionHeaderProblem'] := SSubmissionHeaderProblem;
+      ItemsAsText['submissionHeaderProblemInner'] := '~+#submissionCanHeaderProblemInner;';
+    end;
     ItemsAsText['submissionHeaderLanguage'] := SSubmissionHeaderLanguage;
     ItemsAsText['submissionHeaderVerdict'] := SSubmissionHeaderVerdict;
     ItemsAsText['submissionHeaderTest'] := SSubmissionHeaderTest;
@@ -223,11 +306,13 @@ begin
 end;
 
 constructor TSubmissionItemList.Create(AParent: THtmlPage;
-  ASubmissionList: TIdList; ASession: TProblemSubmissionSession);
+  ASubmissionList: TIdList; ASession: TProblemSubmissionSession;
+  AHandlerClass: TSubmissionProblemHandlerClass);
 begin
   inherited Create(AParent);
   FSubmissionList := ASubmissionList;
   FSession := ASession;
+  FHandlerClass := AHandlerClass;
   DoFillList;
 end;
 
@@ -255,6 +340,12 @@ begin
     ItemsAsText['submissionId'] := IntToStr(Submission.ID);
     ItemsAsText['submissionSubmitTime'] := FormatDateTime(SPreferredDateTimeFormat, Submission.SubmitTime);
     ItemsAsText['submissionAuthorLink'] := Parent.GenerateUserLink(Submission.OwnerName);
+    if Handler <> nil then
+    begin
+      ItemsAsText['submissionProblemRef'] := Handler.ProblemRef;
+      ItemsAsText['submissionProblemTitle'] := Handler.ProblemTitle;
+      ItemsAsText['submissionProblemInner'] := '~+#submissionCanProblemInner;';
+    end;
     ItemsAsText['submissionLanguage'] := LanguageFullCompilerNames(Submission.Language);
     ItemsAsText['submissionVerdict'] := VerdictKindToStr(Submission.VerdictKind);
     ItemsAsText['submissionVerdictKind'] := Submission.VerdictKind;
@@ -270,14 +361,20 @@ begin
   Strings.LoadFromFile(TemplateLocation('problem', 'problemSubmissionListItem'));
 end;
 
-constructor TSubmissionItem.Create(AParent: THtmlPage; ASubmission: TViewSubmission);
+constructor TSubmissionItem.Create(AParent: THtmlPage;
+  ASubmission: TViewSubmission; AHandlerClass: TSubmissionProblemHandlerClass);
 begin
   inherited Create(AParent);
   FSubmission := ASubmission;
+  if AHandlerClass = nil then
+    FHandler := nil
+  else
+    FHandler := AHandlerClass.Create(Self);
 end;
 
 destructor TSubmissionItem.Destroy;
 begin
+  FreeAndNil(FHandler);
   FreeAndNil(FSubmission);
   inherited Destroy;
 end;

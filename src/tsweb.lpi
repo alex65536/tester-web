@@ -57,7 +57,7 @@
         <PackageName Value="FCL"/>
       </Item7>
     </RequiredPackages>
-    <Units Count="64">
+    <Units Count="69">
       <Unit0>
         <Filename Value="tsweb.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -314,6 +314,26 @@
         <Filename Value="standings.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit63>
+      <Unit64>
+        <Filename Value="tswebsolvefeatures.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit64>
+      <Unit65>
+        <Filename Value="tswebsolvepages.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit65>
+      <Unit66>
+        <Filename Value="tswebsolvemodules.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit66>
+      <Unit67>
+        <Filename Value="tswebsolveelements.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit67>
+      <Unit68>
+        <Filename Value="tswebicon.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit68>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

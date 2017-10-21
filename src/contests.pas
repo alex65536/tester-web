@@ -71,13 +71,15 @@ type
     FAllowUpsolving: boolean;
     FDurationMinutes: integer;
     FProblemList: TStringList;
-    FShowStandingsTable: boolean;
     FWasProblemList: TStringList;
+    FShowStandingsTable: boolean;
     FScoringPolicy: TContestScoringPolicy;
+    FWasScoringPolicy: TContestScoringPolicy;
     FStartTime: TDateTime;
     function GetAccessType: TContestAccessType;
     function GetContest: TContest;
     function GetEndTime: TDateTime;
+    function GetSecondsLeft: integer;
     function GetProblemCount: integer;
     function GetProblemNames(I: integer): string;
     function GetProblemTitles(I: integer): string;
@@ -96,6 +98,7 @@ type
     property Contest: TContest read GetContest;
     property StartTime: TDateTime read FStartTime write FStartTime;
     property EndTime: TDateTime read GetEndTime;
+    property SecondsLeft: integer read GetSecondsLeft;
     property Status: TContestStatus read GetStatus;
     property AccessType: TContestAccessType read GetAccessType;
     property DurationMinutes: integer read FDurationMinutes write FDurationMinutes;
@@ -115,6 +118,7 @@ type
     procedure MoveProblemUp(AIndex: integer);
     function CanMoveProblemDown(AIndex: integer): boolean;
     procedure MoveProblemDown(AIndex: integer);
+    function CanAccessContest: boolean; virtual;
     procedure Validate; override;
     destructor Destroy; override;
   end;
@@ -126,6 +130,7 @@ type
     property Contest;
     property StartTime;
     property EndTime;
+    property SecondsLeft;
     property Status;
     property AccessType;
     property DurationMinutes;
@@ -138,9 +143,9 @@ type
     property Problems;
   end;
 
-  { TContestTestTransaction }
+  { TTestContestTransaction }
 
-  TContestTestTransaction = class(TContestTransaction)
+  TTestContestTransaction = class(TContestTransaction)
   public
     function CanReadData: boolean; override;
     function CanWriteData: boolean; override;
@@ -149,12 +154,14 @@ type
     function GetOwnResults: TStandingsRow;
   end;
 
-  { TContestViewTransaction }
+  { TViewContestTransaction }
 
-  TContestViewTransaction = class(TBaseContestTransaction)
+  TViewContestTransaction = class(TBaseContestTransaction)
   public
+    property Contest;
     property StartTime;
     property EndTime;
+    property SecondsLeft;
     property Status;
     property AccessType;
     property DurationMinutes;
@@ -178,6 +185,7 @@ type
     FContest: TContest;
     FStorage: TAbstractDataStorage;
     function ProblemIndexToId(AIndex: integer): integer;
+    function ProblemIndexToName(AIndex: integer): string;
     procedure AddProblemToList(AIndex: integer; const AProblemName: string);
   protected
     property Storage: TAbstractDataStorage read FStorage;
@@ -224,6 +232,7 @@ type
     function DoGetProblem(const AProblemName: string): TContestProblem; virtual;
     function ContestStartTime: TDateTime;
     function ContestDurationMinutes: integer;
+    function ContestSecondsLeft: integer;
     function ContestEndTime: TDateTime;
     function ContestScoringPolicy: TContestScoringPolicy; override;
     function ContestStatus: TContestStatus; override;
@@ -239,12 +248,13 @@ type
     function ProblemManager: TContestProblemManager;
     function ContestProblemCount: integer; override;
     function ContestProblem(AIndex: integer): TContestProblem; override;
+    function ContestProblemIndex(AProblem: TContestProblem): integer; override;
     function ListParticipants: TStringList; override;
     function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession; override;
     function CreateParticipantSession(AUser: TUser): TContestParticipantSession; virtual;
     function CreateTransaction(AUser: TUser): TEditableTransaction; override;
-    function CreateTestTransaction(AUser: TUser): TContestTestTransaction; virtual;
-    function CreateViewTransaction(AUser: TUser): TContestViewTransaction; virtual;
+    function CreateTestTransaction(AUser: TUser): TTestContestTransaction; virtual;
+    function CreateViewTransaction(AUser: TUser): TViewContestTransaction; virtual;
     destructor Destroy; override;
   end;
 
@@ -266,9 +276,9 @@ type
 
 implementation
 
-{ TContestViewTransaction }
+{ TViewContestTransaction }
 
-function TContestViewTransaction.CanReadData: boolean;
+function TViewContestTransaction.CanReadData: boolean;
 begin
   Result := inherited CanReadData;
   if Result then
@@ -276,27 +286,24 @@ begin
   Result := Contest.HasParticipant(User.Info);
 end;
 
-function TContestViewTransaction.CanWriteData: boolean;
+function TViewContestTransaction.CanWriteData: boolean;
 begin
   Result := False;
 end;
 
-{ TContestTestTransaction }
+{ TTestContestTransaction }
 
-function TContestTestTransaction.CanReadData: boolean;
+function TTestContestTransaction.CanReadData: boolean;
 begin
-  Result := inherited CanReadData;
-  if Result then
-    Exit;
-  Result := Contest.ParticipantCanView(User.Info);
+  Result := CanAccessContest;
 end;
 
-function TContestTestTransaction.CanWriteData: boolean;
+function TTestContestTransaction.CanWriteData: boolean;
 begin
   Result := False;
 end;
 
-function TContestTestTransaction.CanGetStandings: boolean;
+function TTestContestTransaction.CanGetStandings: boolean;
 begin
   // for setters, we always allow to view the table
   if AccessLevel in AccessCanReadSet then
@@ -310,14 +317,14 @@ begin
   Result := True;
 end;
 
-function TContestTestTransaction.GetStandings: TStandingsTable;
+function TTestContestTransaction.GetStandings: TStandingsTable;
 begin
   if not CanGetStandings then
     raise EContestAccessDenied.Create(SAccessDenied);
   Result := Contest.StandingsTable;
 end;
 
-function TContestTestTransaction.GetOwnResults: TStandingsRow;
+function TTestContestTransaction.GetOwnResults: TStandingsRow;
 begin
   Result := Contest.StandingsTable.RowsByUsername[User.Username];
 end;
@@ -327,6 +334,11 @@ end;
 function TContestProblemList.ProblemIndexToId(AIndex: integer): integer;
 begin
   Result := Storage.ReadInteger(ProblemByIndexKeyName(AIndex), -1);
+end;
+
+function TContestProblemList.ProblemIndexToName(AIndex: integer): string;
+begin
+  Result := Contest.ProblemManager.IdToObjectName(ProblemIndexToId(AIndex));
 end;
 
 procedure TContestProblemList.AddProblemToList(AIndex: integer;
@@ -381,6 +393,7 @@ begin
     begin
       Problem := Contest.ProblemManager.GetObject(ANewList[I]) as TContestProblem;
       try
+        Contest.SetToProblem(Problem);
         Contest.TriggerProblemAdded(Problem);
       finally
         FreeAndNil(Problem);
@@ -392,6 +405,7 @@ begin
     begin
       Problem := Contest.ProblemManager.GetObject(AOldList[I]) as TContestProblem;
       try
+        Contest.SetToProblem(Problem);
         Contest.TriggerProblemDeleted(Problem);
       finally
         FreeAndNil(Problem);
@@ -463,7 +477,7 @@ function TContestProblemList.GetProblem(AIndex: integer): TContestProblem;
 begin
   if (AIndex < 0) or (AIndex >= ProblemCount) then
     raise EContestValidate.CreateFmt(SIndexOutOfBounds, [AIndex]);
-  Result := Contest.DoGetProblem(ProblemByIndexKeyName(AIndex));
+  Result := Contest.DoGetProblem(ProblemIndexToName(AIndex));
 end;
 
 function TContestProblemList.IsProblemListValid(AValue: TStringList): boolean;
@@ -488,6 +502,11 @@ end;
 function TBaseContestTransaction.GetEndTime: TDateTime;
 begin
   Result := Contest.ContestEndTime;
+end;
+
+function TBaseContestTransaction.GetSecondsLeft: integer;
+begin
+  Result := Contest.ContestSecondsLeft;
 end;
 
 function TBaseContestTransaction.GetProblemCount: integer;
@@ -556,6 +575,7 @@ begin
   FAllowUpsolving := Storage.ReadBool(FullKeyName('allowUpsolving'), True);
   FShowStandingsTable := Storage.ReadBool(FullKeyName('showStandingsTable'), True);
   ReloadProblemList;
+  FWasScoringPolicy := FScoringPolicy;
 end;
 
 procedure TBaseContestTransaction.DoCommit;
@@ -567,6 +587,8 @@ begin
   Storage.WriteBool(FullKeyName('allowUpsolving'), FAllowUpsolving);
   Storage.WriteBool(FullKeyName('showStandingsTable'), FShowStandingsTable);
   CommitProblemList;
+  if FWasScoringPolicy <> FScoringPolicy then
+    Contest.StandingsTable.RecalcTable;
 end;
 
 procedure TBaseContestTransaction.DoClone(ADest: TEditableTransaction);
@@ -653,6 +675,11 @@ begin
   if not CanMoveProblemDown(AIndex) then
     raise EContestValidate.Create(SUnableMoveProblemDown);
   ProblemList.Exchange(AIndex, AIndex + 1);
+end;
+
+function TBaseContestTransaction.CanAccessContest: boolean;
+begin
+  Result := (AccessLevel in AccessCanReadSet) or Contest.ParticipantCanView(User.Info);
 end;
 
 procedure TBaseContestTransaction.Validate;
@@ -859,6 +886,14 @@ begin
   Result := Storage.ReadInteger(FullKeyName('durationMinutes'), 0);
 end;
 
+function TContest.ContestSecondsLeft: integer;
+begin
+  if ContestStatus = csRunning then
+    Result := SecondsBetween(Now, ContestEndTime)
+  else
+    Result := 0;
+end;
+
 function TContest.ContestEndTime: TDateTime;
 begin
   Result := IncMinute(ContestStartTime, ContestDurationMinutes);
@@ -911,6 +946,11 @@ end;
 function TContest.ContestProblem(AIndex: integer): TContestProblem;
 begin
   Result := ProblemList.GetProblem(AIndex);
+end;
+
+function TContest.ContestProblemIndex(AProblem: TContestProblem): integer;
+begin
+  Result := ProblemList.ProblemIndex(AProblem);
 end;
 
 procedure TContest.HandleUserDeleting(AInfo: TUserInfo);
@@ -973,14 +1013,14 @@ begin
   Result := TContestTransaction.Create(Manager, AUser, Self);
 end;
 
-function TContest.CreateTestTransaction(AUser: TUser): TContestTestTransaction;
+function TContest.CreateTestTransaction(AUser: TUser): TTestContestTransaction;
 begin
-  Result := TContestTestTransaction.Create(Manager, AUser, Self);
+  Result := TTestContestTransaction.Create(Manager, AUser, Self);
 end;
 
-function TContest.CreateViewTransaction(AUser: TUser): TContestViewTransaction;
+function TContest.CreateViewTransaction(AUser: TUser): TViewContestTransaction;
 begin
-  Result := TContestViewTransaction.Create(Manager, AUser, Self);
+  Result := TViewContestTransaction.Create(Manager, AUser, Self);
 end;
 
 destructor TContest.Destroy;

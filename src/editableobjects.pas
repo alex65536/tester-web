@@ -142,7 +142,6 @@ type
     procedure CloneObject(AObject: TEditableObject; const ANewName: string);
     procedure CloneObject(const AName, ANewName: string);
     function ListAvailableObjects: TStringList;
-    procedure AfterConstruction; override;
   end;
 
   { TEditableObject }
@@ -878,14 +877,9 @@ end;
 
 function TEditableManagerSession.ListAvailableObjects: TStringList;
 begin
-  Result := Manager.ListAvailableObjects(User as TEditorUser);
-end;
-
-procedure TEditableManagerSession.AfterConstruction;
-begin
   if not (User is TEditorUser) then
     raise EEditableAccessDenied.Create(SAccessDenied);
-  inherited AfterConstruction;
+  Result := Manager.ListAvailableObjects(User as TEditorUser);
 end;
 
 { TEditableTransaction }
@@ -1059,6 +1053,8 @@ end;
 constructor TEditableCustomSession.Create(AManager: TEditableManager;
   AUser: TUser);
 begin
+  if AUser = nil then
+    raise EEditableAccessDenied.Create(SAccessDenied);
   FManager := AManager;
   FStorage := AManager.Storage;
   FUser := AUser;

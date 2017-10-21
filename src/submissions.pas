@@ -254,12 +254,12 @@ type
   public
     function Filter(AList: TIdList; AObject: TObject;
       AFilter: TSubmissionFilter): TIdList;
-    function ProblemFilter(AID: integer; AObject: TObject): boolean;
+    function ProblemFilter(AID: integer; AObject: TObject): boolean; virtual;
     function AvailableFilter(AID: integer; AObject: TObject): boolean;
 
     function ListAll: TIdList;
     function ListByOwner(AInfo: TUserInfo): TIdList;
-    function ListByProblem(AProblem: TTestableProblem): TIdList;
+    function ListByProblem(AProblem: TTestableProblem): TIdList; virtual;
 
     function GetSubmission(AID: integer): TViewSubmission;
 
@@ -303,7 +303,7 @@ type
 
   { TTestProblemTransaction }
 
-  TTestProblemTransaction = class(TProblemTransaction)
+  TTestProblemTransaction = class(TBaseProblemTransaction)
   private
     function GetSubmissionManager: TSubmissionManager;
   protected

@@ -33,7 +33,7 @@ type
 
   { TEditableHtmlPage }
 
-  TEditableHtmlPage = class(TDefaultHtmlPage, IEditablePage)
+  TEditableHtmlPage = class(TDefaultHtmlPage, IEditablePage, IEditableManagerPage)
   protected
     function HasEditableObject: boolean; virtual;
     function EditableObject: TEditableObject;

@@ -20,7 +20,7 @@
 }
 unit standings;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}{$H+}{$inline on}
 
 interface
 
@@ -62,6 +62,7 @@ type
     {%H-}constructor Create(AManager: TStandingsManager);
   public
     procedure LoadData;
+    procedure ReloadData;
   end;
 
   TStandingsTable = class;
@@ -71,6 +72,8 @@ type
   TStandingsRow = class(TStandingsLoadableObject)
   private
     FContest: TBaseContest;
+    FMaxPlace: integer;
+    FMinPlace: integer;
     FTable: TStandingsTable;
     FUserInfo: TUserInfo;
     FList: TDoubleList;
@@ -83,6 +86,8 @@ type
     {%H-}constructor Create(AManager: TStandingsManager; ATable: TStandingsTable;
       AUserID: integer);
   public
+    property MinPlace: integer read FMinPlace write FMinPlace;
+    property MaxPlace: integer read FMaxPlace write FMaxPlace;
     property Contest: TBaseContest read FContest;
     property Table: TStandingsTable read FTable;
     property UserInfo: TUserInfo read FUserInfo;
@@ -110,6 +115,7 @@ type
     function GetRowsByUsername(Username: string): TStandingsRow;
   protected
     procedure DoLoadData; override;
+    procedure FillRowsPlace;
     {%H-}constructor Create(AManager: TStandingsManager; AContest: TBaseContest);
   public
     property Contest: TBaseContest read FContest;
@@ -118,6 +124,7 @@ type
       default;
     property RowCount: integer read GetRowCount;
     procedure SortByScore;
+    procedure RecalcTable;
     destructor Destroy; override;
   end;
 
@@ -131,6 +138,8 @@ type
     function RowSectionName(AInfo: TUserInfo): string;
     function ColumnSectionName(AInfo: TUserInfo; AProblem: TContestProblem): string;
     procedure DoRecalcCell(AInfo: TUserInfo; AProblem: TContestProblem); virtual;
+    procedure DoRecalcRow(AInfo: TUserInfo);
+    procedure DoRecalcCol(AProblem: TContestProblem);
     {%H-}constructor Create(AManager: TStandingsManager; AContest: TBaseContest);
   public
     property Contest: TBaseContest read FContest;
@@ -140,6 +149,7 @@ type
     procedure ProblemDeleted(AProblem: TContestProblem); virtual;
     procedure SubmissionTested(ASubmission: TTestSubmission); virtual;
     procedure ContestDeleted; virtual;
+    procedure RecalcEntireTable;
   end;
 
   { TStandingsManager }
@@ -405,14 +415,7 @@ begin
   end;
 end;
 
-constructor TStandingsContestHandler.Create(AManager: TStandingsManager;
-  AContest: TBaseContest);
-begin
-  inherited Create(AManager);
-  FContest := AContest;
-end;
-
-procedure TStandingsContestHandler.UserAdded(AInfo: TUserInfo);
+procedure TStandingsContestHandler.DoRecalcRow(AInfo: TUserInfo);
 var
   I: integer;
   Problem: TContestProblem;
@@ -428,12 +431,7 @@ begin
   end;
 end;
 
-procedure TStandingsContestHandler.UserDeleted(AInfo: TUserInfo);
-begin
-  Storage.DeletePath(RowSectionName(AInfo));
-end;
-
-procedure TStandingsContestHandler.ProblemAdded(AProblem: TContestProblem);
+procedure TStandingsContestHandler.DoRecalcCol(AProblem: TContestProblem);
 var
   UserList: TStringList;
   Username: string;
@@ -453,6 +451,28 @@ begin
   finally
     FreeAndNil(UserList);
   end;
+end;
+
+constructor TStandingsContestHandler.Create(AManager: TStandingsManager;
+  AContest: TBaseContest);
+begin
+  inherited Create(AManager);
+  FContest := AContest;
+end;
+
+procedure TStandingsContestHandler.UserAdded(AInfo: TUserInfo);
+begin
+  DoRecalcRow(AInfo);
+end;
+
+procedure TStandingsContestHandler.UserDeleted(AInfo: TUserInfo);
+begin
+  Storage.DeletePath(RowSectionName(AInfo));
+end;
+
+procedure TStandingsContestHandler.ProblemAdded(AProblem: TContestProblem);
+begin
+  DoRecalcCol(AProblem);
 end;
 
 procedure TStandingsContestHandler.ProblemDeleted(AProblem: TContestProblem);
@@ -500,6 +520,28 @@ begin
   Storage.DeletePath(ContestSectionName);
 end;
 
+procedure TStandingsContestHandler.RecalcEntireTable;
+var
+  UserList: TStringList;
+  Username: string;
+  Info: TUserInfo;
+begin
+  UserList := Contest.ListParticipants;
+  try
+    for Username in UserList do
+    begin
+      Info := UserManager.GetUserInfo(Username);
+      try
+        DoRecalcRow(Info);
+      finally
+        FreeAndNil(Info);
+      end;
+    end;
+  finally
+    FreeAndNil(UserList);
+  end;
+end;
+
 { TStandingsTable }
 
 function TStandingsTable.GetRowCount: integer;
@@ -545,6 +587,30 @@ begin
   end;
 end;
 
+procedure TStandingsTable.FillRowsPlace;
+
+  function RowsEqual(A, B: integer): boolean; inline;
+  begin
+    Result := CompareValue(FList[A].SumScore, FList[B].SumScore, ScoreCompareEps) = 0;
+  end;
+
+var
+  WasIndex, Index, I: integer;
+begin
+  Index := 0;
+  while Index < FList.Count do
+  begin
+    WasIndex := Index;
+    while (Index < FList.Count) and RowsEqual(Index, WasIndex) do
+      Inc(Index);
+    for I := WasIndex to Index - 1 do
+    begin
+      FList[I].MinPlace := WasIndex;
+      FList[I].MaxPlace := Index - 1;
+    end;
+  end;
+end;
+
 constructor TStandingsTable.Create(AManager: TStandingsManager;
   AContest: TBaseContest);
 begin
@@ -557,6 +623,20 @@ procedure TStandingsTable.SortByScore;
 begin
   LoadData;
   FList.Sort;
+  FillRowsPlace;
+end;
+
+procedure TStandingsTable.RecalcTable;
+var
+  Handler: TStandingsContestHandler;
+begin
+  Handler := TStandingsContestHandler.Create(Manager, Contest);
+  try
+    Handler.RecalcEntireTable;
+  finally
+    FreeAndNil(Handler);
+  end;
+  ReloadData;
 end;
 
 destructor TStandingsTable.Destroy;
@@ -622,6 +702,8 @@ begin
   FUserInfo := UserManager.GetUserInfo(AUserID);
   FList := nil;
   FSumScore := 0.0;
+  FMinPlace := -1;
+  FMaxPlace := -1;
 end;
 
 destructor TStandingsRow.Destroy;
@@ -645,6 +727,15 @@ begin
     Exit;
   DoLoadData;
   FDataLoaded := True;
+end;
+
+procedure TStandingsLoadableObject.ReloadData;
+begin
+  if FDataLoaded then
+  begin
+    FDataLoaded := False;
+    LoadData;
+  end;
 end;
 
 { TStandingsObject }
