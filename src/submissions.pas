@@ -303,7 +303,7 @@ type
 
   { TTestProblemTransaction }
 
-  TTestProblemTransaction = class(TProblemTransaction)
+  TTestProblemTransaction = class(TBaseProblemTransaction)
   private
     function GetSubmissionManager: TSubmissionManager;
   protected

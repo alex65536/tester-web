@@ -27,9 +27,11 @@ interface
 uses
   SysUtils, webmodules, tswebsolvepages, fphttp, htmlpages, tswebeditablemodules,
   tsmiscwebmodules, tswebsolveelements, contests, users, editableobjects,
-  HTTPDefs, tswebpagesbase, tswebmanagers, tswebproblemmodules;
+  HTTPDefs, tswebpagesbase, tswebmanagers, tswebproblemmodules, problems,
+  webstrconsts, contestproblems, submissions;
 
 type
+  ESolveWebModule = class(Exception);
 
   { TSolveContestListModule }
 
@@ -97,6 +99,22 @@ type
     function RedirectLocation: string; override;
   end;
 
+  { TSolveDownloadHandler }
+
+  TSolveDownloadHandler = class(TProblemDownloadHandler)
+  protected
+    procedure InternalHandleDownload; override;
+  end;
+
+  { TSolveDownloadWebModule }
+
+  TSolveDownloadWebModule = class(TUserWebModule)
+  protected
+    function DoCreatePage: THtmlPage; override;
+  public
+    procedure AfterConstruction; override;
+  end;
+
 function SolveContestFromRequest(ARequest: TRequest): TContest;
 function SolveContestNameFromRequest(ARequest: TRequest): string;
 
@@ -110,6 +128,76 @@ end;
 function SolveContestNameFromRequest(ARequest: TRequest): string;
 begin
   Result := EditableObjectNameFromRequest(ARequest, 'contest');
+end;
+
+{ TSolveDownloadHandler }
+
+procedure TSolveDownloadHandler.InternalHandleDownload;
+
+  procedure ParseNames(out ContestName: string; out ProblemIndex: integer);
+  var
+    ContestAndProblemName: string;
+    I: integer;
+    Delim: integer;
+  begin
+    ContestAndProblemName := ChangeFileExt(FileName, '');
+    // find the delimiter
+    Delim := -1;
+    for I := 1 to Length(ContestAndProblemName) do
+      if ContestAndProblemName[I] = '-' then
+        Delim := I;
+    if Delim < 0 then
+      raise ESolveWebModule.Create(SUnableParseFilename);
+    // now, split the string on two
+    ContestName := ContestAndProblemName.Substring(0, Delim - 1);
+    ProblemIndex := StrToInt(ContestAndProblemName.Substring(Delim)) - 1;
+  end;
+
+var
+  ContestName: string;
+  ProblemIndex: integer;
+  Contest: TContest;
+  ContestTransaction: TTestContestTransaction;
+  Problem: TContestProblem;
+  Transaction: TTestProblemTransaction;
+  User: TUser;
+begin
+  ParseNames(ContestName, ProblemIndex);
+  User := (Parent as IUserWebModule).User;
+  Contest := ContestManager.GetObject(ContestName) as TContest;
+  try
+    ContestTransaction := Contest.CreateTestTransaction(User);
+    try
+      Problem := ContestTransaction.Problems[ProblemIndex];
+      try
+        Transaction := Problem.CreateTestTransaction(User);
+        try
+          DoHandleTransaction(Transaction);
+        finally
+          FreeAndNil(Transaction);
+        end;
+      finally
+        FreeAndNil(Problem);
+      end;
+    finally
+      FreeAndNil(ContestTransaction);
+    end;
+  finally
+    FreeAndNil(Contest);
+  end;
+end;
+
+{ TSolveDownloadWebModule }
+
+function TSolveDownloadWebModule.DoCreatePage: THtmlPage;
+begin
+  Result := nil; // no need in page in a download module!
+end;
+
+procedure TSolveDownloadWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Handlers.Add(TSolveDownloadHandler.Create);
 end;
 
 { TSolveContestProblemModule }
@@ -261,6 +349,7 @@ initialization
   RegisterHTTPModule('solve', TSolveContestListModule, True);
   RegisterHTTPModule('solve-contest', TSolveProblemListWebModule, True);
   RegisterHTTPModule('solve-problem', TSolveContestProblemModule, True);
+  RegisterHTTPModule('solve-download', TSolveDownloadWebModule, True);
 
 end.
 

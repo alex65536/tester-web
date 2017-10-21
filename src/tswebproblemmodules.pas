@@ -93,6 +93,7 @@ type
 
   TProblemDownloadHandler = class(TDownloadModuleHandler)
   protected
+    procedure DoHandleTransaction(ATransaction: TBaseProblemTransaction);
     procedure InternalHandleDownload; override;
   end;
 
@@ -349,31 +350,54 @@ end;
 
 { TProblemDownloadHandler }
 
+procedure TProblemDownloadHandler.DoHandleTransaction(ATransaction: TBaseProblemTransaction);
+
+  procedure HandleStatements;
+  begin
+    with ATransaction do
+      if FileExt = SFileTypesByExt[StatementsType] then
+      begin
+        DiskFileName := StatementsFileName;
+        FileMimeType := SFileTypesByMime[StatementsType];
+      end;
+  end;
+
+  procedure HandleArchives;
+  begin
+    if not (ATransaction is TProblemTransaction) then
+      raise EEditableAccessDenied.Create(SAccessDenied);
+    with ATransaction as TProblemTransaction do
+      if FileExt = SArchiveExt then
+      begin
+        DiskFileName := ArchiveFileName;
+        FileMimeType := SArchiveMime;
+      end;
+  end;
+
+begin
+  if FilePath = 'statements' then
+    HandleStatements
+  else if FilePath = 'archives' then
+    HandleArchives;
+end;
+
 procedure TProblemDownloadHandler.InternalHandleDownload;
 var
   ProblemName: string;
   Problem: TProblem;
   User: TEditorUser;
+  Transaction: TProblemTransaction;
 begin
   ProblemName := ChangeFileExt(FileName, '');
   Problem := ProblemManager.GetObject(ProblemName) as TProblem;
   try
     User := (Parent as TUserWebModule).User as TEditorUser;
-    with Problem.CreateTransaction(User) as TProblemTransaction do
-      try
-        if (FilePath = 'statements') and (FileExt = SFileTypesByExt[StatementsType]) then
-        begin
-          DiskFileName := StatementsFileName;
-          FileMimeType := SFileTypesByMime[StatementsType];
-        end
-        else if (FilePath = 'archives') and (FileExt = SArchiveExt) then
-        begin
-          DiskFileName := ArchiveFileName;
-          FileMimeType := SArchiveMime;
-        end;
-      finally
-        Free;
-      end;
+    Transaction := Problem.CreateTransaction(User) as TProblemTransaction;
+    try
+      DoHandleTransaction(Transaction);
+    finally
+      FreeAndNil(Transaction);
+    end;
   finally
     FreeAndNil(Problem);
   end;
