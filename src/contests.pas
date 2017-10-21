@@ -248,6 +248,7 @@ type
     function ProblemManager: TContestProblemManager;
     function ContestProblemCount: integer; override;
     function ContestProblem(AIndex: integer): TContestProblem; override;
+    function ContestProblemIndex(AProblem: TContestProblem): integer; override;
     function ListParticipants: TStringList; override;
     function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession; override;
     function CreateParticipantSession(AUser: TUser): TContestParticipantSession; virtual;
@@ -945,6 +946,11 @@ end;
 function TContest.ContestProblem(AIndex: integer): TContestProblem;
 begin
   Result := ProblemList.GetProblem(AIndex);
+end;
+
+function TContest.ContestProblemIndex(AProblem: TContestProblem): integer;
+begin
+  Result := ProblemList.ProblemIndex(AProblem);
 end;
 
 procedure TContest.HandleUserDeleting(AInfo: TUserInfo);

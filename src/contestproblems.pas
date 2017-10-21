@@ -77,6 +77,7 @@ type
     function ContestProblemCount: integer; virtual; abstract;
     function ContestProblem(AIndex: integer): TContestProblem; virtual; abstract;
     function ListParticipants: TStringList; virtual; abstract;
+    function ContestProblemIndex(AProblem: TContestProblem): integer; virtual; abstract;
   end;
 
   { TBaseContestManager }
@@ -137,6 +138,7 @@ type
   private
     FContest: TBaseContest;
     function GetContestManager: TBaseContestManager;
+    function GetIndex: integer;
   protected
     procedure SetContest(AID: integer);
     procedure SetContest(const AName: string);
@@ -144,6 +146,7 @@ type
   public
     property ContestManager: TBaseContestManager read GetContestManager;
     property Contest: TBaseContest read FContest;
+    property Index: integer read GetIndex;
     function CreateTestTransaction(AUser: TUser): TTestProblemTransaction;
       override;
     destructor Destroy; override;
@@ -479,6 +482,14 @@ end;
 function TContestProblem.GetContestManager: TBaseContestManager;
 begin
   Result := (Manager as TContestProblemManager).ContestManager;
+end;
+
+function TContestProblem.GetIndex: integer;
+begin
+  if Contest = nil then
+    Result := -1
+  else
+    Result := Contest.ContestProblemIndex(Self);
 end;
 
 procedure TContestProblem.SetContest(AID: integer);
