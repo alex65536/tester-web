@@ -278,21 +278,23 @@ end;
 procedure TSolveContestNavBar.DoCreateElements;
 var
   User: TUser;
-  Transaction: TContestTransaction;
+  Transaction: TTestContestTransaction;
   I: integer;
 begin
-  User := (Parent as TUserPage).User;
   // add common elements
   AddElement(SMainPage, '~documentRoot;/main');
   AddElement(SContestSolveTitle, '~documentRoot;/solve');
   // add contest-specific elements
-  AddSplitter;
-  AddElement(SSolveProblemListTitle, '~documentRoot;/solve-contest~+contestParam;');
-  // add submissions page
-  AddNestedElement(SSolveSubmissionsTitle, '~documentRoot;/solve-submissions~+contestParam;');
-  // add problem elements
+  User := (Parent as TUserPage).User;
   Transaction := (Parent as IContestSolvePage).Contest.CreateTestTransaction(User);
   try
+    AddSplitter;
+    AddElement(SSolveProblemListTitle, '~documentRoot;/solve-contest~+contestParam;');
+    // add submissions & standings pages
+    AddNestedElement(SSolveSubmissionsTitle, '~documentRoot;/solve-submissions~+contestParam;');
+    if Transaction.CanGetStandings then
+      AddNestedElement(SSolveStandingsTitle, '~documentRoot;/solve-standings~+contestParam;');
+    // add problem elements
     for I := 0 to Transaction.ProblemCount - 1 do
       AddNestedElement(Format(SSolveProblemTitle, [I + 1]),
         Format('~documentRoot;/solve-problem~+contestParam;&problem=%d', [I + 1]));

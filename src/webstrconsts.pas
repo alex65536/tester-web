@@ -386,6 +386,7 @@ resourcestring
   SFullSolveProblemTitle = '%d. %s';
   SUnableParseFilename = 'Unable to parse filename';
   SSolveSubmissionsTitle = 'Submissions';
+  SSolveStandingsTitle  = 'Standings';
 
 implementation
 
