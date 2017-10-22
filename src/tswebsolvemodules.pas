@@ -266,7 +266,8 @@ end;
 procedure TSolveContestProblemModule.DoSessionCreated;
 begin
   inherited DoSessionCreated;
-  FHandler := TProblemTestPostHandler.Create(Transaction.Problems[ProblemIndex], Self);
+  if Transaction <> nil then
+    FHandler := TProblemTestPostHandler.Create(Transaction.Problems[ProblemIndex], Self);
 end;
 
 procedure TSolveContestProblemModule.DoAfterRequest;
@@ -303,7 +304,12 @@ procedure TSolvePostContestWebModule.DoSessionCreated;
 begin
   inherited DoSessionCreated;
   FContest := SolveContestFromRequest(Request);
-  FTransaction := FContest.CreateTestTransaction(User);
+  try
+    FTransaction := FContest.CreateTestTransaction(User);
+  except
+    FTransaction := nil;
+    // mute the exception, as RedirectIfNoContestAccessHandler will send redirect
+  end;
 end;
 
 procedure TSolvePostContestWebModule.DoAfterRequest;
@@ -330,8 +336,8 @@ end;
 
 procedure TSolvePostContestWebModule.AfterConstruction;
 begin
-  inherited AfterConstruction;
   Handlers.Add(TRedirectIfNoContestAccessWebHandler.Create);
+  inherited AfterConstruction;
 end;
 
 { TSolveBaseContestWebModule }
