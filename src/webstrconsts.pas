@@ -365,6 +365,7 @@ resourcestring
   SDurationSecFormatHours = '%d:%.2d:%.2d';
   SDurationSecFormatDays = '%dd %d:%.2d:%.2d';
   SStatusNotStarted = 'Not started';
+  SStatusNotStartedFmt = 'Not started (%s left)';
   SStatusRunning = 'Running';
   SStatusRunningFmt = 'Running (%s left)';
   SStatusUpsolve = 'Upsolving';

@@ -453,13 +453,19 @@ end;
 { TSolveContestListItem }
 
 procedure TSolveContestListItem.DoFillVariables;
+
+  function MakeTimer: string;
+  begin
+    Result := Parent.GenerateTimer(Transaction.SecondsLeft);
+  end;
+
 var
   ContestStatus: string;
 begin
   // retrieve contest status
   case Transaction.Status of
-    csNotStarted: ContestStatus := SStatusNotStarted;
-    csRunning: ContestStatus := Format(SStatusRunningFmt, [Parent.GenerateTimer(Transaction.SecondsLeft)]);
+    csNotStarted: ContestStatus := Format(SStatusNotStartedFmt, [MakeTimer]);
+    csRunning: ContestStatus := Format(SStatusRunningFmt, [MakeTimer]);
     csUpsolve: ContestStatus := SStatusUpsolve;
   end;
   // fill variables

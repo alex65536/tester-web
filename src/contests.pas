@@ -888,10 +888,11 @@ end;
 
 function TContest.ContestSecondsLeft: integer;
 begin
-  if ContestStatus = csRunning then
-    Result := SecondsBetween(Now, ContestEndTime)
-  else
-    Result := 0;
+  case ContestStatus of
+    csNotStarted: Result := SecondsBetween(Now, ContestStartTime);
+    csRunning: Result := SecondsBetween(Now, ContestEndTime);
+    csUpsolve: Result := -1;
+  end;
 end;
 
 function TContest.ContestEndTime: TDateTime;

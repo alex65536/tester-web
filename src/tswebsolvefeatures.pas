@@ -200,10 +200,7 @@ begin
       csRunning: ContestStatus := SStatusRunning;
       csUpsolve: ContestStatus := SStatusUpsolve;
     end;
-    if Transaction.Status = csRunning then
-      TimeLeft := Transaction.SecondsLeft
-    else
-      TimeLeft := -1;
+    TimeLeft := Transaction.SecondsLeft;
   finally
     FreeAndNil(Transaction);
   end;
