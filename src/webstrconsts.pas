@@ -390,6 +390,7 @@ resourcestring
   SSolveParticipantHeader = 'Participant';
   SSolveTotalScoreHeader = 'Total score';
   SSolvePlaceHeader = 'Place';
+  SFileNotExist = 'File "%s" doesn''t exist!';
 
 implementation
 

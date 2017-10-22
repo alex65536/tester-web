@@ -644,6 +644,8 @@ end;
 
 procedure TSubmissionManager.ResumeCreateSubmission(AID: integer);
 begin
+  if not SubmissionExists(AID) then
+    raise ESubmissionNotExist.CreateFmt(SSubmissionDoesNotExist, [AID]);
   Queue.AddSubmission(DoCreateTestSubmission(AID));
 end;
 
@@ -775,6 +777,8 @@ end;
 
 procedure TSubmissionManager.RejudgeSubmission(AID: integer);
 begin
+  if not SubmissionExists(AID) then
+    raise ESubmissionNotExist.CreateFmt(SSubmissionDoesNotExist, [AID]);
   Queue.DeleteSubmission(AID);
   ResumeCreateSubmission(AID);
 end;
@@ -1011,12 +1015,15 @@ end;
 
 procedure TSubmissionPool.TriggerTestingFinished(ASubmission: TTestSubmission);
 begin
-  if not ASubmission.Finished then
-    ASubmission.Finish(True);
-  FList.Remove(ASubmission);
-  Broadcast(TSubmissionTestedMessage.Create.AddSubmission(ASubmission)
-    .AddSender(Self).Lock);
-  Queue.FreeSubmission(ASubmission);
+  try
+    if not ASubmission.Finished then
+      ASubmission.Finish(True);
+    FList.Remove(ASubmission);
+    Broadcast(TSubmissionTestedMessage.Create.AddSubmission(ASubmission)
+      .AddSender(Self).Lock);
+  finally
+    Queue.FreeSubmission(ASubmission);
+  end;
 end;
 
 constructor TSubmissionPool.Create(AQueue: TSubmissionQueue; AMaxPoolSize: integer);

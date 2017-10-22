@@ -373,12 +373,12 @@ end;
 function TSubmissionSolveProblemHandler.ProblemRef: string;
 begin
   Result := Format('%s/solve-problem?contest=%s&problem=%d', [DocumentRoot,
-    Problem.Contest.Name, Problem.Index]);
+    Problem.Contest.Name, Problem.Index + 1]);
 end;
 
 function TSubmissionSolveProblemHandler.ProblemTitle: string;
 begin
-  Result := Format(SFullSolveProblemTitle, [Problem.Index, Transaction.Title]);
+  Result := Format(SFullSolveProblemTitle, [Problem.Index + 1, Transaction.Title]);
 end;
 
 { TSolveProblemList }
