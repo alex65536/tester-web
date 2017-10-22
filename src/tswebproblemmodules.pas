@@ -28,7 +28,7 @@ uses
   SysUtils, tswebmodules, tswebeditablemodules, fphttp, htmlpages, problems,
   editableobjects, tswebpagesbase, tswebproblempages, webstrconsts, HTTPDefs,
   downloadhandlers, tsmiscwebmodules, tswebmanagers, submissionlanguages,
-  submissions;
+  submissions, userpreferences;
 
 type
 
@@ -277,6 +277,7 @@ var
   FileName: string;
   I: integer;
   TestTransaction: TTestProblemTransaction;
+  Preferences: TUserPreferences;
 begin
   Language := StrToLanguage(ARequest.ContentFields.Values['sol-lang']);
   FileName := '';
@@ -292,6 +293,14 @@ begin
   // if solution file was not found - raise an error
   if FileName = '' then
     raise ESubmissionValidate.Create(SNoSubmissionFile);
+  // update preferences
+  Preferences := PreferencesManager.GetPreferences(Module.User);
+  try
+    Preferences.LastLanguage := Language;
+    Preferences.Commit;
+  finally
+    FreeAndNil(Preferences);
+  end;
   // create and run the submission
   TestTransaction := FProblem.CreateTestTransaction(Module.User);
   try

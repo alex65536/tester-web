@@ -57,7 +57,7 @@
         <PackageName Value="FCL"/>
       </Item7>
     </RequiredPackages>
-    <Units Count="69">
+    <Units Count="70">
       <Unit0>
         <Filename Value="tsweb.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -334,6 +334,10 @@
         <Filename Value="tswebicon.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit68>
+      <Unit69>
+        <Filename Value="userpreferences.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit69>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

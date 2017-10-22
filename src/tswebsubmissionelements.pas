@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, submissionlanguages, tswebpagesbase, htmlpages, htmlpreprocess,
   submissions, submissioninfo, strverdicts, webstrconsts, strconsts, testresults,
-  tswebutils, users;
+  tswebutils, users, userpreferences, userpages;
 
 type
 
@@ -84,12 +84,15 @@ type
   TSubmissionLanguageItem = class(TTesterHtmlPageElement)
   private
     FLanguage: TSubmissionLanguage;
+    FSelected: boolean;
   protected
     procedure DoFillVariables; override;
     procedure DoGetSkeleton(Strings: TIndentTaggedStrings); override;
   public
+    property Selected: boolean read FSelected;
     property Language: TSubmissionLanguage read FLanguage;
-    constructor Create(AParent: THtmlPage; ALanguage: TSubmissionLanguage);
+    constructor Create(AParent: THtmlPage; ALanguage: TSubmissionLanguage;
+      ASelected: boolean);
   end;
 
   { TSubmissionLanguageItemList }
@@ -394,10 +397,18 @@ end;
 constructor TSubmissionLanguageItemList.Create(AParent: THtmlPage);
 var
   L: TSubmissionLanguage;
+  User: TUser;
+  Preferences: TUserPreferences;
 begin
   inherited Create(AParent);
-  for L in TSubmissionLanguage do
-    List.Add(TSubmissionLanguageItem.Create(AParent, L));
+  User := (AParent as TUserPage).User;
+  Preferences := PreferencesManager.GetPreferences(User);
+  try
+    for L in TSubmissionLanguage do
+      List.Add(TSubmissionLanguageItem.Create(AParent, L, L = Preferences.LastLanguage));
+  finally
+    FreeAndNil(Preferences);
+  end;
 end;
 
 { TSubmissionLanguageItem }
@@ -406,6 +417,8 @@ procedure TSubmissionLanguageItem.DoFillVariables;
 begin
   Storage.ItemsAsText['problemLanguageOptionName'] := LanguageToStr(Language);
   Storage.ItemsAsText['problemLanguageOptionText'] := LanguageFullCompilerNames(Language);
+  if Selected then
+    Storage.ItemsAsText['problemLanguageOptionSelected'] := ' selected';
 end;
 
 procedure TSubmissionLanguageItem.DoGetSkeleton(Strings: TIndentTaggedStrings);
@@ -413,10 +426,12 @@ begin
   Strings.LoadFromFile(TemplateLocation('problem', 'problemLanguageOption'));
 end;
 
-constructor TSubmissionLanguageItem.Create(AParent: THtmlPage; ALanguage: TSubmissionLanguage);
+constructor TSubmissionLanguageItem.Create(AParent: THtmlPage;
+  ALanguage: TSubmissionLanguage; ASelected: boolean);
 begin
   inherited Create(AParent);
   FLanguage := ALanguage;
+  FSelected := ASelected;
 end;
 
 end.
