@@ -31,14 +31,53 @@ uses
 type
   TContestProblem = class;
 
+  TContestStatus = (csNotStarted, csRunning, csUpsolve);
+
+  { TContestParticipantMessage }
+
+  TContestParticipantMessage = class(TEditableObjectMessage)
+  private
+    FUserInfo: TUserInfo;
+  public
+    property UserInfo: TUserInfo read FUserInfo;
+    function AddUserInfo(AUserInfo: TUserInfo): TContestParticipantMessage;
+  end;
+
+  { TContestProblemMessage }
+
+  TContestProblemMessage = class(TEditableObjectMessage)
+  private
+    FProblem: TContestProblem;
+  public
+    property Problem: TContestProblem read FProblem;
+    function AddProblem(AProblem: TContestProblem): TContestProblemMessage;
+  end;
+
+  TContestParticipantAddedMessage = class(TContestParticipantMessage);
+  TContestParticipantDeletedMessage = class(TContestParticipantMessage);
+
+  TContestProblemAddedMessage = class(TContestProblemMessage);
+  TContestProblemDeletedMessage = class(TContestProblemMessage);
+
   { TBaseContest }
 
   TBaseContest = class(TEditableObject)
   protected
     procedure SetToProblem(AProblem: TContestProblem);
+    function ContestStatus: TContestStatus; virtual; abstract;
+    function ContestAllowUpsolving: boolean; virtual; abstract;
     function HasParticipant(AInfo: TUserInfo): boolean; virtual; abstract;
-    function ParticipantCanSubmit(AInfo: TUserInfo): boolean; virtual; abstract;
-    function ParticipantCanView(AInfo: TUserInfo): boolean; virtual; abstract;
+    function ParticipantCanSubmit(AInfo: TUserInfo): boolean; virtual;
+    function ParticipantCanView(AInfo: TUserInfo): boolean; virtual;
+    procedure TriggerProblemAdded(AProblem: TContestProblem); virtual;
+    procedure TriggerProblemDeleted(AProblem: TContestProblem); virtual;
+    procedure TriggerParticipantAdded(AInfo: TUserInfo); virtual;
+    procedure TriggerParticipantDeleted(AInfo: TUserInfo); virtual;
+  public
+    function ContestProblemCount: integer; virtual; abstract;
+    function ContestProblem(AIndex: integer): TContestProblem; virtual; abstract;
+    function ListParticipants: TStringList; virtual; abstract;
+    function ContestProblemIndex(AProblem: TContestProblem): integer; virtual; abstract;
   end;
 
   { TBaseContestManager }
@@ -46,20 +85,38 @@ type
   TBaseContestManager = class(TEditableManager)
   end;
 
+  { TContestViewSubmission }
+
+  TContestViewSubmission = class(TViewSubmission)
+  private
+    function GetContest: TBaseContest;
+    function GetContestID: integer;
+    function GetContestName: string;
+    function GetRated: boolean;
+  protected
+    {%H-}constructor Create(AManager: TSubmissionManager; AID: integer);
+  public
+    function ContestManager: TBaseContestManager;
+    property Contest: TBaseContest read GetContest;
+    property ContestID: integer read GetContestID;
+    property ContestName: string read GetContestName;
+    property Rated: boolean read GetRated;
+  end;
+
   { TContestProblemSubmissionSession }
 
   TContestProblemSubmissionSession = class(TProblemSubmissionSession)
   protected
     function ContestAccessLevel(AProblem: TContestProblem): TEditableAccessRights;
-    function DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
-      override;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
   public
     function CanReadSubmission(AProblem: TTestableProblem; AOwner: TUserInfo): boolean;
       override;
     function CanRejudgeSubmission(AProblem: TTestableProblem): boolean;
       override;
-    function ListByContest(AContest: TBaseContest): TIdList;
+    function CanRejudgeSubmission(AContest: TBaseContest): boolean; virtual;
+    function ListAvailable(AContest: TBaseContest): TIdList; overload;
+    procedure RejudgeSubmissions(AContest: TBaseContest); overload;
   end;
 
   { TContestTestProblemTransaction }
@@ -81,6 +138,7 @@ type
   private
     FContest: TBaseContest;
     function GetContestManager: TBaseContestManager;
+    function GetIndex: integer;
   protected
     procedure SetContest(AID: integer);
     procedure SetContest(const AName: string);
@@ -88,6 +146,7 @@ type
   public
     property ContestManager: TBaseContestManager read GetContestManager;
     property Contest: TBaseContest read FContest;
+    property Index: integer read GetIndex;
     function CreateTestTransaction(AUser: TUser): TTestProblemTransaction;
       override;
     destructor Destroy; override;
@@ -109,21 +168,84 @@ type
   TContestSubmissionManager = class(TSubmissionManager)
   protected
     function ContestSectionName(AID: integer): string;
+    function ContestProblemSectionName(AContestID, AProblemID: integer): string;
+    function ContestProblemUserSectionName(AContestID, AProblemID,
+      AUserID: integer): string;
     function SubmissionContestID(AID: integer): integer;
     procedure HandleContestDeleting(AContest: TBaseContest); virtual;
+    function DoCreateProblemFromSubmission(AID: integer): TTestableProblem; override;
+    function DoCreateViewSubmission(AID: integer): TViewSubmission; override;
     procedure DoInternalCreateSubmission(ASubmission: TTestSubmission;
       AProblem: TProblem; AUser: TUser); override;
     procedure DoDeleteSubmission(AID: integer); override;
-    function ListByContest(AContest: TBaseContest): TIdList;
     procedure MessageReceived(AMessage: TAuthorMessage); override;
   public
     function ContestManager: TBaseContestManager; virtual; abstract;
+    function ProblemFilter(AID: integer; AObject: TObject): boolean; override;
     function ContestFilter(AID: integer; AObject: TObject): boolean;
+    function ListByProblem(AProblem: TTestableProblem): TIdList; override;
+    function ListByContest(AContest: TBaseContest): TIdList;
+    function ListByContestProblemUser(AProblem: TContestProblem;
+      AInfo: TUserInfo): TIdList;
     constructor Create;
     destructor Destroy; override;
   end;
 
 implementation
+
+{ TContestProblemMessage }
+
+function TContestProblemMessage.AddProblem(AProblem: TContestProblem): TContestProblemMessage;
+begin
+  NeedsUnlocked;
+  FProblem := AProblem;
+  Result := Self;
+end;
+
+{ TContestParticipantMessage }
+
+function TContestParticipantMessage.AddUserInfo(AUserInfo: TUserInfo): TContestParticipantMessage;
+begin
+  NeedsUnlocked;
+  FUserInfo := AUserInfo;
+  Result := Self;
+end;
+
+{ TContestViewSubmission }
+
+function TContestViewSubmission.GetContest: TBaseContest;
+begin
+  if ContestID >= 0 then
+    Result := ContestManager.GetObject(ContestID) as TBaseContest
+  else
+    Result := nil;
+end;
+
+function TContestViewSubmission.GetContestID: integer;
+begin
+  Result := (Manager as TContestSubmissionManager).SubmissionContestID(ID);
+end;
+
+function TContestViewSubmission.GetContestName: string;
+begin
+  Result := ContestManager.IdToObjectName(ContestID);
+end;
+
+function TContestViewSubmission.GetRated: boolean;
+begin
+  Result := Storage.ReadBool(FullKeyName('isItRated'), False);
+end;
+
+constructor TContestViewSubmission.Create(AManager: TSubmissionManager;
+  AID: integer);
+begin
+  inherited Create(AManager, AID);
+end;
+
+function TContestViewSubmission.ContestManager: TBaseContestManager;
+begin
+  Result := (Manager as TContestSubmissionManager).ContestManager;
+end;
 
 { TBaseContest }
 
@@ -132,11 +254,67 @@ begin
   AProblem.SetContest(Self.Name);
 end;
 
+function TBaseContest.ParticipantCanSubmit(AInfo: TUserInfo): boolean;
+begin
+  if not HasParticipant(AInfo) then
+    Exit(False);
+  case ContestStatus of
+    csRunning: Result := True;
+    csUpsolve: Result := ContestAllowUpsolving
+    else
+      Result := False;
+  end;
+end;
+
+function TBaseContest.ParticipantCanView(AInfo: TUserInfo): boolean;
+begin
+  if not HasParticipant(AInfo) then
+    Exit(False);
+  Result := ContestStatus in [csRunning, csUpsolve];
+end;
+
+procedure TBaseContest.TriggerProblemAdded(AProblem: TContestProblem);
+begin
+  Manager.Broadcast(TContestProblemAddedMessage.Create.AddProblem(AProblem)
+    .AddObject(Self).AddSender(Manager).Lock);
+end;
+
+procedure TBaseContest.TriggerProblemDeleted(AProblem: TContestProblem);
+begin
+  Manager.Broadcast(TContestProblemDeletedMessage.Create.AddProblem(AProblem)
+    .AddObject(Self).AddSender(Manager).Lock);
+end;
+
+procedure TBaseContest.TriggerParticipantAdded(AInfo: TUserInfo);
+begin
+  Manager.Broadcast(TContestParticipantAddedMessage.Create.AddUserInfo(AInfo)
+    .AddObject(Self).AddSender(Manager).Lock);
+end;
+
+procedure TBaseContest.TriggerParticipantDeleted(AInfo: TUserInfo);
+begin
+  Manager.Broadcast(TContestParticipantDeletedMessage.Create.AddUserInfo(AInfo)
+    .AddObject(Self).AddSender(Manager).Lock);
+end;
+
 { TContestSubmissionManager }
 
 function TContestSubmissionManager.ContestSectionName(AID: integer): string;
 begin
   Result := 'contests.' + Id2Str(AID);
+end;
+
+function TContestSubmissionManager.ContestProblemSectionName(AContestID,
+  AProblemID: integer): string;
+begin
+  Result := 'contestProblems.' + Id2Str(AContestID) + '.' + Id2Str(AProblemID);
+end;
+
+function TContestSubmissionManager.ContestProblemUserSectionName(AContestID,
+  AProblemID, AUserID: integer): string;
+begin
+  Result := 'contestProblemUsers.' + Id2Str(AContestID) + '.' + Id2Str(AProblemID) +
+    '.' + Id2Str(AUserID);
 end;
 
 function TContestSubmissionManager.SubmissionContestID(AID: integer): integer;
@@ -159,11 +337,45 @@ begin
   end;
 end;
 
+function TContestSubmissionManager.DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
+var
+  ContestID: integer;
+begin
+  Result := inherited DoCreateProblemFromSubmission(AID);
+  try
+    ContestID := SubmissionContestID(AID);
+    if ContestID >= 0 then
+      (Result as TContestProblem).SetContest(ContestID);
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
+end;
+
+function TContestSubmissionManager.DoCreateViewSubmission(AID: integer): TViewSubmission;
+begin
+  Result := TContestViewSubmission.Create(Self, AID);
+end;
+
 function TContestSubmissionManager.ListByContest(AContest: TBaseContest): TIdList;
 var
   StrList: TStringList;
 begin
   StrList := Storage.GetChildElements(ContestSectionName(AContest.ID));
+  try
+    Result := StrListToIdList(StrList);
+  finally
+    FreeAndNil(StrList);
+  end;
+end;
+
+function TContestSubmissionManager.ListByContestProblemUser(
+  AProblem: TContestProblem; AInfo: TUserInfo): TIdList;
+var
+  StrList: TStringList;
+begin
+  StrList := Storage.GetChildElements(ContestProblemUserSectionName(AProblem.Contest.ID,
+    AProblem.ID, AInfo.ID));
   try
     Result := StrListToIdList(StrList);
   finally
@@ -177,12 +389,49 @@ begin
   Result := SubmissionContestID(AID) = (AObject as TBaseContest).ID;
 end;
 
+function TContestSubmissionManager.ListByProblem(AProblem: TTestableProblem): TIdList;
+var
+  ContestProblem: TContestProblem;
+
+  function ListByContestProblem: TIdList;
+  var
+    StrList: TStringList;
+  begin
+    StrList := Storage.GetChildElements(ContestProblemSectionName(
+      ContestProblem.Contest.ID, AProblem.ID));
+    try
+      Result := StrListToIdList(StrList);
+    finally
+      FreeAndNil(StrList);
+    end;
+  end;
+
+begin
+  ContestProblem := AProblem as TContestProblem;
+  if ContestProblem.Contest = nil then
+    Result := inherited ListByProblem(AProblem)
+  else
+    Result := ListByContestProblem;
+end;
+
 procedure TContestSubmissionManager.MessageReceived(AMessage: TAuthorMessage);
 begin
   if (AMessage is TEditableDeletingMessage) and (AMessage.Sender is TBaseContest) then
     HandleContestDeleting((AMessage as TEditableDeletingMessage).EditableObject as TBaseContest)
   else
     inherited MessageReceived(AMessage);
+end;
+
+function TContestSubmissionManager.ProblemFilter(AID: integer; AObject: TObject): boolean;
+var
+  ContestProblem: TContestProblem;
+begin
+  ContestProblem := AObject as TContestProblem;
+  Result := inherited ProblemFilter(AID, AObject);
+  if not Result then
+    Exit;
+  if ContestProblem.Contest <> nil then
+    Result := SubmissionContestID(AID) = ContestProblem.Contest.ID;
 end;
 
 procedure TContestSubmissionManager.DoInternalCreateSubmission(
@@ -198,16 +447,32 @@ begin
   begin
     Storage.WriteInteger(SubmissionSectionName(ID) + '.contestId', Contest.ID);
     Storage.WriteBool(ContestSectionName(Contest.ID) + '.' + Id2Str(ID), True);
+    Storage.WriteBool(ContestProblemSectionName(Contest.ID, AProblem.ID) + '.' +
+      Id2Str(ID), True);
+    Storage.WriteBool(ContestProblemUserSectionName(Contest.ID, AProblem.ID,
+      AUser.ID) + '.' + Id2Str(ID), True);
+    if Contest.ContestStatus = csRunning then
+      Storage.WriteBool(SubmissionSectionName(ID) + '.isItRated', True);
   end;
 end;
 
 procedure TContestSubmissionManager.DoDeleteSubmission(AID: integer);
 var
   ContestID: integer;
+  ProblemID: integer;
+  UserID: integer;
 begin
   ContestID := SubmissionContestID(AID);
+  ProblemID := SubmissionProblemID(AID);
+  UserID := SubmissionOwnerID(AID);
   if ContestID >= 0 then
+  begin
+    Storage.DeleteVariable(ContestProblemSectionName(ContestID, ProblemID) +
+      '.' + Id2Str(AID));
+    Storage.DeleteVariable(ContestProblemUserSectionName(ContestID, ProblemID, UserID) +
+      '.' + Id2Str(AID));
     Storage.DeleteVariable(ContestSectionName(ContestID) + '.' + Id2Str(AID));
+  end;
   inherited DoDeleteSubmission(AID);
 end;
 
@@ -241,6 +506,14 @@ end;
 function TContestProblem.GetContestManager: TBaseContestManager;
 begin
   Result := (Manager as TContestProblemManager).ContestManager;
+end;
+
+function TContestProblem.GetIndex: integer;
+begin
+  if Contest = nil then
+    Result := -1
+  else
+    Result := Contest.ContestProblemIndex(Self);
 end;
 
 procedure TContestProblem.SetContest(AID: integer);
@@ -295,30 +568,26 @@ end;
 
 function TContestTestProblemTransaction.CanTestProblem: boolean;
 begin
-  // inherit access
-  Result := inherited CanTestProblem;
-  if Result then
-    Exit;
   // for contest setters
   if ContestAccessLevel in AccessCanReadSet then
     Exit(True);
   // for participants
   if Contest <> nil then
-    Result := Contest.ParticipantCanSubmit(User.Info);
+    Result := Contest.ParticipantCanSubmit(User.Info)
+  else
+    Result := inherited CanTestProblem;
 end;
 
 function TContestTestProblemTransaction.CanReadData: boolean;
 begin
-  // inherit access
-  Result := inherited CanReadData;
-  if Result then
-    Exit;
   // for contest setters
   if ContestAccessLevel in AccessCanReadSet then
     Exit(True);
   // for participants
   if Contest <> nil then
-    Result := Contest.ParticipantCanView(User.Info);
+    Result := Contest.ParticipantCanView(User.Info)
+  else
+    Result := inherited CanReadData;
 end;
 
 { TContestProblemSubmissionSession }
@@ -330,23 +599,6 @@ begin
     Result := AProblem.Contest.GetAccessRights(User as TEditorUser)
   else
     Result := erNone;
-end;
-
-function TContestProblemSubmissionSession.DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
-var
-  ContestID: integer;
-  ContestSubmitMgr: TContestSubmissionManager;
-begin
-  Result := inherited DoCreateProblemFromSubmission(AID);
-  try
-    ContestSubmitMgr := SubmissionManager as TContestSubmissionManager;
-    ContestID := ContestSubmitMgr.SubmissionContestID(AID);
-    if ContestID >= 0 then
-      (Result as TContestProblem).SetContest(ContestID);
-  except
-    FreeAndNil(Result);
-    raise;
-  end;
 end;
 
 constructor TContestProblemSubmissionSession.Create(AManager: TEditableManager;
@@ -391,10 +643,32 @@ begin
   Result := ContestAccessLevel(AProblem as TContestProblem) in AccessCanWriteSet;
 end;
 
-function TContestProblemSubmissionSession.ListByContest(AContest: TBaseContest): TIdList;
+function TContestProblemSubmissionSession.CanRejudgeSubmission(AContest: TBaseContest): boolean;
 begin
-  with SubmissionManager do
+  Result := (User is TEditorUser) and
+   (AContest.GetAccessRights(User as TEditorUser) in AccessCanWriteSet);
+end;
+
+function TContestProblemSubmissionSession.ListAvailable(AContest: TBaseContest): TIdList;
+begin
+  with SubmissionManager as TContestSubmissionManager do
     Result := Filter(ListByContest(AContest), Self, @AvailableFilter);
+end;
+
+procedure TContestProblemSubmissionSession.RejudgeSubmissions(AContest: TBaseContest);
+var
+  List: TIdList;
+  ID: integer;
+begin
+  if not CanRejudgeSubmission(AContest) then
+    raise ESubmissionAccessDenied.Create(SAccessDenied);
+  List := ListAvailable(AContest);
+  try
+    for ID in List do
+      (SubmissionManager as TContestSubmissionManager).RejudgeSubmission(ID);
+  finally
+    FreeAndNil(List);
+  end;
 end;
 
 end.

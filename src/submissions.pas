@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, submissionlanguages, users, datastorages, problems,
   testresults, jsonsaver, tswebobservers, filemanager, fgl, editableobjects,
-  webstrconsts, tswebutils, serverconfig, LazFileUtils, tswebdirectories, Math,
+  webstrconsts, tswebutils, serverconfig, LazFileUtils, tswebdirectories,
   submissioninfo, testerprimitives;
 
 type
@@ -39,13 +39,6 @@ type
   TSubmissionManager = class;
   TTestableProblem = class;
   TTestableProblemManager = class;
-
-  { TIdList }
-
-  TIdList = class(specialize TFPGList<integer>)
-  public
-    procedure Sort(Reversed: boolean);
-  end;
 
   { TBaseSubmission }
 
@@ -240,32 +233,35 @@ type
     function CreateQueue: TSubmissionQueue; virtual; abstract;
     function DoCreateTestSubmission(AID: integer): TTestSubmission; virtual;
     function DoCreateViewSubmission(AID: integer): TViewSubmission; virtual;
+    function DoCreateProblemFromSubmission(AID: integer): TTestableProblem; virtual;
     procedure DoInternalCreateSubmission(ASubmission: TTestSubmission;
       AProblem: TProblem; AUser: TUser); virtual;
     procedure DeleteSubmission(AID: integer);
     procedure DoDeleteSubmission(AID: integer); virtual;
     procedure HandleUserDeleting(AInfo: TUserInfo); virtual;
     procedure HandleProblemDeleting(AProblem: TTestableProblem); virtual;
+    procedure HandleSubmissionTested(ASubmission: TTestSubmission); virtual;
     procedure ResumeCreateSubmission(AID: integer); virtual;
     function SubmissionOwnerID(AID: integer): integer;
     function SubmissionProblemID(AID: integer): integer;
     function StrListToIdList(AList: TStringList): TIdList;
 
-    function ListAll: TIdList;
-    function ListByOwner(AInfo: TUserInfo): TIdList;
-    function ListByProblem(AProblem: TTestableProblem): TIdList;
-
     function CreateSubmission(AUser: TUser; AProblem: TTestableProblem;
       ALanguage: TSubmissionLanguage; const AFileName: string): integer;
-    function GetSubmission(AID: integer): TViewSubmission;
     procedure RejudgeSubmission(AID: integer); virtual;
 
     procedure MessageReceived(AMessage: TAuthorMessage); virtual;
   public
     function Filter(AList: TIdList; AObject: TObject;
       AFilter: TSubmissionFilter): TIdList;
-    function ProblemFilter(AID: integer; AObject: TObject): boolean;
+    function ProblemFilter(AID: integer; AObject: TObject): boolean; virtual;
     function AvailableFilter(AID: integer; AObject: TObject): boolean;
+
+    function ListAll: TIdList;
+    function ListByOwner(AInfo: TUserInfo): TIdList;
+    function ListByProblem(AProblem: TTestableProblem): TIdList; virtual;
+
+    function GetSubmission(AID: integer): TViewSubmission;
 
     function ProblemManager: TTestableProblemManager; virtual; abstract;
     property Queue: TSubmissionQueue read FQueue;
@@ -282,7 +278,6 @@ type
     function GetManager: TTestableProblemManager;
     function GetSubmissionManager: TSubmissionManager;
   protected
-    function DoCreateProblemFromSubmission(AID: integer): TTestableProblem; virtual;
     procedure ValidateSubmission(AID: integer);
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
   public
@@ -308,7 +303,7 @@ type
 
   { TTestProblemTransaction }
 
-  TTestProblemTransaction = class(TProblemTransaction)
+  TTestProblemTransaction = class(TBaseProblemTransaction)
   private
     function GetSubmissionManager: TSubmissionManager;
   protected
@@ -344,16 +339,6 @@ type
 
 implementation
 
-function IdComparePlain(const AID1, AID2: integer): integer;
-begin
-  Result := CompareValue(AID1, AID2);
-end;
-
-function IdCompareReversed(const AID1, AID2: integer): integer;
-begin
-  Result := -CompareValue(AID1, AID2);
-end;
-
 { TProblemSubmissionSession }
 
 function TProblemSubmissionSession.GetManager: TTestableProblemManager;
@@ -364,14 +349,6 @@ end;
 function TProblemSubmissionSession.GetSubmissionManager: TSubmissionManager;
 begin
   Result := Manager.SubmissionManager;
-end;
-
-function TProblemSubmissionSession.DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
-var
-  ProblemID: integer;
-begin
-  ProblemID := SubmissionManager.SubmissionProblemID(AID);
-  Result := Manager.GetObject(ProblemID) as TTestableProblem;
 end;
 
 procedure TProblemSubmissionSession.ValidateSubmission(AID: integer);
@@ -392,7 +369,7 @@ var
   Info: TUserInfo;
 begin
   UserID := SubmissionManager.SubmissionOwnerID(AID);
-  Problem := DoCreateProblemFromSubmission(AID);
+  Problem := SubmissionManager.DoCreateProblemFromSubmission(AID);
   try
     Info := UserManager.GetUserInfo(UserID);
     try
@@ -435,7 +412,7 @@ function TProblemSubmissionSession.CanRejudgeSubmission(AID: integer): boolean;
 var
   Problem: TTestableProblem;
 begin
-  Problem := DoCreateProblemFromSubmission(AID);
+  Problem := SubmissionManager.DoCreateProblemFromSubmission(AID);
   try
     Result := CanRejudgeSubmission(Problem);
   finally
@@ -532,16 +509,6 @@ begin
     Result := CreateSubmission(User, Problem as TTestableProblem, ALanguage, AFileName);
 end;
 
-{ TIdList }
-
-procedure TIdList.Sort(Reversed: boolean);
-begin
-  if Reversed then
-    inherited Sort(@IdCompareReversed)
-  else
-    inherited Sort(@IdComparePlain);
-end;
-
 { TTestSubmissionList }
 
 function TTestSubmissionList.FindByID(AID: integer): TTestSubmission;
@@ -594,6 +561,11 @@ end;
 function TSubmissionManager.DoCreateViewSubmission(AID: integer): TViewSubmission;
 begin
   Result := TViewSubmission.Create(Self, AID);
+end;
+
+function TSubmissionManager.DoCreateProblemFromSubmission(AID: integer): TTestableProblem;
+begin
+  Result := ProblemManager.GetObject(SubmissionProblemID(AID)) as TTestableProblem;
 end;
 
 procedure TSubmissionManager.DoInternalCreateSubmission(ASubmission: TTestSubmission;
@@ -664,8 +636,16 @@ begin
   end;
 end;
 
+procedure TSubmissionManager.HandleSubmissionTested(ASubmission: TTestSubmission);
+begin
+  Broadcast(TSubmissionTestedMessage.Create.AddSubmission(ASubmission)
+    .AddSender(Self).Lock);
+end;
+
 procedure TSubmissionManager.ResumeCreateSubmission(AID: integer);
 begin
+  if not SubmissionExists(AID) then
+    raise ESubmissionNotExist.CreateFmt(SSubmissionDoesNotExist, [AID]);
   Queue.AddSubmission(DoCreateTestSubmission(AID));
 end;
 
@@ -797,6 +777,8 @@ end;
 
 procedure TSubmissionManager.RejudgeSubmission(AID: integer);
 begin
+  if not SubmissionExists(AID) then
+    raise ESubmissionNotExist.CreateFmt(SSubmissionDoesNotExist, [AID]);
   Queue.DeleteSubmission(AID);
   ResumeCreateSubmission(AID);
 end;
@@ -925,6 +907,8 @@ begin
   if (AMessage is TSubmissionDeletingPoolMessage) or
     (AMessage is TSubmissionTestedMessage) then
     TriggerAddToPool;
+  if AMessage is TSubmissionTestedMessage then
+    Manager.HandleSubmissionTested((AMessage as TSubmissionTestedMessage).Submission);
 end;
 
 procedure TSubmissionQueue.FPOObservedChanged(ASender: TObject;
@@ -1031,12 +1015,15 @@ end;
 
 procedure TSubmissionPool.TriggerTestingFinished(ASubmission: TTestSubmission);
 begin
-  if not ASubmission.Finished then
-    ASubmission.Finish(True);
-  FList.Remove(ASubmission);
-  Broadcast(TSubmissionTestedMessage.Create.AddSubmission(ASubmission)
-    .AddSender(Self).Lock);
-  Queue.FreeSubmission(ASubmission);
+  try
+    if not ASubmission.Finished then
+      ASubmission.Finish(True);
+    FList.Remove(ASubmission);
+    Broadcast(TSubmissionTestedMessage.Create.AddSubmission(ASubmission)
+      .AddSender(Self).Lock);
+  finally
+    Queue.FreeSubmission(ASubmission);
+  end;
 end;
 
 constructor TSubmissionPool.Create(AQueue: TSubmissionQueue; AMaxPoolSize: integer);
@@ -1260,7 +1247,7 @@ end;
 
 function TBaseSubmission.GetProblem: TTestableProblem;
 begin
-  Result := Manager.ProblemManager.GetObject(ProblemName) as TTestableProblem;
+  Result := Manager.DoCreateProblemFromSubmission(ID);
 end;
 
 function TBaseSubmission.GetProblemName: string;

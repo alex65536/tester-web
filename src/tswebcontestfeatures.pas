@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, Classes, tswebfeatures, tswebeditablefeatures, htmlpages,
   webstrconsts, contests, tswebcontestelements, tswebdatetimefeatures,
-  serverconfig;
+  serverconfig, standings;
 
 const
   SContestScoringPolicies: array [TContestScoringPolicy] of string = (
@@ -342,6 +342,7 @@ begin
    ItemsAsText['contestScoringPolicyValue'] :=
      SContestScoringPolicies[ContestTransaction.ScoringPolicy];
    ItemsAsText['contestAllowUpsolvingValue'] := SYesNo[ContestTransaction.AllowUpsolving];
+   ItemsAsText['contestShowStandingsValue'] := SYesNo[ContestTransaction.ShowStandingsTable];
   end;
   LoadPagePart('contest', 'contestView', 'objectViewContent');
 end;
@@ -372,6 +373,8 @@ begin
       ' selected';
     if ContestTransaction.AllowUpsolving then
       ItemsAsText['allowUpsolvingChecked'] := ' checked';
+    if ContestTransaction.ShowStandingsTable then
+      ItemsAsText['showStandingsChecked'] := ' checked';
   end;
   LoadPagePart('contest', 'contestEdit', 'objectEditContent');
 end;
@@ -411,6 +414,7 @@ begin
     ItemsAsText['contestDurationKey'] := SContestDurationKey;
     ItemsAsText['contestScoringPolicyKey'] := SContestScoringPolicyKey;
     ItemsAsText['contestAllowUpsolvingKey'] := SContestAllowUpsolvingKey;
+    ItemsAsText['contestShowStandingsKey'] := SContestShowStandingsKey;
     ItemsAsText['durationMinutes'] := SDurationMinutes;
   end;
 end;

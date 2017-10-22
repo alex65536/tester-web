@@ -30,10 +30,19 @@ uses
 
 type
   {$interfaces CORBA}
+
+  { IEditablePage }
+
   IEditablePage = interface
     ['{DC40AF42-023F-4781-B994-71228705D8A9}']
-    function Manager: TEditableManager;
     function EditableObject: TEditableObject;
+  end;
+
+  { IEditableManagerPage }
+
+  IEditableManagerPage = interface
+    ['{C7248E1B-4138-44C5-8BDE-27A7700B156F}']
+    function Manager: TEditableManager;
   end;
   {$interfaces COM}
 

@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, userpages, htmlpreprocess, LazFileUtils, serverconfig,
-  users, htmlpages;
+  users, htmlpages, webstrutils;
 
 type
 
@@ -41,6 +41,7 @@ type
     property Title: string read FTitle write FTitle;
     function GenerateUserLink(AInfo: TUserInfo): string;
     function GenerateUserLink(const Username: string): string;
+    function GenerateTimer(TimeSeconds: integer): string;
   end;
 
   { TTesterHtmlPageElement }
@@ -153,6 +154,24 @@ begin
     Result := GenerateUserLink(Info);
   finally
     FreeAndNil(Info);
+  end;
+end;
+
+function TTesterHtmlPage.GenerateTimer(TimeSeconds: integer): string;
+var
+  Storage: TTreeVariableStorage;
+begin
+  Storage := TTreeVariableStorage.Create(Preprocessor.Storages);
+  try
+    Preprocessor.Storages.Add(Storage);
+    with Storage do
+    begin
+      ItemsAsText['timerValue'] := IntToStr(TimeSeconds);
+      ItemsAsText['timerValueStr'] := DurationSecondsToStr(TimeSeconds);
+    end;
+    Result := Preprocessor.PreprocessFile(TemplateLocation('', 'timer'));
+  finally
+    FreeAndNil(Storage);
   end;
 end;
 

@@ -78,6 +78,8 @@ type
       AIndex: integer);
   end;
 
+  { TContestProblemList }
+
   TContestProblemList = class(TTesterHtmlListedPageElement)
   private
     FTransaction: TContestTransaction;

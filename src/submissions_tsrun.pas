@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, submissions, UTF8Process, tswebcrypto, serverconfig,
   filemanager, FileUtil, LazFileUtils, tswebobservers, webstrconsts,
-  objectshredder, contestproblems;
+  objectshredder, contestproblems, custapp;
 
 type
   ETsRunSubmission = class(Exception);
@@ -48,6 +48,8 @@ type
     FTimeout: integer;
     FExitCode: integer;
     procedure InternalExecute;
+  protected
+    procedure DoTerminate; override;
   public
     property Terminated;
     property TsRunExe: string read FTsRunExe write FTsRunExe;
@@ -164,8 +166,11 @@ end;
 
 procedure TTsRunSubmissionPool.DoDelete(ASubmission: TTestSubmission);
 begin
-  (ASubmission as TTsRunTestSubmission).TerminateTesting;
-  ASubmission.Unsubscribe(Self);
+  try
+    (ASubmission as TTsRunTestSubmission).TerminateTesting;
+  finally
+    ASubmission.Unsubscribe(Self);
+  end;
 end;
 
 procedure TTsRunSubmissionPool.MessageReceived(AMessage: TAuthorMessage);
@@ -272,7 +277,7 @@ begin
   begin
     if Terminated then
       FProcess.Terminate(42);
-    Sleep(15);
+    Sleep(1);
   end;
   // retrieve exit code
   FExitCode := FProcess.ExitCode;
@@ -285,13 +290,26 @@ begin
     raise ETsRunThread.CreateFmt(STsRunNonZeroExitcode, [FExitCode]);
 end;
 
+procedure TTsRunThread.DoTerminate;
+begin
+  try
+    inherited DoTerminate;
+  except
+    on E: Exception do
+    begin
+      CustomApplication.ShowException(E);
+      DumpExceptionBackTrace(StdErr);
+    end;
+  end;
+end;
+
 constructor TTsRunThread.Create;
 begin
   inherited Create(True, DefaultStackSize);
   FProcess := nil;
   FTsRunExe := Config.Location_TsRunExe;
   FTestDirName := 'tsweb-' + RandomFileName(16);
-  FTimeout := 30;
+  FTimeout := 15;
   FreeOnTerminate := True;
 end;
 

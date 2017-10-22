@@ -20,16 +20,13 @@
 }
 unit contests;
 
-// TODO : Finish implementing contest system !!!
-
 {$mode objfpc}{$H+}{$M+}
 
 interface
 
 uses
   Classes, SysUtils, editableobjects, webstrconsts, datastorages, users,
-  tswebutils, dateutils, typinfo, serverconfig, contestproblems,
-  tswebobservers;
+  tswebutils, dateutils, serverconfig, contestproblems, standings, tswebobservers;
 
 type
   EContestAction = class(EEditableAction);
@@ -39,8 +36,7 @@ type
   TContest = class;
   TContestManager = class;
 
-  TContestStatus = (csNotStarted, csRunning, csUpsolve);
-  TContestScoringPolicy = (spMaxScore, spLastScore);
+  TContestAccessType = (catNone, catSetter, catParticipant);
 
   { TContestAccessSession }
 
@@ -76,13 +72,18 @@ type
     FDurationMinutes: integer;
     FProblemList: TStringList;
     FWasProblemList: TStringList;
+    FShowStandingsTable: boolean;
     FScoringPolicy: TContestScoringPolicy;
+    FWasScoringPolicy: TContestScoringPolicy;
     FStartTime: TDateTime;
+    function GetAccessType: TContestAccessType;
     function GetContest: TContest;
     function GetEndTime: TDateTime;
+    function GetSecondsLeft: integer;
     function GetProblemCount: integer;
     function GetProblemNames(I: integer): string;
     function GetProblemTitles(I: integer): string;
+    function GetProblems(I: integer): TContestProblem;
     function GetStatus: TContestStatus;
   protected
     property ProblemList: TStringList read FProblemList;
@@ -93,18 +94,22 @@ type
     procedure DoClone(ADest: TEditableTransaction); override;
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser;
       AObject: TEditableObject);
-  public
+  protected
     property Contest: TContest read GetContest;
     property StartTime: TDateTime read FStartTime write FStartTime;
     property EndTime: TDateTime read GetEndTime;
+    property SecondsLeft: integer read GetSecondsLeft;
     property Status: TContestStatus read GetStatus;
+    property AccessType: TContestAccessType read GetAccessType;
     property DurationMinutes: integer read FDurationMinutes write FDurationMinutes;
     property ScoringPolicy: TContestScoringPolicy read FScoringPolicy write FScoringPolicy;
     property AllowUpsolving: boolean read FAllowUpsolving write FAllowUpsolving;
+    property ShowStandingsTable: boolean read FShowStandingsTable write FShowStandingsTable;
     property ProblemNames[I: integer]: string read GetProblemNames;
     property ProblemTitles[I: integer]: string read GetProblemTitles;
     property ProblemCount: integer read GetProblemCount;
-    function GetProblem(AIndex: integer): TContestProblem;
+    property Problems[I: integer]: TContestProblem read GetProblems;
+  public
     function CanAddProblem(const AProblemName: string): boolean; virtual;
     procedure AddProblem(const AProblemName: string; AIndex: integer = -1);
     function CanDeleteProblem(AIndex: integer): boolean;
@@ -113,6 +118,7 @@ type
     procedure MoveProblemUp(AIndex: integer);
     function CanMoveProblemDown(AIndex: integer): boolean;
     procedure MoveProblemDown(AIndex: integer);
+    function CanAccessContest: boolean; virtual;
     procedure Validate; override;
     destructor Destroy; override;
   end;
@@ -121,6 +127,46 @@ type
 
   TContestTransaction = class(TBaseContestTransaction)
   public
+    property Contest;
+    property StartTime;
+    property EndTime;
+    property SecondsLeft;
+    property Status;
+    property AccessType;
+    property DurationMinutes;
+    property ScoringPolicy;
+    property AllowUpsolving;
+    property ShowStandingsTable;
+    property ProblemNames;
+    property ProblemTitles;
+    property ProblemCount;
+    property Problems;
+  end;
+
+  { TTestContestTransaction }
+
+  TTestContestTransaction = class(TContestTransaction)
+  public
+    function CanReadData: boolean; override;
+    function CanWriteData: boolean; override;
+    function CanGetStandings: boolean; virtual;
+    function GetStandings: TStandingsTable;
+    function GetOwnResults: TStandingsRow;
+  end;
+
+  { TViewContestTransaction }
+
+  TViewContestTransaction = class(TBaseContestTransaction)
+  public
+    property Contest;
+    property StartTime;
+    property EndTime;
+    property SecondsLeft;
+    property Status;
+    property AccessType;
+    property DurationMinutes;
+    function CanReadData: boolean; override;
+    function CanWriteData: boolean; override;
   end;
 
   { TContestManagerSession }
@@ -128,6 +174,8 @@ type
   TContestManagerSession = class(TEditableManagerSession)
   protected
     {%H-}constructor Create(AManager: TEditableManager; AUser: TUser);
+  public
+    function ListAvailableContests: TStringList;
   end;
 
   { TContestProblemList }
@@ -137,6 +185,7 @@ type
     FContest: TContest;
     FStorage: TAbstractDataStorage;
     function ProblemIndexToId(AIndex: integer): integer;
+    function ProblemIndexToName(AIndex: integer): string;
     procedure AddProblemToList(AIndex: integer; const AProblemName: string);
   protected
     property Storage: TAbstractDataStorage read FStorage;
@@ -146,6 +195,7 @@ type
     function ProblemsByIndexSectionName: string;
     function ProblemByIndexKeyName(AIndex: integer): string;
     function ProblemCountKeyName: string;
+    procedure HandleProblemDifference(AOldList, ANewList: TStringList);
     function GetProblemList: TStringList;
     procedure SetProblemList(AValue: TStringList);
     function GetProblemCount: integer;
@@ -163,7 +213,7 @@ type
 
   { TContest }
 
-  TContest = class(TBaseContest)
+  TContest = class(TBaseStandingsContest)
   private
     FProblemList: TContestProblemList;
     function GetManager: TContestManager;
@@ -179,16 +229,16 @@ type
     procedure DeleteParticipant(AInfo: TUserInfo);
     procedure DoDeleteParticipant(AInfo: TUserInfo);
     function HasParticipant(AInfo: TUserInfo): boolean; override;
-    function ParticipantCanSubmit(AInfo: TUserInfo): boolean; override;
-    function ParticipantCanView(AInfo: TUserInfo): boolean; override;
     function DoGetProblem(const AProblemName: string): TContestProblem; virtual;
-    function ListParticipants: TStringList;
     function ContestStartTime: TDateTime;
     function ContestDurationMinutes: integer;
+    function ContestSecondsLeft: integer;
     function ContestEndTime: TDateTime;
-    function ContestStatus: TContestStatus;
-    function ContestAllowUpsolving: boolean;
-    procedure HandleSelfDeletion; override;
+    function ContestScoringPolicy: TContestScoringPolicy; override;
+    function ContestStatus: TContestStatus; override;
+    function ContestAllowUpsolving: boolean; override;
+    function ContestShowStandingsTable: boolean;
+    function ContestAccessType(AInfo: TUserInfo): TContestAccessType;
     procedure HandleUserDeleting(AInfo: TUserInfo); override;
     procedure HandleProblemDeleting(AProblem: TContestProblem); virtual;
     procedure MessageReceived(AMessage: TAuthorMessage); override;
@@ -196,15 +246,21 @@ type
   public
     property Manager: TContestManager read GetManager;
     function ProblemManager: TContestProblemManager;
+    function ContestProblemCount: integer; override;
+    function ContestProblem(AIndex: integer): TContestProblem; override;
+    function ContestProblemIndex(AProblem: TContestProblem): integer; override;
+    function ListParticipants: TStringList; override;
     function CreateAccessSession(AUser: TUser): TEditableObjectAccessSession; override;
     function CreateParticipantSession(AUser: TUser): TContestParticipantSession; virtual;
     function CreateTransaction(AUser: TUser): TEditableTransaction; override;
+    function CreateTestTransaction(AUser: TUser): TTestContestTransaction; virtual;
+    function CreateViewTransaction(AUser: TUser): TViewContestTransaction; virtual;
     destructor Destroy; override;
   end;
 
   { TContestManager }
 
-  TContestManager = class(TBaseContestManager)
+  TContestManager = class(TBaseStandingsContestManager)
   protected
     function ObjectTypeName: string; override;
     function CreateObject(const AName: string): TEditableObject; override;
@@ -218,24 +274,59 @@ type
     destructor Destroy; override;
   end;
 
-function ScoringPolicyToStr(APolicy: TContestScoringPolicy): string;
-function StrToScoringPolicy(const S: string): TContestScoringPolicy;
-
 implementation
 
-function ScoringPolicyToStr(APolicy: TContestScoringPolicy): string;
+{ TViewContestTransaction }
+
+function TViewContestTransaction.CanReadData: boolean;
 begin
-  Result := GetEnumName(TypeInfo(APolicy), Ord(APolicy));
+  Result := inherited CanReadData;
+  if Result then
+    Exit;
+  Result := Contest.HasParticipant(User.Info);
 end;
 
-function StrToScoringPolicy(const S: string): TContestScoringPolicy;
-var
-  P: TContestScoringPolicy;
+function TViewContestTransaction.CanWriteData: boolean;
 begin
-  for P in TContestScoringPolicy do
-    if ScoringPolicyToStr(P) = S then
-      Exit(P);
-  raise EConvertError.Create(SNoSuchScoringPolicy);
+  Result := False;
+end;
+
+{ TTestContestTransaction }
+
+function TTestContestTransaction.CanReadData: boolean;
+begin
+  Result := CanAccessContest;
+end;
+
+function TTestContestTransaction.CanWriteData: boolean;
+begin
+  Result := False;
+end;
+
+function TTestContestTransaction.CanGetStandings: boolean;
+begin
+  // for setters, we always allow to view the table
+  if AccessLevel in AccessCanReadSet then
+    Exit(True);
+  // for participants, we check it
+  Result := False;
+  if not Contest.ContestShowStandingsTable then
+    Exit;
+  if not Contest.ParticipantCanView(User.Info) then
+    Exit;
+  Result := True;
+end;
+
+function TTestContestTransaction.GetStandings: TStandingsTable;
+begin
+  if not CanGetStandings then
+    raise EContestAccessDenied.Create(SAccessDenied);
+  Result := Contest.StandingsTable;
+end;
+
+function TTestContestTransaction.GetOwnResults: TStandingsRow;
+begin
+  Result := Contest.StandingsTable.RowsByUsername[User.Username];
 end;
 
 { TContestProblemList }
@@ -243,6 +334,11 @@ end;
 function TContestProblemList.ProblemIndexToId(AIndex: integer): integer;
 begin
   Result := Storage.ReadInteger(ProblemByIndexKeyName(AIndex), -1);
+end;
+
+function TContestProblemList.ProblemIndexToName(AIndex: integer): string;
+begin
+  Result := Contest.ProblemManager.IdToObjectName(ProblemIndexToId(AIndex));
 end;
 
 procedure TContestProblemList.AddProblemToList(AIndex: integer;
@@ -285,6 +381,38 @@ begin
   Result := ProblemsSectionName + '.count';
 end;
 
+procedure TContestProblemList.HandleProblemDifference(AOldList,
+  ANewList: TStringList);
+var
+  I: integer;
+  Problem: TContestProblem;
+begin
+  // handle added problems
+  for I := 0 to ANewList.Count - 1 do
+    if AOldList.IndexOf(ANewList[I]) < 0 then
+    begin
+      Problem := Contest.ProblemManager.GetObject(ANewList[I]) as TContestProblem;
+      try
+        Contest.SetToProblem(Problem);
+        Contest.TriggerProblemAdded(Problem);
+      finally
+        FreeAndNil(Problem);
+      end;
+    end;
+  // handle deleted problems
+  for I := 0 to AOldList.Count - 1 do
+    if ANewList.IndexOf(AOldList[I]) < 0 then
+    begin
+      Problem := Contest.ProblemManager.GetObject(AOldList[I]) as TContestProblem;
+      try
+        Contest.SetToProblem(Problem);
+        Contest.TriggerProblemDeleted(Problem);
+      finally
+        FreeAndNil(Problem);
+      end;
+    end;
+end;
+
 function TContestProblemList.GetProblemList: TStringList;
 var
   I: integer;
@@ -302,10 +430,18 @@ end;
 procedure TContestProblemList.SetProblemList(AValue: TStringList);
 var
   I: integer;
+  OldList: TStringList;
 begin
   // validate new list
   if not IsProblemListValid(AValue) then
     raise EContestValidate.Create(SProblemListNotValid);
+  // handle the difference in problems
+  OldList := ProblemList;
+  try
+    HandleProblemDifference(OldList, AValue);
+  finally
+    FreeAndNil(OldList);
+  end;
   // delete old values
   Storage.DeletePath(ProblemsByIdSectionName);
   Storage.DeletePath(ProblemsByIndexSectionName);
@@ -341,7 +477,7 @@ function TContestProblemList.GetProblem(AIndex: integer): TContestProblem;
 begin
   if (AIndex < 0) or (AIndex >= ProblemCount) then
     raise EContestValidate.CreateFmt(SIndexOutOfBounds, [AIndex]);
-  Result := Contest.DoGetProblem(ProblemByIndexKeyName(AIndex));
+  Result := Contest.DoGetProblem(ProblemIndexToName(AIndex));
 end;
 
 function TContestProblemList.IsProblemListValid(AValue: TStringList): boolean;
@@ -368,6 +504,11 @@ begin
   Result := Contest.ContestEndTime;
 end;
 
+function TBaseContestTransaction.GetSecondsLeft: integer;
+begin
+  Result := Contest.ContestSecondsLeft;
+end;
+
 function TBaseContestTransaction.GetProblemCount: integer;
 begin
   Result := FProblemList.Count;
@@ -383,7 +524,7 @@ var
   Problem: TContestProblem;
   Transaction: TContestTestProblemTransaction;
 begin
-  Problem := GetProblem(I);
+  Problem := Problems[I];
   try
     Transaction := Problem.CreateTestTransaction(User) as TContestTestProblemTransaction;
     try
@@ -399,6 +540,11 @@ end;
 function TBaseContestTransaction.GetContest: TContest;
 begin
   Result := EditableObject as TContest;
+end;
+
+function TBaseContestTransaction.GetAccessType: TContestAccessType;
+begin
+  Result := Contest.ContestAccessType(User.Info);
 end;
 
 function TBaseContestTransaction.GetStatus: TContestStatus;
@@ -427,7 +573,9 @@ begin
   FScoringPolicy := StrToScoringPolicy(Storage.ReadString(FullKeyName('scoringPolicy'),
     ScoringPolicyToStr(spMaxScore)));
   FAllowUpsolving := Storage.ReadBool(FullKeyName('allowUpsolving'), True);
+  FShowStandingsTable := Storage.ReadBool(FullKeyName('showStandingsTable'), True);
   ReloadProblemList;
+  FWasScoringPolicy := FScoringPolicy;
 end;
 
 procedure TBaseContestTransaction.DoCommit;
@@ -437,7 +585,10 @@ begin
   Storage.WriteInteger(FullKeyName('durationMinutes'), FDurationMinutes);
   Storage.WriteString(FullKeyName('scoringPolicy'), ScoringPolicyToStr(FScoringPolicy));
   Storage.WriteBool(FullKeyName('allowUpsolving'), FAllowUpsolving);
+  Storage.WriteBool(FullKeyName('showStandingsTable'), FShowStandingsTable);
   CommitProblemList;
+  if FWasScoringPolicy <> FScoringPolicy then
+    Contest.StandingsTable.RecalcTable;
 end;
 
 procedure TBaseContestTransaction.DoClone(ADest: TEditableTransaction);
@@ -449,6 +600,7 @@ begin
     DurationMinutes := Self.DurationMinutes;
     ScoringPolicy := Self.ScoringPolicy;
     AllowUpsolving := Self.AllowUpsolving;
+    ShowStandingsTable := Self.ShowStandingsTable;
     ProblemList.Assign(Self.ProblemList);
   end;
 end;
@@ -461,9 +613,9 @@ begin
   FWasProblemList := TStringList.Create;
 end;
 
-function TBaseContestTransaction.GetProblem(AIndex: integer): TContestProblem;
+function TBaseContestTransaction.GetProblems(I: integer): TContestProblem;
 begin
-  Result := Contest.DoGetProblem(ProblemList[AIndex]);
+  Result := Contest.DoGetProblem(ProblemList[I]);
 end;
 
 function TBaseContestTransaction.CanAddProblem(const AProblemName: string): boolean;
@@ -523,6 +675,11 @@ begin
   if not CanMoveProblemDown(AIndex) then
     raise EContestValidate.Create(SUnableMoveProblemDown);
   ProblemList.Exchange(AIndex, AIndex + 1);
+end;
+
+function TBaseContestTransaction.CanAccessContest: boolean;
+begin
+  Result := (AccessLevel in AccessCanReadSet) or Contest.ParticipantCanView(User.Info);
 end;
 
 procedure TBaseContestTransaction.Validate;
@@ -665,6 +822,7 @@ end;
 procedure TContest.DoAddParticipant(AInfo: TUserInfo);
 begin
   Storage.WriteBool(ParticipantsFullKeyName(AInfo.ID), True);
+  TriggerParticipantAdded(AInfo);
 end;
 
 procedure TContest.DeleteParticipant(AInfo: TUserInfo);
@@ -678,30 +836,12 @@ end;
 procedure TContest.DoDeleteParticipant(AInfo: TUserInfo);
 begin
   Storage.DeleteVariable(ParticipantsFullKeyName(AInfo.ID));
+  TriggerParticipantDeleted(AInfo);
 end;
 
 function TContest.HasParticipant(AInfo: TUserInfo): boolean;
 begin
   Result := Storage.VariableExists(ParticipantsFullKeyName(AInfo.ID));
-end;
-
-function TContest.ParticipantCanSubmit(AInfo: TUserInfo): boolean;
-begin
-  if not HasParticipant(AInfo) then
-    Exit(False);
-  case ContestStatus of
-    csRunning: Result := True;
-    csUpsolve: Result := ContestAllowUpsolving
-    else
-      Result := False;
-  end;
-end;
-
-function TContest.ParticipantCanView(AInfo: TUserInfo): boolean;
-begin
-  if not HasParticipant(AInfo) then
-    Exit(False);
-  Result := ContestStatus in [csRunning, csUpsolve];
 end;
 
 function TContest.DoGetProblem(const AProblemName: string): TContestProblem;
@@ -746,9 +886,24 @@ begin
   Result := Storage.ReadInteger(FullKeyName('durationMinutes'), 0);
 end;
 
+function TContest.ContestSecondsLeft: integer;
+begin
+  case ContestStatus of
+    csNotStarted: Result := SecondsBetween(Now, ContestStartTime);
+    csRunning: Result := SecondsBetween(Now, ContestEndTime);
+    csUpsolve: Result := -1;
+  end;
+end;
+
 function TContest.ContestEndTime: TDateTime;
 begin
   Result := IncMinute(ContestStartTime, ContestDurationMinutes);
+end;
+
+function TContest.ContestScoringPolicy: TContestScoringPolicy;
+begin
+  Result := StrToScoringPolicy(Storage.ReadString(FullKeyName('scoringPolicy'),
+    ScoringPolicyToStr(spMaxScore)));
 end;
 
 function TContest.ContestStatus: TContestStatus;
@@ -769,11 +924,34 @@ begin
   Result := Storage.ReadBool(FullKeyName('allowUpsolving'), True);
 end;
 
-procedure TContest.HandleSelfDeletion;
+function TContest.ContestShowStandingsTable: boolean;
 begin
-  inherited HandleSelfDeletion;
-  // to be implemented later ...
-  // TODO : Implement it, make "later" come :)
+  Result := Storage.ReadBool(FullKeyName('showStandingsTable'), True);
+end;
+
+function TContest.ContestAccessType(AInfo: TUserInfo): TContestAccessType;
+begin
+  if HasParticipant(AInfo) then
+    Result := catParticipant
+  else if (AInfo.Role in EditorsSet) and (GetAccessRights(AInfo) in AccessCanReadSet) then
+    Result := catSetter
+  else
+    Result := catNone;
+end;
+
+function TContest.ContestProblemCount: integer;
+begin
+  Result := ProblemList.ProblemCount;
+end;
+
+function TContest.ContestProblem(AIndex: integer): TContestProblem;
+begin
+  Result := ProblemList.GetProblem(AIndex);
+end;
+
+function TContest.ContestProblemIndex(AProblem: TContestProblem): integer;
+begin
+  Result := ProblemList.ProblemIndex(AProblem);
 end;
 
 procedure TContest.HandleUserDeleting(AInfo: TUserInfo);
@@ -836,6 +1014,16 @@ begin
   Result := TContestTransaction.Create(Manager, AUser, Self);
 end;
 
+function TContest.CreateTestTransaction(AUser: TUser): TTestContestTransaction;
+begin
+  Result := TTestContestTransaction.Create(Manager, AUser, Self);
+end;
+
+function TContest.CreateViewTransaction(AUser: TUser): TViewContestTransaction;
+begin
+  Result := TViewContestTransaction.Create(Manager, AUser, Self);
+end;
+
 destructor TContest.Destroy;
 begin
   FreeAndNil(FProblemList);
@@ -847,6 +1035,35 @@ end;
 constructor TContestManagerSession.Create(AManager: TEditableManager; AUser: TUser);
 begin
   inherited Create(AManager, AUser);
+end;
+
+function TContestManagerSession.ListAvailableContests: TStringList;
+var
+  AllContests: TStringList;
+  ContestName: string;
+  Contest: TContest;
+begin
+  Result := TStringList.Create;
+  try
+    AllContests := Manager.ListAllAvailableObjects;
+    try
+      for ContestName in AllContests do
+      begin
+        Contest := Manager.GetObject(ContestName) as TContest;
+        try
+          if Contest.ContestAccessType(User.Info) <> catNone then
+            Result.Add(ContestName);
+        finally
+          FreeAndNil(Contest);
+        end;
+      end;
+    finally
+      FreeAndNil(AllContests);
+    end;
+  except
+    FreeAndNil(Result);
+    raise;
+  end;
 end;
 
 { TContestAccessSession }

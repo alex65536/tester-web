@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, tswebpagesbase, tswebmodules, tswebeditablemodules,
   fphttp, tswebcontestpages, tswebmanagers, editableobjects, htmlpages,
-  contests, HTTPDefs, users, webstrconsts, dateutils;
+  contests, HTTPDefs, users, webstrconsts, dateutils, standings;
 
 type
 
@@ -240,6 +240,7 @@ begin
     ContestTransaction.DurationMinutes := StrToInt(Values['duration']);
     ContestTransaction.ScoringPolicy := StrToScoringPolicy(Values['scoring-policy']);
     ContestTransaction.AllowUpsolving := (Values['allow-upsolving'] <> '');
+    ContestTransaction.ShowStandingsTable := (Values['show-standings'] <> '');
   end;
 end;
 

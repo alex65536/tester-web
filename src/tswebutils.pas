@@ -25,7 +25,16 @@ unit tswebutils;
 interface
 
 uses
-  Classes, SysUtils, webstrconsts, LazUTF8;
+  Classes, SysUtils, webstrconsts, LazUTF8, fgl, math;
+
+type
+
+  { TIdList }
+
+  TIdList = class(specialize TFPGList<integer>)
+  public
+    procedure Sort(Reversed: boolean);
+  end;
 
 function Id2Str(AID: integer): string;
 function Str2Id(const AID: string): integer;
@@ -75,6 +84,26 @@ begin
   StrLen := UTF8Length(AStr);
   if (StrLen < MinLen) or (StrLen > MaxLen) then
     raise AExceptClass.CreateFmt(SStrInvalidLen, [AType, MinLen, MaxLen]);
+end;
+
+function IdComparePlain(const AID1, AID2: integer): integer;
+begin
+  Result := CompareValue(AID1, AID2);
+end;
+
+function IdCompareReversed(const AID1, AID2: integer): integer;
+begin
+  Result := -CompareValue(AID1, AID2);
+end;
+
+{ TIdList }
+
+procedure TIdList.Sort(Reversed: boolean);
+begin
+  if Reversed then
+    inherited Sort(@IdCompareReversed)
+  else
+    inherited Sort(@IdComparePlain);
 end;
 
 end.

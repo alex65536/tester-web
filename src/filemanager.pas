@@ -97,11 +97,13 @@ end;
 
 function WaitForFile(const FileName: string; Mode: Word): TFileStream;
 const
-  TriesCount = 300;
+  TriesCount = 30000;
   TriesTimeout = 15;
 var
   I: integer;
 begin
+  if not FileExistsUTF8(FileName) then
+    raise EFileManager.CreateFmt(SFileNotExist, [FileName]);
   I := 0;
   while True do
     try

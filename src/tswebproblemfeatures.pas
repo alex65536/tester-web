@@ -27,7 +27,7 @@ interface
 uses
   SysUtils, tswebeditablefeatures, webstrconsts, htmlpages, tswebfeatures,
   serverconfig, problems, webstrutils, editableobjects, tswebsubmissionfeatures,
-  submissions, tswebsubmissionelements;
+  submissions, tswebsubmissionelements, tswebutils;
 
 type
 
@@ -183,7 +183,7 @@ begin
   // load list
   Problem := EditableObject as TTestableProblem;
   SubmissionIds := Session.ListAvailable(Problem);
-  List := TSubmissionItemList.Create(Parent, SubmissionIds, Session);
+  List := TSubmissionItemList.Create(Parent, SubmissionIds, Session, TSubmissionProblemNameHandler);
   try
     Parent.AddElementPagePart('problemSubmissionList', List);
   finally

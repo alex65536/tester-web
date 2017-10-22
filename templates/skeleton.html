@@ -7,6 +7,7 @@
 ~C!		~?#+refreshHeader;
 		<link rel="stylesheet" href="~dataRoot;/tester.css" type="text/css">
 		<link rel="stylesheet" href="~dataRoot;/verdicts.css" type="text/css">
+		<link rel="icon" href="~dataRoot;/logo.ico">
 		<script>
 			fileTooBigAlertHead = '~\fileTooBigAlertHead;';
 			fileTooBigAlertTail = '~\fileTooBigAlertTail;';
@@ -15,7 +16,7 @@
 ~C!		~?#+syntaxHighlighterJsFiles;
 		<title>~+title;</title>
 	</head>
-	<body>
+	<body onload="attachTimers();">
 		<table class="container">
 ~C!			~?#+header;
 			<tr>
@@ -23,6 +24,7 @@
 				<td class="content-cell">
 					<table class="box content-table">
 ~C!						~?#+contentHeader;
+~C!						~?#+contestPostHeader;
 						<tr><td class="content">
 							~#+content;
 						</td></tr>

@@ -151,7 +151,7 @@ resourcestring
   SEditableCreateTitle = 'Title:';
   SEditableCreateTitlePrompt = 'Enter object title';
   SEditableCreateSubmit = 'Create';
-  SProblemList = 'Problems List';
+  SProblemList = 'Problem Editor';
   SEditableListName = 'Name';
   SEditableListTitle = 'Title';
   SEditableListAuthor = 'Author';
@@ -243,6 +243,7 @@ resourcestring
   SSubmissionHeaderId = 'ID';
   SSubmissionHeaderSubmitTime = 'Submit time';
   SSubmissionHeaderAuthor = 'Author';
+  SSubmissionHeaderProblem = 'Problem';
   SSubmissionHeaderLanguage = 'Language';
   SSubmissionHeaderVerdict = 'Verdict';
   SSubmissionHeaderTest = 'Test';
@@ -282,7 +283,7 @@ resourcestring
   SContestCloneNamePrompt = 'Enter new contest name';
   SContestCloneObject = 'Clone contest:';
   SContestDeleteObject = 'Delete contest:';
-  SContestList = 'Contests List';
+  SContestList = 'Contest Editor';
   SContestCreateNew = 'Create New Contest';
   SContestEditSubmit = 'Edit contest';
   SRequestShowFormat = '%s Request %s %s from %s done in %d ms.';
@@ -357,6 +358,40 @@ resourcestring
   SFindUserPrompt = 'Enter username to find';
   SFindUserSubmit = 'Find user';
   SFindUserTitle = 'Find User';
+  SContestShowStandingsKey = 'Show standings?';
+  SContestSolveTitle = 'Contest List';
+  SDurationMinFormatHours = '%d:%.2d';
+  SDurationMinFormatDays = '%dd %d:%.2d';
+  SDurationSecFormatHours = '%d:%.2d:%.2d';
+  SDurationSecFormatDays = '%dd %d:%.2d:%.2d';
+  SStatusNotStarted = 'Not started';
+  SStatusNotStartedFmt = 'Not started (%s left)';
+  SStatusRunning = 'Running';
+  SStatusRunningFmt = 'Running (%s left)';
+  SStatusUpsolve = 'Upsolving';
+  SContestAccessTypeNone = '(none)';
+  SContestAccessTypeSetter = 'Contest setter';
+  SContestAccessTypeParticipant = 'Participant';
+  SSolveNameHeader = 'Name';
+  SSolveStartTimeHeader = 'Start time';
+  SSolveDurationHeader = 'Duration';
+  SSolveStatusHeader = 'Status';
+  SSolveAccessTypeHeader = 'Access type';
+  SSolveProblemIndexHeader = '#';
+  SSolveProblemTitleHeader = 'Title';
+  SSolveProblemScoreHeader = 'Score';
+  SSolveProblemListTitle = 'Contest';
+  SSolveTimeLeft = 'Time left:';
+  SProblemIndexFmt = '%d. ';
+  SSolveProblemTitle = 'Problem %d';
+  SFullSolveProblemTitle = '%d. %s';
+  SUnableParseFilename = 'Unable to parse filename';
+  SSolveSubmissionsTitle = 'Submissions';
+  SSolveStandingsTitle  = 'Standings';
+  SSolveParticipantHeader = 'Participant';
+  SSolveTotalScoreHeader = 'Total score';
+  SSolvePlaceHeader = 'Place';
+  SFileNotExist = 'File "%s" doesn''t exist!';
 
 implementation
 

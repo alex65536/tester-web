@@ -95,7 +95,13 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   tswebeditablepages,
   tswebcontestelements,
   tswebdatetimefeatures,
-  contestproblems;
+  contestproblems,
+  standings,
+  tswebsolvefeatures,
+  tswebsolvepages,
+  tswebsolvemodules,
+  tswebsolveelements,
+  tswebicon;
 
 {$ifdef Windows}
 var
@@ -114,6 +120,7 @@ begin
   MimeTypes.AddType('text/css', 'css');
   MimeTypes.AddType('text/javascript', 'js');
   MimeTypes.AddType('image/png', 'png');
+  MimeTypes.AddType('image/vnd.microsoft.icon', 'ico');
   RegisterFileLocation('data', Config.Location_DataDir);
 
   Application.Title := 'Tester Web';

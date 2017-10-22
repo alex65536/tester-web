@@ -25,10 +25,12 @@ unit webstrutils;
 interface
 
 uses
-  Classes, SysUtils, webstrconsts, LazFileUtils;
+  Classes, SysUtils, webstrconsts, LazFileUtils, math;
 
 function FileSizeToStr(ASize: int64): string;
 function FileSizeStr(const FileName: string): string;
+function DurationMinutesToStr(Duration: integer): string;
+function DurationSecondsToStr(Duration: integer): string;
 
 implementation
 
@@ -45,6 +47,43 @@ end;
 function FileSizeStr(const FileName: string): string;
 begin
   Result := FileSizeToStr(FileSizeUtf8(FileName));
+end;
+
+function TimeDivMod(var Divident: integer; Divisor: integer): integer;
+begin
+  Result := 0;
+  DivMod(Divident, Divisor, Result, Divident);
+end;
+
+function DurationMinutesToStr(Duration: integer): string;
+var
+  Days, Hours, Minutes: integer;
+begin
+  // calculate time
+  Days := TimeDivMod(Duration, 24 * 60);
+  Hours := TimeDivMod(Duration, 60);
+  Minutes := Duration;
+  // make format string
+  if Days = 0 then
+    Result := Format(SDurationMinFormatHours, [Hours, Minutes])
+  else
+    Result := Format(SDurationMinFormatDays, [Days, Hours, Minutes]);
+end;
+
+function DurationSecondsToStr(Duration: integer): string;
+var
+  Days, Hours, Minutes, Seconds: integer;
+begin
+  // calculate time
+  Days := TimeDivMod(Duration, 24 * 60 * 60);
+  Hours := TimeDivMod(Duration, 60 * 60);
+  Minutes := TimeDivMod(Duration, 60);
+  Seconds := Duration;
+  // make format string
+  if Days = 0 then
+    Result := Format(SDurationSecFormatHours, [Hours, Minutes, Seconds])
+  else
+    Result := Format(SDurationSecFormatDays, [Days, Hours, Minutes, Seconds])
 end;
 
 end.

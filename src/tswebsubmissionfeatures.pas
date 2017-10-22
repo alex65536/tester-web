@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, submissions, tswebeditablefeatures, editableobjects,
-  tswebfeatures, htmlpages, webstrconsts, tswebsubmissionelements,
+  tswebfeatures, htmlpages, webstrconsts, tswebsubmissionelements, tswebutils,
   tswebmanagers, submissioninfo, strverdicts, LazFileUtils, submissionlanguages;
 
 const
@@ -144,7 +144,7 @@ begin
   // fill brief table
   IdList := TIdList.Create;
   IdList.Add(Submission.ID);
-  BriefTable := TSubmissionItemList.Create(Parent, IdList, Session);
+  BriefTable := TSubmissionItemList.Create(Parent, IdList, Session, nil);
   try
     Parent.AddElementPagePart('submissionBriefTable', BriefTable);
   finally
@@ -284,7 +284,7 @@ var
   List: TSubmissionItemList;
 begin
   SubmissionIds := Session.ListByOwner(EditableObject as TTestableProblem);
-  List := TSubmissionItemList.Create(Parent, SubmissionIds, Session);
+  List := TSubmissionItemList.Create(Parent, SubmissionIds, Session, nil);
   try
     Parent.AddElementPagePart('problemSubmissionList', List);
   finally
@@ -306,6 +306,9 @@ procedure TSubmitPageFeature.InternalSatisfy;
 var
   List: TSubmissionLanguageItemList;
 begin
+  // we don't add this feature it we're not allowed to test!
+  if not Transaction.CanTestProblem then
+    Exit;
   // fill variables
   with Parent.Variables do
   begin

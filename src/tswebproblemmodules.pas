@@ -93,6 +93,7 @@ type
 
   TProblemDownloadHandler = class(TDownloadModuleHandler)
   protected
+    procedure DoHandleTransaction(ATransaction: TBaseProblemTransaction);
     procedure InternalHandleDownload; override;
   end;
 
@@ -107,28 +108,37 @@ type
     procedure AfterConstruction; override;
   end;
 
-  { TProblemTestBaseWebModule }
+  { TProblemTestPostHandler }
 
-  TProblemTestBaseWebModule = class(TEditablePostWebModule)
+  TProblemTestPostHandler = class
   private
     FID: integer;
+    FModule: TPostUserWebModule;
+    FProblem: TTestableProblem;
+  public
+    property Problem: TTestableProblem read FProblem;
+    property Module: TPostUserWebModule read FModule;
+    function CanRedirect: boolean; virtual;
+    function RedirectLocation: string; virtual;
+    procedure HandlePost(ARequest: TRequest); virtual;
+    constructor Create(AProblem: TTestableProblem; AModule: TPostUserWebModule);
+    destructor Destroy; override;
+  end;
+
+  { TProblemTestWebModule }
+
+  TProblemTestWebModule = class(TEditablePostWebModule)
+  private
+    FHandler: TProblemTestPostHandler;
   protected
-    function GetTestableProblem: TTestableProblem; virtual; abstract;
     function Inside: boolean; override;
     function HookClass: TEditableModuleHookClass; override;
+    function DoCreatePage: THtmlPage; override;
     procedure DoHandlePost(ARequest: TRequest); override;
     function CanRedirect: boolean; override;
     function RedirectLocation: string; override;
     procedure DoBeforeRequest; override;
     procedure DoAfterRequest; override;
-  end;
-
-  { TProblemTestWebModule }
-
-  TProblemTestWebModule = class(TProblemTestBaseWebModule)
-  protected
-    function GetTestableProblem: TTestableProblem; override;
-    function DoCreatePage: THtmlPage; override;
   end;
 
   { TProblemSubmissionsWebModule }
@@ -217,9 +227,14 @@ end;
 
 { TProblemTestWebModule }
 
-function TProblemTestWebModule.GetTestableProblem: TTestableProblem;
+function TProblemTestWebModule.Inside: boolean;
 begin
-  Result := Hook.EditableObject as TTestableProblem;
+  Result := True;
+end;
+
+function TProblemTestWebModule.HookClass: TEditableModuleHookClass;
+begin
+  Result := TProblemModuleHook;
 end;
 
 function TProblemTestWebModule.DoCreatePage: THtmlPage;
@@ -227,24 +242,40 @@ begin
   Result := TProblemTestPage.Create;
 end;
 
-{ TProblemTestBaseWebModule }
-
-function TProblemTestBaseWebModule.Inside: boolean;
+procedure TProblemTestWebModule.DoHandlePost(ARequest: TRequest);
 begin
-  Result := True;
+  FHandler.HandlePost(ARequest);
 end;
 
-function TProblemTestBaseWebModule.HookClass: TEditableModuleHookClass;
+function TProblemTestWebModule.CanRedirect: boolean;
 begin
-  Result := TProblemModuleHook;
+  Result := FHandler.CanRedirect;
 end;
 
-procedure TProblemTestBaseWebModule.DoHandlePost(ARequest: TRequest);
+function TProblemTestWebModule.RedirectLocation: string;
+begin
+  Result := FHandler.RedirectLocation;
+end;
+
+procedure TProblemTestWebModule.DoBeforeRequest;
+begin
+  inherited DoBeforeRequest;
+  FHandler := TProblemTestPostHandler.Create(Hook.EditableObject as TTestableProblem, Self);
+end;
+
+procedure TProblemTestWebModule.DoAfterRequest;
+begin
+  FreeAndNil(FHandler);
+  inherited DoAfterRequest;
+end;
+
+{ TProblemTestPostHandler }
+
+procedure TProblemTestPostHandler.HandlePost(ARequest: TRequest);
 var
   Language: TSubmissionLanguage;
   FileName: string;
   I: integer;
-  TestProblem: TTestableProblem;
   TestTransaction: TTestProblemTransaction;
 begin
   Language := StrToLanguage(ARequest.ContentFields.Values['sol-lang']);
@@ -262,39 +293,36 @@ begin
   if FileName = '' then
     raise ESubmissionValidate.Create(SNoSubmissionFile);
   // create and run the submission
-  TestProblem := GetTestableProblem;
+  TestTransaction := FProblem.CreateTestTransaction(Module.User);
   try
-    TestTransaction := TestProblem.CreateTestTransaction(User);
-    try
-      FID := TestTransaction.CreateSubmission(Language, FileName);
-    finally
-      FreeAndNil(TestTransaction);
-    end;
+    FID := TestTransaction.CreateSubmission(Language, FileName);
   finally
-    FreeAndNil(TestProblem);
+    FreeAndNil(TestTransaction);
   end;
 end;
 
-function TProblemTestBaseWebModule.CanRedirect: boolean;
+function TProblemTestPostHandler.CanRedirect: boolean;
 begin
   Result := FID >= 0;
 end;
 
-function TProblemTestBaseWebModule.RedirectLocation: string;
+function TProblemTestPostHandler.RedirectLocation: string;
 begin
   Result := Format('%s/submissions?id=%d', [DocumentRoot, FID]);
 end;
 
-procedure TProblemTestBaseWebModule.DoBeforeRequest;
+constructor TProblemTestPostHandler.Create(AProblem: TTestableProblem;
+  AModule: TPostUserWebModule);
 begin
-  inherited DoBeforeRequest;
-  FID := -1;
+  inherited Create;
+  FProblem := AProblem;
+  FModule := AModule;
 end;
 
-procedure TProblemTestBaseWebModule.DoAfterRequest;
+destructor TProblemTestPostHandler.Destroy;
 begin
-  FID := -1;
-  inherited DoAfterRequest;
+  FreeAndNil(FProblem);
+  inherited Destroy;
 end;
 
 { TProblemDownloadWebModule }
@@ -322,31 +350,54 @@ end;
 
 { TProblemDownloadHandler }
 
+procedure TProblemDownloadHandler.DoHandleTransaction(ATransaction: TBaseProblemTransaction);
+
+  procedure HandleStatements;
+  begin
+    with ATransaction do
+      if FileExt = SFileTypesByExt[StatementsType] then
+      begin
+        DiskFileName := StatementsFileName;
+        FileMimeType := SFileTypesByMime[StatementsType];
+      end;
+  end;
+
+  procedure HandleArchives;
+  begin
+    if not (ATransaction is TProblemTransaction) then
+      raise EEditableAccessDenied.Create(SAccessDenied);
+    with ATransaction as TProblemTransaction do
+      if FileExt = SArchiveExt then
+      begin
+        DiskFileName := ArchiveFileName;
+        FileMimeType := SArchiveMime;
+      end;
+  end;
+
+begin
+  if FilePath = 'statements' then
+    HandleStatements
+  else if FilePath = 'archives' then
+    HandleArchives;
+end;
+
 procedure TProblemDownloadHandler.InternalHandleDownload;
 var
   ProblemName: string;
   Problem: TProblem;
   User: TEditorUser;
+  Transaction: TProblemTransaction;
 begin
   ProblemName := ChangeFileExt(FileName, '');
   Problem := ProblemManager.GetObject(ProblemName) as TProblem;
   try
     User := (Parent as TUserWebModule).User as TEditorUser;
-    with Problem.CreateTransaction(User) as TProblemTransaction do
-      try
-        if (FilePath = 'statements') and (FileExt = SFileTypesByExt[StatementsType]) then
-        begin
-          DiskFileName := StatementsFileName;
-          FileMimeType := SFileTypesByMime[StatementsType];
-        end
-        else if (FilePath = 'archives') and (FileExt = SArchiveExt) then
-        begin
-          DiskFileName := ArchiveFileName;
-          FileMimeType := SArchiveMime;
-        end;
-      finally
-        Free;
-      end;
+    Transaction := Problem.CreateTransaction(User) as TProblemTransaction;
+    try
+      DoHandleTransaction(Transaction);
+    finally
+      FreeAndNil(Transaction);
+    end;
   finally
     FreeAndNil(Problem);
   end;
