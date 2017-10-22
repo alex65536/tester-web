@@ -12,4 +12,6 @@
 .fuse*
 src/tsweb-i386-linux
 src/tsweb-x86_64-linux
+src/tsrun
+package.zip
 
