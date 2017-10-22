@@ -11,5 +11,5 @@
 [V] 06.10.2017 Create submission system
 [V] 14.10.2017 Create contest system
 [V] 14.10.2017 Make contest editor
-[*] Add contest participant interface
-[*] Add standings
+[V] 21.10.2017 Add contest participant interface
+[V] 21.10.2017 Add standings
