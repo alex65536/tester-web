@@ -109,6 +109,7 @@ type
     procedure AddEventHandler(AEvent: TWebActionEvent);
     constructor CreateNew(AOwner: TComponent; CreateMode: integer); override;
     destructor Destroy; override;
+    procedure AfterConstruction; override;
   end;
 
   { THtmlPageWebModule }
@@ -333,6 +334,12 @@ destructor THandlerWebModule.Destroy;
 begin
   FreeAndNil(FHandlers);
   inherited Destroy;
+end;
+
+procedure THandlerWebModule.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  Kind := wkOneShot;
 end;
 
 end.

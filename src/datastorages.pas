@@ -523,7 +523,7 @@ var
   TempList: TStringList;
   S: string;
   Map: TStringToPointerTree;
-  It: PStringToPointerItem;
+  It: PStringToPointerTreeItem;
 begin
   RemoveEmptySections;
   Result := TStringList.Create;
@@ -565,7 +565,7 @@ var
   Items: TStringList;
   S: string;
   Tail: string;
-  It: PStringToPointerItem;
+  It: PStringToPointerTreeItem;
 begin
   // scan path to root, if necessary
   if Path = '' then

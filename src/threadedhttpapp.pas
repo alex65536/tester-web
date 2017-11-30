@@ -183,6 +183,8 @@ begin
     Port := Config.Server_Port;
     QueueSize := Config.Server_QueueSize;
     PreferModuleName := True;
+    AllowDefaultModule := True;
+    LegacyRouting := True; // improved router in fcl-web from FPC 3.0.4 breaks Tester Web
   end;
 end;
 
