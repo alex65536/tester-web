@@ -49,7 +49,7 @@ The disadvantages are:
 
 ## GNU/Linux
 
-* Tested on _Ubuntu 16.04_ (64-bit), but should work on other popular _GNU/Linux_ distros.
+* Tested on _Ubuntu 16.04, 17.10_ (64-bit), but should work on other popular _GNU/Linux_ distros.
 
 * Some checkers for problems may come only in EXE file, so you should install [_Wine_](https://winehq.org) to launch them.
 
