@@ -14,4 +14,4 @@ src/tsweb-i386-linux
 src/tsweb-x86_64-linux
 src/tsrun
 package.zip
-
+build/image/files/tsweb.zip
