@@ -3,7 +3,7 @@ FROM debian:9.4
 RUN	apt-get update \
 	&& apt-get install -y --no-install-recommends \
 		rsync \
-		fp-compiler-3.0.0 \
+		fp-compiler \
 		gcc \
 		g++ \
 		unzip
