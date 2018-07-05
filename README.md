@@ -25,7 +25,7 @@ The main advantages are:
 * Simplicity in use (no many options, it's easy to add a problem or a contest to it).
 * Problems and contests can be accessed by many users. You can also choose access rights for each user.
 * It will work on any machine under _Windows_ and _GNU/Linux_.
-* The dependency list is very small: the compilers (`fpc`, `gcc`, `g++`) must be installed. There is no other dependencies.
+* The dependency list is very small: the compilers (`fpc`, `gcc`, `g++`) must be installed. There are no other dependencies.
 
 The disadvantages are:
 
@@ -77,7 +77,7 @@ Latest release of _Tester Web_ can be found [here](https://github.com/alex65536/
 
 * You will need [_Git_](https://git-scm.com/).
 
-* Also you can build inside [_Docker_](https://docker.io) and build a docker image with _Tester Web_. This dependency is optional.
+* Also you can build inside [_Docker_](https://docker.io) and build a docker image with _Tester Web_. It is optional; building without _Docker_ is also supported.
 
 ## Building
 
@@ -121,7 +121,7 @@ Installing _Tester Web_ is quite simple:
 
 1. Get the _Tester Web_ distribution archive (download or build it) and unpack it anywhere you want.
 
-2. Run the server program located in `<unpacked archive>/bin/tsweb-...` (the ending of the filename depends on the platform you are using). The working dir must be **the same as the server binary is located!**
+2. Run the server program located in `<unpacked archive>/bin/tsweb-...` (the ending of the filename depends on the platform you are using). The working dir must be **the same as the directory where the server binary is located!**
 
 3. Now log in as the server owner. Find the username and password in the configuration file stored in `<home dir>/tsweb/data/config.ini`. The keys `defaults.password` and `defaults.userName` in section `[owner]` of the config file store the default username and password. **It's recommended to change the password after your first login.**
 
@@ -129,7 +129,7 @@ Installing _Tester Web_ is quite simple:
 
 ## Alternative way: using Docker
 
-You can also use _Tester Web_ inside a _Docker_ container. There is no prebuilt images, you should build it yourself (see above).
+You can also use _Tester Web_ inside a _Docker_ container. There are no prebuilt images, you should build it yourself (see above).
 
 Alternatively, you can use a _Docker_ image by [Ivan Udovin](https://github.com/udovin) ([link](https://hub.docker.com/r/wilcot/alex-tsweb/)). This image is also smaller.
 
