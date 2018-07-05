@@ -26,7 +26,7 @@ interface
 
 uses
   SysUtils, htmlpages, htmlpreprocess, webstrconsts, tswebpagesbase,
-  navbars, users, userpages, tswebsessions, serverconfig;
+  navbars, users, userpages, tswebsessions, tswebconfig;
 
 type
 

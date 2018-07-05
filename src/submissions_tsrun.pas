@@ -25,7 +25,7 @@ unit submissions_tsrun;
 interface
 
 uses
-  Classes, SysUtils, submissions, UTF8Process, tswebcrypto, serverconfig,
+  Classes, SysUtils, submissions, UTF8Process, tswebcrypto, tswebconfig,
   filemanager, FileUtil, LazFileUtils, tswebobservers, webstrconsts,
   objectshredder, contestproblems, custapp;
 

@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, HTTPDefs, datastorages, tswebcrypto, typinfo, webstrconsts,
-  serverconfig, commitscheduler, tswebobservers, tswebutils;
+  tswebconfig, commitscheduler, tswebobservers, tswebutils;
 
 type
   EUserAction = class(Exception);

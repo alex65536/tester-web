@@ -25,7 +25,7 @@ unit archivemanager;
 interface
 
 uses
-  Classes, SysUtils, zipper, serverconfig, filemanager, webstrconsts,
+  Classes, SysUtils, zipper, tswebconfig, filemanager, webstrconsts,
   FileUtil, LazFileUtils;
 
 type

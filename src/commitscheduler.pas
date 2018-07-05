@@ -25,7 +25,7 @@ unit commitscheduler;
 interface
 
 uses
-  Classes, SysUtils, datastorages, fgl, dateutils, serverconfig, tswebobservers,
+  Classes, SysUtils, datastorages, fgl, dateutils, tswebconfig, tswebobservers,
   serverevents;
 
 type

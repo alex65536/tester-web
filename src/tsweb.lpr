@@ -43,6 +43,7 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   SysUtils,
   datastorages,
   serverconfig,
+  tswebconfig,
   tswebcrypto,
   dateutils,
   fpwebfile,

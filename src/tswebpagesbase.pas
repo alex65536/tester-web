@@ -25,7 +25,7 @@ unit tswebpagesbase;
 interface
 
 uses
-  Classes, SysUtils, userpages, htmlpreprocess, LazFileUtils, serverconfig,
+  Classes, SysUtils, userpages, htmlpreprocess, LazFileUtils, tswebconfig,
   users, htmlpages, webstrutils;
 
 type

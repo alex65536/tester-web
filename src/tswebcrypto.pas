@@ -59,7 +59,7 @@ uses
 {$IfDef __WinRandomSeq__}
   JwaWinCrypt,
 {$EndIf}
-  serverconfig, scrypt;
+  tswebconfig, scrypt;
 
 function RandomSequenceBase64(Len: integer): string;
 var

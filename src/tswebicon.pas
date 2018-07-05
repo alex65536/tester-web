@@ -25,7 +25,7 @@ unit tswebicon;
 interface
 
 uses
-  Classes, SysUtils, fphttp, serverconfig, webmodules, LazFileUtils;
+  Classes, SysUtils, fphttp, tswebconfig, webmodules, LazFileUtils;
 
 type
 

@@ -1,7 +1,7 @@
 {
   This file is part of Tester Web
 
-  Copyright (C) 2017 Alexander Kernozhitsky <sh200105@mail.ru>
+  Copyright (C) 2017-2018 Alexander Kernozhitsky <sh200105@mail.ru>
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
@@ -153,20 +153,10 @@ type
     destructor Destroy; override;
   end;
 
-function Config: TTesterServerConfig;
-
 implementation
 
 uses
   tswebcrypto;
-
-var
-  FConfig: TTesterServerConfig;
-
-function Config: TTesterServerConfig;
-begin
-  Result := FConfig;
-end;
 
 { TTesterServerConfig }
 
@@ -433,11 +423,5 @@ begin
   FreeAndNil(FStorage);
   inherited Destroy;
 end;
-
-initialization
-  FConfig := TTesterServerConfig.Create;
-
-finalization
-  FreeAndNil(FConfig);
 
 end.

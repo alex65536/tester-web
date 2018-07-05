@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, editableobjects, webstrconsts, datastorages, users,
-  tswebutils, dateutils, serverconfig, contestproblems, standings, tswebobservers;
+  tswebutils, dateutils, tswebconfig, contestproblems, standings, tswebobservers;
 
 type
   EContestAction = class(EEditableAction);
