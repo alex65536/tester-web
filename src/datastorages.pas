@@ -40,9 +40,9 @@ type
 
   TAbstractDataStorage = class(TPersistent)
   private
-    FStoragePath: string;
+    FCommitOnDestroy: boolean;
   public
-    property StoragePath: string read FStoragePath;
+    property CommitOnDestroy: boolean read FCommitOnDestroy write FCommitOnDestroy;
     function GetRootElements: TStringList; virtual; abstract;
     function GetChildElements(const Path: string): TStringList; virtual; abstract;
     function VariableExists(const Path: string): boolean; virtual; abstract;
@@ -63,7 +63,7 @@ type
     procedure BackUp; virtual; abstract;
     procedure Commit; virtual;
     procedure Reload; virtual;
-    constructor Create(const AStoragePath: string);
+    constructor Create;
     procedure AfterConstruction; override;
     procedure BeforeDestruction; override;
   end;
@@ -72,6 +72,7 @@ type
 
   TFileDataStorage = class(TAbstractDataStorage)
   private
+    FStoragePath: string;
     function ExpandDir(const ADirName: string): string;
   protected
     function GetFileExt: string; virtual; abstract;
@@ -79,7 +80,9 @@ type
     function GetBackupFileName: string;
     function GetSecondBackupFileName: string;
   public
+    property StoragePath: string read FStoragePath;
     procedure BackUp; override;
+    constructor Create(const AStoragePath: string);
   end;
 
   { TIniDataStorage }
@@ -186,6 +189,12 @@ begin
   RemoveDirUTF8(GetSecondBackupFileName);
   RenameFileUTF8(GetBackupFileName, GetSecondBackupFileName);
   CopyFile(GetFileName, GetBackupFileName, True);
+end;
+
+constructor TFileDataStorage.Create(const AStoragePath: string);
+begin
+  inherited Create;
+  FStoragePath := AStoragePath;
 end;
 
 { TXmlDataStorage }
@@ -811,9 +820,9 @@ begin
   FPONotifyObservers(Self, ooChange, nil);
 end;
 
-constructor TAbstractDataStorage.Create(const AStoragePath: string);
+constructor TAbstractDataStorage.Create;
 begin
-  FStoragePath := AStoragePath;
+  FCommitOnDestroy := True;
 end;
 
 procedure TAbstractDataStorage.AfterConstruction;
@@ -824,7 +833,8 @@ end;
 
 procedure TAbstractDataStorage.BeforeDestruction;
 begin
-  Commit;
+  if CommitOnDestroy then
+    Commit;
   inherited BeforeDestruction;
 end;
 

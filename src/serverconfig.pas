@@ -416,6 +416,7 @@ constructor TTesterServerConfig.Create;
 begin
   FConstructing := True;
   FStorage := CreateStorageConfig;
+  FStorage.CommitOnDestroy := False;
   FStorage.FPOAttachObserver(Self);
   DefaultSettings;
   FStorage.Commit;
