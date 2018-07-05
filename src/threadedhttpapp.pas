@@ -1,7 +1,7 @@
 {
   This file is part of Tester Web
 
-  Copyright (C) 2017 Alexander Kernozhitsky <sh200105@mail.ru>
+  Copyright (C) 2017-2018 Alexander Kernozhitsky <sh200105@mail.ru>
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
@@ -161,6 +161,7 @@ end;
 
 procedure TThreadedHttpApplication.Initialize;
 begin
+  LogNote(SServerStarted);
   inherited Initialize;
   FServerThread.Start;
 end;
@@ -173,9 +174,11 @@ end;
 
 procedure TThreadedHttpApplication.Terminate(AExitCode: Integer);
 begin
-  if not Terminated then
-    FServerThread.Terminate;
+  if Terminated then
+    Exit;
   inherited Terminate(AExitCode);
+  FServerThread.Terminate;
+  LogNote(SServerTerminated, [ExitCode]);
 end;
 
 constructor TThreadedHttpApplication.Create(AOwner: TComponent);

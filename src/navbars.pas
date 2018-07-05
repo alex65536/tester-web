@@ -25,7 +25,7 @@ unit navbars;
 interface
 
 uses
-  Classes, SysUtils, htmlpreprocess, htmlpages, serverconfig, fgl;
+  Classes, SysUtils, htmlpreprocess, htmlpages, fgl;
 
 type
   TNavBar = class;
