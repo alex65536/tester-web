@@ -347,7 +347,7 @@
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="tsweb-$(TargetCPU)-$(TargetOS)"/>
+      <Filename Value="tsweb"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>

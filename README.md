@@ -121,7 +121,7 @@ Installing _Tester Web_ is quite simple:
 
 1. Get the _Tester Web_ distribution archive (download or build it) and unpack it anywhere you want.
 
-2. Run the server program located in `<unpacked archive>/bin/tsweb-...` (the ending of the filename depends on the platform you are using). The working dir must be **the same as the directory where the server binary is located!**
+2. Run the server program located in `<unpacked archive>/bin/tsweb` (the ending of the filename depends on the platform you are using). The working dir must be **the same as the directory where the server binary is located!**
 
 3. Now log in as the server owner. Find the username and password in the configuration file stored in `<home dir>/tsweb/data/config.ini`. The keys `defaults.password` and `defaults.userName` in section `[owner]` of the config file store the default username and password. **It's recommended to change the password after your first login.**
 
