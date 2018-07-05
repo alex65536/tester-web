@@ -25,7 +25,7 @@ unit serverconfig;
 interface
 
 uses
-  serverevents, Classes, SysUtils, datastorages, webstrconsts;
+  Classes, SysUtils, datastorages, webstrconsts;
 
 const
   {$IfDef Windows}
@@ -212,7 +212,7 @@ end;
 
 function TTesterServerConfig.GetFiles_MaxArchiveSize: integer;
 begin
-  Result := FStorage.ReadInteger('files.maxArchiveSize', 16384);
+  Result := FStorage.ReadInteger('files.maxArchiveSize', 65536);
 end;
 
 function TTesterServerConfig.GetFiles_MaxSrcSize: integer;
@@ -222,12 +222,12 @@ end;
 
 function TTesterServerConfig.GetFiles_MaxStatementsSize: integer;
 begin
-  Result := FStorage.ReadInteger('files.maxStatementsSize', 2048);
+  Result := FStorage.ReadInteger('files.maxStatementsSize', 4096);
 end;
 
 function TTesterServerConfig.GetFiles_MaxUnpackedArchiveSize: integer;
 begin
-  Result := FStorage.ReadInteger('files.maxUnpackedArchiveSize', 65536);
+  Result := FStorage.ReadInteger('files.maxUnpackedArchiveSize', 262144);
 end;
 
 function TTesterServerConfig.GetLocation_DataDir: string;
@@ -289,7 +289,7 @@ end;
 
 function TTesterServerConfig.GetSession_AliveTimeMinutes: integer;
 begin
-  Result := FStorage.ReadInteger('session.aliveTimeMinutes', 60);
+  Result := FStorage.ReadInteger('session.aliveTimeMinutes', 180);
 end;
 
 function TTesterServerConfig.GetSession_IDLength: integer;
