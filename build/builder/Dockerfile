@@ -9,8 +9,8 @@ VOLUME /var/build
 
 WORKDIR /var/build
 
-COPY files/start-build.sh /start-build.sh
+COPY files/start-build.sh /bin/start-build.sh
 
-RUN chmod 0744 /start-build.sh
+RUN chmod 0744 /bin/start-build.sh
 
-ENTRYPOINT ["/start-build.sh"]
+ENTRYPOINT ["/bin/start-build.sh"]

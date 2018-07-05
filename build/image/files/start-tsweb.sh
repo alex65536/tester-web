@@ -9,4 +9,4 @@ if [ -z "$(ls /var/tsweb --hide='lost+found')" ]; then
 	rsync -a /etc/.copy/var/tsweb/* /var/tsweb
 fi
 
-cd /etc/tsweb/bin && ./tsweb-x86_64-linux
+cd /opt/tsweb/bin && ./tsweb-x86_64-linux
