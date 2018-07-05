@@ -83,18 +83,16 @@ Latest release of _Tester Web_ can be found [here](https://github.com/alex65536/
 
 To build _Tester Web_ from sources, follow these steps:
 
-1. Clone the repository with its submodules:
-
 ~~~~
 $ git clone https://github.com/alex65536/tester-web
 $ cd tester-web
 $ git submodule init
 $ git submodule update
+$ cd build
+$ ./build_all.sh
 ~~~~
 
-2. Build _Tester_. [Use this reference to do it](https://alex65536.github.io/tester/#building-from-sources). On _GNU/Linux_ **do build** _timerlib_ statically.
-
-3. Build _Tester Web_. Go to `build` directory and run `build_all.sh`. This will build the archive with _Tester Web_ distribution. The archive will be located in `<repo dir>/package.zip`.
+This will build the archive with _Tester Web_ distribution. The archive will be located in `<repo dir>/package.zip`.
 
 ### Alternative build inside Docker
 
