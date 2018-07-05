@@ -25,8 +25,8 @@ unit commitscheduler;
 interface
 
 uses
-  Classes, SysUtils, datastorages, fgl, dateutils, tswebconfig, tswebobservers,
-  serverevents;
+  Classes, SysUtils, datastorages, fgl, dateutils, serverevents, tswebobservers,
+  tswebconfig;
 
 type
   TDataStorageList = specialize TFPGObjectList<TAbstractDataStorage>;
