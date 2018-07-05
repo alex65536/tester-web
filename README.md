@@ -32,8 +32,7 @@ The disadvantages are:
 * _Tester Web_ is not designed to hold big contests with hundreds of participants and doesn't support distributed testing on many machines.
 * No HTTPS support.
 * Sometimes _Tester Web_ may be slow (will be optimized in the next versions).
-* Currenty there is no sandboxing. _GNU/Linux_ users may try to use the patch for _Linux_ kernel from Ejudge authors [(info)](https://ejudge.ru/wiki/index.php/%D0%9F%D0%B0%D1%82%D1%87_%D0%BA_%D1%8F%D0%B4%D1%80%D1%83_Linux), which can be downloaded at [ejudge.ru](https://ejudge.ru/). This patch should work because _Tester Web_ uses _[Ejudge](https://ejudge.ru/)_ libraries for testing, but I haven't tested this patch yet.  
-  **UPD:** If you will build _Tester Web_ yourself and use latest _timerlib_, the Ejudge patch will work, otherwise there will be no sandboxing. Note that is still _GNU/Linux_ only.
+* Currenty there is no sandboxing. _GNU/Linux_ users may use the patch for _Linux_ kernel from Ejudge authors [(info)](https://ejudge.ru/wiki/index.php/%D0%9F%D0%B0%D1%82%D1%87_%D0%BA_%D1%8F%D0%B4%D1%80%D1%83_Linux), which can be downloaded at [ejudge.ru](https://ejudge.ru/). This patch will work because _Tester Web_ uses _[Ejudge](https://ejudge.ru/)_ libraries for testing.
 
 # Pre-requisites
 
