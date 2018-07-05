@@ -103,7 +103,8 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   tswebsolvemodules,
   tswebsolveelements,
   tswebicon,
-  userpreferences;
+  userpreferences,
+  tswebpasswords;
 
 {$ifdef Windows}
 var
