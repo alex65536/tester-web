@@ -1,7 +1,7 @@
 #!/bin/bash
 # Builds Tester Web release package
 
-cd ".."
+cd ..
 
 SEED="${RANDOM}"
 TMP_DIR="${PWD}/tsweb-build-${SEED}"
@@ -26,7 +26,7 @@ cp -rP "data" "templates" "${TMP_DIR}/tsweb"
 find "${TMP_DIR}/tsweb" -name "~dataRoot;" -delete
 
 # Copy binaries
-cp src/tsrun* src/tsweb-* src/*.so src/*.dll "${TMP_DIR}/tsweb/bin" >&/dev/null
+cp src/tsrun{,.exe} src/tsweb{,.exe} src/tsweb-mkcfg{,.exe} src/*.so src/*.dll "${TMP_DIR}/tsweb/bin" >&/dev/null
 
 # Build zip archive
 cd "${TMP_DIR}"
