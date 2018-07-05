@@ -25,14 +25,8 @@ unit logging;
 interface
 
 uses
-  SysUtils, richtextconsole, tswebdirectories, LazFileUtils, LazUTF8;
-
-resourcestring
-  SLogInfo = 'Info';
-  SLogNote = 'Note';
-  SLogWarning = 'Warning';
-  SLogError = 'Error';
-  SLogFatal = 'CRITICAL';
+  SysUtils, richtextconsole, tswebdirectories, LazFileUtils, LazUTF8,
+  tswebutils, webstrconsts;
 
 type
   TLogEventSeverity = (lsInfo, lsNote, lsWarning, lsError, lsFatal);
@@ -59,6 +53,8 @@ procedure LogError(const S: string; const Args: array of const);
 
 procedure LogFatal(const S: string);
 procedure LogFatal(const S: string; const Args: array of const);
+
+procedure LogException(ASeverity: TLogEventSeverity; E: Exception);
 
 implementation
 
@@ -164,6 +160,14 @@ begin
     Rewrite(LogFile)
   else
     Append(LogFile);
+end;
+
+procedure LogException(ASeverity: TLogEventSeverity; E: Exception);
+begin
+  LogWrite(ASeverity, Format(SErrorMsg, [E.ClassName, E.Message]));
+  LogWrite(ASeverity, SErrorStackTrace);
+  LogWrite(ASeverity, DumpBackTrace);
+  LogWrite(ASeverity, ' ');
 end;
 
 initialization

@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, CustApp, custhttpapp, HTTPDefs, tswebconfig, errorpages,
-  webstrconsts, dateutils;
+  webstrconsts, dateutils, logging;
 
 type
   EThreadedHttpApplication = class(Exception);
@@ -86,6 +86,7 @@ type
     property OnIdle: TNotifyEvent read FOnIdle write FOnIdle;
     property DefaultModuleName: string read GetDefaultModuleName write SetDefaultModuleName;
     procedure Initialize; override;
+    procedure ShowException(E: Exception); override;
     procedure Terminate(AExitCode: Integer); override;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -164,6 +165,12 @@ begin
   FServerThread.Start;
 end;
 
+procedure TThreadedHttpApplication.ShowException(E: Exception);
+begin
+  LogFatal(SUnhandledException);
+  LogException(lsFatal, E);
+end;
+
 procedure TThreadedHttpApplication.Terminate(AExitCode: Integer);
 begin
   if not Terminated then
@@ -236,6 +243,8 @@ procedure TThreadedHttpHandler.ShowRequestException(AResponse: TResponse;
 var
   Page: TErrorHtmlPage;
 begin
+  LogError(SExceptionCaught);
+  LogException(lsError, AException);
   try
     Page := TDefaultErrorPage.Create;
     try
@@ -246,8 +255,13 @@ begin
       FreeAndNil(Page);
     end;
   except
-    // exception while showing an exception :)
-    inherited ShowRequestException(AResponse, AException);
+    on E: Exception do
+    begin
+      LogFatal(SExceptionWhileException);
+      LogException(lsFatal, E);
+      // exception while showing an exception :)
+      inherited ShowRequestException(AResponse, AException);
+    end;
   end;
 end;
 
@@ -262,9 +276,9 @@ begin
   try
     FThread.Synchronize(@InternalRequestHandler);
   finally
-    WriteLn(Format(SRequestShowFormat, [
-      FormatDateTime(SRequestDateTimeFormat, Now), FRequest.Method,
-      FRequest.URI, FRequest.RemoteAddress, MilliSecondsBetween(Time, Now)
+    LogInfo(Format(SRequestShowFormat, [
+      FRequest.Method, FRequest.URI, FRequest.RemoteAddress,
+      MilliSecondsBetween(Time, Now)
     ]));
     FRequest := nil;
     FResponse := nil;

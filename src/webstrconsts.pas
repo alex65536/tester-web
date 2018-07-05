@@ -286,7 +286,7 @@ resourcestring
   SContestList = 'Contest Editor';
   SContestCreateNew = 'Create New Contest';
   SContestEditSubmit = 'Edit contest';
-  SRequestShowFormat = '%s Request %s %s from %s done in %d ms.';
+  SRequestShowFormat = 'Request %s %s from %s done in %d ms.';
   SRequestDateTimeFormat = 'hh:mm:ss.zzzz';
   SArchiveTooManyFiles = 'Archive may not contain more than %d files.';
   SParticipantAlreadyAdded = 'Participant "%s" is already added!';
@@ -392,6 +392,14 @@ resourcestring
   SSolveTotalScoreHeader = 'Total score';
   SSolvePlaceHeader = 'Place';
   SFileNotExist = 'File "%s" doesn''t exist!';
+  SExceptionCaught = 'An exception is caught.';
+  SExceptionWhileException = 'Exception occured while showing another exception!';
+  SUnhandledException = 'An unhandled exception occured!';
+  SLogInfo = 'Info';
+  SLogNote = 'Note';
+  SLogWarning = 'Warning';
+  SLogError = 'Error';
+  SLogFatal = 'CRITICAL';
 
 implementation
 

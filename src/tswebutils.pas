@@ -43,6 +43,8 @@ procedure ValidateVarNameStr(const VarType, VarName: string; AExceptClass: Excep
 procedure ValidateStrLength(const AType, AStr: string; MinLen, MaxLen: integer;
   AExceptClass: ExceptClass);
 
+function DumpBackTrace: string;
+
 implementation
 
 function Id2Str(AID: integer): string;
@@ -84,6 +86,26 @@ begin
   StrLen := UTF8Length(AStr);
   if (StrLen < MinLen) or (StrLen > MaxLen) then
     raise AExceptClass.CreateFmt(SStrInvalidLen, [AType, MinLen, MaxLen]);
+end;
+
+function DumpBackTrace: string;
+var
+  Strings: TStringList;
+  FrameCount: integer;
+  Frames: PCodePointer;
+  I: integer;
+begin
+  Strings := TStringList.Create;
+  try
+    FrameCount := ExceptFrameCount;
+    Frames := ExceptFrames;
+    Strings.Add(Trim(BackTraceStrFunc(ExceptAddr)));
+    for I := 0 to FrameCount - 1 do
+      Strings.Add(Trim(BackTraceStrFunc(Frames[I])));
+    Result := Strings.Text;
+  finally
+    FreeAndNil(Strings);
+  end;
 end;
 
 function IdComparePlain(const AID1, AID2: integer): integer;
