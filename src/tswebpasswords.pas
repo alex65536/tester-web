@@ -1,7 +1,7 @@
 {
   This file is part of Tester Web
 
-  Copyright (C) 2017 Alexander Kernozhitsky <sh200105@mail.ru>
+  Copyright (C) 2018 Alexander Kernozhitsky <sh200105@mail.ru>
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
@@ -18,40 +18,39 @@
   to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
   MA 02111-1307, USA.
 }
-unit tswebicon;
+unit tswebpasswords;
 
 {$mode objfpc}{$H+}
 
 interface
 
 uses
-  Classes, SysUtils, fphttp, tswebconfig, webmodules, LazFileUtils;
+  SysUtils, Types, tswebconfig, tswebcrypto;
 
-type
-
-  { TFavIconModule }
-
-  TFavIconModule = class(TTesterWebModule)
-  protected
-    procedure DoInsideRequest; override;
-  end;
+function GenSalt: string;
+function HashPassword(const Password, Salt: string): string;
 
 implementation
 
-{ TFavIconModule }
-
-procedure TFavIconModule.DoInsideRequest;
-var
-  IconPath: string;
+function GenSalt: string;
 begin
-  IconPath := AppendPathDelim(Config.Location_DataDir) + 'logo.ico';
-  Response.ContentType := 'image/vnd.microsoft.icon';
-  Response.FreeContentStream := True;
-  Response.ContentStream := TFileStream.Create(IconPath, fmOpenRead);
+  Result := RandomSequenceBase64(Config.Crypto_SaltLen);
 end;
 
-initialization
-  RegisterHTTPModule('favicon.ico', TFavIconModule, True);
+function HashPassword(const Password, Salt: string): string;
+var
+  Hash: TByteDynArray;
+  HashLen, NeedLen: integer;
+  N, R, P: integer;
+begin
+  NeedLen := Config.Crypto_HashLen;
+  HashLen := (NeedLen * 6) div 8 + 4;
+  N := 1 shl Config.Crypto_SCrypt_LogN;
+  R := Config.Crypto_SCrypt_R;
+  P := Config.Crypto_SCrypt_P;
+  Hash := SCryptHash(Password, Salt, N, R, P, HashLen);
+  Result := Copy(BytesToBase64(Hash, HashLen), 1, NeedLen);
+end;
 
 end.
 

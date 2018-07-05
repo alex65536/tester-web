@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, editableobjects, datastorages, webstrconsts, TypInfo,
   tswebdirectories, filemanager, archivemanager, FileUtil, LazFileUtils,
-  serverconfig, users;
+  tswebconfig, users;
 
 type
   TProblemStatementsType = (stNone, stHtml, stPdf, stDoc, stDocx);

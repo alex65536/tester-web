@@ -10,8 +10,10 @@
 **/backup/**
 **/lib/**
 .fuse*
+src/tsweb
 src/tsweb-i386-linux
 src/tsweb-x86_64-linux
+src/tsweb-mkcfg
 src/tsrun
 package.zip
-
+build/image/files/tsweb.zip

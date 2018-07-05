@@ -27,7 +27,7 @@ unit threadedhttpapp;
 interface
 
 uses
-  Classes, SysUtils, CustApp, custhttpapp, HTTPDefs, serverconfig, errorpages,
+  Classes, SysUtils, CustApp, custhttpapp, HTTPDefs, tswebconfig, errorpages,
   webstrconsts, dateutils;
 
 type

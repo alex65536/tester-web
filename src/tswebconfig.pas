@@ -1,7 +1,7 @@
 {
   This file is part of Tester Web
 
-  Copyright (C) 2017 Alexander Kernozhitsky <sh200105@mail.ru>
+  Copyright (C) 2018 Alexander Kernozhitsky <sh200105@mail.ru>
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
@@ -18,40 +18,32 @@
   to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
   MA 02111-1307, USA.
 }
-unit tswebicon;
+unit tswebconfig;
 
 {$mode objfpc}{$H+}
 
 interface
 
 uses
-  Classes, SysUtils, fphttp, tswebconfig, webmodules, LazFileUtils;
+  SysUtils, serverconfig;
 
-type
-
-  { TFavIconModule }
-
-  TFavIconModule = class(TTesterWebModule)
-  protected
-    procedure DoInsideRequest; override;
-  end;
+function Config: TTesterServerConfig;
 
 implementation
 
-{ TFavIconModule }
-
-procedure TFavIconModule.DoInsideRequest;
 var
-  IconPath: string;
+  FConfig: TTesterServerConfig;
+
+function Config: TTesterServerConfig;
 begin
-  IconPath := AppendPathDelim(Config.Location_DataDir) + 'logo.ico';
-  Response.ContentType := 'image/vnd.microsoft.icon';
-  Response.FreeContentStream := True;
-  Response.ContentStream := TFileStream.Create(IconPath, fmOpenRead);
+  Result := FConfig;
 end;
 
 initialization
-  RegisterHTTPModule('favicon.ico', TFavIconModule, True);
+  FConfig := TTesterServerConfig.Create;
+
+finalization
+  FreeAndNil(FConfig);
 
 end.
 

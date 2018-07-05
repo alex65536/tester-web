@@ -1,7 +1,7 @@
 {
   This file is part of Tester Web
 
-  Copyright (C) 2017 Alexander Kernozhitsky <sh200105@mail.ru>
+  Copyright (C) 2017-2018 Alexander Kernozhitsky <sh200105@mail.ru>
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
@@ -32,10 +32,9 @@ function RandomSequenceBase64(Len: integer): string;
 function RandomFileName(Len: integer): string;
 function BytesToBase64(const Bytes: TByteDynArray; Len: integer): string;
 
-function GenSalt: string;
-function HashPassword(const Password, Salt: string): string;
-
 function SlowCompareStrings(const A, B: string): boolean;
+
+function SCryptHash(const Password, Salt: string; N, R, P, Len: integer): TByteDynArray;
 
 implementation
 
@@ -50,7 +49,7 @@ implementation
     // We must warn this is insecure.
     {$Warning TrulyRandomSequence doesn't use a cryptographically strong random function.}
     {$Warning Using TrulyRandomSequence may be insecure on this platform}
-    {$Warning Please consider it or implement something better}
+    {$Warning Please consider implementing something better}
     {$Define __SimpleRandomSeq__}
   {$Endif}
 {$EndIf}
@@ -59,7 +58,7 @@ uses
 {$IfDef __WinRandomSeq__}
   JwaWinCrypt,
 {$EndIf}
-  serverconfig, scrypt;
+  scrypt;
 
 function RandomSequenceBase64(Len: integer): string;
 var
@@ -102,28 +101,6 @@ begin
   end;
 end;
 
-function GenSalt: string;
-begin
-  Result := RandomSequenceBase64(Config.Crypto_SaltLen);
-end;
-
-function HashPassword(const Password, Salt: string): string;
-var
-  Hash: TByteDynArray;
-  HashLen, NeedLen: integer;
-  N, R, P: integer;
-begin
-  NeedLen := Config.Crypto_HashLen;
-  HashLen := (NeedLen * 6) div 8 + 4;
-  N := 1 shl Config.Crypto_SCrypt_LogN;
-  R := Config.Crypto_SCrypt_R;
-  P := Config.Crypto_SCrypt_P;
-  SetLength(Hash, HashLen);
-  scrypt_kdf(@Password[1], Length(Password), @Salt[1], Length(Salt),
-    N, R, P, Hash[0], HashLen);
-  Result := Copy(BytesToBase64(Hash, HashLen), 1, NeedLen);
-end;
-
 function SlowCompareStrings(const A, B: string): boolean;
 var
   Diff: integer;
@@ -133,6 +110,13 @@ begin
   for I := 1 to Min(Length(A), Length(B)) do
     Diff := Diff or (Ord(A[I]) xor Ord(B[I]));
   Result := Diff = 0;
+end;
+
+function SCryptHash(const Password, Salt: string; N, R, P, Len: integer): TByteDynArray;
+begin
+  SetLength(Result, Len);
+  scrypt_kdf(@Password[1], Length(Password), @Salt[1], Length(Salt),
+    N, R, P, Result[0], Len);
 end;
 
 {$IfDef __UnixRandomSeq__}

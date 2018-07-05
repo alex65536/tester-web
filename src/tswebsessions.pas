@@ -27,7 +27,7 @@ unit tswebsessions;
 interface
 
 uses
-  Classes, SysUtils, datastorages, serverconfig, fphttp, HTTPDefs, webstrconsts,
+  Classes, SysUtils, datastorages, tswebconfig, fphttp, HTTPDefs, webstrconsts,
   DateUtils, commitscheduler, tswebpagesbase;
 
 type

@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, submissionlanguages, users, datastorages, problems,
   testresults, jsonsaver, tswebobservers, filemanager, fgl, editableobjects,
-  webstrconsts, tswebutils, serverconfig, LazFileUtils, tswebdirectories,
+  webstrconsts, tswebutils, tswebconfig, LazFileUtils, tswebdirectories,
   submissioninfo, testerprimitives;
 
 type

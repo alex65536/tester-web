@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, TypInfo, webstrconsts, users, datastorages, tswebobservers,
-  tswebutils, serverconfig;
+  tswebutils, tswebconfig;
 
 type
   TEditableAccessRights = (erNone, erRead, erWrite, erOwner);

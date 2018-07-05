@@ -43,6 +43,7 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   SysUtils,
   datastorages,
   serverconfig,
+  tswebconfig,
   tswebcrypto,
   dateutils,
   fpwebfile,
@@ -102,7 +103,8 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   tswebsolvemodules,
   tswebsolveelements,
   tswebicon,
-  userpreferences;
+  userpreferences,
+  tswebpasswords;
 
 {$ifdef Windows}
 var

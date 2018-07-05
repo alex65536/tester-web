@@ -1,7 +1,7 @@
 {
   This file is part of Tester Web
 
-  Copyright (C) 2017 Alexander Kernozhitsky <sh200105@mail.ru>
+  Copyright (C) 2017-2018 Alexander Kernozhitsky <sh200105@mail.ru>
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
@@ -25,7 +25,7 @@ unit serverconfig;
 interface
 
 uses
-  serverevents, Classes, SysUtils, datastorages, webstrconsts;
+  Classes, SysUtils, datastorages, webstrconsts;
 
 const
   {$IfDef Windows}
@@ -153,20 +153,10 @@ type
     destructor Destroy; override;
   end;
 
-function Config: TTesterServerConfig;
-
 implementation
 
 uses
   tswebcrypto;
-
-var
-  FConfig: TTesterServerConfig;
-
-function Config: TTesterServerConfig;
-begin
-  Result := FConfig;
-end;
 
 { TTesterServerConfig }
 
@@ -212,7 +202,7 @@ end;
 
 function TTesterServerConfig.GetFiles_MaxArchiveSize: integer;
 begin
-  Result := FStorage.ReadInteger('files.maxArchiveSize', 16384);
+  Result := FStorage.ReadInteger('files.maxArchiveSize', 65536);
 end;
 
 function TTesterServerConfig.GetFiles_MaxSrcSize: integer;
@@ -222,12 +212,12 @@ end;
 
 function TTesterServerConfig.GetFiles_MaxStatementsSize: integer;
 begin
-  Result := FStorage.ReadInteger('files.maxStatementsSize', 2048);
+  Result := FStorage.ReadInteger('files.maxStatementsSize', 4096);
 end;
 
 function TTesterServerConfig.GetFiles_MaxUnpackedArchiveSize: integer;
 begin
-  Result := FStorage.ReadInteger('files.maxUnpackedArchiveSize', 65536);
+  Result := FStorage.ReadInteger('files.maxUnpackedArchiveSize', 262144);
 end;
 
 function TTesterServerConfig.GetLocation_DataDir: string;
@@ -289,7 +279,7 @@ end;
 
 function TTesterServerConfig.GetSession_AliveTimeMinutes: integer;
 begin
-  Result := FStorage.ReadInteger('session.aliveTimeMinutes', 60);
+  Result := FStorage.ReadInteger('session.aliveTimeMinutes', 180);
 end;
 
 function TTesterServerConfig.GetSession_IDLength: integer;
@@ -416,6 +406,7 @@ constructor TTesterServerConfig.Create;
 begin
   FConstructing := True;
   FStorage := CreateStorageConfig;
+  FStorage.CommitOnDestroy := False;
   FStorage.FPOAttachObserver(Self);
   DefaultSettings;
   FStorage.Commit;
@@ -432,11 +423,5 @@ begin
   FreeAndNil(FStorage);
   inherited Destroy;
 end;
-
-initialization
-  FConfig := TTesterServerConfig.Create;
-
-finalization
-  FreeAndNil(FConfig);
 
 end.
