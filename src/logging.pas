@@ -43,7 +43,7 @@ const
   SeverityNames: array [TLogEventSeverity] of string =
     (SLogInfo, SLogNote, SLogWarning, SLogError, SLogFatal);
 
-procedure LogWrite(ASeverity: TLogEventSeverity; const S: string);
+procedure LogWrite(ASeverity: TLogEventSeverity; const Line: string);
 
 procedure LogInfo(const S: string);
 procedure LogInfo(const S: string; const Args: array of const);
@@ -83,19 +83,24 @@ begin
   Flush(LogFile);
 end;
 
-procedure LogWrite(ASeverity: TLogEventSeverity; const S: string);
+procedure LogWrite(ASeverity: TLogEventSeverity; const Line: string);
 const
   DateTimeFmt = 'yyyy-mm-dd hh:nn:ss';
+var
+  S: string;
 begin
-  DoLogWrite(FormatDateTime(DateTimeFmt, Now) + ' ');
-  rtcSetFgColor(ColorsBySeverity[ASeverity]);
-  rtcSetBold;
-  DoLogWrite('[' + SeverityNames[ASeverity] + ']');
-  if ASeverity <> lsFatal then
+  for S in AdjustLineBreaks(Line, tlbsLF).Split([#10]) do
+  begin
+    DoLogWrite(FormatDateTime(DateTimeFmt, Now) + ' ');
+    rtcSetFgColor(ColorsBySeverity[ASeverity]);
+    rtcSetBold;
+    DoLogWrite('[' + SeverityNames[ASeverity] + ']');
+    if ASeverity <> lsFatal then
+      rtcResetStyle;
+    DoLogWrite(': ' + S);
     rtcResetStyle;
-  DoLogWrite(': ' + S);
-  rtcResetStyle;
-  DoLogWriteLn;
+    DoLogWriteLn;
+  end;
   DoLogFlush;
 end;
 
