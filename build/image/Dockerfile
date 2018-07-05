@@ -16,8 +16,6 @@ RUN	unzip /tmp/tsweb.zip -d /opt \
 		unzip \
 	&& ln -s /var/tsweb /root/tsweb
 
-COPY files/config.ini /etc/.copy/var/tsweb/data/config.ini
-
 VOLUME /var/tsweb
 
 EXPOSE 80
