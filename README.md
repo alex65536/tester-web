@@ -9,6 +9,7 @@
 * [Building from sources](#building-from-sources)
 * [Installing](#installing)
 * [Usage](#usage)
+* [Thanks to](#thanks-to)
 * [License](#license)
 * [Libraries used by _Tester Web_](#libraries-used-by-tester-web)
 
@@ -24,6 +25,7 @@ The main advantages are:
 * Simplicity in use (no many options, it's easy to add a problem or a contest to it).
 * Problems and contests can be accessed by many users. You can also choose access rights for each user.
 * It will work on any machine under _Windows_ and _GNU/Linux_.
+* The dependency list is very small: the compilers (`fpc`, `gcc`, `g++`) must be installed. There is no other dependencies.
 
 The disadvantages are:
 
@@ -49,7 +51,7 @@ The disadvantages are:
 
 ## GNU/Linux
 
-* Tested on _Ubuntu 16.04, 17.10_ (64-bit), but should work on other popular _GNU/Linux_ distros.
+* Tested on _Ubuntu 16.04, 17.10_ (64-bit), _Debian 9, 10_ (64-bit), but should work on other popular _GNU/Linux_ distros.
 
 * Some checkers for problems may come only in EXE file, so you should install [_Wine_](https://winehq.org) to launch them.
 
@@ -75,6 +77,8 @@ Latest release of _Tester Web_ can be found [here](https://github.com/alex65536/
 
 * You will need [_Git_](https://git-scm.com/).
 
+* Also you can build inside [_Docker_](https://docker.io) and build a docker image with _Tester Web_. This dependency is optional.
+
 ## Building
 
 To build _Tester Web_ from sources, follow these steps:
@@ -92,21 +96,50 @@ $ git submodule update
 
 3. Build _Tester Web_. Go to `build` directory and run `build_all.sh`. This will build the archive with _Tester Web_ distribution. The archive will be located in `<repo dir>/package.zip`.
 
+### Alternative build inside Docker
+
+You can also use _Docker_ to build _Tester Web_. Here are the steps:
+
+~~~~
+$ git clone https://github.com/alex65536/tester-web
+$ cd tester-web
+$ git submodule init
+$ git submodule update
+$ cd build
+$ ./build_with_docker.sh
+~~~~
+
+After the build succeeds, you will have `package.zip`, just like in the previous step.
+
+### Building Docker image
+
+When you get `package.zip` after building _Tester Web_, you can also build a _Docker_ image with it. To do this, use `build/build_docker_image.sh`.
+
 # Installing
 
 Installing _Tester Web_ is quite simple:
 
 1. Get the _Tester Web_ distribution archive (download or build it) and unpack it anywhere you want.
 
-2. Run the server program located in `<unpacked archive>/bin/tsweb-...` (the ending of the filename depends on the platform you are using).
+2. Run the server program located in `<unpacked archive>/bin/tsweb-...` (the ending of the filename depends on the platform you are using). The working dir must be **the same as the server binary is located!**
 
 3. Now log in as the server owner. Find the username and password in the configuration file stored in `<home dir>/tsweb/data/config.ini`. The keys `defaults.password` and `defaults.userName` in section `[owner]` of the config file store the default username and password. **It's recommended to change the password after your first login.**
 
 4. Now the server it set. Congratulations! 😃
 
+## Alternative way: using Docker
+
+You can also use _Tester Web_ inside a _Docker_ container. There is no prebuilt images, you should build it yourself (see above).
+
+Alternatively, you can use a _Docker_ image by [Ivan Udovin](https://github.com/udovin) ([link](https://hub.docker.com/r/wilcot/alex-tsweb/)). This image is also smaller.
+
 # Usage
 
 Coming soon ...
+
+# Thanks to
+
+[Ivan Udovin](https://github.com/udovin) for providing the scripts to build a _Docker_ image and to build inside _Docker_.
 
 # License
 
