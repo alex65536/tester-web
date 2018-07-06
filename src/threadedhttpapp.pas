@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, CustApp, custhttpapp, HTTPDefs, tswebconfig, errorpages,
-  webstrconsts, dateutils, logging;
+  webstrconsts, dateutils, logging, termhandler;
 
 type
   EThreadedHttpApplication = class(Exception);

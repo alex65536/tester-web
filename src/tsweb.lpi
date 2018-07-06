@@ -53,7 +53,7 @@
         <PackageName Value="FCL"/>
       </Item7>
     </RequiredPackages>
-    <Units Count="74">
+    <Units Count="75">
       <Unit0>
         <Filename Value="tsweb.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -350,6 +350,10 @@
         <Filename Value="richtextconsole.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit73>
+      <Unit74>
+        <Filename Value="termhandler.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit74>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
