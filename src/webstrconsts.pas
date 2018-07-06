@@ -1,7 +1,7 @@
 {
   This file is part of Tester Web
 
-  Copyright (C) 2017 Alexander Kernozhitsky <sh200105@mail.ru>
+  Copyright (C) 2017-2018 Alexander Kernozhitsky <sh200105@mail.ru>
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
@@ -286,7 +286,7 @@ resourcestring
   SContestList = 'Contest Editor';
   SContestCreateNew = 'Create New Contest';
   SContestEditSubmit = 'Edit contest';
-  SRequestShowFormat = '%s Request %s %s from %s done in %d ms.';
+  SRequestShowFormat = 'Request %s %s from %s done in %d ms.';
   SRequestDateTimeFormat = 'hh:mm:ss.zzzz';
   SArchiveTooManyFiles = 'Archive may not contain more than %d files.';
   SParticipantAlreadyAdded = 'Participant "%s" is already added!';
@@ -392,6 +392,27 @@ resourcestring
   SSolveTotalScoreHeader = 'Total score';
   SSolvePlaceHeader = 'Place';
   SFileNotExist = 'File "%s" doesn''t exist!';
+  SExceptionCaught = 'An exception is caught.';
+  SExceptionWhileException = 'Exception occured while showing another exception!';
+  SUnhandledException = 'An unhandled exception occured!';
+  SLogInfo = 'Info';
+  SLogNote = 'Note';
+  SLogWarning = 'Warning';
+  SLogError = 'Error';
+  SLogFatal = 'CRITICAL';
+  SCommitSchedulerBackUpStarted = 'CommitScheduler: started creating backups.';
+  SCommitSchedulerBackUpFinished = 'CommitScheduler: finished creating backups.';
+  SCommitSchedulerCommitStarted = 'CommitScheduler: started committing storages.';
+  SStorageComitting = 'Data storage "%s" is comitting.';
+  SCommitSchedulerCommitFinished = 'CommitScheduler: finished committing storages.';
+  SServerStarted = 'Server started.';
+  SServerTerminated = 'Server terminated [exit status is %d].';
+  STsRunTerminateException = 'Exception while terminating TsRun.';
+  SSubmissionAddQueue = 'Submission %d added into queue.';
+  SSubmissionRemoveQueue = 'Submission %d removed from queue.';
+  SSubmissionAddPool = 'Submission %d started testing.';
+  SSubmissionRemovePool = 'Submission %d removed from testing.'; 
+  SSubmissionFinishPool = 'Submission %d finished testing.';
 
 implementation
 

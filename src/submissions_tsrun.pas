@@ -26,8 +26,8 @@ interface
 
 uses
   Classes, SysUtils, submissions, UTF8Process, tswebcrypto, tswebconfig,
-  filemanager, FileUtil, LazFileUtils, tswebobservers, webstrconsts,
-  objectshredder, contestproblems, custapp;
+  filemanager, LazFileUtils, tswebobservers, webstrconsts, objectshredder,
+  contestproblems, logging;
 
 type
   ETsRunSubmission = class(Exception);
@@ -101,6 +101,7 @@ type
     function CreatePool: TSubmissionPool; override;
     {%H-}constructor Create(AManager: TSubmissionManager);
   public
+    procedure BeforeDestruction; override;
     destructor Destroy; override;
   end;
 
@@ -142,6 +143,12 @@ constructor TTsRunSubmissionQueue.Create(AManager: TSubmissionManager);
 begin
   FShredder := TObjectShredder.Create;
   inherited Create(AManager);
+end;
+
+procedure TTsRunSubmissionQueue.BeforeDestruction;
+begin
+  inherited BeforeDestruction;
+  CheckSynchronize(1); // to allow all the running submissions to be terminated gracefully.
 end;
 
 destructor TTsRunSubmissionQueue.Destroy;
@@ -297,8 +304,8 @@ begin
   except
     on E: Exception do
     begin
-      CustomApplication.ShowException(E);
-      DumpExceptionBackTrace(StdErr);
+      LogFatal(STsRunTerminateException);
+      LogException(lsFatal, E);
     end;
   end;
 end;

@@ -28,7 +28,7 @@ interface
 
 uses
   Classes, SysUtils, IniFiles, FileUtil, LazFileUtils, Laz2_DOM, Laz2_XMLRead,
-  Laz2_XMLWrite, AvgLvlTree, escaping, tswebdirectories;
+  Laz2_XMLWrite, AvgLvlTree, escaping, tswebdirectories, webstrconsts, logging;
 
 const
   // action codes for ooCustom in data storages
@@ -41,7 +41,9 @@ type
   TAbstractDataStorage = class(TPersistent)
   private
     FCommitOnDestroy: boolean;
+    FName: string;
   public
+    property Name: string read FName write FName;
     property CommitOnDestroy: boolean read FCommitOnDestroy write FCommitOnDestroy;
     function GetRootElements: TStringList; virtual; abstract;
     function GetChildElements(const Path: string): TStringList; virtual; abstract;
@@ -195,6 +197,7 @@ constructor TFileDataStorage.Create(const AStoragePath: string);
 begin
   inherited Create;
   FStoragePath := AStoragePath;
+  Name := AStoragePath;
 end;
 
 { TXmlDataStorage }
@@ -812,6 +815,7 @@ end;
 
 procedure TAbstractDataStorage.Commit;
 begin
+  LogInfo(SStorageComitting, [FName]);
   FPONotifyObservers(Self, ooCustom, Pointer(DS_CODE_COMMITING));
 end;
 
@@ -823,6 +827,7 @@ end;
 constructor TAbstractDataStorage.Create;
 begin
   FCommitOnDestroy := True;
+  FName := 'anonymous';
 end;
 
 procedure TAbstractDataStorage.AfterConstruction;

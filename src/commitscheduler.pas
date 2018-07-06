@@ -1,7 +1,7 @@
 {
   This file is part of Tester Web
 
-  Copyright (C) 2017 Alexander Kernozhitsky <sh200105@mail.ru>
+  Copyright (C) 2017-2018 Alexander Kernozhitsky <sh200105@mail.ru>
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
@@ -26,7 +26,7 @@ interface
 
 uses
   Classes, SysUtils, datastorages, fgl, dateutils, serverevents, tswebobservers,
-  tswebconfig;
+  tswebconfig, logging, webstrconsts;
 
 type
   TDataStorageList = specialize TFPGObjectList<TAbstractDataStorage>;
@@ -80,9 +80,11 @@ procedure TCommitScheduler.CommitAll;
 var
   I: integer;
 begin
+  LogNote(SCommitSchedulerCommitStarted);
   for I := 0 to FStorages.Count - 1 do
     FStorages[I].Commit;
   FLastCommitTime := Now;
+  LogNote(SCommitSchedulerCommitFinished);
 end;
 
 function TCommitScheduler.CanCommit: boolean;
@@ -133,8 +135,10 @@ procedure TCommitScheduler.BackUp;
 var
   I: integer;
 begin
+  LogNote(SCommitSchedulerBackUpStarted);
   for I := 0 to FStorages.Count - 1 do
     FStorages[I].BackUp;
+  LogNote(SCommitSchedulerBackUpFinished);
 end;
 
 constructor TCommitScheduler.Create;

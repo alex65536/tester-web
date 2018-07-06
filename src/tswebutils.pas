@@ -1,7 +1,7 @@
 {
   This file is part of Tester Web
 
-  Copyright (C) 2017 Alexander Kernozhitsky <sh200105@mail.ru>
+  Copyright (C) 2017-2018 Alexander Kernozhitsky <sh200105@mail.ru>
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
@@ -42,6 +42,8 @@ function Str2Id(const AID: string): integer;
 procedure ValidateVarNameStr(const VarType, VarName: string; AExceptClass: ExceptClass);
 procedure ValidateStrLength(const AType, AStr: string; MinLen, MaxLen: integer;
   AExceptClass: ExceptClass);
+
+function DumpBackTrace: string;
 
 implementation
 
@@ -84,6 +86,26 @@ begin
   StrLen := UTF8Length(AStr);
   if (StrLen < MinLen) or (StrLen > MaxLen) then
     raise AExceptClass.CreateFmt(SStrInvalidLen, [AType, MinLen, MaxLen]);
+end;
+
+function DumpBackTrace: string;
+var
+  Strings: TStringList;
+  FrameCount: integer;
+  Frames: PCodePointer;
+  I: integer;
+begin
+  Strings := TStringList.Create;
+  try
+    FrameCount := ExceptFrameCount;
+    Frames := ExceptFrames;
+    Strings.Add(Trim(BackTraceStrFunc(ExceptAddr)));
+    for I := 0 to FrameCount - 1 do
+      Strings.Add(Trim(BackTraceStrFunc(Frames[I])));
+    Result := Strings.Text;
+  finally
+    FreeAndNil(Strings);
+  end;
 end;
 
 function IdComparePlain(const AID1, AID2: integer): integer;

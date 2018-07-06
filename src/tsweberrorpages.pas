@@ -1,7 +1,7 @@
 {
   This file is part of Tester Web
 
-  Copyright (C) 2017 Alexander Kernozhitsky <sh200105@mail.ru>
+  Copyright (C) 2017-2018 Alexander Kernozhitsky <sh200105@mail.ru>
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
@@ -26,7 +26,7 @@ interface
 
 uses
   SysUtils, tswebpagesbase, tswebfeatures, htmlpreprocess, webstrconsts,
-  errorpages, tswebmodules;
+  errorpages, tswebmodules, tswebutils;
 
 type
 
@@ -65,27 +65,6 @@ end;
 { TErrorPageFeature }
 
 procedure TErrorPageFeature.Satisfy;
-
-  procedure SetStackTrace;
-  var
-    Strings: TIndentTaggedStrings;
-    FrameCount: integer;
-    Frames: PCodePointer;
-    I: integer;
-  begin
-    Strings := TIndentTaggedStrings.Create;
-    try
-      FrameCount := ExceptFrameCount;
-      Frames := ExceptFrames;
-      Strings.Add(Trim(BackTraceStrFunc(ExceptAddr)));
-      for I := 0 to FrameCount - 1 do
-        Strings.Add(Trim(BackTraceStrFunc(Frames[I])));
-      Parent.Variables.SetItemAsStrings('stackTrace', Strings);
-    finally
-      FreeAndNil(Strings);
-    end;
-  end;
-
 begin
   with Parent.Variables do
   begin
@@ -94,7 +73,7 @@ begin
     with (Parent as TErrorHtmlPage).ExceptObj do
       ItemsAsText['errorMsg'] := Format(SErrorMsg, [ClassName, Message]);
     ItemsAsText['stackTraceMsg'] := SErrorStackTrace;
-    SetStackTrace;
+    ItemsAsText['stackTrace'] := DumpBackTrace;
   end;
   LoadPagePart('', 'errorPage', 'content');
 end;

@@ -104,7 +104,8 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   tswebsolveelements,
   tswebicon,
   userpreferences,
-  tswebpasswords;
+  tswebpasswords,
+  logging;
 
 {$ifdef Windows}
 var
