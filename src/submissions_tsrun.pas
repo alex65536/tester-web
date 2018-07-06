@@ -101,6 +101,7 @@ type
     function CreatePool: TSubmissionPool; override;
     {%H-}constructor Create(AManager: TSubmissionManager);
   public
+    procedure BeforeDestruction; override;
     destructor Destroy; override;
   end;
 
@@ -142,6 +143,12 @@ constructor TTsRunSubmissionQueue.Create(AManager: TSubmissionManager);
 begin
   FShredder := TObjectShredder.Create;
   inherited Create(AManager);
+end;
+
+procedure TTsRunSubmissionQueue.BeforeDestruction;
+begin
+  inherited BeforeDestruction;
+  CheckSynchronize(1); // to allow all the running submissions to be terminated gracefully.
 end;
 
 destructor TTsRunSubmissionQueue.Destroy;

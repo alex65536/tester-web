@@ -972,6 +972,9 @@ procedure TSubmissionQueue.BeforeDestruction;
 begin
   Commit;
   FDestructing := True;
+  Clear;
+  if Pool <> nil then
+    Pool.Clear;
   inherited BeforeDestruction;
 end;
 
@@ -983,12 +986,10 @@ end;
 
 destructor TSubmissionQueue.Destroy;
 begin
-  if Storage <> nil then
-    Storage.FPODetachObserver(Self);
   if Pool <> nil then
     Pool.Unsubscribe(Self);
-  if FList <> nil then
-    Clear;
+  if Storage <> nil then
+    Storage.FPODetachObserver(Self);
   FreeAndNil(FPool);
   FreeAndNil(FList);
   inherited Destroy;
@@ -1008,6 +1009,7 @@ end;
 
 procedure TSubmissionPool.InternalDeleteAndFree(ASubmission: TTestSubmission);
 begin
+  LogNote(SSubmissionRemovePool, [ASubmission.ID]);
   FList.Remove(ASubmission);
   DoDelete(ASubmission);
   Broadcast(TSubmissionDeletingPoolMessage.Create.AddSubmission(ASubmission)
@@ -1058,7 +1060,6 @@ begin
   Result := Submission <> nil;
   if not Result then
     Exit;
-  LogNote(SSubmissionRemovePool, [AID]);
   InternalDeleteAndFree(Submission);
 end;
 
