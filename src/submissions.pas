@@ -1,7 +1,7 @@
 {
   This file is part of Tester Web
 
-  Copyright (C) 2017 Alexander Kernozhitsky <sh200105@mail.ru>
+  Copyright (C) 2017-2018 Alexander Kernozhitsky <sh200105@mail.ru>
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
@@ -882,6 +882,7 @@ procedure TSubmissionQueue.Commit;
 var
   I: integer;
 begin
+  LogInfo(SQueueSaved, [Pool.SubmissionCount, FList.Count]);
   // remove old section
   Storage.DeletePath('queue');
   // append submissions (from pool)
