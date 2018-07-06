@@ -739,11 +739,17 @@ begin
 end;
 
 procedure TSubmissionManager.MessageReceived(AMessage: TAuthorMessage);
+var
+  EditableObject: TEditableObject;
 begin
   if AMessage is TUserDeletingMessage then
     HandleUserDeleting((AMessage as TUserDeletingMessage).Info)
   else if AMessage is TEditableDeletingMessage then
-    HandleProblemDeleting((AMessage as TEditableDeletingMessage).EditableObject as TTestableProblem);
+  begin
+    EditableObject := (AMessage as TEditableDeletingMessage).EditableObject;
+    if EditableObject is TProblem then
+      HandleProblemDeleting(EditableObject as TTestableProblem);
+  end;
 end;
 
 function TSubmissionManager.CreateSubmission(AUser: TUser; AProblem: TTestableProblem;
