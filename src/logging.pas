@@ -26,10 +26,13 @@ interface
 
 uses
   SysUtils, richtextconsole, tswebdirectories, LazFileUtils, LazUTF8,
-  tswebutils, webstrconsts;
+  tswebutils, webstrconsts, Classes;
 
 type
   TLogEventSeverity = (lsInfo, lsNote, lsWarning, lsError, lsFatal);
+
+type
+  ELogging = class(Exception);
 
 const
   ColorsBySeverity: array [TLogEventSeverity] of TConsoleColor =
@@ -75,6 +78,8 @@ end;
 
 procedure DoLogFlush;
 begin
+  if MainThreadID <> ThreadID then
+    raise ELogging.Create(SLogNotFromMain);
   Flush(Output);
   Flush(LogFile);
 end;

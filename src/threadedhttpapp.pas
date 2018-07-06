@@ -77,6 +77,7 @@ type
     procedure SetDefaultModuleName(AValue: string);
   protected
     property ServerThread: THttpApplicationHandlerThread read FServerThread;
+    procedure DoLog(EventType: TEventType; const Msg: String); override;
     procedure DoRun; override;
     procedure DoTerminate; virtual;
     procedure SetTitle(const AValue: string); override;
@@ -89,7 +90,6 @@ type
     procedure Run;
     procedure Terminate(AExitCode: Integer); override;
     constructor Create(AOwner: TComponent); override;
-    destructor Destroy; override;
   end;
 
 var
@@ -123,6 +123,7 @@ begin
     LogFatal(SServerTerminateException);
     LogException(lsFatal, Thread.FatalException as Exception);
   end;
+  FServerThread := nil;
 end;
 
 function TThreadedHttpApplication.GetDefaultModuleName: string;
@@ -137,6 +138,20 @@ begin
   FServerThread.WebHandler.DefaultModuleName := AValue;
 end;
 
+procedure TThreadedHttpApplication.DoLog(EventType: TEventType;
+  const Msg: String);
+const
+  TranslateTable: array [TEventType] of TLogEventSeverity = (
+    lsInfo,
+    lsNote,
+    lsWarning,
+    lsError,
+    lsInfo
+  );
+begin
+  LogWrite(TranslateTable[EventType], Msg);
+end;
+
 procedure TThreadedHttpApplication.DoRun;
 begin
   inherited DoRun;
@@ -145,10 +160,20 @@ begin
 end;
 
 procedure TThreadedHttpApplication.DoTerminate;
+var
+  Time: TDateTime;
 begin
   LogNote(SWebHandlerWait);
   FServerThread.Terminate;
-  FServerThread.WaitFor;
+  // wait for the thread
+  Time := Now;
+  while (FServerThread <> nil) and (MilliSecondSpan(Time, Now) < 3000) do
+    CheckSynchronize(1);
+  if FServerThread <> nil then
+  begin
+    LogError(SServerKilling);
+    KillThread(FServerThread.Handle);
+  end;
   LogNote(SServerTerminated);
 end;
 
@@ -196,6 +221,7 @@ begin
   inherited Create(AOwner);
   FServerThread := THttpApplicationHandlerThread.Create(True);
   FServerThread.OnTerminate := @ServerTerminated;
+  FServerThread.FreeOnTerminate := True;
   with FServerThread.WebHandler do
   begin
     OnLog := @Self.Log;
@@ -207,12 +233,6 @@ begin
     LegacyRouting := True; // improved router in fcl-web from FPC 3.0.4 breaks Tester Web
     AcceptIdleTimeout := 1;
   end;
-end;
-
-destructor TThreadedHttpApplication.Destroy;
-begin
-  FreeAndNil(FServerThread);
-  inherited Destroy;
 end;
 
 { THttpApplicationHandlerThread }
@@ -243,8 +263,15 @@ end;
 { TThreadedHttpHandler }
 
 procedure TThreadedHttpHandler.InternalRequestHandler;
+var
+  Time: TDateTime;
 begin
+  Time := Now;
   inherited HandleRequest(FRequest, FResponse);
+  LogInfo(Format(SRequestShowFormat, [
+    FRequest.Method, FRequest.URI, FRequest.RemoteAddress,
+    MilliSecondsBetween(Time, Now)
+  ]));
 end;
 
 procedure TThreadedHttpHandler.ShowRequestException(AResponse: TResponse;
@@ -276,19 +303,12 @@ end;
 
 procedure TThreadedHttpHandler.HandleRequest(ARequest: TRequest;
   AResponse: TResponse);
-var
-  Time: TDateTime;
 begin
   FRequest := ARequest;
   FResponse := AResponse;
-  Time := Now;
   try
     FThread.Synchronize(@InternalRequestHandler);
   finally
-    LogInfo(Format(SRequestShowFormat, [
-      FRequest.Method, FRequest.URI, FRequest.RemoteAddress,
-      MilliSecondsBetween(Time, Now)
-    ]));
     FRequest := nil;
     FResponse := nil;
   end;

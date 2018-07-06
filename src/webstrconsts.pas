@@ -416,6 +416,8 @@ resourcestring
   SSubmissionRemovePool = 'Submission %d removed from testing.'; 
   SSubmissionFinishPool = 'Submission %d finished testing.';
   SServerTerminateException = 'Exception while terminating the server.';
+  SServerKilling = 'Cannot terminate the server thread gracefully; killing it.';
+  SLogNotFromMain = 'Logging not from main thread is forbidden!';
 
 implementation
 
