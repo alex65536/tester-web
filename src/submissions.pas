@@ -28,7 +28,7 @@ uses
   Classes, SysUtils, submissionlanguages, users, datastorages, problems,
   testresults, jsonsaver, tswebobservers, filemanager, fgl, editableobjects,
   webstrconsts, tswebutils, tswebconfig, LazFileUtils, tswebdirectories,
-  submissioninfo, testerprimitives;
+  submissioninfo, testerprimitives, logging;
 
 type
   ESubmissionAction = class(EUserAction);
@@ -933,6 +933,7 @@ end;
 
 procedure TSubmissionQueue.AddSubmission(ASubmission: TTestSubmission);
 begin
+  LogNote(SSubmissionAddQueue, [ASubmission.ID]);
   ASubmission.Prepare;
   FList.Add(ASubmission);
   TriggerAddToPool;
@@ -945,6 +946,7 @@ begin
   Submission := FList.FindByID(AID);
   if Submission <> nil then
   begin
+    LogNote(SSubmissionRemoveQueue, [AID]);
     FList.Remove(Submission);
     FreeSubmission(Submission);
   end
@@ -1016,6 +1018,7 @@ end;
 procedure TSubmissionPool.TriggerTestingFinished(ASubmission: TTestSubmission);
 begin
   try
+    LogNote(SSubmissionFinishPool, [ASubmission.ID]);
     if not ASubmission.Finished then
       ASubmission.Finish(True);
     FList.Remove(ASubmission);
@@ -1041,6 +1044,7 @@ function TSubmissionPool.AddSubmission(ASubmission: TTestSubmission): boolean;
 begin
   if FList.Count >= MaxPoolSize then
     Exit(False);
+  LogNote(SSubmissionAddPool, [ASubmission.ID]);
   Result := True;
   FList.Add(ASubmission);
   DoAdd(ASubmission);
@@ -1052,8 +1056,10 @@ var
 begin
   Submission := FList.FindByID(AID);
   Result := Submission <> nil;
-  if Result then
-    InternalDeleteAndFree(Submission);
+  if not Result then
+    Exit;
+  LogNote(SSubmissionRemovePool, [AID]);
+  InternalDeleteAndFree(Submission);
 end;
 
 procedure TSubmissionPool.Clear;

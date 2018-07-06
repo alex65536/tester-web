@@ -26,8 +26,8 @@ interface
 
 uses
   Classes, SysUtils, submissions, UTF8Process, tswebcrypto, tswebconfig,
-  filemanager, FileUtil, LazFileUtils, tswebobservers, webstrconsts,
-  objectshredder, contestproblems, custapp;
+  filemanager, LazFileUtils, tswebobservers, webstrconsts, objectshredder,
+  contestproblems, logging;
 
 type
   ETsRunSubmission = class(Exception);
@@ -297,8 +297,8 @@ begin
   except
     on E: Exception do
     begin
-      CustomApplication.ShowException(E);
-      DumpExceptionBackTrace(StdErr);
+      LogFatal(STsRunTerminateException);
+      LogException(lsFatal, E);
     end;
   end;
 end;
