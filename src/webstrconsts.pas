@@ -406,13 +406,16 @@ resourcestring
   SStorageComitting = 'Data storage "%s" is comitting.';
   SCommitSchedulerCommitFinished = 'CommitScheduler: finished committing storages.';
   SServerStarted = 'Server started.';
-  SServerTerminated = 'Server terminated [exit status is %d].';
+  SServerTerminating = 'Server terminating [exit status is %d].';
+  SWebHandlerWait = 'Waiting for the WebHandler shutdown.';
+  SServerTerminated = 'Server terminated.';
   STsRunTerminateException = 'Exception while terminating TsRun.';
   SSubmissionAddQueue = 'Submission %d added into queue.';
   SSubmissionRemoveQueue = 'Submission %d removed from queue.';
   SSubmissionAddPool = 'Submission %d started testing.';
   SSubmissionRemovePool = 'Submission %d removed from testing.'; 
   SSubmissionFinishPool = 'Submission %d finished testing.';
+  SServerTerminateException = 'Exception while terminating the server.';
 
 implementation
 

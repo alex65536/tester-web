@@ -57,8 +57,6 @@ type
   THttpApplicationHandlerThread = class(TThread)
   private
     FWebHandler: TThreadedHttpHandler;
-  protected
-    procedure Synchronize(AMethod: TThreadMethod);
   public
     property WebHandler: TThreadedHttpHandler read FWebHandler;
     procedure Execute; override;
@@ -80,6 +78,7 @@ type
   protected
     property ServerThread: THttpApplicationHandlerThread read FServerThread;
     procedure DoRun; override;
+    procedure DoTerminate; virtual;
     procedure SetTitle(const AValue: string); override;
     procedure DoIdle; virtual;
   public
@@ -87,6 +86,7 @@ type
     property DefaultModuleName: string read GetDefaultModuleName write SetDefaultModuleName;
     procedure Initialize; override;
     procedure ShowException(E: Exception); override;
+    procedure Run;
     procedure Terminate(AExitCode: Integer); override;
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -118,12 +118,10 @@ var
   Thread: THttpApplicationHandlerThread;
 begin
   Thread := Sender as THttpApplicationHandlerThread;
-  if Thread.FatalException = nil then
-    Terminate(0)
-  else
+  if Thread.FatalException <> nil then
   begin
-    ShowException(Thread.FatalException as Exception);
-    Terminate(1);
+    LogFatal(SServerTerminateException);
+    LogException(lsFatal, Thread.FatalException as Exception);
   end;
 end;
 
@@ -143,8 +141,15 @@ procedure TThreadedHttpApplication.DoRun;
 begin
   inherited DoRun;
   DoIdle;
-  CheckSynchronize;
-  Sleep(1);
+  CheckSynchronize(1);
+end;
+
+procedure TThreadedHttpApplication.DoTerminate;
+begin
+  LogNote(SWebHandlerWait);
+  FServerThread.Terminate;
+  FServerThread.WaitFor;
+  LogNote(SServerTerminated);
 end;
 
 procedure TThreadedHttpApplication.SetTitle(const AValue: string);
@@ -172,13 +177,18 @@ begin
   LogException(lsFatal, E);
 end;
 
+procedure TThreadedHttpApplication.Run;
+begin
+  inherited Run;
+  DoTerminate;
+end;
+
 procedure TThreadedHttpApplication.Terminate(AExitCode: Integer);
 begin
   if Terminated then
     Exit;
   inherited Terminate(AExitCode);
-  FServerThread.Terminate;
-  LogNote(SServerTerminated, [ExitCode]);
+  LogNote(SServerTerminating, [ExitCode]);
 end;
 
 constructor TThreadedHttpApplication.Create(AOwner: TComponent);
@@ -195,6 +205,7 @@ begin
     PreferModuleName := True;
     AllowDefaultModule := True;
     LegacyRouting := True; // improved router in fcl-web from FPC 3.0.4 breaks Tester Web
+    AcceptIdleTimeout := 1;
   end;
 end;
 
@@ -205,11 +216,6 @@ begin
 end;
 
 { THttpApplicationHandlerThread }
-
-procedure THttpApplicationHandlerThread.Synchronize(AMethod: TThreadMethod);
-begin
-  inherited Synchronize(AMethod);
-end;
 
 procedure THttpApplicationHandlerThread.Execute;
 begin
@@ -224,14 +230,14 @@ end;
 constructor THttpApplicationHandlerThread.Create(CreateSuspended: Boolean;
   const StackSize: SizeUInt);
 begin
-  FWebHandler := TThreadedHttpHandler.Create(nil, Self);
   inherited Create(CreateSuspended, StackSize);
+  FWebHandler := TThreadedHttpHandler.Create(nil, Self);
 end;
 
 destructor THttpApplicationHandlerThread.Destroy;
 begin
-  inherited Destroy;
   FreeAndNil(FWebHandler);
+  inherited Destroy;
 end;
 
 { TThreadedHttpHandler }
