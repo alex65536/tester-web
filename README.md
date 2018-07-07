@@ -64,7 +64,7 @@ Latest release of _Tester Web_ can be found [here](https://github.com/alex65536/
 
 ### Common
 
-* To build _tester_ from sources, you will need [_Lazarus IDE_](https://www.lazarus-ide.org) (recommended version is 1.6.4) with [_Free Pascal Compiler_](https://freepascal.org/) (recommended version is 3.0.2) and [_GNU GCC Compiler_](https://gcc.gnu.org). Also install _WebLaz_ package into your [_Lazarus IDE_](https://www.lazarus-ide.org).
+* To build _tester_ from sources, you will need [_Lazarus IDE_](https://www.lazarus-ide.org) (recommended version is 1.8.4) with [_Free Pascal Compiler_](https://freepascal.org/) (recommended version is 3.0.4) and [_GNU GCC Compiler_](https://gcc.gnu.org). Also install _WebLaz_ package into your [_Lazarus IDE_](https://www.lazarus-ide.org).
 
 ### Windows
 
