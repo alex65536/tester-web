@@ -1,7 +1,7 @@
 {
   This file is part of Tester Web
 
-  Copyright (C) 2017 Alexander Kernozhitsky <sh200105@mail.ru>
+  Copyright (C) 2017-2018 Alexander Kernozhitsky <sh200105@mail.ru>
 
   This program is free software; you can redistribute it and/or modify it under
   the terms of the GNU General Public License as published by the Free
@@ -105,7 +105,9 @@ uses {$IfDef UNIX} {$IfDef UseCThreads}
   tswebicon,
   userpreferences,
   tswebpasswords,
-  logging;
+  logging,
+  tswebfile,
+  LazFileUtils;
 
 {$ifdef Windows}
 var
@@ -125,7 +127,7 @@ begin
   MimeTypes.AddType('text/javascript', 'js');
   MimeTypes.AddType('image/png', 'png');
   MimeTypes.AddType('image/vnd.microsoft.icon', 'ico');
-  RegisterFileLocation('data', Config.Location_DataDir);
+  RegisterFileLocation('data', ExpandFileNameUTF8(Config.Location_DataDir));
 
   Application.Title := 'Tester Web';
   Application.OnIdle := @IdleMessenger.OnIdle;

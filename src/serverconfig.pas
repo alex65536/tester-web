@@ -44,6 +44,7 @@ type
   private
     FConstructing: boolean;
     FStorage: TAbstractDataStorage;
+    function GetCache_StaticCacheSeconds: integer;
     function GetContest_MaxDurationMinutes: integer;
     function GetCrypto_HashLen: integer;
     function GetCrypto_SaltLen: integer;
@@ -107,6 +108,9 @@ type
     // storage parameters
     property Storages_CommitIntervalSeconds: integer
       read GetStorages_CommitIntervalSeconds;
+
+    // cache parameters
+    property Cache_StaticCacheSeconds: integer read GetCache_StaticCacheSeconds;
 
     // owner default settings
     // WARNING: don't store your actual password here, use "Change password"
@@ -173,6 +177,11 @@ end;
 function TTesterServerConfig.GetContest_MaxDurationMinutes: integer;
 begin
   Result := FStorage.ReadInteger('contest.maxDurationMinutes', 10080);
+end;
+
+function TTesterServerConfig.GetCache_StaticCacheSeconds: integer;
+begin
+  Result := FStorage.ReadInteger('cache.staticCacheSeconds', 86400);
 end;
 
 function TTesterServerConfig.GetCrypto_SCrypt_LogN: integer;
@@ -394,6 +403,8 @@ begin
     WriteInteger('strings.maxTitleLength', Strings_MaxTitleLength);
     WriteInteger('strings.minPasswordLength', Strings_MinPasswordLength);
     WriteInteger('strings.maxPasswordLength', Strings_MaxPasswordLength);
+
+    WriteInteger('cache.staticCacheSeconds', Cache_StaticCacheSeconds);
   end;
 end;
 
