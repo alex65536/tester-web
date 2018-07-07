@@ -36,6 +36,7 @@ type
     FRequest: TRequest;
   protected
     property Request: TRequest read FRequest;
+    procedure DoHandleRequest(ARequest: TRequest; AResponse: TResponse); virtual;
   public
     function MapFileName(const AFileName: String): String; override;
     function AllowFile(const AFileName: String): Boolean; override;
@@ -46,6 +47,46 @@ type
 implementation
 
 { TTsWebFile }
+
+procedure TTsWebFile.DoHandleRequest(ARequest: TRequest; AResponse: TResponse);
+// A patched version of TFPCustomFileModule.HandleRequest
+// Here, we deliver 403 earlier than 404
+// Also, minor refactoring and code style adjusting is made
+
+  procedure SendError(Code: integer; const Msg: string);
+  begin
+    AResponse.Code := Code;
+    AResponse.CodeText := Msg;
+    AResponse.SendContent;
+  end;
+
+var
+  RequestFileName, FileName: string;
+begin
+  if CompareText(ARequest.Method, 'GET') <> 0 then
+  begin
+    SendError(405, 'Method Not Allowed');
+    exit;
+  end;
+  RequestFileName := GetRequestFileName(ARequest);
+  if RequestFileName = '' then
+  begin
+    SendError(400, 'Bad Request');
+    exit;
+  end;
+  FileName := MapFileName(RequestFileName);
+  if not AllowFile(FileName) then
+  begin
+    SendError(403, 'Forbidden');
+    exit;
+  end;
+  if (FileName = '') or not FileExistsUTF8(FileName) or DirectoryExistsUTF8(FileName) then
+  begin
+    SendError(404, 'Not Found');
+    exit;
+  end;
+  SendFile(FileName, AResponse);
+end;
 
 function TTsWebFile.MapFileName(const AFileName: String): String;
 begin
@@ -88,7 +129,7 @@ procedure TTsWebFile.HandleRequest(ARequest: TRequest; AResponse: TResponse);
 begin
   FRequest := ARequest;
   try
-    inherited HandleRequest(ARequest, AResponse);
+    DoHandleRequest(ARequest, AResponse);
   finally
     FRequest := nil;
   end;
