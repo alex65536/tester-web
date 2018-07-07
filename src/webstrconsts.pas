@@ -418,7 +418,10 @@ resourcestring
   SServerTerminateException = 'Exception while terminating the server.';
   SServerKilling = 'Cannot terminate the server thread gracefully; killing it.';
   SLogNotFromMain = 'Logging not from main thread is forbidden!';
-  SQueueSaved = 'Queue saved: PoolSize = %d, QueueSize = %d';
+  SQueueSaved = 'Queue saved: PoolSize = %d, QueueSize = %d.';
+  SInvalidHttpDateTimeFormat = 'Invalid Date/Time format.';
+  SInvalidHttpDay = 'Invalid day: "%s".';
+  SInvalidHttpMonth = 'Invalid month: "%s".';
 
 implementation
 

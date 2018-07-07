@@ -25,9 +25,10 @@ unit tswebutils;
 interface
 
 uses
-  Classes, SysUtils, webstrconsts, LazUTF8, fgl, math;
+  Classes, SysUtils, webstrconsts, LazUTF8, fgl, math, HTTPDefs, DateUtils;
 
 type
+  EHTTPDateTime = class(Exception);
 
   { TIdList }
 
@@ -44,6 +45,9 @@ procedure ValidateStrLength(const AType, AStr: string; MinLen, MaxLen: integer;
   AExceptClass: ExceptClass);
 
 function DumpBackTrace: string;
+
+function DateTimeToHTTPDate(ADate: TDateTime): string;
+function HTTPDateToDateTime(S: string): TDateTime;
 
 implementation
 
@@ -106,6 +110,59 @@ begin
   finally
     FreeAndNil(Strings);
   end;
+end;
+
+function DateTimeToHTTPDate(ADate: TDateTime): string;
+var
+  WeekDay, Month: integer;
+begin
+  ADate := LocalTimeToUniversal(ADate);
+  WeekDay := DayOfWeek(ADate);
+  Month := MonthOf(ADate);
+  Result := Format(FormatDateTime(HTTPDateFmt + ' "GMT"', ADate),
+    [HTTPDays[WeekDay], HTTPMonths[Month]]);
+end;
+
+function HTTPDateToDateTime(S: string): TDateTime;
+
+  function GetWeekDay(const S: string): integer;
+  var
+    I: integer;
+  begin
+    for I := Low(HTTPDays) to High(HTTPDays) do
+      if CompareText(S, HTTPDays[I]) = 0 then
+        Exit(I);
+    raise EHTTPDateTime.CreateFmt(SInvalidHttpDay, [S]);
+  end;
+
+  function GetMonth(const S: string): integer;
+  var
+    I: integer;
+  begin
+    for I := Low(HTTPMonths) to High(HTTPMonths) do
+      if CompareText(S, HTTPMonths[I]) = 0 then
+        Exit(I);
+    raise EHTTPDateTime.CreateFmt(SInvalidHttpMonth, [S]);
+  end;
+
+var
+  Fields: array of string;
+  DayName, MonthName: string;
+  DateFmt: string;
+  Month: integer;
+begin
+  Fields := S.Split(' ');
+  if Length(Fields) < 3 then
+    raise EHTTPDateTime.Create(SInvalidHttpDateTimeFormat);
+  DayName := Fields[0];
+  MonthName := Fields[2];
+  if not DayName.IsEmpty then
+    Delete(DayName, Length(DayName), 1);
+  GetWeekDay(DayName);
+  Month := GetMonth(MonthName);
+  DateFmt := Format(HTTPDateFmt + ' "GMT"!m', [DayName, MonthName]);
+  Result := ScanDateTime(DateFmt, S + '!' + IntToStr(Month));
+  Result := UniversalTimeToLocal(Result);
 end;
 
 function IdComparePlain(const AID1, AID2: integer): integer;
