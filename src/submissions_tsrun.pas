@@ -27,7 +27,7 @@ interface
 uses
   Classes, SysUtils, submissions, UTF8Process, tswebcrypto, tswebconfig,
   filemanager, LazFileUtils, tswebobservers, webstrconsts, objectshredder,
-  contestproblems, logging;
+  contestproblems, logging, process;
 
 type
   ETsRunSubmission = class(Exception);
@@ -48,6 +48,7 @@ type
     FTimeout: integer;
     FExitCode: integer;
     procedure InternalExecute;
+    procedure ProcessFork(Sender: TObject);
   protected
     procedure DoTerminate; override;
   public
@@ -114,6 +115,11 @@ type
   end;
 
 implementation
+
+{$IfDef Unix}
+  uses
+    BaseUnix;
+{$EndIf}
 
 { TTsRunContestSubmissionManager }
 
@@ -266,6 +272,8 @@ begin
   CheckForNotEmpty('TestDirName', FTestDirName);
   // add parameters
   FProcess.Executable := FTsRunExe;
+  FProcess.Options := FProcess.Options + [poNewProcessGroup];
+  FProcess.OnForkEvent := @ProcessFork;
   with FProcess.Parameters do
   begin
     Add(FProblemWorkDir);
@@ -295,6 +303,13 @@ begin
   // raise exception if non-zero exitcode
   if FExitCode <> 0 then
     raise ETsRunThread.CreateFmt(STsRunNonZeroExitcode, [FExitCode]);
+end;
+
+procedure TTsRunThread.ProcessFork(Sender: TObject);
+begin
+  {$IfDef Unix}
+    FpSetsid;
+  {$EndIf}
 end;
 
 procedure TTsRunThread.DoTerminate;
