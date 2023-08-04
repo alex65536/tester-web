@@ -67,7 +67,7 @@ implementation
       '40', '41', '42', '43', '44', '45', '46', '47',
       '100', '101', '102', '103', '104', '105', '106', '107'
     );
-    BoldTable: array [boolean] of string = ('21', '1');
+    BoldTable: array [boolean] of string = ('22', '1');
     ItalicTable: array [boolean] of string = ('23', '3');
     UnderlineTable: array [boolean] of string = ('24', '4');
 
