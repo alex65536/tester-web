@@ -1,7 +1,7 @@
 {
   richtextconsole - Colored/bold/italic/underline text in terminal
 
-  Copyright (C) 2018 Alexander Kernozhitsky <sh200105@mail.ru>
+  Copyright (C) 2018, 2022-2023 Alexander Kernozhitsky <sh200105@mail.ru>
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -37,13 +37,13 @@ procedure rtcSetFgColor(AColor: TConsoleColor); inline;
 procedure rtcSetBgColor(var AFile: TextFile; AColor: TConsoleColor); inline;
 procedure rtcSetBgColor(AColor: TConsoleColor); inline;
 
-procedure rtcSetBold(var AFile: TextFile; ABold: boolean); inline;
+procedure rtcSetBold(var AFile: TextFile; ABold: boolean = True); inline;
 procedure rtcSetBold(ABold: boolean = True); inline;
 
-procedure rtcSetItalic(var AFile: TextFile; AItalic: boolean); inline;
+procedure rtcSetItalic(var AFile: TextFile; AItalic: boolean = True); inline;
 procedure rtcSetItalic(AItalic: boolean = True); inline;
 
-procedure rtcSetUnderline(var AFile: TextFile; AUnderline: boolean); inline;
+procedure rtcSetUnderline(var AFile: TextFile; AUnderline: boolean = True); inline;
 procedure rtcSetUnderline(AUnderline: boolean = True); inline;
 
 procedure rtcResetStyle(var AFile: TextFile); inline;
