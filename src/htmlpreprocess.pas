@@ -910,6 +910,7 @@ end;
 
 constructor TIndentTaggedStrings.Create;
 begin
+  inherited;
   SkipLastLineBreak := True;
   FEnableIndents := True;
   FSetRawTextMode := False;

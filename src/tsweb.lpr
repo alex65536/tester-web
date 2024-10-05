@@ -27,7 +27,6 @@ program tsweb;
 uses {$IfDef UNIX} {$IfDef UseCThreads}
   cthreads,
   cmem, {$EndIf} {$EndIf}
-  heaptrc,
   commitscheduler,
   Classes,
   ts_testerutil,
